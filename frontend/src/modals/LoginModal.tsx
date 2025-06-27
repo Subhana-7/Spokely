@@ -3,6 +3,7 @@ import { LogIn } from 'lucide-react';
 import Modal from './Modal';
 import Input from './Input';
 import Button from './Button';
+import {login} from '../services/authServices'
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -26,8 +27,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
     console.log('Google login clicked');
   };
 
-  const handleLogin = () => {
-    console.log('Login:', formData);
+  const handleLogin = async() => {
+    try{
+      const res = await login(formData);
+      alert("Login Successful");
+      console.log("Token",res.data.token);
+      localStorage.setItem("token",res.data.token);
+      onClose();
+    }catch(err:any){
+      alert("Login Failed " + (err.response?.data?.message || err.message));
+    }
   };
 
   return (

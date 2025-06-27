@@ -4,6 +4,7 @@ import Modal from './Modal';
 import Input from './Input';
 import Button from './Button';
 import Toggle from './Toggle';
+import {signup} from '../services/authServices'
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -29,8 +30,15 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     console.log('Google signup clicked');
   };
 
-  const handleCreateAccount = () => {
-    console.log('Create account:', formData);
+  const handleCreateAccount = async() => {
+    try{
+      const res = await signup(formData);
+      alert('signup successful');
+      console.log('Response',res.data);
+      onClose();
+    }catch(err:any){
+      alert('Signup failed: ' + (err.Response.data?.message || err.message));
+    }
   };
 
   return (
@@ -52,13 +60,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           placeholder="Email Address"
           value={formData.email}
           onChange={(value) => setFormData({ ...formData, email: value })}
-        />
-        
-        <Input
-          type="tel"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={(value) => setFormData({ ...formData, phone: value })}
         />
         
         <Input
