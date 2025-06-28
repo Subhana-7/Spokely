@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserRepository } from "../repositories/user.repository";
+import nodemailer from "nodemailer";
 
 export class UserService {
   private repo = new UserRepository();
@@ -26,6 +27,44 @@ export class UserService {
         "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
       );
     }
+  }
+
+  private generateOTP(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+  }
+
+  private async sendOTPEmail(to: string, otp: string) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // or SMTP config
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: "Your OTP Code",
+      text: `Your verification code is ${otp}. It expires in 10 minutes.`,
+    });
+  }
+
+  async sendOtp(email: string) {
+    const user = await this.repo.findByEmail(email);
+    if (!user) throw new Error("User not found");
+
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    await this.repo.updateOTP(email, otp, expiresAt);
+    await this.sendOTPEmail(email, otp);
+  }
+
+  async verifyOtp(email: string, code: string) {
+    const isValid = await this.repo.verifyOTP(email, code);
+    if (!isValid) throw new Error("Invalid or expired OTP");
+    return { message: "Email verified successfully" };
   }
 
   async signup(data: any) {

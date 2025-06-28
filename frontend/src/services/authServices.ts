@@ -15,5 +15,8 @@ export const signup = (data: any) => {
 
 
 
-export const login = (data: { email: string; password: string }) =>
-  API.post("/login", data);
+export const login = (data: { email: string; password: string }) => API.post("/login", data);
+
+export const sendOTP = (data: {email:string}) => API.post("/send-otp",data);
+
+export const verifyOTP = (data:{email:string,code:string}) => API.post("/verify-otp",data);
