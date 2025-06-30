@@ -7,7 +7,7 @@ import Toggle from './Toggle';
 interface RoleSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onContinue: (role: string) => void;
+  onContinue: (role: "user" | "mentor") => void;
 }
 
 const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ 
@@ -15,7 +15,8 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   onClose, 
   onContinue 
 }) => {
-  const [selectedRole, setSelectedRole] = useState('user');
+  const [selectedRole, setSelectedRole] = useState<"user" | "mentor">("user");
+
 
   const roleOptions = [
     { value: 'user', label: 'User' },
@@ -43,7 +44,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
         <Toggle
           options={roleOptions}
           selected={selectedRole}
-          onChange={setSelectedRole}
+          onChange={(value) => setSelectedRole(value as "user" | "mentor")}
         />
         
         <div className="space-y-4">

@@ -4,7 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   phone?: number;
-  password: string;
+  password?: string;
   role: "user" | "mentor";
   profilePicture?: string;
   createdAt?: Date;
@@ -19,14 +19,21 @@ export interface IUser extends Document {
     code: string;
     expiresAt: Date;
   };
-  isVerified: Boolean;
+  isVerified: boolean;
+  googleId?:string;
+  isGoogleUser?:boolean;
 }
 
 const userSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: {
+       type: String,
+        required: function(this:{googleId?:string}){
+          return !this.googleId;
+        },
+      },
     phone: { type: Number },
     role: {
       type: String,
@@ -37,6 +44,8 @@ const userSchema = new Schema<IUser>(
     otp: {
       code: { type: String, expiresAt: Date },
     },
+    googleId:{type:String,default:null},
+    isGoogleUser:{type:Boolean,default:false},
     isVerified: { type: Boolean, default: false },
     profilePicture: { type: String, default: "" },
     isBlocked: { type: Boolean, default: false },

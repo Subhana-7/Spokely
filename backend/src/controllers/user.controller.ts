@@ -39,3 +39,15 @@ export const verifyOtp = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+export const updateRole = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { role } = req.body;
+
+    const updated = await service.updateRole(userId, role);
+    res.status(200).json({ message: "Role updated", user: updated });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};

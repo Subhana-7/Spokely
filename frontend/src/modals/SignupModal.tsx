@@ -34,7 +34,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   ];
 
   const handleGoogleSignup = () => {
-    console.log("Google signup clicked");
+    window.location.href = " http://localhost:5000/api/users/google";
   };
 
   const handleCreateAccount = async () => {

@@ -6,7 +6,7 @@ import nodemailer from "nodemailer";
 export class UserService {
   private repo = new UserRepository();
 
-  private async generateUniqueReferralCode(): Promise<string> {
+  async generateUniqueReferralCode(): Promise<string> {
     const generateRandom = () =>
       Math.random().toString(36).substring(2, 8).toUpperCase();
     let code = generateRandom();
@@ -87,6 +87,16 @@ export class UserService {
     const user = await this.repo.findByEmail(data.email);
     if (!user) throw new Error("Invalid email or password");
 
+    if (!user.password) {
+      throw new Error(
+        "This user is registered via Google. Use Google sign-in."
+      );
+    }
+
+    if (!data.password) {
+      throw new Error("Password is required");
+    }
+
     const match = await bcrypt.compare(data.password, user.password);
     if (!match) throw new Error("Invalid email or password");
 
@@ -94,5 +104,16 @@ export class UserService {
       expiresIn: "1d",
     });
     return { user, token };
+  }
+
+  async updateRole(userId: string, role: "user" | "mentor") {
+    if (!["user", "mentor"].includes(role)) {
+      throw new Error("Invalid role");
+    }
+
+    const updated = await this.repo.updateUserRole(userId, role);
+    if (!updated) throw new Error("User not found");
+
+    return updated;
   }
 }

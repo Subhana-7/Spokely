@@ -11,7 +11,9 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToSignup: () => void;
+  onForgotPassword: () => void; // ✅ Add this
 }
+
 
 const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
@@ -46,6 +48,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
+  const handleGoogleSignup = () => {
+  window.location.href = " http://localhost:5000/api/users/google";
+};
+
+
   return (
     <>
       <Modal
@@ -67,6 +74,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
             value={formData.password}
             onChange={(val) => setFormData({ ...formData, password: val })}
           />
+
+          <Button variant="google" onClick={handleGoogleSignup}>
+            Login using Google
+          </Button>
 
           <Button variant="primary" onClick={handleLogin}>
             Login

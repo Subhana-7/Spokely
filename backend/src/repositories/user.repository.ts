@@ -36,4 +36,8 @@ export class UserRepository {
 
     return true;
   }
+
+  async updateUserRole(userId: string, role: "user" | "mentor") {
+    return User.findByIdAndUpdate(userId, { role }, { new: true });
+  }
 }

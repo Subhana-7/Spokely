@@ -1,0 +1,48 @@
+export const ROLES = {
+  USER: "user",
+  MENTOR: "mentor",
+};
+
+export const STATUS_CODES = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  INTERNAL_SERVER_ERROR: 500,
+};
+
+export const MESSAGES = {
+  SUCCESS: {
+    SIGNUP: "Signup successful. Please verify your email.",
+    LOGIN: "Login successful",
+    LOGOUT: "Logout successful",
+    OTP_SENT: "OTP sent to your email",
+    OTP_VERIFIED: "OTP verified successfully",
+    OTP_RESENT: "OTP resent successfully",
+    PASSWORD_RESET: "Password reset successful",
+    PASSWORD_UPDATED: "Password changed successfully",
+    PROFILE_UPDATED: "Profile updated successfully",
+    ROLE_UPDATED: "User role updated successfully",
+    SESSIONS_FETCHED: "Sessions fetched successfully",
+    USER_FETCHED: "User data fetched successfully",
+  },
+  ERROR: {
+    INVALID_CREDENTIALS: "Invalid email or password",
+    EMAIL_EXISTS: "Email already exists",
+    USER_NOT_FOUND: "User not found",
+    PASSWORD_MISMATCH: "Password and confirm password do not match",
+    INVALID_INPUT: "Required fields are missing or invalid",
+    INVALID_ROLE: "Invalid role selected",
+    BLOCKED_USER: "You are blocked from accessing this service",
+    UNAUTHORIZED: "Unauthorized access",
+    FORBIDDEN: "You do not have permission to perform this action",
+    SERVER_ERROR: "Internal server error",
+    INVALID_TOKEN: "Invalid or expired token",
+    OTP_INVALID: "Invalid OTP",
+    OTP_EXPIRED: "OTP has expired",
+    ALREADY_VERIFIED: "User is already verified",
+  },
+};
