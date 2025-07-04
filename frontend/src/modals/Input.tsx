@@ -1,28 +1,28 @@
-import React from 'react';
+import React from "react";
 
 interface InputProps {
-  type?: string;
-  placeholder: string;
+  type: string;
+  placeholder?: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (val: string) => void;
+  error?: string; 
   className?: string;
 }
 
-const Input: React.FC<InputProps> = ({ 
-  type = 'text', 
-  placeholder, 
-  value, 
-  onChange, 
-  className = '' 
-}) => {
+const Input: React.FC<InputProps> = ({ type, placeholder, value, onChange, error }) => {
   return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`w-full px-4 py-3 bg-white/90 border border-white/50 rounded-xl text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white transition-all ${className}`}
-    />
+    <div className="space-y-1">
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full px-4 py-2 border ${
+          error ? "border-red-500" : "border-black-600"
+        } rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500`}
+      />
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+    </div>
   );
 };
 

@@ -103,6 +103,7 @@ export class UserService {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "1d",
     });
+    console.log('backend service login',user,token)
     return { user, token };
   }
 

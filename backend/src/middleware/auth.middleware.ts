@@ -1,10 +1,13 @@
 import jwt from "jsonwebtoken";
 import { Response, NextFunction, RequestHandler } from "express";
 import { MESSAGES, STATUS_CODES } from "../utilis/constants";
-import { AuthenticatedRequest } from "../types/authenticatedRequest"; 
+import { AuthenticatedRequest } from "../types/authenticatedRequest";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
   return (req, res, next) => {
+
     const token =
       req.cookies["auth-token"] || req.headers.authorization?.split(" ")[1];
 

@@ -55,6 +55,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
         </div>
 
         <Input
+          type=""
           placeholder="Enter OTP"
           value={otp}
           onChange={setOtp}

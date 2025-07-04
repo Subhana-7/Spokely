@@ -11,9 +11,8 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToSignup: () => void;
-  onForgotPassword: () => void; // ✅ Add this
+  onForgotPassword: () => void;
 }
-
 
 const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
@@ -21,15 +20,32 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onSwitchToSignup,
 }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
+  const [loading, setLoading] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
+  const validate = () => {
+    const err: typeof errors = {};
+    if (!formData.email) err.email = "Email is required";
+    if (!formData.password) err.password = "Password is required";
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
   const handleLogin = async () => {
+    if (!validate()) return;
+
+    setLoading(true);
+    setErrors({});
     try {
       const res = await login(formData);
       const user = res.data.user;
+      const token = res.data.token;
 
       if (!user.isVerified) {
         await sendOTP({ email: user.email });
@@ -37,21 +53,34 @@ const LoginModal: React.FC<LoginModalProps> = ({
         setEmail(user.email);
         setShowOtpModal(true);
       } else {
-        if (user.role === "user") {
-          navigate("/user/home");
-        } else {
-          navigate("/mentor/home");
-        }
+        localStorage.setItem("spokely_token", token);
+        if (user.role === "user") navigate("/user/home");
+        else navigate("/mentor/home");
       }
     } catch (err: any) {
-      alert("Login failed: " + (err.response?.data?.message || err.message));
+      const message = err.response?.data?.message || err.message;
+
+      if (message.toLowerCase().includes("email")) {
+        setErrors({ email: message });
+      } else if (
+        message.toLowerCase().includes("password") ||
+        message.toLowerCase().includes("invalid credentials") || 
+        message.toLowerCase().includes("incorrect")
+      ) {
+        setErrors({ password: message });
+      } else {
+        setErrors({ password: message });
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignup = () => {
-  window.location.href = " http://localhost:5000/api/users/google";
-};
-
+    if (!loading) {
+      window.location.href = "http://localhost:5000/api/users/google";
+    }
+  };
 
   return (
     <>
@@ -66,21 +95,34 @@ const LoginModal: React.FC<LoginModalProps> = ({
             type="email"
             placeholder="Email"
             value={formData.email}
-            onChange={(val) => setFormData({ ...formData, email: val })}
+            onChange={(val) => {
+              setFormData({ ...formData, email: val });
+              if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            error={errors.email}
           />
           <Input
             type="password"
             placeholder="Password"
             value={formData.password}
-            onChange={(val) => setFormData({ ...formData, password: val })}
+            onChange={(val) => {
+              setFormData({ ...formData, password: val });
+              if (errors.password)
+                setErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            error={errors.password}
           />
 
-          <Button variant="google" onClick={handleGoogleSignup}>
+          <Button
+            variant="google"
+            onClick={handleGoogleSignup}
+            disabled={loading}
+          >
             Login using Google
           </Button>
 
-          <Button variant="primary" onClick={handleLogin}>
-            Login
+          <Button variant="primary" onClick={handleLogin} disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </Button>
 
           <div className="text-center pt-2">

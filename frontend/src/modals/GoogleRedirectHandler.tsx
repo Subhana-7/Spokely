@@ -1,6 +1,11 @@
-// GoogleRedirectHandler.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
+type CustomJwtPayload = {
+  role: "user" | "mentor";
+  isGoogleUser?: boolean;
+};
 
 const GoogleRedirectHandler = () => {
   const navigate = useNavigate();
@@ -8,22 +13,29 @@ const GoogleRedirectHandler = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
+    const source = params.get("source");
 
     if (token) {
-      localStorage.setItem("token", token);
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        localStorage.setItem("spokely_token", token);
+
+        const payload = jwtDecode<CustomJwtPayload>(token);
         const { role, isGoogleUser } = payload;
 
-        if (isGoogleUser) {
-          navigate("/role-selection");
-        } else if (role === "mentor") {
-          navigate("/pages/admin/home");
-        } else {
-          navigate("/pages/user/home");
-        }
-      } catch (err) {
-        console.error("Invalid token", err);
+        // Delay navigation slightly to ensure token is saved
+        setTimeout(() => {
+          // if (source === "signup" && isGoogleUser) {
+          //   navigate("/role-selection");
+          // } else
+           if (role === "mentor") {
+            navigate("/mentor/home");
+          } else {
+            navigate("/user/home");
+          }
+        }, 100); // short delay
+      } catch (e) {
+        console.error("Invalid token or decoding failed", e);
+        alert("Invalid login session.");
         navigate("/");
       }
     } else {

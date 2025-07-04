@@ -14,15 +14,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, icon, children })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Background Overlay */}
+      
       <div 
         className="absolute inset-0 bg-white/80 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal Container */}
+      
       <div className="relative bg-[#C4EA70] rounded-[20px] shadow-2xl w-full max-w-md mx-auto transform transition-all duration-300 ease-out">
-        {/* Close Button */}
+        
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 hover:bg-black/10 rounded-full transition-colors z-10"
@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, icon, children })
           <X className="h-5 w-5 text-gray-800" />
         </button>
         
-        {/* Header */}
+        
         <div className="pt-8 pb-6 px-8 text-center">
           {icon && (
             <div className="flex justify-center mb-4">
@@ -42,7 +42,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, icon, children })
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
         </div>
         
-        {/* Content */}
+        
         <div className="px-8 pb-8">
           {children}
         </div>

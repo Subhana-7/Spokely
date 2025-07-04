@@ -16,7 +16,7 @@ const Button: React.FC<ButtonProps> = ({ variant = 'primary', children, ...props
   return (
     <button
       className={`${baseStyle} ${variants[variant]}`}
-      {...props} // <-- includes type, onClick, etc.
+      {...props}
     >
       {children}
     </button>

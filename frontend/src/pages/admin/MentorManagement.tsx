@@ -5,14 +5,14 @@ import DataTable from '../../components/admin/DataTables';
 import { getAllMentors } from '../../services/adminService';
 
 const MentorManagement = () => {
-  const [mentors, setMentors] = useState<any[]>([]); // Replace 'any' with a proper type if needed
+  const [mentors, setMentors] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMentors = async () => {
       try {
         const res = await getAllMentors();
-        setMentors(res); // assuming res is an array of mentors
+        setMentors(res);
       } catch (err) {
         console.error('Error fetching mentors:', err);
       } finally {
@@ -38,7 +38,7 @@ const MentorManagement = () => {
     id: mentor._id,
     name: mentor.name,
     email: mentor.email,
-    students: mentor.studentsCount || 0, // adapt based on your schema
+    students: mentor.studentsCount || 0,
     status: mentor.isBlocked ? 'Blocked' : 'Active',
     sessions: mentor.sessionsDone || 0,
     avatar: mentor.profilePicture || undefined,

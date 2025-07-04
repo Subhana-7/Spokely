@@ -6,7 +6,6 @@ export class UserRepository {
   }
 
   async createUser(data: any) {
-    //change any
     return User.create(data);
   }
 

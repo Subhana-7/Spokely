@@ -1,4 +1,3 @@
-// src/config/passport.ts
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import dotenv from 'dotenv';
@@ -18,6 +17,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await User.findOne({ email: profile.emails?.[0].value });
+        console.log(user,'passport.ts')
         if (!user) {
           user = await User.create({
             name: profile.displayName,

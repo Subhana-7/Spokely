@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/user.service";
+import { error } from "console";
 
 const service = new UserService();
 
@@ -39,6 +40,14 @@ export const verifyOtp = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+export const home = async(req:Request, res:Response) => {
+  try{
+    
+  }catch(err:any){
+    res.status(400).json({error:err.message})
+  }
+}
 
 export const updateRole = async (req: Request, res: Response) => {
   try {

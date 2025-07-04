@@ -19,6 +19,10 @@ router.post("/login", login);
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 
+router.get("/home", authMiddleware(["user"]), (req, res) => {
+  res.json({ message: "Welcome Home!" });
+});
+
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -31,6 +35,7 @@ router.get(
     session: false,
   }), //session false is temperory no auth for now
   (req, res) => {
+    console.log("GOOGLE CALLBACK JWT_SECRET:", process.env.JWT_SECRET);
     const user = req.user as any;
 
     const token = jwt.sign(
@@ -39,14 +44,18 @@ router.get(
       { expiresIn: "1d" }
     );
 
-    res.redirect(`http://localhost:5173/?token=${token}&showRole=true`);
+    console.log(token)
+
+    const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
+
+    const redirectUrl = `http://localhost:5173/google-redirect?token=${token}${
+      isNewUser ? "&source=signup" : ""
+    }`;
+
+    res.redirect(redirectUrl);
   }
 );
 
-router.patch(
-  '/update-role',
-  authMiddleware(['user', 'mentor']),
-  updateRole 
-);
+router.patch("/update-role", authMiddleware(["user", "mentor"]), updateRole);
 
 export default router;
