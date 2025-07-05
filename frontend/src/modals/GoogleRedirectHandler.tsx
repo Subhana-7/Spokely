@@ -22,7 +22,6 @@ const GoogleRedirectHandler = () => {
         const payload = jwtDecode<CustomJwtPayload>(token);
         const { role, isGoogleUser } = payload;
 
-        // Delay navigation slightly to ensure token is saved
         setTimeout(() => {
           // if (source === "signup" && isGoogleUser) {
           //   navigate("/role-selection");
@@ -32,7 +31,7 @@ const GoogleRedirectHandler = () => {
           } else {
             navigate("/user/home");
           }
-        }, 100); // short delay
+        }, 100); 
       } catch (e) {
         console.error("Invalid token or decoding failed", e);
         alert("Invalid login session.");

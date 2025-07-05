@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/contexts/ThemeContext";
 import LandingPage from "./components/LandingPage";
-import UserHome from "./pages/user/UserHome";
-import MentorHome from "./pages/mentor/MentorHome";
+import UserHome from "./pages/user/UserDashboard";
+import MentorHome from "./pages/mentor/MentorDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/admin/Dashboard";
