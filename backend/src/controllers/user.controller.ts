@@ -15,12 +15,21 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const result = await service.login(req.body);
-    res.status(200).json(result);
+    const { user, token } = await service.login(req.body);
+
+    res.cookie('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: 'lax',
+    });
+
+    res.status(200).json({ user }); // token no longer returned
   } catch (err: any) {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 export const sendOtp = async (req: Request, res: Response) => {
   try {
@@ -43,7 +52,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
 export const home = async(req:Request, res:Response) => {
   try{
-    
+    res.json({ message: "Welcome Home!" })
   }catch(err:any){
     res.status(400).json({error:err.message})
   }

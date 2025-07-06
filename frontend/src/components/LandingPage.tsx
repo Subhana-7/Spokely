@@ -19,6 +19,7 @@ import ChangePasswordModal from "../modals/ChangePasswordModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { setRole } from "../services/authServices";
+import { useAuthStore } from "../store/userAuthStore";
 
 const LandingPage: React.FC = () => {
   const location = useLocation();
@@ -27,6 +28,7 @@ const LandingPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("token");
   const showRoleFlag = queryParams.get("showRole") === "true";
+  const { setToken, setRole: setGlobalRole } = useAuthStore();
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -36,26 +38,27 @@ const LandingPage: React.FC = () => {
   const showRoleModal = location.pathname === "/role-selection";
 
   const handleRoleContinue = async (role: "user" | "mentor") => {
-  const token = localStorage.getItem("spokely_token");
-  try {
-    await setRole(role); 
-    if (role === "user") navigate("/user/home");
-    else navigate("/mentor/home");
-  } catch (error) {
-    console.error("Role update failed:", error);
-  }
-};
+    const token = useAuthStore.getState().token;
+    try {
+      await setRole(role);
+      setGlobalRole(role); // sync Zustand again
+      if (role === "user") navigate("/user/home");
+      else navigate("/mentor/home");
+    } catch (error) {
+      console.error("Role update failed:", error);
+    }
+  };
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem("spokely_token", token);
+      setToken(token); // Set token to Zustand + cookie
       if (showRoleFlag) setActiveModal("role");
 
       // Optional: Clean the URL
       const newURL = window.location.pathname;
       window.history.replaceState({}, document.title, newURL);
     }
-  }, [token, showRoleFlag]);
+  }, [token, showRoleFlag, setToken]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -406,16 +409,16 @@ const LandingPage: React.FC = () => {
       <RoleSelectionModal
         isOpen={activeModal === "role"}
         onClose={closeModal}
-        onContinue={async(role) => {
-          try{
+        onContinue={async (role) => {
+          try {
             await setRole(role);
             closeModal();
-            if(role === "mentor"){
+            if (role === "mentor") {
               navigate("/mentor/home");
-            }else{
-              navigate("/user/home")
+            } else {
+              navigate("/user/home");
             }
-          }catch(err){
+          } catch (err) {
             console.error(err);
             alert("Error updating role");
           }

@@ -5,6 +5,7 @@ import {
   sendOtp,
   verifyOtp,
   updateRole,
+  home
 } from "../controllers/user.controller";
 import express from "express";
 import passport from "passport";
@@ -19,9 +20,7 @@ router.post("/login", login);
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 
-router.get("/home", authMiddleware(["user"]), (req, res) => {
-  res.json({ message: "Welcome Home!" });
-});
+router.get("/home",home);
 
 router.get(
   "/google",
@@ -30,31 +29,44 @@ router.get(
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "/login",
-    session: false,
-  }), //session false is temperory no auth for now
-  (req, res) => {
-    console.log("GOOGLE CALLBACK JWT_SECRET:", process.env.JWT_SECRET);
-    const user = req.user as any;
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user) => {
+      if (err) {
+        console.error("Google authentication error:", err);
+        return res.redirect("http://localhost:5173?error=auth_failed");
+      }
+      
+      if (!user) {
+        return res.redirect("http://localhost:5173?error=no_user");
+      }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, isGoogleUser: user.isGoogleUser },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
+      const token = jwt.sign(
+        { id: user._id, role: user.role, isGoogleUser: user.isGoogleUser },
+        process.env.JWT_SECRET!,
+        { expiresIn: "1d" }
+      );
 
-    console.log(token)
+      res.cookie("auth-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: "lax",
+      });
 
-    const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
+      const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
+      const redirectUrl = isNewUser
+        ? "http://localhost:5173/google-redirect?source=signup"
+        : "http://localhost:5173/google-redirect";
 
-    const redirectUrl = `http://localhost:5173/google-redirect?token=${token}${
-      isNewUser ? "&source=signup" : ""
-    }`;
-
-    res.redirect(redirectUrl);
+      res.redirect(redirectUrl);
+    })(req, res, next);
   }
 );
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("auth-token");
+  res.status(200).json({ message: "Logged out" });
+});
 
 router.patch("/update-role", authMiddleware(["user", "mentor"]), updateRole);
 

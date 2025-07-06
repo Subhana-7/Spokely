@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { useAuthStore } from "../store/userAuthStore";
 
 type CustomJwtPayload = {
   role: "user" | "mentor";
@@ -9,6 +10,7 @@ type CustomJwtPayload = {
 
 const GoogleRedirectHandler = () => {
   const navigate = useNavigate();
+  const { setToken, setRole } = useAuthStore();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -17,21 +19,24 @@ const GoogleRedirectHandler = () => {
 
     if (token) {
       try {
-        localStorage.setItem("spokely_token", token);
-
         const payload = jwtDecode<CustomJwtPayload>(token);
         const { role, isGoogleUser } = payload;
 
+        // Store token and role using Zustand + cookies
+        setToken(token);
+        setRole(role);
+
         setTimeout(() => {
+          // Uncomment if you use role-selection step for signup
           // if (source === "signup" && isGoogleUser) {
           //   navigate("/role-selection");
-          // } else
-           if (role === "mentor") {
+          // } else 
+          if (role === "mentor") {
             navigate("/mentor/home");
           } else {
             navigate("/user/home");
           }
-        }, 100); 
+        }, 100);
       } catch (e) {
         console.error("Invalid token or decoding failed", e);
         alert("Invalid login session.");

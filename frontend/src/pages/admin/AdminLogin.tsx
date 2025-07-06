@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User, Lock, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { adminLogin } from "../../services/adminService"
+import { useAdminAuthStore } from "../../store/adminAuthStore";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -9,11 +10,13 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const { setToken } = useAdminAuthStore(); // ← Zustand
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { token } = await adminLogin(email, password);
-      localStorage.setItem("admin-token", token);
+      setToken(token); // ← save in cookies & Zustand
       navigate("/admin");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");

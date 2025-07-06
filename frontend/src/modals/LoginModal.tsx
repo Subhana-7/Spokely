@@ -6,6 +6,7 @@ import Button from "./Button";
 import { login, sendOTP } from "../services/authServices";
 import OTPModal from "./OTPModal";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/userAuthStore";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+
+  const { setToken, setRole: setGlobalRole } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [role, setRole] = useState("");
@@ -37,44 +40,47 @@ const LoginModal: React.FC<LoginModalProps> = ({
     return Object.keys(err).length === 0;
   };
 
-  const handleLogin = async () => {
-    if (!validate()) return;
+const handleLogin = async () => {
+  if (!validate()) return;
 
-    setLoading(true);
-    setErrors({});
-    try {
-      const res = await login(formData);
-      const user = res.data.user;
-      const token = res.data.token;
+  setLoading(true);
+  setErrors({});
+  try {
+    const res = await login(formData);
+    const user = res.data.user;
+    const token = res.data.token;
 
-      if (!user.isVerified) {
-        await sendOTP({ email: user.email });
-        setRole(user.role);
-        setEmail(user.email);
-        setShowOtpModal(true);
-      } else {
-        localStorage.setItem("spokely_token", token);
-        if (user.role === "user") navigate("/user/home");
-        else navigate("/mentor/home");
-      }
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message;
+    if (!user.isVerified) {
+      await sendOTP({ email: user.email });
+      setRole(user.role);         // local state for OTPModal
+      setEmail(user.email);       // local state for OTPModal
+      setShowOtpModal(true);
+    } else {
+      setToken(token);            // store in cookie + Zustand
+      setGlobalRole(user.role);   // store in cookie + Zustand
 
-      if (message.toLowerCase().includes("email")) {
-        setErrors({ email: message });
-      } else if (
-        message.toLowerCase().includes("password") ||
-        message.toLowerCase().includes("invalid credentials") || 
-        message.toLowerCase().includes("incorrect")
-      ) {
-        setErrors({ password: message });
-      } else {
-        setErrors({ password: message });
-      }
-    } finally {
-      setLoading(false);
+      if (user.role === "user") navigate("/user/home");
+      else navigate("/mentor/home");
     }
-  };
+  } catch (err: any) {
+    const message = err.response?.data?.message || err.message;
+
+    if (message.toLowerCase().includes("email")) {
+      setErrors({ email: message });
+    } else if (
+      message.toLowerCase().includes("password") ||
+      message.toLowerCase().includes("invalid credentials") || 
+      message.toLowerCase().includes("incorrect")
+    ) {
+      setErrors({ password: message });
+    } else {
+      setErrors({ password: message });
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleGoogleSignup = () => {
     if (!loading) {
