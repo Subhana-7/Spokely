@@ -9,6 +9,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagemnt";
 import MentorManagement from "./pages/admin/MentorManagement";
 import GoogleRedirectHandler from "./modals/GoogleRedirectHandler";
+import Connections from "./pages/user/connections/Connections";
 import { AuthProvider } from "./components/contexts/AuthContext";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
               element={<GoogleRedirectHandler />}
             />
             <Route path="/user/home" element={<UserHome />} />
+            <Route path="/user/connections" element={<Connections/>}/>
             <Route path="/mentor/home" element={<MentorHome />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />}>

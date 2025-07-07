@@ -26,6 +26,9 @@ const DashboardHeader = () => {
           <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
             Mentors
           </button>
+          <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+            Connections
+          </button>
         </nav>
 
         <div className="flex items-center space-x-4">
