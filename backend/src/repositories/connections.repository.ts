@@ -40,4 +40,13 @@ export class ConnectionRepository {
       $or: [{ userId }, { connectedUserId: userId }],
     }).populate("userId connectedUserId");
   }
+
+  async getSentRequests(userId: Types.ObjectId) {
+  return await ConnectionModel.find({
+    userId,
+    status: "pending",
+  }).populate("connectedUserId");
 }
+
+}
+

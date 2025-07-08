@@ -28,6 +28,11 @@ export class ConnectionService {
     return await this.repo.getAcceptedConnections(new Types.ObjectId(userId));
   }
 
+  async getOutgoingRequests(userId: string) {
+  return await this.repo.getSentRequests(new Types.ObjectId(userId));
+}
+
+
 }
 
 

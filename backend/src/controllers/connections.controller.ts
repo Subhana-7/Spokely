@@ -55,5 +55,17 @@ export const listConnections = async (
     res.status(200).json(connections);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
+  } 
+};
+
+export const getSentRequests = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.id) throw new Error("User not authenticated");
+    const userId = req.id;
+    const requests = await service.getOutgoingRequests(userId);
+    res.status(200).json(requests);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
 };
+

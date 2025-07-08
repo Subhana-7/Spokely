@@ -27,3 +27,9 @@ export const acceptConnectionRequest = (requestId: string) =>
   API.patch(`/accept/${requestId}`);
 
 export const getAllConnections = () => API.get("/list");
+
+export const getSentConnectionRequests = () =>
+  API.get("/sent-requests");
+
+export const rejectConnectionRequest = (requestId: string) =>
+  API.delete(`/reject/${requestId}`); //add it 

@@ -2,15 +2,22 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import Input from '../../../modals/Input';
 import Button from '../../../modals/Button';
-import { sendConnectionRequest, getConnectionRequests } from '../../../services/connection.service';
+import {
+  sendConnectionRequest,
+  getConnectionRequests,
+  getSentConnectionRequests,
+  acceptConnectionRequest
+} from '../../../services/connection.service';
 import toast from 'react-hot-toast';
 
 interface AddConnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onFetchIncomingCount?: (count: number) => void;
 }
 
-interface PendingRequest {
+// Incoming request: someone sent a request to me
+interface IncomingRequest {
   _id: string;
   userId: {
     _id: string;
@@ -19,38 +26,70 @@ interface PendingRequest {
   };
 }
 
-const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose }) => {
+// Sent request: I sent a request to someone
+interface SentRequest {
+  _id: string;
+  connectedUserId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
+
+const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
+  isOpen,
+  onClose,
+  onFetchIncomingCount
+}) => {
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [incomingRequests, setIncomingRequests] = useState<PendingRequest[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
+
+  const fetchRequests = async () => {
+    try {
+      const [incoming, sent] = await Promise.all([
+        getConnectionRequests(),
+        getSentConnectionRequests()
+      ]);
+
+      setIncomingRequests(incoming.data);
+      setSentRequests(sent.data);
+
+      onFetchIncomingCount?.(incoming.data.length);
+    } catch (err) {
+      toast.error('Failed to fetch requests');
+    }
+  };
 
   const handleAddConnection = async () => {
     try {
-      if (!referralCode.trim()) return toast.error("Enter referral code");
+      if (!referralCode.trim()) return toast.error('Enter referral code');
       setLoading(true);
       await sendConnectionRequest(referralCode.trim());
-      toast.success("Connection request sent!");
+      toast.success('Connection request sent!');
       setReferralCode('');
-      onClose();
+      fetchRequests(); // Refresh request lists
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send request");
+      toast.error(err.response?.data?.message || 'Failed to send request');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchIncomingRequests = async () => {
+  const handleAccept = async (requestId: string) => {
     try {
-      const res = await getConnectionRequests();
-      setIncomingRequests(res.data);
-    } catch (err: any) {
-      toast.error("Failed to fetch incoming requests");
+      await acceptConnectionRequest(requestId);
+      toast.success('Connection accepted!');
+      fetchRequests(); // Refresh after accept
+    } catch {
+      toast.error('Failed to accept request');
     }
   };
 
   useEffect(() => {
     if (isOpen) {
-      fetchIncomingRequests();
+      fetchRequests();
     }
   }, [isOpen]);
 
@@ -70,6 +109,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose
         </div>
 
         <div className="p-6">
+          {/* Add by referral */}
           <Input
             type="text"
             placeholder="Enter user's referral code"
@@ -77,30 +117,60 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose
             onChange={(val: string) => setReferralCode(val)}
             className="w-full bg-white border-0 rounded-xl py-3 text-base shadow-sm focus:ring-2 focus:ring-lime-500 focus:border-transparent mb-6"
           />
-          <div className="flex justify-end gap-4">
-            <Button onClick={onClose} className="bg-gray-500 text-white">Cancel</Button>
+          <div className="flex justify-end gap-4 mb-6">
+            <Button onClick={onClose} className="bg-gray-500 text-white">
+              Cancel
+            </Button>
             <Button
               onClick={handleAddConnection}
               disabled={loading}
               className="bg-emerald-600 text-white hover:bg-emerald-700"
             >
-              {loading ? "Sending..." : "Send Request"}
+              {loading ? 'Sending...' : 'Send Request'}
             </Button>
           </div>
 
-          {/* Display incoming requests */}
+          {/* Incoming Requests */}
           {incomingRequests.length > 0 && (
-            <div className="mt-8">
+            <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Incoming Requests</h3>
               <ul className="space-y-2">
                 {incomingRequests.map((req) => (
-                  <li key={req._id} className="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center">
+                  <li
+                    key={req._id}
+                    className="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center"
+                  >
                     <div>
                       <p className="font-medium">{req.userId.name}</p>
                       <p className="text-sm text-gray-500">{req.userId.email}</p>
                     </div>
-                    {/* You can add Accept button later */}
-                    <span className="text-sm text-orange-600 font-semibold">Pending</span>
+                    <Button
+                      className="bg-green-600 text-white px-3 py-1 text-sm"
+                      onClick={() => handleAccept(req._id)}
+                    >
+                      Accept
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Sent Requests */}
+          {sentRequests.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Sent Requests</h3>
+              <ul className="space-y-2">
+                {sentRequests.map((req) => (
+                  <li
+                    key={req._id}
+                    className="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="font-medium">{req.connectedUserId.name}</p>
+                      <p className="text-sm text-gray-500">{req.connectedUserId.email}</p>
+                    </div>
+                    <span className="text-sm text-orange-500 font-semibold">Pending</span>
                   </li>
                 ))}
               </ul>
