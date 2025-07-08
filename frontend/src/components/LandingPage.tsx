@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const queryParams = new URLSearchParams(location.search);
-  const token = queryParams.get("token");
+  const token = queryParams.get("auth-token");
   const showRoleFlag = queryParams.get("showRole") === "true";
   const { setToken, setRole: setGlobalRole } = useAuthStore();
 
@@ -41,7 +41,7 @@ const LandingPage: React.FC = () => {
     const token = useAuthStore.getState().token;
     try {
       await setRole(role);
-      setGlobalRole(role); // sync Zustand again
+      setGlobalRole(role); 
       if (role === "user") navigate("/user/home");
       else navigate("/mentor/home");
     } catch (error) {
@@ -51,10 +51,9 @@ const LandingPage: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      setToken(token); // Set token to Zustand + cookie
+      setToken(token); 
       if (showRoleFlag) setActiveModal("role");
 
-      // Optional: Clean the URL
       const newURL = window.location.pathname;
       window.history.replaceState({}, document.title, newURL);
     }
@@ -401,7 +400,7 @@ const LandingPage: React.FC = () => {
       <OTPModal
         isOpen={activeModal === "otp"}
         onClose={closeModal}
-        email="demo@example.com" ///change this
+        email="demo@example.com" 
         role="user"
         onVerify={() => openModal("role")}
       />

@@ -3,7 +3,7 @@ import Button from "../../../modals/Button";
 import { MessageCircle, Ban, Trash2 } from "lucide-react";
 
 interface Connection {
-  id: number;
+  id: string;
   username: string;
   email: string;
   role: string;

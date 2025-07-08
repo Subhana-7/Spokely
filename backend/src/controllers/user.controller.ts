@@ -20,11 +20,11 @@ export const login = async (req: Request, res: Response) => {
     res.cookie('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000, 
       sameSite: 'lax',
     });
 
-    res.status(200).json({ user }); // token no longer returned
+    res.status(200).json({ user }); 
   } catch (err: any) {
     res.status(400).json({ message: err.message });
   }

@@ -1,4 +1,3 @@
-// src/store/adminAuthStore.ts
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
 

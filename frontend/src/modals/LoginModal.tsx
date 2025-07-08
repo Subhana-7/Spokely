@@ -52,12 +52,12 @@ const handleLogin = async () => {
 
     if (!user.isVerified) {
       await sendOTP({ email: user.email });
-      setRole(user.role);         // local state for OTPModal
-      setEmail(user.email);       // local state for OTPModal
+      setRole(user.role);         
+      setEmail(user.email);      
       setShowOtpModal(true);
     } else {
-      setToken(token);            // store in cookie + Zustand
-      setGlobalRole(user.role);   // store in cookie + Zustand
+      setToken(token);          
+      setGlobalRole(user.role);  
 
       if (user.role === "user") navigate("/user/home");
       else navigate("/mentor/home");

@@ -22,7 +22,6 @@ const GoogleRedirectHandler = () => {
         const payload = jwtDecode<CustomJwtPayload>(token);
         const { role, isGoogleUser } = payload;
 
-        // Store token and role using Zustand + cookies
         setToken(token);
         setRole(role);
 

@@ -8,6 +8,7 @@ dotenv.config();
 export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
   return (req, res, next) => {
 
+
     const token =
       req.cookies["auth-token"] || req.headers.authorization?.split(" ")[1];
 
@@ -24,6 +25,8 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
         role: "user" | "mentor";
       };
 
+      console.log(decoded.role,decoded.id)
+
       if (!allowedRoles.includes(decoded.role)) {
         res.status(STATUS_CODES.FORBIDDEN).json({
           message: MESSAGES.ERROR.FORBIDDEN,
@@ -33,6 +36,8 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
 
       (req as AuthenticatedRequest).id = decoded.id;
       (req as AuthenticatedRequest).role = decoded.role;
+
+      console.log("Authenticated user:", decoded);
       next();
     } catch (err) {
       res.status(STATUS_CODES.UNAUTHORIZED).json({

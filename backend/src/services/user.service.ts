@@ -30,12 +30,12 @@ export class UserService {
   }
 
   private generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   private async sendOTPEmail(to: string, otp: string) {
     const transporter = nodemailer.createTransport({
-      service: "gmail", // or SMTP config
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -55,7 +55,7 @@ export class UserService {
     if (!user) throw new Error("User not found");
 
     const otp = this.generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
     await this.repo.updateOTP(email, otp, expiresAt);
     await this.sendOTPEmail(email, otp);
@@ -68,7 +68,6 @@ export class UserService {
   }
 
   async signup(data: any) {
-    //change any
     await this.passwordValidation(data.password);
 
     const existing = await this.repo.findByEmail(data.email);
@@ -100,10 +99,15 @@ export class UserService {
     const match = await bcrypt.compare(data.password, user.password);
     if (!match) throw new Error("Invalid email or password");
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "1d",
-    });
-    console.log('backend service login',user,token)
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role, 
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1d" }
+    );
+
     return { user, token };
   }
 

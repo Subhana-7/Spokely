@@ -10,13 +10,13 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const { setToken } = useAdminAuthStore(); // ← Zustand
+  const { setToken } = useAdminAuthStore(); 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { token } = await adminLogin(email, password);
-      setToken(token); // ← save in cookies & Zustand
+      setToken(token); 
       navigate("/admin");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");

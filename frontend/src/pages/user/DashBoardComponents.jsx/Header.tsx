@@ -7,8 +7,8 @@ const DashboardHeader = () => {
   const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
-    logout(); // clears cookies + Zustand state
-    navigate("/"); // redirect to login or home
+    logout(); 
+    navigate("/"); 
   };
 
   return (

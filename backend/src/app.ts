@@ -8,6 +8,7 @@ import passport from 'passport';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import './config/passport';
+import connectionsRoutes from './routes/connections.route'
 
 dotenv.config();
 const app = express();
@@ -41,6 +42,7 @@ app.use(passport.session());
 
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users/connections',connectionsRoutes);
 
 
 
