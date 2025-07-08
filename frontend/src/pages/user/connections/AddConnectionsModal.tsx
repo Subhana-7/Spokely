@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { X, Search, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import Input from '../../../modals/Input';
 import Button from '../../../modals/Button';
-import { sendConnectionRequest } from '../../../services/connection.service';
+import { sendConnectionRequest, getConnectionRequests } from '../../../services/connection.service';
 import toast from 'react-hot-toast';
 
 interface AddConnectionModalProps {
@@ -10,9 +10,19 @@ interface AddConnectionModalProps {
   onClose: () => void;
 }
 
+interface PendingRequest {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
+
 const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose }) => {
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [incomingRequests, setIncomingRequests] = useState<PendingRequest[]>([]);
 
   const handleAddConnection = async () => {
     try {
@@ -28,6 +38,21 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose
       setLoading(false);
     }
   };
+
+  const fetchIncomingRequests = async () => {
+    try {
+      const res = await getConnectionRequests();
+      setIncomingRequests(res.data);
+    } catch (err: any) {
+      toast.error("Failed to fetch incoming requests");
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchIncomingRequests();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -49,7 +74,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose
             type="text"
             placeholder="Enter user's referral code"
             value={referralCode}
-            onChange={(val:string) => setReferralCode(val)}
+            onChange={(val: string) => setReferralCode(val)}
             className="w-full bg-white border-0 rounded-xl py-3 text-base shadow-sm focus:ring-2 focus:ring-lime-500 focus:border-transparent mb-6"
           />
           <div className="flex justify-end gap-4">
@@ -62,6 +87,25 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({ isOpen, onClose
               {loading ? "Sending..." : "Send Request"}
             </Button>
           </div>
+
+          {/* Display incoming requests */}
+          {incomingRequests.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Incoming Requests</h3>
+              <ul className="space-y-2">
+                {incomingRequests.map((req) => (
+                  <li key={req._id} className="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{req.userId.name}</p>
+                      <p className="text-sm text-gray-500">{req.userId.email}</p>
+                    </div>
+                    {/* You can add Accept button later */}
+                    <span className="text-sm text-orange-600 font-semibold">Pending</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
