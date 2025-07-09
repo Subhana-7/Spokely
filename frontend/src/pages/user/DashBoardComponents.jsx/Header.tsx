@@ -1,24 +1,16 @@
 import { Bell, Moon, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/userAuthStore'; 
-import axios from 'axios'
+import { logoutService } from '../../../services/authServices';
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
-  // const logout = useAuthStore((state) => state.logout);
 
   const {logout} = useAuthStore()
-  // const {logout} = useAuthStore();
-
-  // const handleLogout = () => {
-  //   console.log('lo')
-  //   logout(); 
-  //   // navigate("/"); 
-  // };
 
   const handleLogout = async() => {
     try {
-    await axios.post('http://localhost:5000/api/users/logout', {}, { withCredentials: true });
+    await logoutService();
     logout(); // Zustand logout // move this to service
     navigate('/');
   } catch (err) {

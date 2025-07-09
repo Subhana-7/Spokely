@@ -33,3 +33,4 @@ export const getSentConnectionRequests = () =>
 
 export const rejectConnectionRequest = (requestId: string) =>
   API.delete(`/reject/${requestId}`); //add it 
+
