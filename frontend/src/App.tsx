@@ -11,6 +11,9 @@ import MentorManagement from "./pages/admin/MentorManagement";
 import GoogleRedirectHandler from "./modals/GoogleRedirectHandler";
 import Connections from "./pages/user/connections/Connections";
 import { AuthProvider } from "./components/contexts/AuthContext";
+import Sessions from './pages/user/Sessions/Sessions';
+import SessionSchedule from './pages/user/Sessions/ScheduleSessions';
+import SessionDetail from "./pages/user/Sessions/SessionDetails";
 
 function App() {
   return (
@@ -32,6 +35,9 @@ function App() {
               <Route path="users" element={<UserManagement />} />
               <Route path="mentors" element={<MentorManagement />} />
             </Route>
+            <Route path="/user/sessions" element={<Sessions />} />
+          <Route path="/user/schedule-session" element={<SessionSchedule />} />
+          <Route path="/user/session-detail" element={<SessionDetail />} />
           </Routes>
         </AuthProvider>
       </ThemeProvider>

@@ -11,7 +11,7 @@ const DashboardHeader = () => {
   const handleLogout = async() => {
     try {
     await logoutService();
-    logout(); // Zustand logout // move this to service
+    logout(); 
     navigate('/');
   } catch (err) {
     console.error('Logout failed', err);
