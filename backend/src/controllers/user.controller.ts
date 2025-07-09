@@ -69,3 +69,13 @@ export const updateRole = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+
+export const logout = async (req: Request, res: Response) => {
+  res.clearCookie('auth-token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.status(200).json({ message: "Logged out successfully" });
+};

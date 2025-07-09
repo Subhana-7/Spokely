@@ -10,7 +10,7 @@ type CustomJwtPayload = {
 
 const GoogleRedirectHandler = () => {
   const navigate = useNavigate();
-  const { setToken, setRole } = useAuthStore();
+  const { setRole } = useAuthStore();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -22,14 +22,9 @@ const GoogleRedirectHandler = () => {
         const payload = jwtDecode<CustomJwtPayload>(token);
         const { role, isGoogleUser } = payload;
 
-        setToken(token);
         setRole(role);
 
         setTimeout(() => {
-          // Uncomment if you use role-selection step for signup
-          // if (source === "signup" && isGoogleUser) {
-          //   navigate("/role-selection");
-          // } else 
           if (role === "mentor") {
             navigate("/mentor/home");
           } else {

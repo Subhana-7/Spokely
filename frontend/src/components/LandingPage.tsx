@@ -28,7 +28,7 @@ const LandingPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("auth-token");
   const showRoleFlag = queryParams.get("showRole") === "true";
-  const { setToken, setRole: setGlobalRole } = useAuthStore();
+  const {setRole: setGlobalRole } = useAuthStore();
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -50,14 +50,14 @@ const LandingPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (token) {
-      setToken(token); 
-      if (showRoleFlag) setActiveModal("role");
+  if (token) {
+    if (showRoleFlag) setActiveModal("role");
 
-      const newURL = window.location.pathname;
-      window.history.replaceState({}, document.title, newURL);
-    }
-  }, [token, showRoleFlag, setToken]);
+    const newURL = window.location.pathname;
+    window.history.replaceState({}, document.title, newURL);
+  }
+}, [token, showRoleFlag]);
+
 
   return (
     <div className="min-h-screen bg-white">

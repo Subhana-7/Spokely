@@ -5,7 +5,8 @@ import {
   sendOtp,
   verifyOtp,
   updateRole,
-  home
+  home,
+  logout
 } from "../controllers/user.controller";
 import express from "express";
 import passport from "passport";
@@ -63,10 +64,13 @@ router.get(
   }
 );
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("auth-token");
-  res.status(200).json({ message: "Logged out" });
-});
+// router.post("/logout", (req, res) => {
+//   res.clearCookie("auth-token");
+//   res.status(200).json({ message: "Logged out" });
+// });
+
+router.post("/logout", logout);
+
 
 router.patch("/update-role", authMiddleware(["user", "mentor"]), updateRole);
 
