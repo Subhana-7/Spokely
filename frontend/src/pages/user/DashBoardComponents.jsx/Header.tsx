@@ -36,7 +36,7 @@ const DashboardHeader = () => {
 
   const handleSessionsButton = () => {
     try {
-      navigate("/user/sessions")
+      navigate("/user/session")
     } catch (err) {
       console.error("button failed", err);
     }

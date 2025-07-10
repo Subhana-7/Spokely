@@ -44,7 +44,7 @@ app.use(passport.session());
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users/connections',connectionsRoutes);
-app.use('/api/users/sessions',sessionRoutes)
+app.use('/api/users/session',sessionRoutes)
 
 
 

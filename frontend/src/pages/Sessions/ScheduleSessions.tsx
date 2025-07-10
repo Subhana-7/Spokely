@@ -76,7 +76,7 @@ const ScheduleSession = () => {
 
       await createSession(payload);
       toast.success("Session scheduled successfully");
-      navigate("/user/sessions");
+      navigate("/user/session");
     } catch (err: any) {
       console.error("Error scheduling session", err);
       toast.error("Failed to schedule session");

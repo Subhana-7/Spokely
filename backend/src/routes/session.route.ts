@@ -8,5 +8,6 @@ router.post("/schedule", authMiddleware(["user", "mentor"]), SessionController.c
 router.get("/list", authMiddleware(["user", "mentor"]), SessionController.getAllSessions);
 router.get("/:id", authMiddleware(["user", "mentor"]), SessionController.getSessionById);
 router.patch("/:id", authMiddleware(["user", "mentor"]), SessionController.updateSession);
+router.get("/:id/token", authMiddleware(["user", "mentor"]), SessionController.getAgoraToken);
 
 export default router;
