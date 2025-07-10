@@ -25,8 +25,6 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
         role: "user" | "mentor";
       };
 
-      console.log(decoded.role,decoded.id)
-
       if (!allowedRoles.includes(decoded.role)) {
         res.status(STATUS_CODES.FORBIDDEN).json({
           message: MESSAGES.ERROR.FORBIDDEN,
@@ -36,8 +34,6 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
 
       (req as AuthenticatedRequest).id = decoded.id;
       (req as AuthenticatedRequest).role = decoded.role;
-
-      console.log("Authenticated user:", decoded);
       next();
     } catch (err) {
       res.status(STATUS_CODES.UNAUTHORIZED).json({

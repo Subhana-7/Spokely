@@ -11,9 +11,10 @@ import MentorManagement from "./pages/admin/MentorManagement";
 import GoogleRedirectHandler from "./modals/GoogleRedirectHandler";
 import Connections from "./pages/user/connections/Connections";
 import { AuthProvider } from "./components/contexts/AuthContext";
-import Sessions from './pages/user/Sessions/Sessions';
-import SessionSchedule from './pages/user/Sessions/ScheduleSessions';
-import SessionDetail from "./pages/user/Sessions/SessionDetails";
+import Sessions from './pages/Sessions/Sessions';
+import SessionSchedule from './pages/Sessions/ScheduleSessions';
+import SessionDetail from "./pages/Sessions/SessionDetails";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
@@ -37,10 +38,11 @@ function App() {
             </Route>
             <Route path="/user/sessions" element={<Sessions />} />
           <Route path="/user/schedule-session" element={<SessionSchedule />} />
-          <Route path="/user/session-detail" element={<SessionDetail />} />
+          <Route path="/user/session/:id" element={<SessionDetail />} />
           </Routes>
         </AuthProvider>
       </ThemeProvider>
+      <Toaster position="top-right" reverseOrder={false} />
     </BrowserRouter>
   );
 }

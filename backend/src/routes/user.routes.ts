@@ -6,7 +6,8 @@ import {
   verifyOtp,
   updateRole,
   home,
-  logout
+  logout,
+  getAllUsers
 } from "../controllers/user.controller";
 import express from "express";
 import passport from "passport";
@@ -73,5 +74,8 @@ router.post("/logout", logout);
 
 
 router.patch("/update-role", authMiddleware(["user", "mentor"]), updateRole);
+
+router.get("/all", authMiddleware(["user", "mentor"]), getAllUsers);
+
 
 export default router;

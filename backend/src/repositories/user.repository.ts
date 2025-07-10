@@ -39,4 +39,8 @@ export class UserRepository {
   async updateUserRole(userId: string, role: "user" | "mentor") {
     return User.findByIdAndUpdate(userId, { role }, { new: true });
   }
+
+  async findAll() {
+    return await User.find({}, "-password -otp -googleId");
+  }
 }

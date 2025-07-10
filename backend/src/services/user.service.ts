@@ -121,4 +121,8 @@ export class UserService {
 
     return updated;
   }
+  
+  async getAllUsers() {
+    return await this.repo.findAll();
+  }
 }

@@ -1,21 +1,45 @@
-import { Bell, Moon, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../../store/userAuthStore'; 
-import { logoutService } from '../../../services/authServices';
+import { Bell, Moon, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../../store/userAuthStore";
+import { logoutService } from "../../../services/authServices";
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
 
-  const {logout} = useAuthStore()
+  const { logout } = useAuthStore();
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     try {
-    await logoutService();
-    logout(); 
-    navigate('/');
-  } catch (err) {
-    console.error('Logout failed', err);
+      await logoutService();
+      logout();
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
+
+  const handleDashboardButton = () => {
+    try {
+      navigate("/user/home")
+    } catch (err) {
+      console.error("button failed", err);
+    }
   }
+
+  const handleConnectionsButton = () => {
+    try {
+      navigate("/user/connections")
+    } catch (err) {
+      console.error("button failed", err);
+    }
+  }
+
+  const handleSessionsButton = () => {
+    try {
+      navigate("/user/sessions")
+    } catch (err) {
+      console.error("button failed", err);
+    }
   }
 
   return (
@@ -24,16 +48,16 @@ const DashboardHeader = () => {
         <div className="text-2xl font-bold text-white">Spokely</div>
 
         <nav className="hidden md:flex items-center space-x-8">
-          <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+          <button onClick={handleDashboardButton} className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
             Dashboard
           </button>
-          <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+          <button onClick={handleSessionsButton} className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
             Sessions
           </button>
           <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
             Mentors
           </button>
-          <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+          <button onClick={handleConnectionsButton} className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
             Connections
           </button>
         </nav>

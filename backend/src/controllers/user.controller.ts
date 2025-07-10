@@ -79,3 +79,14 @@ export const logout = async (req: Request, res: Response) => {
   });
   res.status(200).json({ message: "Logged out successfully" });
 };
+
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await service.getAllUsers();
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
