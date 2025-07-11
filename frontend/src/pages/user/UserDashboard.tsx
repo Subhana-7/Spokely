@@ -13,7 +13,6 @@ const Dashboard = () => {
       
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             <GreetingBanner />
             
@@ -26,13 +25,11 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Right Column */}
           <div className="space-y-6">
             <LearningLevelsCard />
           </div>
         </div>
         
-        {/* Bottom Section */}
         <div className="mt-8">
           <TipOfTheDayCard />
         </div>

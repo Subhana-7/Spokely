@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
-import { getAllUsers } from "../../services/adminService";
+import {
+  getAllUsers,
+  blockUser,
+  deleteUser,
+} from "../../services/adminService";
+import toast from "react-hot-toast";
 
 interface IUser {
   _id: string;
@@ -29,9 +34,29 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  const handleBlock = (id: string) => console.log("Block user:", id);
+  const handleBlock = async (id: string) => {
+    try {
+      await blockUser(id);
+      toast.success("User blocked");
+      setUsers((prev) =>
+        prev.map((u) => (u._id === id ? { ...u, isBlocked: true } : u))
+      );
+    } catch (err) {
+      toast.error("Failed to block user");
+    }
+  };
+
   const handleEdit = (id: string) => console.log("Edit user:", id);
-  const handleDelete = (id: string) => console.log("Delete user:", id);
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteUser(id);
+      toast.success("User deleted");
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      toast.error("Failed to delete user");
+    }
+  };
 
   return (
     <div className="p-8">
@@ -62,7 +87,7 @@ const UserManagement = () => {
           id: user._id,
           name: user.name,
           email: user.email,
-          level: user.levels?.toString() ?? "N/A", 
+          level: user.levels?.toString() ?? "N/A",
           dailyTask: "To be implemented",
           sessions: user.sessionsDone,
           mentors: 0,

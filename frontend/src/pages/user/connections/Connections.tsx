@@ -58,7 +58,6 @@ const Connections = () => {
 
   return (
     <>
-      {/* Main Page - Will blur when modal is open */}
       <div
         className={`min-h-screen bg-sky-100 transition-all duration-300 ${
           isAddModalOpen ? "blur-sm pointer-events-none select-none" : ""
@@ -124,7 +123,6 @@ const Connections = () => {
         </div>
       </div>
 
-      {/* ✅ Add Modal Here - OUTSIDE Blur Zone */}
       <AddConnectionModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

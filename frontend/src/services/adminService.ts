@@ -19,3 +19,20 @@ export const getAllMentors = async() => {
   const response = await API.get("/admin/mentors");
   return response.data;
 }
+
+
+export const blockUser = async (id: string) => {
+  return API.patch(`/admin/users/${id}/block`);
+};
+
+export const deleteUser = async (id: string) => {
+  return API.delete(`/admin/users/${id}`);
+};
+
+export const blockMentor = async (id: string) => {
+  return API.patch(`/admin/mentors/${id}/block`);
+};
+
+export const deleteMentor = async (id: string) => {
+  return API.delete(`/admin/mentors/${id}`);
+};

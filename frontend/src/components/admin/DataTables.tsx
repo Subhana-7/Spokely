@@ -120,7 +120,6 @@ const DataTable = ({ data, type, onBlock, onEdit, onDelete }: DataTableProps) =>
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-center space-x-1 mt-4 text-sm">
         <a href="#" className="px-3 py-1 rounded border text-gray-600 hover:bg-gray-100">Previous</a>
         <a href="#" className="px-3 py-1 rounded border bg-blue-100 text-blue-700 font-semibold">1</a>

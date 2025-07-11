@@ -103,7 +103,6 @@ const ScheduleSession = () => {
           <Card padding="lg">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                {/* Session Type */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Type
@@ -119,8 +118,6 @@ const ScheduleSession = () => {
                     <option value="peer-to-peer">Peer-to-Peer</option>
                   </select>
                 </div>
-
-                {/* Start & End Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -145,7 +142,6 @@ const ScheduleSession = () => {
                 </div>
 
                 <div className="space-y-6">
-                {/* Topic (free text) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Topic
@@ -158,7 +154,6 @@ const ScheduleSession = () => {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Description
@@ -174,7 +169,6 @@ const ScheduleSession = () => {
                 </div>
               </div>
 
-                {/* Date */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Date
@@ -185,8 +179,6 @@ const ScheduleSession = () => {
                     onChange={(val) => handleInputChange("date", val)}
                   />
                 </div>
-
-                {/* Members */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Add Members
@@ -258,7 +250,6 @@ const ScheduleSession = () => {
               </div>
             </div>
 
-            {/* Footer Buttons */}
             <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
               <button className="px-6 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 transition-colors">
                 Cancel

@@ -10,7 +10,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: Cookies.get('auth-token') || null,  // Only read, don't set
+  token: Cookies.get('auth-token') || null,  
   role: Cookies.get('role') || null,
   isAuthenticated: !!Cookies.get('auth-token'),
 
@@ -20,7 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    Cookies.remove('role'); // ✅ Only manage role
+    Cookies.remove('role'); 
     set({ role: null, token: null, isAuthenticated: false });
   },
 }));

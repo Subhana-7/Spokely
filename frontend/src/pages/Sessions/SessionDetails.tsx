@@ -34,7 +34,6 @@ const SessionDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center">
           <button onClick={() => navigate(-1)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors mr-4">
@@ -46,7 +45,6 @@ const SessionDetail = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Session Info */}
           <div className="space-y-6">
             <Card>
               <div className="flex justify-between items-start mb-4">
@@ -94,7 +92,6 @@ const SessionDetail = () => {
               </div>
             </Card>
 
-            {/* Members */}
             <Card>
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2 text-lime-600" />
@@ -115,9 +112,7 @@ const SessionDetail = () => {
             </Card>
           </div>
 
-          {/* Right Column - Actions */}
           <div className="space-y-6">
-            {/* Placeholder for analysis cards */}
             <Card variant="info">
               <div className="text-center">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Performance & Feedback</h3>

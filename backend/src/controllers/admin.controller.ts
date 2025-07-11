@@ -39,3 +39,30 @@ export const listMentors = async(req:Request,res:Response) => {
     res.status(500).json({error:err.message});
   }
 }
+
+
+export const blockUser = async (req: Request, res: Response) => {
+  try {
+    console.log("controollwe- block")
+    const { id } = req.params;
+    const updated = await service.blockUser(id);
+    res.status(200).json(updated);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    console.log("controollwe- delete")
+    const { id } = req.params;
+    await service.deleteUser(id);
+    res.status(200).json({ message: "User deleted" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+

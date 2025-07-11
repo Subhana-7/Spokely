@@ -14,11 +14,8 @@ const DashboardHeader = () => {
     <header className="bg-white shadow-sm border-b">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center space-x-8">
             <h1 className="text-2xl font-bold text-gray-800">Spokely Admin</h1>
-
-            {/* Navigation */}
             <nav className="flex space-x-1">
               {navItems.map((item) => (
                 <NavLink
@@ -37,13 +34,10 @@ const DashboardHeader = () => {
               ))}
             </nav>
           </div>
-
-          {/* Logout Button */}
           <button
             type="button"
             className="px-4 py-2 border border-red-300 text-red-600 rounded-md font-medium text-sm hover:bg-red-50 hover:border-red-400 transition-colors duration-200"
             onClick={() => {
-              // Add logout logic here
               console.log('Logged out');
             }}
           >

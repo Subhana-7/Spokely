@@ -29,7 +29,6 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      {/* Table Header */}
       <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 font-semibold text-gray-700 text-sm uppercase tracking-wide">
           <div>USERNAME</div>
@@ -39,7 +38,6 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
         </div>
       </div>
 
-      {/* Table Body */}
       <div className="divide-y divide-gray-200">
         {connections.map((connection, index) => (
           <div
@@ -49,7 +47,6 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
             } hover:bg-gray-100 transition-colors duration-150`}
           >
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-              {/* Username Column */}
               <div>
                 <div className="font-medium text-gray-900">
                   {connection.username}
@@ -57,7 +54,6 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
                 <div className="text-sm text-gray-500">{connection.email}</div>
               </div>
 
-              {/* Role Column */}
               <div className="md:block">
                 <div className="text-gray-800 font-medium">
                   {connection.role}
@@ -67,14 +63,12 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
                 </div>
               </div>
 
-              {/* Sessions Column */}
               <div className="hidden md:block">
                 <span className="text-lg font-semibold text-gray-900">
                   {connection.sessions}
                 </span>
               </div>
 
-              {/* Actions Column */}
               <div className="flex flex-wrap gap-2 md:justify-start justify-center">
                 <Button
                   onClick={() => handleBlock(connection.username)}

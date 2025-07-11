@@ -16,7 +16,6 @@ interface AddConnectionModalProps {
   onFetchIncomingCount?: (count: number) => void;
 }
 
-// Incoming request: someone sent a request to me
 interface IncomingRequest {
   _id: string;
   userId: {
@@ -26,7 +25,6 @@ interface IncomingRequest {
   };
 }
 
-// Sent request: I sent a request to someone
 interface SentRequest {
   _id: string;
   connectedUserId: {
@@ -69,7 +67,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
       await sendConnectionRequest(referralCode.trim());
       toast.success('Connection request sent!');
       setReferralCode('');
-      fetchRequests(); // Refresh request lists
+      fetchRequests(); 
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to send request');
     } finally {
@@ -81,7 +79,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
     try {
       await acceptConnectionRequest(requestId);
       toast.success('Connection accepted!');
-      fetchRequests(); // Refresh after accept
+      fetchRequests();
     } catch {
       toast.error('Failed to accept request');
     }
@@ -109,7 +107,6 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
         </div>
 
         <div className="p-6">
-          {/* Add by referral */}
           <Input
             type="text"
             placeholder="Enter user's referral code"
@@ -129,8 +126,6 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
               {loading ? 'Sending...' : 'Send Request'}
             </Button>
           </div>
-
-          {/* Incoming Requests */}
           {incomingRequests.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Incoming Requests</h3>
@@ -156,7 +151,6 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
             </div>
           )}
 
-          {/* Sent Requests */}
           {sentRequests.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Sent Requests</h3>

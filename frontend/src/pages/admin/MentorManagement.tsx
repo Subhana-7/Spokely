@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import SearchFilterBar from '../../components/admin/SearchFilterBar';
 import DataTable from '../../components/admin/DataTables';
-import { getAllMentors } from '../../services/adminService';
+import { getAllMentors,blockMentor,deleteMentor } from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 const MentorManagement = () => {
   const [mentors, setMentors] = useState<any[]>([]); 
@@ -22,16 +23,32 @@ const MentorManagement = () => {
     fetchMentors();
   }, []);
 
-  const handleBlock = (id: string) => {
-    console.log('Block mentor:', id);
+  const handleBlock = async (id: string) => {
+    try {
+      await blockMentor(id);
+      toast.success("User blocked");
+      setMentors((prev) =>
+      prev.map((mentor) =>
+        mentor._id === id ? { ...mentor, isBlocked: !mentor.isBlocked } : mentor
+      )
+    );
+    } catch (err) {
+      toast.error("Failed to block user");
+    }
   };
 
   const handleEdit = (id: string) => {
     console.log('Edit mentor:', id);
   };
 
-  const handleDelete = (id: string) => {
-    console.log('Delete mentor:', id);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMentor(id);
+      toast.success("User deleted");
+      setMentors((prev) => prev.filter((mentor) => mentor._id !== id));
+    } catch (err) {
+      toast.error("Failed to delete user");
+    }
   };
 
   const mentorData = mentors.map(mentor => ({

@@ -61,7 +61,6 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4 md:py-6">
@@ -207,7 +206,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Mentor Features Section */}
       <section className="py-16 md:py-24 bg-emerald-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -264,7 +262,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Demo Buttons for Testing Modals */}
       <section className="py-8 bg-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -305,7 +302,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
@@ -383,7 +379,6 @@ const LandingPage: React.FC = () => {
         </div>
       </footer>
 
-      {/* Modal Components */}
       <SignupModal
         isOpen={activeModal === "signup"}
         onClose={closeModal}

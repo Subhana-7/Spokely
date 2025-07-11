@@ -22,7 +22,7 @@ const Sessions = () => {
           setSessions(data);
         } else {
           console.warn("Unexpected session data:", data);
-          setSessions([]); // fallback to empty array
+          setSessions([]); 
         }
       } catch (err: any) {
         toast.error(err?.response?.data?.message || 'Failed to load sessions');

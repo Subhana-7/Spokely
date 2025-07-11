@@ -20,4 +20,12 @@ export class AdminService {
   async getAllMentors() {
     return this.repo.findAllMentors();
   }
+
+  async blockUser(id: string) {
+    return this.repo.blockUser(id);
+  }
+
+  async deleteUser(id: string) {
+    return this.repo.deleteUser(id);
+  }
 }

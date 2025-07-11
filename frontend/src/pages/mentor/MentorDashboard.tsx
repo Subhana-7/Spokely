@@ -12,7 +12,6 @@ const MentorDashboard = () => {
       
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Column - Main Content */}
           <div className="lg:col-span-3 space-y-6">
             <MentorGreeting />
             
@@ -23,7 +22,6 @@ const MentorDashboard = () => {
             <RecentActivityCard />
           </div>
           
-          {/* Right Column - Sidebar */}
           <div className="space-y-6">
             <QuickActionsCard />
           </div>
