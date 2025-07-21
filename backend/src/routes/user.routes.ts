@@ -1,28 +1,20 @@
 import { Router } from "express";
-import {
-  signup,
-  login,
-  sendOtp,
-  verifyOtp,
-  updateRole,
-  home,
-  logout,
-  getAllUsers
-} from "../controllers/user.controller";
+import { UserController } from "../controllers/user.controller";
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
+const controller = new UserController();
 
-router.post("/signup", signup);
-router.post("/login", login);
+router.post("/signup", controller.signup);
+router.post("/login", controller.login);
 
-router.post("/send-otp", sendOtp);
-router.post("/verify-otp", verifyOtp);
+router.post("/send-otp", controller.sendOtp);
+router.post("/verify-otp", controller.verifyOtp);
 
-router.get("/home",home);
+router.get("/home",controller.home);
 
 router.get(
   "/google",
@@ -70,12 +62,12 @@ router.get(
 //   res.status(200).json({ message: "Logged out" });
 // });
 
-router.post("/logout", logout);
+router.post("/logout", controller.logout);
 
 
-router.patch("/update-role", authMiddleware(["user", "mentor"]), updateRole);
+router.patch("/update-role", authMiddleware(["user", "mentor"]), controller.updateRole);
 
-router.get("/all", authMiddleware(["user", "mentor"]), getAllUsers);
+router.get("/all", authMiddleware(["user", "mentor"]), controller.getAllUsers);
 
 
 export default router;

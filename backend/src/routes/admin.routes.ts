@@ -1,17 +1,18 @@
 import express from "express";
-import { adminLogin, listMentors, listUsers,blockUser,deleteUser } from "../controllers/admin.controller";
+import { AdminController } from "../controllers/admin.controller";
 
 const router = express.Router();
+const controller = new AdminController();
 
-router.post("/login", adminLogin);
-router.get("/users",listUsers);
-router.get("/mentors",listMentors);
+router.post("/login", controller.adminLogin);
+router.get("/users",controller.listUsers);
+router.get("/mentors",controller.listMentors);
 
-router.patch("/users/:id/block", blockUser);
-router.delete("/users/:id", deleteUser);
+router.patch("/users/:id/block", controller.blockUser);
+router.delete("/users/:id", controller.deleteUser);
 
-router.patch("/mentors/:id/block", blockUser);
-router.delete("/mentors/:id", deleteUser);  
+router.patch("/mentors/:id/block", controller.blockUser);
+router.delete("/mentors/:id", controller.deleteUser);  
 
 
 export default router;

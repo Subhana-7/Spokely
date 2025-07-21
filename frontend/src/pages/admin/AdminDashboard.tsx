@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import DashboardHeader from '../../components/admin/DashboardHeader';
+import DashboardHeader from '../../components/common/admin/DashboardHeader';
 
 const AdminDashboard = () => {
   return (

@@ -2,10 +2,20 @@ import { Request, Response } from "express";
 import { SessionService } from "../services/session.service";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import mongoose from "mongoose";
-import { generateAgoraToken } from "../utilis/agora";
+import { generateAgoraToken } from "../config/agora";
 
-export const SessionController = {
-  createSession: async (req: AuthenticatedRequest, res: Response) => {
+const sessionService = new SessionService();
+
+export class SessionController {
+  constructor() {
+    this.createSession = this.createSession.bind(this);
+    this.getAllSessions = this.getAllSessions.bind(this);
+    this.getSessionById = this.getSessionById.bind(this);
+    this.updateSession = this.updateSession.bind(this);
+    this.getAgoraToken = this.getAgoraToken.bind(this);
+  }
+
+  async createSession(req: AuthenticatedRequest, res: Response) {
     try {
       const {
         type,
@@ -18,7 +28,7 @@ export const SessionController = {
         sessionFee,
       } = req.body;
 
-      const newSession = await SessionService.createSession({
+      const newSession = await sessionService.createSession({
         type,
         topic,
         description,
@@ -37,29 +47,29 @@ export const SessionController = {
       console.error(error);
       res.status(500).json({ message: "Failed to create session" });
     }
-  },
+  }
 
-  getAllSessions: async (req: AuthenticatedRequest, res: Response) => {
+  async getAllSessions(req: AuthenticatedRequest, res: Response) {
     try {
-      const sessions = await SessionService.getSessions();
+      const sessions = await sessionService.getSessions();
       res.status(200).json(sessions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch sessions" });
     }
-  },
+  }
 
-  getSessionById: async (req: AuthenticatedRequest, res: Response) => {
+  async getSessionById(req: AuthenticatedRequest, res: Response) {
     try {
-      const session = await SessionService.getSessionById(req.params.id);
+      const session = await sessionService.getSessionById(req.params.id);
       res.status(200).json(session);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch session" });
     }
-  },
+  }
 
-  updateSession: async (req: AuthenticatedRequest, res: Response) => {
+  async updateSession(req: AuthenticatedRequest, res: Response) {
     try {
-      const updated = await SessionService.updateSession(
+      const updated = await sessionService.updateSession(
         req.params.id,
         req.body
       );
@@ -67,12 +77,9 @@ export const SessionController = {
     } catch (error) {
       res.status(500).json({ message: "Failed to update session" });
     }
-  },
+  }
 
-  getAgoraToken: async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
+  async getAgoraToken(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) {
         res.status(401).json({ message: "Unauthorized" });
@@ -82,7 +89,7 @@ export const SessionController = {
       const sessionId = req.params.id;
       const userId = req.id;
 
-      const session = await SessionService.getSessionById(sessionId);
+      const session = await sessionService.getSessionById(sessionId);
       if (!session) {
         res.status(404).json({ message: "Session not found" });
         return;
@@ -93,10 +100,6 @@ export const SessionController = {
         now >= new Date(session.startTime) &&
         now <=
           new Date(session.endTime ?? new Date(now.getTime() + 60 * 60 * 1000));
-
-      // console.log("Now:", now);
-      // console.log("Session start:", session.startTime);
-      // console.log("Session end:", session.endTime);
 
       // if (!isValidTime) {
       //   res.status(403).json({ message: "Session is not active yet" });
@@ -111,5 +114,5 @@ export const SessionController = {
       console.error(err);
       res.status(500).json({ message: "Failed to generate token" });
     }
-  },
-};
+  }
+}
