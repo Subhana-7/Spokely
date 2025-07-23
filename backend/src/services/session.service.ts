@@ -8,19 +8,44 @@ export class SessionService {
     this.repo = new SessionRepository();
   }
 
-  async createSession(sessionData: Partial<ISession>) {
-    return await this.repo.createSession(sessionData);
+  async createSession(
+    sessionData: Partial<ISession>
+  ): Promise<ISession | null> {
+    try {
+      return await this.repo.createSession(sessionData);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async getSessions() {
-    return await this.repo.getAllSessions();
+  async getSessions(): Promise<ISession[] | null> {
+    try {
+      return await this.repo.getAllSessions();
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async getSessionById(id: string) {
-    return await this.repo.getSessionById(id);
+  async getSessionById(id: string): Promise<ISession | null> {
+    try {
+      return await this.repo.getSessionById(id);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async updateSession(id: string, updates: Partial<ISession>) {
-    return await this.repo.updateSession(id, updates);
+  async updateSession(
+    id: string,
+    updates: Partial<ISession>
+  ): Promise<ISession | null> {
+    try {
+      return await this.repo.updateSession(id, updates);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 }

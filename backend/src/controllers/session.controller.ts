@@ -3,10 +3,11 @@ import { SessionService } from "../services/session.service";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import mongoose from "mongoose";
 import { generateAgoraToken } from "../config/agora";
+import { ISessionController } from "./interfaces/ISessionController";
 
 const sessionService = new SessionService();
 
-export class SessionController {
+export class SessionController implements ISessionController {
   constructor() {
     this.createSession = this.createSession.bind(this);
     this.getAllSessions = this.getAllSessions.bind(this);
@@ -15,7 +16,7 @@ export class SessionController {
     this.getAgoraToken = this.getAgoraToken.bind(this);
   }
 
-  async createSession(req: AuthenticatedRequest, res: Response) {
+  async createSession(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const {
         type,
@@ -49,7 +50,10 @@ export class SessionController {
     }
   }
 
-  async getAllSessions(req: AuthenticatedRequest, res: Response) {
+  async getAllSessions(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const sessions = await sessionService.getSessions();
       res.status(200).json(sessions);
@@ -58,7 +62,10 @@ export class SessionController {
     }
   }
 
-  async getSessionById(req: AuthenticatedRequest, res: Response) {
+  async getSessionById(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const session = await sessionService.getSessionById(req.params.id);
       res.status(200).json(session);
@@ -67,7 +74,7 @@ export class SessionController {
     }
   }
 
-  async updateSession(req: AuthenticatedRequest, res: Response) {
+  async updateSession(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const updated = await sessionService.updateSession(
         req.params.id,

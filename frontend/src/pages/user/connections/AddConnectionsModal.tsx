@@ -7,7 +7,7 @@ import {
   getConnectionRequests,
   getSentConnectionRequests,
   acceptConnectionRequest
-} from '../../../services/connection.service';
+} from '../../../services/connectionService';
 import toast from 'react-hot-toast';
 
 interface AddConnectionModalProps {

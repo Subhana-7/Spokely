@@ -2,30 +2,41 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserRepository } from "../repositories/user.repository";
 import nodemailer from "nodemailer";
+import { IUserService } from "./interfaces/IUserService";
+import { IUser } from "../models/user.model";
 
-export class UserService {
+export class UserService implements IUserService {
   private repo = new UserRepository();
 
-  async generateUniqueReferralCode(): Promise<string> {
-    const generateRandom = () =>
-      Math.random().toString(36).substring(2, 8).toUpperCase();
-    let code = generateRandom();
-    let exists = await this.repo.findByReferalCode(code);
+  async generateUniqueReferralCode(): Promise<string | null> {
+    try {
+      const generateRandom = () =>
+        Math.random().toString(36).substring(2, 8).toUpperCase();
+      let code = generateRandom();
+      let exists = await this.repo.findByReferalCode(code);
 
-    while (exists) {
-      code = generateRandom();
-      exists = await this.repo.findByReferalCode(code);
+      while (exists) {
+        code = generateRandom();
+        exists = await this.repo.findByReferalCode(code);
+      }
+      return code;
+    } catch (error) {
+      console.log("error", error);
+      return null;
     }
-    return code;
   }
 
   private async passwordValidation(password: string): Promise<void> {
-    const strongPasswordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    if (!strongPasswordRegex.test(password)) {
-      throw new Error(
-        "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
-      );
+    try {
+      const strongPasswordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      if (!strongPasswordRegex.test(password)) {
+        throw new Error(
+          "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
+        );
+      }
+    } catch (error) {
+      console.log("error", error);
     }
   }
 
@@ -33,96 +44,137 @@ export class UserService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async sendOTPEmail(to: string, otp: string) {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+  private async sendOTPEmail(to: string, otp: string): Promise<void | null> {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject: "Your OTP Code",
-      text: `Your verification code is ${otp}. It expires in 10 minutes.`,
-    });
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to,
+        subject: "Your OTP Code",
+        text: `Your verification code is ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async sendOtp(email: string) {
-    const user = await this.repo.findByEmail(email);
-    if (!user) throw new Error("User not found");
+  async sendOtp(email: string): Promise<void | null> {
+    try {
+      const user = await this.repo.findByEmail(email);
+      if (!user) throw new Error("User not found");
 
-    const otp = this.generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
+      const otp = this.generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.repo.updateOTP(email, otp, expiresAt);
-    await this.sendOTPEmail(email, otp);
+      await this.repo.updateOTP(email, otp, expiresAt);
+      await this.sendOTPEmail(email, otp);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async verifyOtp(email: string, code: string) {
-    const isValid = await this.repo.verifyOTP(email, code);
-    if (!isValid) throw new Error("Invalid or expired OTP");
-    return { message: "Email verified successfully" };
+  async verifyOtp(
+    email: string,
+    code: string
+  ): Promise<{ message: string } | null> {
+    try {
+      const isValid = await this.repo.verifyOTP(email, code);
+      if (!isValid) throw new Error("Invalid or expired OTP");
+      return { message: "Email verified successfully" };
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async signup(data: any) {
-    await this.passwordValidation(data.password);
+  async signup(data: any): Promise<IUser | null> {
+    try {
+      await this.passwordValidation(data.password);
 
-    const existing = await this.repo.findByEmail(data.email);
-    if (existing) throw new Error("Email Already in use");
-    const hashed = await bcrypt.hash(data.password, 10);
-    const referalCode = await this.generateUniqueReferralCode();
+      const existing = await this.repo.findByEmail(data.email);
+      if (existing) throw new Error("Email Already in use");
+      const hashed = await bcrypt.hash(data.password, 10);
+      const referalCode = await this.generateUniqueReferralCode();
 
-    return this.repo.createUser({
-      ...data,
-      password: hashed,
-      referalCode,
-    });
+      return this.repo.createUser({
+        ...data,
+        password: hashed,
+        referalCode,
+      });
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async login(data: any) {
-    const user = await this.repo.findByEmail(data.email);
-    if (!user) throw new Error("Invalid email or password");
+  async login(data: any): Promise<{ user: IUser; token: string } | null> {
+    try {
+      const user = await this.repo.findByEmail(data.email);
+      if (!user) throw new Error("Invalid email or password");
 
-    if (!user.password) {
-      throw new Error(
-        "This user is registered via Google. Use Google sign-in."
+      if (!user.password) {
+        throw new Error(
+          "This user is registered via Google. Use Google sign-in."
+        );
+      }
+
+      if (!data.password) {
+        throw new Error("Password is required");
+      }
+
+      const match = await bcrypt.compare(data.password, user.password);
+      if (!match) throw new Error("Invalid email or password");
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: "1d" }
       );
+
+      return { user, token };
+    } catch (error) {
+      console.log("error", error);
+      return null;
     }
-
-    if (!data.password) {
-      throw new Error("Password is required");
-    }
-
-    const match = await bcrypt.compare(data.password, user.password);
-    if (!match) throw new Error("Invalid email or password");
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role, 
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
-
-    return { user, token };
   }
 
-  async updateRole(userId: string, role: "user" | "mentor") {
-    if (!["user", "mentor"].includes(role)) {
-      throw new Error("Invalid role");
+  async updateRole(
+    userId: string,
+    role: "user" | "mentor"
+  ): Promise<IUser | null> {
+    try {
+      if (!["user", "mentor"].includes(role)) {
+        throw new Error("Invalid role");
+      }
+
+      const updated = await this.repo.updateUserRole(userId, role);
+      if (!updated) throw new Error("User not found");
+
+      return updated;
+    } catch (error) {
+      console.log("error", error);
+      return null;
     }
-
-    const updated = await this.repo.updateUserRole(userId, role);
-    if (!updated) throw new Error("User not found");
-
-    return updated;
   }
-  
-  async getAllUsers() {
-    return await this.repo.findAll();
+
+  async getAllUsers(): Promise<Partial<IUser>[] | null> {
+    try {
+      return await this.repo.findAll();
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 }

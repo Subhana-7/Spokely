@@ -5,7 +5,7 @@ import Button from "../../../modals/Button";
 import Input from "../../../modals/Input";
 import AddConnectionModal from "./AddConnectionsModal";
 import { Search, Plus } from "lucide-react";
-import { getAllConnections } from "../../../services/connection.service";
+import { getAllConnections } from "../../../services/connectionService";
 import toast from "react-hot-toast";
 
 interface Connection {

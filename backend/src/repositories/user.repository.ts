@@ -1,46 +1,89 @@
-import User from "../models/user.model";
+import User, { IUser } from "../models/user.model";
+import { IUserRepository } from "./interfaces/IUserRepository";
 
-export class UserRepository {
-  async findByEmail(email: String) {
-    return User.findOne({ email });
+export class UserRepository implements IUserRepository {
+  async findByEmail(email: String): Promise<IUser | null> {
+    try {
+      return User.findOne({ email });
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async createUser(data: any) {
-    return User.create(data);
+  async createUser(data: any): Promise<IUser | null> {
+    try {
+      return User.create(data);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async findByReferalCode(code: String) {
-    return User.findOne({ referalCode: code });
+  async findByReferalCode(code: String): Promise<IUser | null> {
+    try {
+      return User.findOne({ referalCode: code });
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async updateOTP(email: string, code: string, expiresAt: Date) {
-    return User.findOneAndUpdate(
-      { email },
-      { otp: { code, expiresAt } },
-      { new: true }
-    );
+  async updateOTP(
+    email: string,
+    code: string,
+    expiresAt: Date
+  ): Promise<IUser | null> {
+    try {
+      return User.findOneAndUpdate(
+        { email },
+        { otp: { code, expiresAt } },
+        { new: true }
+      );
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async verifyOTP(email: string, code: string) {
-    const user = await User.findOne({ email });
+  async verifyOTP(email: string, code: string): Promise<boolean | null> {
+    try {
+      const user = await User.findOne({ email });
 
-    if (!user || !user.otp || user.otp.code !== code) return false;
+      if (!user || !user.otp || user.otp.code !== code) return false;
 
-    const now = new Date();
-    if (now > user.otp.expiresAt) return false;
+      const now = new Date();
+      if (now > user.otp.expiresAt) return false;
 
-    user.isVerified = true;
-    user.otp = undefined;
-    await user.save();
+      user.isVerified = true;
+      user.otp = undefined;
+      await user.save();
 
-    return true;
+      return true;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async updateUserRole(userId: string, role: "user" | "mentor") {
-    return User.findByIdAndUpdate(userId, { role }, { new: true });
+  async updateUserRole(
+    userId: string,
+    role: "user" | "mentor"
+  ): Promise<IUser | null> {
+    try {
+      return User.findByIdAndUpdate(userId, { role }, { new: true });
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
-  async findAll() {
-    return await User.find({}, "-password -otp -googleId");
+  async findAll(): Promise<Partial<IUser>[] | null> {
+    try {
+      return await User.find({}, "-password -otp -googleId");
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 }

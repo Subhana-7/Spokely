@@ -77,7 +77,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = "http://localhost:5000/api/users/google";
+    window.location.href = `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/google`;
   };
 
   const handleCreateAccount = async () => {

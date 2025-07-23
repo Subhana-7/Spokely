@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { AdminService } from "../services/admin.service";
+import { IAdminController } from "./interfaces/IAdminController";
 
-export class AdminController {
+export class AdminController implements IAdminController {
   private service: AdminService;
 
   constructor() {
@@ -15,7 +16,7 @@ export class AdminController {
     this.deleteUser = this.deleteUser.bind(this);
   }
 
-  async adminLogin(req: Request, res: Response) {
+  async adminLogin(req: Request, res: Response):Promise<void> {
     try {
       const { email, password } = req.body;
       const admin = await this.service.login(email, password);
@@ -32,7 +33,7 @@ export class AdminController {
     }
   }
 
-  async listUsers(req: Request, res: Response) {
+  async listUsers(req: Request, res: Response):Promise<void> {
     try {
       const users = await this.service.getAllUsers();
       res.status(200).json(users);
@@ -41,7 +42,7 @@ export class AdminController {
     }
   }
 
-  async listMentors(req: Request, res: Response) {
+  async listMentors(req: Request, res: Response):Promise<void> {
     try {
       const mentors = await this.service.getAllMentors();
       res.status(200).json(mentors);
@@ -50,7 +51,7 @@ export class AdminController {
     }
   }
 
-  async blockUser(req: Request, res: Response) {
+  async blockUser(req: Request, res: Response):Promise<void> {
     try {
       console.log("controller - block");
       const { id } = req.params;
@@ -61,7 +62,7 @@ export class AdminController {
     }
   }
 
-  async deleteUser(req: Request, res: Response) {
+  async deleteUser(req: Request, res: Response):Promise<void> {
     try {
       console.log("controller - delete");
       const { id } = req.params;

@@ -1,8 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { ConnectionService } from "../services/connections.service";
+import { IConnectionController } from "./interfaces/IConnectionsController";
 
-export class ConnectionController {
+export class ConnectionController implements IConnectionController {
   private service: ConnectionService;
 
   constructor() {
@@ -15,7 +16,7 @@ export class ConnectionController {
     this.getSentRequests = this.getSentRequests.bind(this);
   }
 
-  async sendRequest(req: AuthenticatedRequest, res: Response) {
+  async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
@@ -33,7 +34,7 @@ export class ConnectionController {
     }
   }
 
-  async getRequests(req: AuthenticatedRequest, res: Response) {
+  async getRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
@@ -46,7 +47,10 @@ export class ConnectionController {
     }
   }
 
-  async acceptConnection(req: AuthenticatedRequest, res: Response) {
+  async acceptConnection(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const { requestId } = req.params;
       const accepted = await this.service.acceptRequest(requestId);
@@ -56,7 +60,10 @@ export class ConnectionController {
     }
   }
 
-  async listConnections(req: AuthenticatedRequest, res: Response) {
+  async listConnections(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
@@ -69,7 +76,10 @@ export class ConnectionController {
     }
   }
 
-  async getSentRequests(req: AuthenticatedRequest, res: Response) {
+  async getSentRequests(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-import SearchFilterBar from '../../components/common/admin/SearchFilterBar';
-import DataTable from '../../components/common/admin/DataTables';
+import SearchFilterBar from '../../components/admin/SearchFilterBar';
+import DataTable from '../../components/admin/DataTables';
 import { getAllMentors,blockMentor,deleteMentor } from '../../services/adminService';
 import toast from 'react-hot-toast';
 

@@ -17,7 +17,7 @@ const VideoCall = () => {
       if (!sessionId) return;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/session/${sessionId}/token`,
+          `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/session/${sessionId}/token`,
           {
             withCredentials: true,
           }
