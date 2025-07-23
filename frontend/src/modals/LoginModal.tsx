@@ -84,13 +84,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleGoogleSignup = () => {
     if (!loading) {
-<<<<<<< Updated upstream
-      window.location.href = "http://localhost:5000/api/users/google";
-=======
       window.location.href = `${
         import.meta.env.VITE_SERVER_SIDE_URL
       }/api/users/google`;
->>>>>>> Stashed changes
     }
   };
 
