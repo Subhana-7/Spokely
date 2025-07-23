@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LogIn } from "lucide-react";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
@@ -25,6 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   const { setRole: setGlobalRole } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -53,11 +54,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
       if (!user.isVerified) {
         await sendOTP({ email: user.email });
-        setRole(user.role);         
-        setEmail(user.email);      
+        setRole(user.role);
+        setEmail(user.email);
         setShowOtpModal(true);
       } else {
-        setGlobalRole(user.role);  
+        setGlobalRole(user.role);
 
         if (user.role === "user") navigate("/user/home");
         else navigate("/mentor/home");
@@ -69,7 +70,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         setErrors({ email: message });
       } else if (
         message.toLowerCase().includes("password") ||
-        message.toLowerCase().includes("invalid credentials") || 
+        message.toLowerCase().includes("invalid credentials") ||
         message.toLowerCase().includes("incorrect")
       ) {
         setErrors({ password: message });
@@ -83,7 +84,13 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleGoogleSignup = () => {
     if (!loading) {
+<<<<<<< Updated upstream
       window.location.href = "http://localhost:5000/api/users/google";
+=======
+      window.location.href = `${
+        import.meta.env.VITE_SERVER_SIDE_URL
+      }/api/users/google`;
+>>>>>>> Stashed changes
     }
   };
 
@@ -107,7 +114,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             error={errors.email}
           />
           <Input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={formData.password}
             onChange={(val) => {
@@ -116,6 +123,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 setErrors((prev) => ({ ...prev, password: "" }));
             }}
             error={errors.password}
+            rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            onRightIconClick={() => setShowPassword((prev) => !prev)}
           />
 
           <Button

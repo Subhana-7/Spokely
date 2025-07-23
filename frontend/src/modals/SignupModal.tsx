@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
@@ -34,6 +34,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   }>({});
 
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const roleOptions = [
     { value: "user", label: "User" },
@@ -77,7 +78,13 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleGoogleSignup = () => {
+<<<<<<< Updated upstream
     window.location.href = "http://localhost:5000/api/users/google";
+=======
+    window.location.href = `${
+      import.meta.env.VITE_SERVER_SIDE_URL
+    }/api/users/google`;
+>>>>>>> Stashed changes
   };
 
   const handleCreateAccount = async () => {
@@ -88,7 +95,9 @@ const SignupModal: React.FC<SignupModalProps> = ({
       await sendOTP({ email: formData.email });
       setShowOtpModal(true);
     } catch (err: any) {
-      console.log("Signup failed: " + (err.response?.data?.message || err.message));
+      console.log(
+        "Signup failed: " + (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -135,7 +144,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
         />
 
         <Input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={formData.password}
           onChange={(value) => {
@@ -144,6 +153,8 @@ const SignupModal: React.FC<SignupModalProps> = ({
               setErrors((prev) => ({ ...prev, password: "" }));
           }}
           error={errors.password}
+          rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          onRightIconClick={() => setShowPassword((prev) => !prev)}
         />
 
         <div>
