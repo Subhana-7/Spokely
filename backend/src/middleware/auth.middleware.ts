@@ -7,8 +7,6 @@ dotenv.config();
 
 export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
   return (req, res, next) => {
-
-
     const token =
       req.cookies["auth-token"] || req.headers.authorization?.split(" ")[1];
 

@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/users",
+  baseURL: `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users`,
   withCredentials: true,
 });
 

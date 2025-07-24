@@ -7,10 +7,21 @@ import Badge from '../../components/common/Badge';
 import DashboardHeader from '../user/DashBoardComponents.jsx/Header';
 import { getSessions } from '../../services/sessionService';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const navigate = useNavigate();
+
+  function hanldeScheduleButton() {
+    try {
+      navigate('/user/schedule-session')
+    } catch (error) {
+      console.log('error navigating schedule button',error)
+    }
+  }
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -97,7 +108,7 @@ const Sessions = () => {
 
                 <div className="space-y-3">
                   <div className="flex gap-2">
-                    <Button
+                    <Button 
                       variant="primary"
                       className="flex-1 bg-blue-500 hover:bg-blue-600 text-sm py-2"
                     >
@@ -119,7 +130,7 @@ const Sessions = () => {
         </div>
       </main>
 
-      <button className="fixed bottom-8 right-8 bg-lime-500 hover:bg-lime-600 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110">
+      <button onClick={hanldeScheduleButton} className="fixed bottom-8 right-8 bg-lime-500 hover:bg-lime-600 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110">
         <Plus size={24} />
       </button>
     </div>

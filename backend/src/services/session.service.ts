@@ -1,20 +1,51 @@
 import { SessionRepository } from "../repositories/session.repository";
 import { ISession } from "../models/sessions.model";
 
-export const SessionService = {
-  createSession: async (sessionData: Partial<ISession>) => {
-    return await SessionRepository.createSession(sessionData);
-  },
+export class SessionService {
+  private readonly repo: SessionRepository;
 
-  getSessions: async () => {
-    return await SessionRepository.getAllSessions();
-  },
-
-  getSessionById: async (id: string) => {
-    return await SessionRepository.getSessionById(id);
-  },
-
-  updateSession: async (id: string, updates: Partial<ISession>) => {
-    return await SessionRepository.updateSession(id, updates);
+  constructor() {
+    this.repo = new SessionRepository();
   }
-};
+
+  async createSession(
+    sessionData: Partial<ISession>
+  ): Promise<ISession | null> {
+    try {
+      return await this.repo.createSession(sessionData);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async getSessions(): Promise<ISession[] | null> {
+    try {
+      return await this.repo.getAllSessions();
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async getSessionById(id: string): Promise<ISession | null> {
+    try {
+      return await this.repo.getSessionById(id);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updateSession(
+    id: string,
+    updates: Partial<ISession>
+  ): Promise<ISession | null> {
+    try {
+      return await this.repo.updateSession(id, updates);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+}

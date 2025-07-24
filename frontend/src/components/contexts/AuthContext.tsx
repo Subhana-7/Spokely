@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/users/logout', {}, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/logout`, {}, { withCredentials: true });
       localLogout(); 
       navigate('/');
     } catch (err) {

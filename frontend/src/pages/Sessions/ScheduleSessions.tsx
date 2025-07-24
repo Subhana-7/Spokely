@@ -26,7 +26,7 @@ const ScheduleSession = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/users/all", { withCredentials: true })
+      .get(`${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/all`, { withCredentials: true })
       .then((res) => setUsers(res.data))
       .catch(() => toast.error("Failed to fetch users"));
   }, []);
