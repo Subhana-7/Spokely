@@ -15,11 +15,11 @@ interface DataTableProps {
   data: DataItem[];
   type: 'user' | 'mentor';
   onBlock?: (id: string) => void;
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  // onEdit?: (id: string) => void;
+  // onDelete?: (id: string) => void;
 }
 
-const DataTable = ({ data, type, onBlock, onEdit, onDelete }: DataTableProps) => {
+const DataTable = ({ data, type, onBlock }: DataTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -100,7 +100,7 @@ const DataTable = ({ data, type, onBlock, onEdit, onDelete }: DataTableProps) =>
                     >
                       Block
                     </button>
-                    <button
+                    {/* <button
                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
                       onClick={() => onEdit?.(item.id)}
                     >
@@ -111,7 +111,7 @@ const DataTable = ({ data, type, onBlock, onEdit, onDelete }: DataTableProps) =>
                       onClick={() => onDelete?.(item.id)}
                     >
                       Delete
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
