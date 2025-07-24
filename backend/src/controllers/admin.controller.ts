@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { AdminService } from "../services/admin.service";
 import { IAdminController } from "./interfaces/IAdminController";
+import { IAdminService } from "../services/interfaces/IAdminService";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../types/types";
 
 export class AdminController implements IAdminController {
-  private service: AdminService;
-
-  constructor() {
-    this.service = new AdminService();
-    
+  constructor(@inject(TYPES.IAdminService) private service: IAdminService) {
     this.adminLogin = this.adminLogin.bind(this);
     this.listUsers = this.listUsers.bind(this);
     this.listMentors = this.listMentors.bind(this);
@@ -16,10 +15,15 @@ export class AdminController implements IAdminController {
     this.deleteUser = this.deleteUser.bind(this);
   }
 
-  async adminLogin(req: Request, res: Response):Promise<void> {
+  async adminLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
       const admin = await this.service.login(email, password);
+
+      if (!admin) {
+        res.status(401).json({ error: "Invalid credentials" });
+        return;
+      }
 
       const token = jwt.sign(
         { id: admin._id, role: "admin" },
@@ -33,7 +37,7 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async listUsers(req: Request, res: Response):Promise<void> {
+  async listUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await this.service.getAllUsers();
       res.status(200).json(users);
@@ -42,7 +46,7 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async listMentors(req: Request, res: Response):Promise<void> {
+  async listMentors(req: Request, res: Response): Promise<void> {
     try {
       const mentors = await this.service.getAllMentors();
       res.status(200).json(mentors);
@@ -51,7 +55,7 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async blockUser(req: Request, res: Response):Promise<void> {
+  async blockUser(req: Request, res: Response): Promise<void> {
     try {
       console.log("controller - block");
       const { id } = req.params;
@@ -62,7 +66,7 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async deleteUser(req: Request, res: Response):Promise<void> {
+  async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       console.log("controller - delete");
       const { id } = req.params;

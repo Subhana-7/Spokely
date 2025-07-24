@@ -1,7 +1,9 @@
 import Admin, { IAdmin } from "../models/admin.model";
 import User, { IUser } from "../models/user.model";
 import { IAdminRepository } from "./interfaces/IAdminRepository";
+import { injectable } from "inversify";
 
+@injectable()
 export class AdminRepository implements IAdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
     try {

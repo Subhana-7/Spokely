@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import './config/passport';
 import connectionsRoutes from './routes/connections.route'
 import sessionRoutes from './routes/session.route';
+import "reflect-metadata"
 
 dotenv.config();
 const app = express();
