@@ -1,9 +1,11 @@
 import express from "express";
-import { SessionController } from "../controllers/session.controller";
+import container from "../config/inversify.config";
+import { TYPES } from "../types/types";
+import { ISessionController } from "../controllers/interfaces/ISessionController";
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = express.Router();
-const controller = new SessionController();
+const controller = container.get<ISessionController>(TYPES.ISessionController);
 
 router.post("/schedule", authMiddleware(["user", "mentor"]), controller.createSession);
 router.get("/list", authMiddleware(["user", "mentor"]), controller.getAllSessions);

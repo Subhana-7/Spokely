@@ -3,9 +3,15 @@ import UserModel from "../models/user.model";
 import { Types } from "mongoose";
 import { IConnectionService } from "./interfaces/IConnectionsService";
 import { IConnection } from "../models/connections.model";
+import { TYPES } from "../types/types";
+import { inject,injectable } from "inversify";
+import { IConnectionRepository } from "../repositories/interfaces/IConnectionsRepository";
 
+@injectable()
 export class ConnectionService implements IConnectionService {
-  private repo = new ConnectionRepository();
+  constructor(
+    @inject(TYPES.IConnectionRepository) private repo: IConnectionRepository
+  ) {}
 
   async sendConnectionRequest(
     senderId: string,

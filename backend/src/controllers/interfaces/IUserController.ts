@@ -9,4 +9,6 @@ export interface IUserController {
   updateRole(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
   getAllUsers(req: Request, res: Response): Promise<void>;
+  handleGoogleAccounts(req:Request,res:Response,next:Function):Promise<void>;
+  googleCallback(req:Request,res:Response,next:Function):Promise<void>;
 }

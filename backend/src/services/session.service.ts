@@ -1,11 +1,17 @@
 import { SessionRepository } from "../repositories/session.repository";
 import { ISession } from "../models/sessions.model";
+import { inject,injectable } from "inversify";
+import { TYPES } from "../types/types";
+import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
 
+@injectable()
 export class SessionService {
-  private readonly repo: SessionRepository;
+   private readonly repo: ISessionRepository;
 
-  constructor() {
-    this.repo = new SessionRepository();
+  constructor(
+    @inject(TYPES.ISessionRepository) repo: ISessionRepository
+  ) {
+    this.repo = repo;
   }
 
   async createSession(

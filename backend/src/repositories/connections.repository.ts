@@ -1,7 +1,9 @@
 import ConnectionModel, { IConnection } from "../models/connections.model";
 import { Types } from "mongoose";
 import { IConnectionRepository } from "./interfaces/IConnectionsRepository";
+import { injectable } from "inversify";
 
+@injectable()
 export class ConnectionRepository implements IConnectionRepository {
   async createConnection(
     userId: Types.ObjectId,

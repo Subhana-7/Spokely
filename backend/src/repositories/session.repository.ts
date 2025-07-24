@@ -1,6 +1,8 @@
 import SessionModel, { ISession } from "../models/sessions.model";
 import { ISessionRepository } from "./interfaces/ISessionsRepository";
+import { injectable } from "inversify";
 
+@injectable()
 export class SessionRepository implements ISessionRepository {
   async createSession(data: Partial<ISession>): Promise<ISession | null> {
     try {

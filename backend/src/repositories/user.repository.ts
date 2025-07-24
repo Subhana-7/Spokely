@@ -1,6 +1,8 @@
 import User, { IUser } from "../models/user.model";
 import { IUserRepository } from "./interfaces/IUserRepository";
+import { injectable } from "inversify";
 
+@injectable()
 export class UserRepository implements IUserRepository {
   async findByEmail(email: String): Promise<IUser | null> {
     try {
