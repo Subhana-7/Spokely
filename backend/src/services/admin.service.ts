@@ -33,7 +33,7 @@ export class AdminService implements IAdminService {
     return this.repo.blockUser(id);
   }
 
-  async deleteUser(id: string): Promise<IUser | null> {
-    return this.repo.deleteUser(id);
-  }
+  // async deleteUser(id: string): Promise<IUser | null> {
+  //   return this.repo.deleteUser(id);
+  // }
 }

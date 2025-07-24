@@ -6,5 +6,5 @@ export interface IAdminService {
   getAllUsers(): Promise<Partial<IUser>[] | null>;
   getAllMentors(): Promise<Partial<IUser>[] | null>;
   blockUser(id: string): Promise<IUser | null>;
-  deleteUser(id: string): Promise<IUser | null>;
+  // deleteUser(id: string): Promise<IUser | null>;
 }
