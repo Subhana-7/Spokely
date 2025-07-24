@@ -1,6 +1,33 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { ISessionController } from "../controllers/interfaces/ISessionController";
+import { SessionController } from "../controllers/session.controller";
+
+import { ISessionService } from "../services/interfaces/ISessionService";
+import { SessionService } from "../services/session.service";
+
+import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
+import { SessionRepository } from "../repositories/session.repository";
+
+import { IConnectionController } from "../controllers/interfaces/IConnectionsController";
+import { ConnectionController } from "../controllers/connections.controller";
+
+import { IConnectionService } from "../services/interfaces/IConnectionsService";
+import { ConnectionService } from "../services/connections.service";
+
+import { IConnectionRepository } from "../repositories/interfaces/IConnectionsRepository";
+import { ConnectionRepository } from "../repositories/connections.repository";
+
+import { IUserController } from "../controllers/interfaces/IUserController";
+import { UserController } from "../controllers/user.controller";
+
+import { IUserService } from "../services/interfaces/IUserService";
+import { UserService } from "../services/user.service";
+
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { UserRepository } from "../repositories/user.repository";
+
 import { IAdminController } from "../controllers/interfaces/IAdminController";
 import { AdminController } from "../controllers/admin.controller";
 
@@ -11,6 +38,18 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<ISessionController>(TYPES.ISessionController).to(SessionController);
+container.bind<ISessionService>(TYPES.ISessionService).to(SessionService);
+container.bind<ISessionRepository>(TYPES.ISessionRepository).to(SessionRepository);
+
+container.bind<IConnectionController>(TYPES.IConnectionController).to(ConnectionController);
+container.bind<IConnectionService>(TYPES.IConnectionService).to(ConnectionService);
+container.bind<IConnectionRepository>(TYPES.IConnectionRepository).to(ConnectionRepository);
+
+container.bind<IUserController>(TYPES.IUserController).to(UserController);
+container.bind<IUserService>(TYPES.IUserService).to(UserService);
+container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
 
 container.bind<IAdminController>(TYPES.IAdminController).to(AdminController);
 container.bind<IAdminService>(TYPES.IAdminService).to(AdminService);

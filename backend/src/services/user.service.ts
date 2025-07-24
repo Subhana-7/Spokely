@@ -4,9 +4,15 @@ import { UserRepository } from "../repositories/user.repository";
 import nodemailer from "nodemailer";
 import { IUserService } from "./interfaces/IUserService";
 import { IUser } from "../models/user.model";
+import { inject,injectable } from "inversify";
+import { TYPES } from "../types/types";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 
+@injectable()
 export class UserService implements IUserService {
-  private repo = new UserRepository();
+  constructor(
+    @inject(TYPES.IUserRepository) private repo: IUserRepository
+  ) {}
 
   async generateUniqueReferralCode(): Promise<string | null> {
     try {

@@ -41,12 +41,12 @@ export class AdminRepository implements IAdminRepository {
     }
   }
 
-  async deleteUser(id: string): Promise<IUser | null> {
-    try {
-      return User.findByIdAndDelete(id);
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
+  // async deleteUser(id: string): Promise<IUser | null> {
+  //   try {
+  //     return User.findByIdAndDelete(id);
+  //   } catch (error) {
+  //     console.log("error", error);
+  //     return null;
+  //   }
+  // }
 }

@@ -12,7 +12,7 @@ export class AdminController implements IAdminController {
     this.listUsers = this.listUsers.bind(this);
     this.listMentors = this.listMentors.bind(this);
     this.blockUser = this.blockUser.bind(this);
-    this.deleteUser = this.deleteUser.bind(this);
+    // this.deleteUser = this.deleteUser.bind(this);
   }
 
   async adminLogin(req: Request, res: Response): Promise<void> {
@@ -66,14 +66,14 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async deleteUser(req: Request, res: Response): Promise<void> {
-    try {
-      console.log("controller - delete");
-      const { id } = req.params;
-      await this.service.deleteUser(id);
-      res.status(200).json({ message: "User deleted" });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  }
+  // async deleteUser(req: Request, res: Response): Promise<void> {
+  //   try {
+  //     console.log("controller - delete");
+  //     const { id } = req.params;
+  //     await this.service.deleteUser(id);
+  //     res.status(200).json({ message: "User deleted" });
+  //   } catch (err: any) {
+  //     res.status(500).json({ error: err.message });
+  //   }
+  // }
 }

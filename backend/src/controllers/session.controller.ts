@@ -4,19 +4,18 @@ import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import mongoose from "mongoose";
 import { generateAgoraToken } from "../config/agora";
 import { ISessionController } from "./interfaces/ISessionController";
+import { inject,injectable } from "inversify";
+import {TYPES} from "../types/types"
+import { ISessionService } from "../services/interfaces/ISessionService";
 
-const sessionService = new SessionService();
 
+@injectable()
 export class SessionController implements ISessionController {
-  constructor() {
-    this.createSession = this.createSession.bind(this);
-    this.getAllSessions = this.getAllSessions.bind(this);
-    this.getSessionById = this.getSessionById.bind(this);
-    this.updateSession = this.updateSession.bind(this);
-    this.getAgoraToken = this.getAgoraToken.bind(this);
-  }
+  constructor(
+    @inject(TYPES.ISessionService) private readonly sessionService: ISessionService
+  ) {}
 
-  async createSession(req: AuthenticatedRequest, res: Response): Promise<void> {
+  createSession = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const {
         type,
@@ -29,7 +28,7 @@ export class SessionController implements ISessionController {
         sessionFee,
       } = req.body;
 
-      const newSession = await sessionService.createSession({
+      const newSession = await this.sessionService.createSession({
         type,
         topic,
         description,
@@ -50,33 +49,33 @@ export class SessionController implements ISessionController {
     }
   }
 
-  async getAllSessions(
+  getAllSessions = async(
     req: AuthenticatedRequest,
     res: Response
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      const sessions = await sessionService.getSessions();
+      const sessions = await this.sessionService.getSessions();
       res.status(200).json(sessions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch sessions" });
     }
   }
 
-  async getSessionById(
+  getSessionById = async(
     req: AuthenticatedRequest,
     res: Response
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      const session = await sessionService.getSessionById(req.params.id);
+      const session = await this.sessionService.getSessionById(req.params.id);
       res.status(200).json(session);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch session" });
     }
   }
 
-  async updateSession(req: AuthenticatedRequest, res: Response): Promise<void> {
+  updateSession = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const updated = await sessionService.updateSession(
+      const updated = await this.sessionService.updateSession(
         req.params.id,
         req.body
       );
@@ -86,7 +85,7 @@ export class SessionController implements ISessionController {
     }
   }
 
-  async getAgoraToken(req: AuthenticatedRequest, res: Response): Promise<void> {
+  getAgoraToken = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       if (!req.id) {
         res.status(401).json({ message: "Unauthorized" });
@@ -96,7 +95,7 @@ export class SessionController implements ISessionController {
       const sessionId = req.params.id;
       const userId = req.id;
 
-      const session = await sessionService.getSessionById(sessionId);
+      const session = await this.sessionService.getSessionById(sessionId);
       if (!session) {
         res.status(404).json({ message: "Session not found" });
         return;

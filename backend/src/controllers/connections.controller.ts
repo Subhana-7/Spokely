@@ -2,19 +2,16 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { ConnectionService } from "../services/connections.service";
 import { IConnectionController } from "./interfaces/IConnectionsController";
+import { inject,injectable } from "inversify";
+import { TYPES } from "../types/types";
+import { IConnectionService } from "../services/interfaces/IConnectionsService";
 
+@injectable()
 export class ConnectionController implements IConnectionController {
-  private service: ConnectionService;
+  constructor(
+    @inject(TYPES.IConnectionService) private service: IConnectionService
+  ) {}
 
-  constructor() {
-    this.service = new ConnectionService();
-
-    this.sendRequest = this.sendRequest.bind(this);
-    this.getRequests = this.getRequests.bind(this);
-    this.acceptConnection = this.acceptConnection.bind(this);
-    this.listConnections = this.listConnections.bind(this);
-    this.getSentRequests = this.getSentRequests.bind(this);
-  }
 
   async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -68,8 +65,8 @@ export class ConnectionController implements IConnectionController {
       if (!req.id) throw new Error("User not authenticated");
 
       const userId = req.id;
-      const connections = await this.service.getAllConnections(userId);
 
+      const connections = await this.service.getAllConnections(userId);
       res.status(200).json(connections);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
