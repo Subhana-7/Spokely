@@ -14,7 +14,7 @@ export class AdminRepository implements IAdminRepository {
     }
   }
 
-  async findAllUsers(): Promise<Partial<IUser>[] | null> {
+  async findAllUsers(): Promise<IUser[] | null> {
     try {
       return User.find({ role: "user" });
     } catch (error) {
@@ -23,7 +23,7 @@ export class AdminRepository implements IAdminRepository {
     }
   }
 
-  async findAllMentors(): Promise<Partial<IUser>[] | null> {
+  async findAllMentors(): Promise<IUser[] | null> {
     try {
       return User.find({ role: "mentor" });
     } catch (error) {

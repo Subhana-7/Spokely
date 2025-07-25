@@ -2,6 +2,7 @@ import ConnectionModel, { IConnection } from "../models/connections.model";
 import { Types } from "mongoose";
 import { IConnectionRepository } from "./interfaces/IConnectionsRepository";
 import { injectable } from "inversify";
+import { PopulatedConnection } from "../types/populated";
 
 @injectable()
 export class ConnectionRepository implements IConnectionRepository {
@@ -61,12 +62,12 @@ export class ConnectionRepository implements IConnectionRepository {
 
   async getAcceptedConnections(
     userId: Types.ObjectId
-  ): Promise<IConnection[] | null> {
+  ): Promise<PopulatedConnection[] | null> {
     try {
       return await ConnectionModel.find({
         status: "accepted",
         $or: [{ userId }, { connectedUserId: userId }],
-      }).populate("userId connectedUserId");
+      }).populate("userId connectedUserId") as unknown as PopulatedConnection[];
     } catch (error) {
       console.log("error", error);
       return null;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import axios from "axios";
+import { videoCall } from "../services/sessionService";
 
 const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
@@ -16,12 +16,7 @@ const VideoCall = () => {
     const initCall = async () => {
       if (!sessionId) return;
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/session/${sessionId}/token`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await videoCall(sessionId);
 
         console.log("Agora Token Response", res.data);
 

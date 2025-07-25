@@ -80,7 +80,7 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async findAll(): Promise<Partial<IUser>[] | null> {
+  async findAll(): Promise<IUser[] | null> {
     try {
       return await User.find({}, "-password -otp -googleId");
     } catch (error) {

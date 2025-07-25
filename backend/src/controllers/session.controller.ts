@@ -4,52 +4,42 @@ import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import mongoose from "mongoose";
 import { generateAgoraToken } from "../config/agora";
 import { ISessionController } from "./interfaces/ISessionController";
-import { inject,injectable } from "inversify";
-import {TYPES} from "../types/types"
+import { inject, injectable } from "inversify";
+import { TYPES } from "../types/types";
 import { ISessionService } from "../services/interfaces/ISessionService";
-
+import {
+  mapToCreateSessionDTO,
+  mapToUpdateSessionDTO,
+} from "../mappers/session.mappers";
 
 @injectable()
 export class SessionController implements ISessionController {
   constructor(
-    @inject(TYPES.ISessionService) private readonly sessionService: ISessionService
+    @inject(TYPES.ISessionService)
+    private readonly sessionService: ISessionService
   ) {}
 
-  createSession = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
+  createSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      const {
-        type,
-        topic,
-        description,
-        mentorId,
-        startTime,
-        endTime,
-        participants,
-        sessionFee,
-      } = req.body;
+      if (!req.id) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
 
-      const newSession = await this.sessionService.createSession({
-        type,
-        topic,
-        description,
-        mentorId: mentorId ? new mongoose.Types.ObjectId(mentorId) : undefined,
-        startTime,
-        endTime,
-        createdBy: new mongoose.Types.ObjectId(req.id),
-        participants: participants?.map(
-          (p: string) => new mongoose.Types.ObjectId(p)
-        ),
-        sessionFee,
-      });
+      const dto = mapToCreateSessionDTO(req.body, req.id);
+      const newSession = await this.sessionService.createSession(dto);
 
       res.status(201).json({ message: "Session created", session: newSession });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to create session" });
     }
-  }
+  };
 
-  getAllSessions = async(
+  getAllSessions = async (
     req: AuthenticatedRequest,
     res: Response
   ): Promise<void> => {
@@ -59,9 +49,9 @@ export class SessionController implements ISessionController {
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch sessions" });
     }
-  }
+  };
 
-  getSessionById = async(
+  getSessionById = async (
     req: AuthenticatedRequest,
     res: Response
   ): Promise<void> => {
@@ -71,21 +61,28 @@ export class SessionController implements ISessionController {
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch session" });
     }
-  }
+  };
 
-  updateSession = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
+  updateSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
+      const dto = mapToUpdateSessionDTO(req.body);
       const updated = await this.sessionService.updateSession(
         req.params.id,
-        req.body
+        dto
       );
       res.status(200).json({ message: "Session updated", session: updated });
     } catch (error) {
       res.status(500).json({ message: "Failed to update session" });
     }
-  }
+  };
 
-  getAgoraToken = async(req: AuthenticatedRequest, res: Response): Promise<void> => {
+  getAgoraToken = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       if (!req.id) {
         res.status(401).json({ message: "Unauthorized" });
@@ -120,5 +117,5 @@ export class SessionController implements ISessionController {
       console.error(err);
       res.status(500).json({ message: "Failed to generate token" });
     }
-  }
+  };
 }

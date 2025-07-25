@@ -5,6 +5,7 @@ import { IAdminController } from "./interfaces/IAdminController";
 import { IAdminService } from "../services/interfaces/IAdminService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
+import { mapUserToSummaryDto } from "../mappers/admin.mapper";
 
 export class AdminController implements IAdminController {
   constructor(@inject(TYPES.IAdminService) private service: IAdminService) {
@@ -40,7 +41,8 @@ export class AdminController implements IAdminController {
   async listUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await this.service.getAllUsers();
-      res.status(200).json(users);
+      const usersDto = users?.map(mapUserToSummaryDto);
+      res.status(200).json(usersDto);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

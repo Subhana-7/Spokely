@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { useAuthStore } from '../../store/userAuthStore';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { logoutService } from '../../services/authServices';
 
 const AuthContext = createContext<any>(null);
 
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/logout`, {}, { withCredentials: true });
+      await logoutService()
       localLogout(); 
       navigate('/');
     } catch (err) {

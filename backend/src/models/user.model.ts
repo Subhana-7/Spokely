@@ -10,7 +10,7 @@ export interface IUser extends Document {
   profilePicture?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  isBlocked: Boolean;
+  isBlocked: boolean;
   referalCode: string;
   levels?: number;
   completionRate?: number;

@@ -175,7 +175,7 @@ export class UserService implements IUserService {
     }
   }
 
-  async getAllUsers(): Promise<Partial<IUser>[] | null> {
+  async getAllUsers(): Promise<IUser[] | null> {
     try {
       return await this.repo.findAll();
     } catch (error) {
