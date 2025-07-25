@@ -7,28 +7,48 @@ import { IUserController } from "./interfaces/IUserController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserService } from "../services/interfaces/IUserService";
+import { toUserResponseDTO } from "../mappers/user.mapper";
+import {
+  LoginDTO,
+  SendOtpDTO,
+  SignupDTO,
+  UpdateRoleDTO,
+  VerifyOtpDTO,
+} from "../dto/user.dto";
 
 @injectable()
 export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private service: IUserService) {}
 
-  signup = async (req: Request, res: Response): Promise<void> => {
+  signup = async (
+    req: Request<{}, {}, SignupDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const user = await this.service.signup(req.body);
-      res.status(201).json(user);
+
+      if (!user) {
+        res.status(401).json({ message: "Invalid credentials" });
+        return;
+      }
+      const userDTO = toUserResponseDTO(user);
+      res.status(201).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  login = async (req: Request, res: Response): Promise<void> => {
+  login = async (
+    req: Request<{}, {}, LoginDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const result = await this.service.login(req.body);
-
       if (!result) {
         res.status(401).json({ message: "Invalid credentials" });
         return;
       }
+
       const { user, token } = result;
 
       res.cookie("auth-token", token, {
@@ -38,13 +58,17 @@ export class UserController implements IUserController {
         sameSite: "lax",
       });
 
-      res.status(200).json({ user });
+      const userDTO = toUserResponseDTO(user);
+      res.status(200).json({ user: userDTO });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  sendOtp = async (req: Request, res: Response): Promise<void> => {
+  sendOtp = async (
+    req: Request<{}, {}, SendOtpDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       await this.service.sendOtp(req.body.email);
       res.status(200).json({ message: "OTP sent to email" });
@@ -53,7 +77,10 @@ export class UserController implements IUserController {
     }
   };
 
-  verifyOtp = async (req: Request, res: Response): Promise<void> => {
+  verifyOtp = async (
+    req: Request<{}, {}, VerifyOtpDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const { email, code } = req.body;
       const result = await this.service.verifyOtp(email, code);
@@ -63,7 +90,7 @@ export class UserController implements IUserController {
     }
   };
 
-  handleGoogleAccounts = async(
+  handleGoogleAccounts = async (
     req: Request,
     res: Response,
     next: Function
@@ -79,12 +106,18 @@ export class UserController implements IUserController {
     }
   };
 
-  googleCallback = async(req: Request, res: Response, next: Function):Promise<void> => {
+  googleCallback = async (
+    req: Request,
+    res: Response,
+    next: Function
+  ): Promise<void> => {
     try {
       passport.authenticate("google", { session: false }, (err, user) => {
         if (err) {
           console.error("Google authentication error:", err);
-          return res.redirect(`${process.env.CLIENT_SIDE_URL}?error=auth_failed`);
+          return res.redirect(
+            `${process.env.CLIENT_SIDE_URL}?error=auth_failed`
+          );
         }
 
         if (!user) {
@@ -124,12 +157,20 @@ export class UserController implements IUserController {
     }
   };
 
-  updateRole = async (req: Request, res: Response): Promise<void> => {
+  updateRole = async (
+    req: Request<{}, {}, UpdateRoleDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const userId = (req as any).userId;
       const { role } = req.body;
       const updated = await this.service.updateRole(userId, role);
-      res.status(200).json({ message: "Role updated", user: updated });
+      if (!updated) {
+        res.status(401).json({ message: "Invalid credentials" });
+        return;
+      }
+      const userDTO = toUserResponseDTO(updated);
+      res.status(200).json({ message: "Role updated", user: userDTO });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -147,7 +188,14 @@ export class UserController implements IUserController {
   getAllUsers = async (req: Request, res: Response): Promise<void> => {
     try {
       const users = await this.service.getAllUsers();
-      res.status(200).json(users);
+      if (!users) {
+        res.status(401).json({ message: "Error fetching users" });
+        return;
+      }
+
+      const usersDTO = users.map(toUserResponseDTO);
+
+      res.status(200).json(usersDTO);
     } catch (err) {
       console.error("Error fetching users:", err);
       res.status(500).json({ message: "Failed to fetch users" });

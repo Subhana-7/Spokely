@@ -21,11 +21,11 @@ export class AdminService implements IAdminService {
 
     return admin;
   }
-  async getAllUsers(): Promise<Partial<IUser>[] | null> {
+  async getAllUsers(): Promise<IUser[] | null> {
     return this.repo.findAllUsers();
   }
 
-  async getAllMentors(): Promise<Partial<IUser>[] | null> {
+  async getAllMentors(): Promise<IUser[] | null> {
     return this.repo.findAllMentors();
   }
 

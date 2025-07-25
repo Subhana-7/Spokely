@@ -7,5 +7,5 @@ export interface IUserService {
   signup(data: any): Promise<IUser | null>;
   login(data: any): Promise<{ user: IUser; token: string } | null>;
   updateRole(userId: string, role: "user" | "mentor"): Promise<IUser | null>;
-  getAllUsers(): Promise<Partial<IUser>[] | null>;
+  getAllUsers(): Promise<IUser[] | null>;
 }

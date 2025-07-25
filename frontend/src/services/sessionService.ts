@@ -21,3 +21,9 @@ export const createSession = (data: any) => API.post('/schedule', data);
 export const getSessions = () => API.get('/list');
 export const getSessionById = (id: string) => API.get(`/${id}`);
 export const updateSession = (id: string, updates: any) => API.patch(`/${id}`, updates);
+
+export const videoCall = async (sessionId: string) => {
+  return await API.get(`/${sessionId}/token`, {
+    withCredentials: true,
+  });
+};

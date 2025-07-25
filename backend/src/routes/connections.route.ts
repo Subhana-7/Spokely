@@ -1,4 +1,3 @@
-// routes/connection.routes.ts
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import container from "../config/inversify.config";

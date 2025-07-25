@@ -57,3 +57,9 @@ export const setRole = async (role: "user" | "mentor") => {
 export const logoutService = async() => {
   return await API.post('/logout',{},{withCredentials:true});
 }
+
+export const getAllSessions = async() => {
+  return await API.get('/all',{
+    withCredentials:true
+  })
+}
