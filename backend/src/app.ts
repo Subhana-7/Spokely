@@ -12,6 +12,7 @@ import connectionsRoutes from './routes/connections.route'
 import sessionRoutes from './routes/session.route';
 import "reflect-metadata"
 import {logger} from "./middleware/logger"
+import helmet from 'helmet';
 
 dotenv.config();
 const app = express();
@@ -44,6 +45,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(logger);
+
+app.use(helmet());
 
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
