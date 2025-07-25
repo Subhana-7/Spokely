@@ -6,6 +6,7 @@ import { IConnection } from "../models/connections.model";
 import { TYPES } from "../types/types";
 import { inject,injectable } from "inversify";
 import { IConnectionRepository } from "../repositories/interfaces/IConnectionsRepository";
+import { PopulatedConnection } from "../types/populated";
 
 @injectable()
 export class ConnectionService implements IConnectionService {
@@ -57,7 +58,7 @@ export class ConnectionService implements IConnectionService {
     }
   }
 
-  async getAllConnections(userId: string): Promise<IConnection[] | null> {
+  async getAllConnections(userId: string): Promise<PopulatedConnection[] | null> {
     try {
       return await this.repo.getAcceptedConnections(new Types.ObjectId(userId));
     } catch (error) {

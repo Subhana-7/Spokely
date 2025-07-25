@@ -42,3 +42,12 @@ export interface UserResponseDTO {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface UserDTO {
+  id: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+  role: "user" | "mentor";
+  referalCode: string;
+}

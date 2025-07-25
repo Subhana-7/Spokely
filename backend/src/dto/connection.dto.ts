@@ -1,20 +1,12 @@
-export interface UserSummaryDto {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isBlocked: boolean;
-}
+import { UserDTO } from "./user.dto";
 
-export interface ConnectionDto {
+export interface ConnectionDTO {
   id: string;
-  user: UserSummaryDto;
-  connectedUser: UserSummaryDto;
-  status: 'pending' | 'accepted' | 'rejected';
+  user: UserDTO;
+  connectedUser: UserDTO;
+  status: "pending" | "accepted" | "rejected";
   sessionCount: number;
   levelsUnlocked: number;
-  isBlocked: boolean;
-  isRemoved: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

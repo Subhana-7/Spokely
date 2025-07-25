@@ -1,5 +1,5 @@
 import { IUser } from "../models/user.model";
-import { UserResponseDTO } from "../dto/user.dto";
+import { UserResponseDTO,UserDTO } from "../dto/user.dto";
 
 export const toUserResponseDTO = (user: IUser): UserResponseDTO => {
   return {
@@ -21,3 +21,12 @@ export const toUserResponseDTO = (user: IUser): UserResponseDTO => {
     updatedAt: user.updatedAt,
   };
 };
+
+export const toUserDTO = (user: IUser): UserDTO => ({
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  profilePicture: user.profilePicture,
+  role: user.role,
+  referalCode: user.referalCode,
+});
