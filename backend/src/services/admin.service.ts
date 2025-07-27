@@ -30,6 +30,7 @@ export class AdminService implements IAdminService {
   }
 
   async blockUser(id: string): Promise<IUser | null> {
+    console.log("reaching service")
     return this.repo.blockUser(id);
   }
 

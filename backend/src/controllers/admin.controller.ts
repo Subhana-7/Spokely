@@ -59,7 +59,6 @@ export class AdminController implements IAdminController {
 
   async blockUser(req: Request, res: Response): Promise<void> {
     try {
-      console.log("controller - block");
       const { id } = req.params;
       const updated = await this.service.blockUser(id);
       res.status(200).json(updated);

@@ -34,7 +34,8 @@ export class AdminRepository implements IAdminRepository {
 
   async blockUser(id: string): Promise<IUser | null> {
     try {
-      return User.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+      let result =  User.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+      return result;
     } catch (error) {
       console.log("error", error);
       return null;

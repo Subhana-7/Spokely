@@ -67,13 +67,13 @@ const MentorManagement = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Mentor Management</h1>
           <p className="text-sm text-gray-600">Manage and monitor all platform mentors</p>
         </div>
-        <button
+        {/* <button
           className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium"
           onClick={() => console.log('Add Mentor')}
         >
           <Plus className="w-4 h-4" />
           Add Mentor
-        </button>
+        </button> */}
       </div>
 
       <SearchFilterBar

@@ -20,6 +20,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { setRole } from "../services/authServices";
 import { useAuthStore } from "../store/userAuthStore";
+import AppIcon from "../assets/app-icon.png";
 
 const LandingPage: React.FC = () => {
   const location = useLocation();
@@ -28,7 +29,7 @@ const LandingPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("auth-token");
   const showRoleFlag = queryParams.get("showRole") === "true";
-  const {setRole: setGlobalRole } = useAuthStore();
+  const { setRole: setGlobalRole } = useAuthStore();
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -41,7 +42,7 @@ const LandingPage: React.FC = () => {
     const token = useAuthStore.getState().token;
     try {
       await setRole(role);
-      setGlobalRole(role); 
+      setGlobalRole(role);
       if (role === "user") navigate("/user/home");
       else navigate("/mentor/home");
     } catch (error) {
@@ -50,23 +51,26 @@ const LandingPage: React.FC = () => {
   };
 
   useEffect(() => {
-  if (token) {
-    if (showRoleFlag) setActiveModal("role");
+    if (token) {
+      if (showRoleFlag) setActiveModal("role");
 
-    const newURL = window.location.pathname;
-    window.history.replaceState({}, document.title, newURL);
-  }
-}, [token, showRoleFlag]);
-
+      const newURL = window.location.pathname;
+      window.history.replaceState({}, document.title, newURL);
+    }
+  }, [token, showRoleFlag]);
 
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4 md:py-6">
+          <div className="flex justify-between items-center py-4 md:py-2">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <MessageCircle className="h-8 w-8 text-emerald-600" />
+                <img
+                  src={AppIcon}
+                  alt="Spokely Logo"
+                  className="w-18 h-18 rounded-full object-cover m-0 p-0"
+                />
                 <span className="text-2xl font-bold text-gray-900">
                   Spokely
                 </span>
@@ -395,7 +399,7 @@ const LandingPage: React.FC = () => {
       <OTPModal
         isOpen={activeModal === "otp"}
         onClose={closeModal}
-        email="demo@example.com" 
+        email="demo@example.com"
         role="user"
         onVerify={() => openModal("role")}
       />

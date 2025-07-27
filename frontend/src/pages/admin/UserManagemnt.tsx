@@ -23,10 +23,13 @@ const UserManagement = () => {
   const handleBlock = async (id: string) => {
     try {
       await blockUser(id);
-      toast.success("User blocked");
       setUsers((prev) =>
-        prev.map((u) => (u._id === id ? { ...u, isBlocked: true } : u))
-      );
+      prev.map((u) =>
+        u._id === id ? { ...u, isBlocked: !u.isBlocked } : u
+      )
+    );
+
+    toast.success("User " + (users.find(u => u._id === id)?.isBlocked ? "unblocked" : "blocked"));
     } catch (err) {
       toast.error("Failed to block user");
     }
@@ -45,14 +48,17 @@ const UserManagement = () => {
   // };
 
   const userData = users.map((user) => ({
-    id: user._id,
+    id: user.id,
     name: user.name,
     email: user.email,
+    avatar: user.profilePicture || undefined,
     level: user.levels?.toString() ?? "N/A",
+    students: user.students?.length ?? 0,
     dailyTask: "To be implemented",
+    status: user.isBlocked ? "Blocked" : "Active",
+    isBlocked:user.isBlocked,
     sessions: user.sessionsDone,
     mentors: 0,
-    avatar: user.profilePicture || undefined,
   }));
 
   return (
@@ -60,16 +66,20 @@ const UserManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <div className="w-16 h-1 bg-purple-500 rounded-full mb-2"></div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">User Management</h1>
-          <p className="text-sm text-gray-600">Manage and monitor all platform users</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            User Management
+          </h1>
+          <p className="text-sm text-gray-600">
+            Manage and monitor all platform users
+          </p>
         </div>
-        <button
+        {/* <button
           className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium"
           onClick={() => console.log("Add User")}
         >
           <Plus className="w-4 h-4" />
           Add User
-        </button>
+        </button> */}
       </div>
 
       <SearchFilterBar
