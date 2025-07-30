@@ -32,7 +32,7 @@ export interface UserResponseDTO {
   role: "user" | "mentor";
   profilePicture?: string;
   isBlocked: boolean;
-  referalCode: string;
+  uniqueCode: string;
   levels?: number;
   completionRate?: number;
   streak?: number;
@@ -49,5 +49,5 @@ export interface UserDTO {
   email: string;
   profilePicture?: string;
   role: "user" | "mentor";
-  referalCode: string;
+  uniqueCode: string;
 }

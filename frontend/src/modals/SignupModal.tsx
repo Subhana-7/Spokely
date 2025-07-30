@@ -19,15 +19,15 @@ const SignupModal: React.FC<SignupModalProps> = ({
   onSwitchToLogin,
 }) => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
     password: "",
-    role: "user",
+    role: "",
   });
 
   const [errors, setErrors] = useState<{
-    fullName?: string;
+    name?: string;
     email?: string;
     phone?: string;
     password?: string;
@@ -44,8 +44,8 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const validate = () => {
     const newErrors: typeof errors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full Name is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Full Name is required";
     }
 
     if (!formData.email.trim()) {
@@ -78,7 +78,9 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/google`;
+    window.location.href = `${
+      import.meta.env.VITE_SERVER_SIDE_URL
+    }/api/users/google`;
   };
 
   const handleCreateAccount = async () => {
@@ -86,7 +88,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
 
     try {
       await signup(formData);
-      await sendOTP({ email: formData.email });
+      await sendOTP({ email: formData.email },formData.role as "user" | "mentor");
       setShowOtpModal(true);
     } catch (err: any) {
       console.log(
@@ -106,13 +108,13 @@ const SignupModal: React.FC<SignupModalProps> = ({
         <Input
           type="name"
           placeholder="Full Name"
-          value={formData.fullName}
+          value={formData.name}
           onChange={(value) => {
-            setFormData({ ...formData, fullName: value });
-            if (errors.fullName)
-              setErrors((prev) => ({ ...prev, fullName: "" }));
+            setFormData({ ...formData, name: value });
+            if (errors.name)
+              setErrors((prev) => ({ ...prev, name: "" }));
           }}
-          error={errors.fullName}
+          error={errors.name}
         />
 
         <Input

@@ -18,7 +18,6 @@ import RoleSelectionModal from "../modals/RoleSelectionModal";
 import ChangePasswordModal from "../modals/ChangePasswordModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { setRole } from "../services/authServices";
 import { useAuthStore } from "../store/userAuthStore";
 import AppIcon from "../assets/app-icon.png";
 
@@ -38,17 +37,17 @@ const LandingPage: React.FC = () => {
 
   const showRoleModal = location.pathname === "/role-selection";
 
-  const handleRoleContinue = async (role: "user" | "mentor") => {
-    const token = useAuthStore.getState().token;
-    try {
-      await setRole(role);
-      setGlobalRole(role);
-      if (role === "user") navigate("/user/home");
-      else navigate("/mentor/home");
-    } catch (error) {
-      console.error("Role update failed:", error);
-    }
-  };
+  // const handleRoleContinue = async (role: "user" | "mentor") => {
+  //   const token = useAuthStore.getState().token;
+  //   try {
+  //     await setRole(role);
+  //     setGlobalRole(role);
+  //     if (role === "user") navigate("/user/home");
+  //     else navigate("/mentor/home");
+  //   } catch (error) {
+  //     console.error("Role update failed:", error);
+  //   }
+  // };
 
   useEffect(() => {
     if (token) {
@@ -404,7 +403,7 @@ const LandingPage: React.FC = () => {
         onVerify={() => openModal("role")}
       />
 
-      <RoleSelectionModal
+      {/* <RoleSelectionModal
         isOpen={activeModal === "role"}
         onClose={closeModal}
         onContinue={async (role) => {
@@ -421,7 +420,7 @@ const LandingPage: React.FC = () => {
             alert("Error updating role");
           }
         }}
-      />
+      /> */}
 
       <ChangePasswordModal
         isOpen={activeModal === "password"}
@@ -432,13 +431,13 @@ const LandingPage: React.FC = () => {
         }}
       />
 
-      {showRoleModal && (
+      {/* {showRoleModal && (
         <RoleSelectionModal
           isOpen={true}
           onClose={() => navigate("/")}
           onContinue={handleRoleContinue}
         />
-      )}
+      )} */}
     </div>
   );
 };

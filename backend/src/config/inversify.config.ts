@@ -28,6 +28,15 @@ import { UserService } from "../services/user.service";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { UserRepository } from "../repositories/user.repository";
 
+import { IMentorController } from "../controllers/interfaces/IMentorController";
+import { MentorController } from "../controllers/mentor.controller";
+
+import { IMentorService } from "../services/interfaces/IMentorService";
+import { MentorService } from "../services/mentor.service";
+
+import { IMentorRepository } from "../repositories/interfaces/IMentorRepository";
+import { MentorRepository } from "../repositories/mentor.repository";
+
 import { IAdminController } from "../controllers/interfaces/IAdminController";
 import { AdminController } from "../controllers/admin.controller";
 
@@ -39,17 +48,31 @@ import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
 
-container.bind<ISessionController>(TYPES.ISessionController).to(SessionController);
+container
+  .bind<ISessionController>(TYPES.ISessionController)
+  .to(SessionController);
 container.bind<ISessionService>(TYPES.ISessionService).to(SessionService);
-container.bind<ISessionRepository>(TYPES.ISessionRepository).to(SessionRepository);
+container
+  .bind<ISessionRepository>(TYPES.ISessionRepository)
+  .to(SessionRepository);
 
-container.bind<IConnectionController>(TYPES.IConnectionController).to(ConnectionController);
-container.bind<IConnectionService>(TYPES.IConnectionService).to(ConnectionService);
-container.bind<IConnectionRepository>(TYPES.IConnectionRepository).to(ConnectionRepository);
+container
+  .bind<IConnectionController>(TYPES.IConnectionController)
+  .to(ConnectionController);
+container
+  .bind<IConnectionService>(TYPES.IConnectionService)
+  .to(ConnectionService);
+container
+  .bind<IConnectionRepository>(TYPES.IConnectionRepository)
+  .to(ConnectionRepository);
 
 container.bind<IUserController>(TYPES.IUserController).to(UserController);
 container.bind<IUserService>(TYPES.IUserService).to(UserService);
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
+
+container.bind<IMentorController>(TYPES.IMentorController).to(MentorController);
+container.bind<IMentorService>(TYPES.IMentorService).to(MentorService);
+container.bind<IMentorRepository>(TYPES.IMentorRepository).to(MentorRepository);
 
 container.bind<IAdminController>(TYPES.IAdminController).to(AdminController);
 container.bind<IAdminService>(TYPES.IAdminService).to(AdminService);

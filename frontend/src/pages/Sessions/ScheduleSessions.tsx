@@ -7,7 +7,8 @@ import Badge from "../../components/common/Badge";
 import { createSession } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { getAllSessions } from "../../services/authServices";
+// import { getAllSessions } from "../../services/authServices";
+import { getSessions } from "../../services/sessionService";
 
 const ScheduleSession = () => {
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
@@ -25,7 +26,7 @@ const ScheduleSession = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getAllSessions()
+    getSessions()
       .then((res) => setUsers(res.data))
       .catch(() => toast.error("Failed to fetch users"));
   }, []);

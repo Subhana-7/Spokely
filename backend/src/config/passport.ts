@@ -26,7 +26,7 @@ passport.use(
             role: 'user',
             isVerified:true,
             profilePicture: profile.photos?.[0].value,
-            referalCode: await service.generateUniqueReferralCode(), 
+            uniqueCode: await service.generateUniqueCode(), 
             isGoogleUser:true,
           });
         }

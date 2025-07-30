@@ -42,6 +42,7 @@ export class UserController implements IUserController {
     req: Request<{}, {}, LoginDTO>,
     res: Response
   ): Promise<void> => {
+    console.log("user login controller")
     try {
       const result = await this.service.login(req.body);
       if (!result) {
@@ -73,7 +74,7 @@ export class UserController implements IUserController {
       await this.service.sendOtp(req.body.email);
       res.status(200).json({ message: "OTP sent to email" });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ message: err.message });
     }
   };
 
@@ -86,7 +87,7 @@ export class UserController implements IUserController {
       const result = await this.service.verifyOtp(email, code);
       res.status(200).json(result);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ message: err.message });
     }
   };
 
@@ -102,7 +103,7 @@ export class UserController implements IUserController {
         next
       );
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(400).json({ message: error.message });
     }
   };
 
@@ -145,7 +146,7 @@ export class UserController implements IUserController {
         res.redirect(redirectUrl);
       })(req, res, next);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ message: err.message });
     }
   };
 
@@ -153,7 +154,7 @@ export class UserController implements IUserController {
     try {
       res.json({ message: "Welcome Home!" });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ message: err.message });
     }
   };
 
@@ -172,7 +173,7 @@ export class UserController implements IUserController {
       const userDTO = toUserResponseDTO(updated);
       res.status(200).json({ message: "Role updated", user: userDTO });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ message: err.message });
     }
   };
 

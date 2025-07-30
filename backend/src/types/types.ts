@@ -11,6 +11,10 @@ export const TYPES = {
   IUserService: Symbol.for("IUserService"),
   IUserRepository: Symbol.for("IUserRepository"),
 
+  IMentorController: Symbol.for("IMentorController"),
+  IMentorService: Symbol.for("IMentorService"),
+  IMentorRepository: Symbol.for("IMentorRepository"),
+
   IAdminController: Symbol.for("IAdminController"),
   IAdminService: Symbol.for("IAdminService"),
   IAdminRepository: Symbol.for("IAdminRepository"),

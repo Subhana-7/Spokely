@@ -39,7 +39,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
   onClose,
   onFetchIncomingCount
 }) => {
-  const [referralCode, setReferralCode] = useState('');
+  const [uniqueeCode, setuniqueeCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
@@ -62,11 +62,11 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
 
   const handleAddConnection = async () => {
     try {
-      if (!referralCode.trim()) return toast.error('Enter referral code');
+      if (!uniqueeCode.trim()) return toast.error('Enter referral code');
       setLoading(true);
-      await sendConnectionRequest(referralCode.trim());
+      await sendConnectionRequest(uniqueeCode.trim());
       toast.success('Connection request sent!');
-      setReferralCode('');
+      setuniqueeCode('');
       fetchRequests(); 
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to send request');
@@ -110,8 +110,8 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
           <Input
             type="text"
             placeholder="Enter user's referral code"
-            value={referralCode}
-            onChange={(val: string) => setReferralCode(val)}
+            value={uniqueeCode}
+            onChange={(val: string) => setuniqueeCode(val)}
             className="w-full bg-white border-0 rounded-xl py-3 text-base shadow-sm focus:ring-2 focus:ring-lime-500 focus:border-transparent mb-6"
           />
           <div className="flex justify-end gap-4 mb-6">

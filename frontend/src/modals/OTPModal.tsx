@@ -21,21 +21,23 @@ const OTPModal: React.FC<OTPModalProps> = ({
   role,
 }) => {
   const [otp, setOtp] = useState("");
+  const [error, setError] = useState("Test error");
   const navigate = useNavigate();
 
   const handleVerify = async () => {
+    setError("");
     try {
-      await verifyOTP({ email, code: otp });
+      await verifyOTP({ email, code: otp }, role as "user" | "mentor");
       if (role === "user") {
         navigate("/user/home");
       } else {
         navigate("/mentor/home");
       }
     } catch (err: any) {
-      alert(
-        "OTP verification failed: " +
-          (err.response?.data?.message || err.message)
-      );
+      const msg =
+      err.response?.data?.message || err.message || "Verification failed";
+      console.log("Setting error:", msg);
+      setError(msg);
     }
   };
 
@@ -55,16 +57,17 @@ const OTPModal: React.FC<OTPModalProps> = ({
         </div>
 
         <Input
-          type=""
+          type="text"
           placeholder="Enter OTP"
           value={otp}
           onChange={setOtp}
           className="text-center text-lg tracking-widest"
+          error={error}
         />
 
         <div className="pt-2">
           <Button variant="primary" onClick={handleVerify}>
-            Verify & Create Account
+            Verify & Continue
           </Button>
         </div>
 

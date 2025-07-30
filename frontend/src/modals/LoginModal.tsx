@@ -7,6 +7,7 @@ import { login, sendOTP } from "../services/authServices";
 import OTPModal from "./OTPModal";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
+import Toggle from "./Toggle";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -45,38 +46,34 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const handleLogin = async () => {
     if (!validate()) return;
 
+    if (role !== "user" && role !== "mentor") {
+      setErrors({ email: "Please select a role (User or Mentor)" });
+      return;
+    }
+
     setLoading(true);
     setErrors({});
+
     try {
-      const res = await login(formData);
-      const user = res.data.user;
-      const token = res.data.token;
+      const selectedRole: "user" | "mentor" = role;
+      const res = await login(formData, selectedRole);
+      const user = res.data[selectedRole];
 
       if (!user.isVerified) {
-        await sendOTP({ email: user.email });
         setRole(user.role);
         setEmail(user.email);
         setShowOtpModal(true);
       } else {
         setGlobalRole(user.role);
-
-        if (user.role === "user") navigate("/user/home");
-        else navigate("/mentor/home");
+        if (selectedRole === "user") {
+          navigate("/user/home");
+        } else {
+          navigate("/mentor/home");
+        }
       }
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;
-
-      if (message.toLowerCase().includes("email")) {
-        setErrors({ email: message });
-      } else if (
-        message.toLowerCase().includes("password") ||
-        message.toLowerCase().includes("invalid credentials") ||
-        message.toLowerCase().includes("incorrect")
-      ) {
-        setErrors({ password: message });
-      } else {
-        setErrors({ password: message });
-      }
+      setErrors({ password: message });
     } finally {
       setLoading(false);
     }
@@ -89,6 +86,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
       }/api/users/google`;
     }
   };
+
+  const roleOptions = [
+    { value: "user", label: "User" },
+    { value: "mentor", label: "Mentor" },
+  ];
 
   return (
     <>
@@ -123,6 +125,17 @@ const LoginModal: React.FC<LoginModalProps> = ({
             onRightIconClick={() => setShowPassword((prev) => !prev)}
           />
 
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-2">
+              You are a
+            </label>
+            <Toggle
+              options={roleOptions}
+              selected={role}
+              onChange={(val) => setRole(val)}
+            />
+          </div>
+
           <Button
             variant="google"
             onClick={handleGoogleSignup}
@@ -152,8 +165,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
         email={email}
         role={role}
         onVerify={() => {
-          if (role === "user") navigate("/user/home");
-          else navigate("/mentor/home");
+          if (role === "user") {
+            navigate("/user/home");
+          } else {
+            navigate("/mentor/home");
+          }
         }}
       />
     </>

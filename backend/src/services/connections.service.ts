@@ -16,15 +16,15 @@ export class ConnectionService implements IConnectionService {
 
   async sendConnectionRequest(
     senderId: string,
-    referralCode: string
+    uniqueeCode: string
   ): Promise<IConnection | null> {
     try {
-      const receiver = await UserModel.findOne({ referalCode: referralCode });
+      const receiver = await UserModel.findOne({ uniqueCode: uniqueeCode});
       if (!receiver) throw new Error("User with referral code not found");
       if (receiver._id.equals(senderId))
         throw new Error("You can't connect with yourself");
 
-      const existing = await this.repo.findByReferralCode(
+      const existing = await this.repo.findByUniqueCode(
         new Types.ObjectId(senderId),
         receiver._id
       );

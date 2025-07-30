@@ -1,65 +1,63 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
+import { data } from "react-router-dom";
+
+const BASE = import.meta.env.VITE_SERVER_SIDE_URL;
 
 const API = axios.create({
-  baseURL: `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users`,
+  baseURL: `${BASE}`,
   withCredentials: true,
 });
 
-API.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+API.interceptors.request.use((config) => {
+  const token = Cookies.get("auth-token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const signup = (data: any) => {
+  const { name, email, phone, password, role } = data;
+
   const payload = {
-    name: data.fullName,
-    email: data.email,
-    phone: data.phone,
-    password: data.password,
-    role: data.role,
+    name,
+    email,
+    phone,
+    password,
   };
-  return API.post("/signup", payload);
+
+  const endpoint =
+    role === "mentor" ? "/api/mentors/signup" : "/api/users/signup";
+  return API.post(endpoint, payload);
 };
 
-export const login = (data: { email: string; password: string }) => API.post("/login", data);
-
-export const sendOTP = (data: { email: string }) => API.post("/send-otp", data);
-
-export const verifyOTP = (data: { email: string; code: string }) => API.post("/verify-otp", data);
-
-export const setRole = async (role: "user" | "mentor") => {
-  const token = Cookies.get("token");
-  if (!token) throw new Error("No token");
-
-  const decoded: any = jwtDecode(token);
-  const userId = decoded.id || decoded._id;
-
-  return API.patch(
-    "/update-role",
-    { role, id: userId },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const login = (
+  data: { email: string; password: string },
+  role: "user" | "mentor"
+) => {
+  const endpoint =
+    role === "mentor" ? "/api/mentors/login" : "/api/users/login";
+    console.log(endpoint,data)
+  return API.post(endpoint, data);
 };
 
-
-export const logoutService = async() => {
-  return await API.post('/logout',{},{withCredentials:true});
+export const sendOTP = (data: { email: string },role: "user" | "mentor") =>{
+  const endpoint = 
+  role === "mentor" ? "/api/mentors/send-otp" : "/api/users/send-otp";
+  return API.post(endpoint,data);
 }
 
-export const getAllSessions = async() => {
-  return await API.get('/all',{
-    withCredentials:true
-  })
+export const verifyOTP = (data: { email: string; code: string }, role: "user" | "mentor") => {
+  const endpoint = 
+    role === "mentor" ? "/api/mentors/verify-otp" : "/api/users/verify-otp";
+  return API.post(endpoint, data);
+};
+
+
+
+export const logoutService = (role:"user" | "mentor") => {
+  const endpoint = 
+  role === "mentor" ? "/api/mentors/logout" : "/api/users/logout";
+  return API.post(endpoint,data);
 }

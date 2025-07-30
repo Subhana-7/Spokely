@@ -10,7 +10,7 @@ export const toUserResponseDTO = (user: IUser): UserResponseDTO => {
     role: user.role,
     profilePicture: user.profilePicture,
     isBlocked: user.isBlocked,
-    referalCode: user.referalCode,
+    uniqueCode: user.uniqueCode,
     levels: user.levels,
     completionRate: user.completionRate,
     streak: user.streak,
@@ -28,5 +28,5 @@ export const toUserDTO = (user: IUser): UserDTO => ({
   email: user.email,
   profilePicture: user.profilePicture,
   role: user.role,
-  referalCode: user.referalCode,
+  uniqueCode: user.uniqueCode,
 });
