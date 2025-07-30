@@ -9,6 +9,7 @@ interface InputProps {
   className?: string;
   rightIcon?: React.ReactNode;
   onRightIconClick?: () => void;
+  disabled?: boolean; 
 }
 
 const Input: React.FC<InputProps> = ({
@@ -20,6 +21,7 @@ const Input: React.FC<InputProps> = ({
   className = "",
   rightIcon,
   onRightIconClick,
+  ...rest
 }) => {
   return (
     <div className="space-y-1">
@@ -32,6 +34,8 @@ const Input: React.FC<InputProps> = ({
           className={`w-full px-4 py-2 border ${
             error ? "border-red-500" : "border-black-600"
           } rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10 ${className}`}
+          disabled={rest.disabled}
+          {...rest}
         />
         {rightIcon && (
           <div

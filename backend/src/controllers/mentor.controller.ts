@@ -16,23 +16,26 @@ export class MentorController implements IMentorController {
   };
 
   login = async (req: Request, res: Response) => {
-    console.log("mentor login controller")
-    const result = await this.service.login(req.body);
-    if (!result) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
+    try {
+      const result = await this.service.login(req.body);
+      if (!result) {
+        res.status(401).json({ message: "Invalid credentials" });
+        return;
+      }
+      const { mentor, token } = result;
+
+      res.cookie("auth-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 86400000,
+        sameSite: "lax",
+      });
+
+      const dto = toMentorResponseDTO(mentor);
+      res.status(200).json({ mentor: dto });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
-    const { mentor, token } = result;
-
-    res.cookie("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 86400000,
-      sameSite: "lax",
-    });
-
-    const dto = toMentorResponseDTO(mentor);
-    res.status(200).json({ mentor: dto });
   };
 
   sendOtp = async (req: Request, res: Response) => {
@@ -40,10 +43,14 @@ export class MentorController implements IMentorController {
     res.status(200).json({ message: "OTP sent" });
   };
 
-  verifyOtp = async (req: Request, res: Response) => {
-    const { email, code } = req.body;
-    const result = await this.service.verifyOtp(email, code);
-    res.status(200).json(result);
+  verifyOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, code } = req.body;
+      const result = await this.service.verifyOtp(email, code);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   };
 
   getAll = async (req: Request, res: Response) => {
