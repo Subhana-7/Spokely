@@ -19,6 +19,12 @@ export interface IMentor extends Document {
   isVerified: boolean;
   googleId?: string;
   isGoogleUser?: boolean;
+  document: {
+    documentUrl: string;
+    textMessage: string;
+    verificationStatus: "pending" | "approved" | "rejected";
+    rejectionReason?: string;
+  };
 }
 
 const mentorSchema = new Schema<IMentor>(
@@ -33,7 +39,8 @@ const mentorSchema = new Schema<IMentor>(
     },
     phone: { type: Number },
     otp: {
-      code: { type: String, expiresAt: Date },
+      code: { type: String },
+      expiresAt: { type: Date },
     },
     googleId: { type: String, default: null },
     isGoogleUser: { type: Boolean, default: false },
@@ -42,6 +49,17 @@ const mentorSchema = new Schema<IMentor>(
     isBlocked: { type: Boolean, default: false },
     uniqueCode: { type: String, required: true, unique: true },
     sessionsDone: { type: Number, default: 0 },
+    document: {
+      documentUrl: { type: String, required: true },
+      textMessage: { type: String, required: true },
+      verificationStatus: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
+      },
+
+      rejectionReason: { type: String },
+    },
   },
   { timestamps: true }
 );

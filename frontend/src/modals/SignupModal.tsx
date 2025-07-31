@@ -6,6 +6,7 @@ import Button from "./Button";
 import Toggle from "./Toggle";
 import { signup, sendOTP } from "../services/authServices";
 import OTPModal from "./OTPModal";
+import { uploadImageToCloudinary } from "../utilis/cloudinary ";
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -26,11 +27,18 @@ const SignupModal: React.FC<SignupModalProps> = ({
     role: "",
   });
 
+  const [mentorData, setMentorData] = useState({
+    documentUrl: "",
+    textMessage: "",
+  });
+
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
     phone?: string;
     password?: string;
+    mentorDocument?: string;
+    mentorMessage?: string;
   }>({});
 
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -73,6 +81,19 @@ const SignupModal: React.FC<SignupModalProps> = ({
       newErrors.phone = "Enter a valid 10-digit phone number";
     }
 
+    if (formData.role === "mentor") {
+      if (!mentorData.documentUrl) {
+        newErrors.mentorDocument = "Verification document is required";
+      }
+
+      const trimmedMessage = mentorData.textMessage.trim();
+      if (!trimmedMessage) {
+        newErrors.mentorMessage = "Please write a message to the Spokely team";
+      } else if (trimmedMessage.length < 10) {
+        newErrors.mentorMessage = "Message must be at least 10 characters long";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -83,12 +104,29 @@ const SignupModal: React.FC<SignupModalProps> = ({
     }/api/users/google`;
   };
 
+  const handleFileUpload = async (file: File) => {
+    try {
+      const url = await uploadImageToCloudinary(file);
+      setMentorData({ ...mentorData, documentUrl: url });
+      setErrors((prev) => ({ ...prev, mentorDocument: "" }));
+    } catch (error) {
+      console.error("File upload failed", error);
+      alert("Failed to upload document. Please try again.");
+    }
+  };
+
   const handleCreateAccount = async () => {
     if (!validate()) return;
 
     try {
-      await signup(formData);
-      await sendOTP({ email: formData.email },formData.role as "user" | "mentor");
+      await signup({
+        ...formData,
+        ...mentorData,
+      });
+      await sendOTP(
+        { email: formData.email },
+        formData.role as "user" | "mentor"
+      );
       setShowOtpModal(true);
     } catch (err: any) {
       console.log(
@@ -111,8 +149,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
           value={formData.name}
           onChange={(value) => {
             setFormData({ ...formData, name: value });
-            if (errors.name)
-              setErrors((prev) => ({ ...prev, name: "" }));
+            if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
           }}
           error={errors.name}
         />
@@ -163,6 +200,50 @@ const SignupModal: React.FC<SignupModalProps> = ({
             onChange={(value) => setFormData({ ...formData, role: value })}
           />
         </div>
+
+        {formData.role === "mentor" && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Upload Verification Document
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileUpload(file);
+                  }
+                }}
+                className="mt-2"
+              />
+              {errors.mentorDocument && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.mentorDocument}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Input
+                type="textarea"
+                placeholder="Write your message to the Spokely team..."
+                value={mentorData.textMessage}
+                onChange={(val) => {
+                  setMentorData({ ...mentorData, textMessage: val });
+
+                  const trimmedVal = val.trim();
+                  if (errors.mentorMessage && trimmedVal.length >= 10) {
+                    setErrors((prev) => ({ ...prev, mentorMessage: "" }));
+                  }
+                }}
+                className="resize-none h-24"
+                error={errors.mentorMessage}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 pt-2">
           <Button variant="google" onClick={handleGoogleSignup}>

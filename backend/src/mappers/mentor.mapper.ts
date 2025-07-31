@@ -14,4 +14,12 @@ export const toMentorResponseDTO = (mentor: IMentor): MentorResponseDTO => ({
   isGoogleUser: mentor.isGoogleUser,
   createdAt: mentor.createdAt,
   updatedAt: mentor.updatedAt,
+  document: mentor.document
+    ? {
+        documentUrl: mentor.document.documentUrl,
+        textMessage: mentor.document.textMessage,
+        verificationStatus: mentor.document.verificationStatus,
+        rejectionReason: mentor.document.rejectionReason,
+      }
+    : undefined,
 });

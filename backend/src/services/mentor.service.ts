@@ -14,7 +14,8 @@ export class MentorService implements IMentorService {
   ) {}
 
   async generateUniqueCode(): Promise<string | null> {
-    const generate = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+    const generate = () =>
+      Math.random().toString(36).substring(2, 8).toUpperCase();
     let code = generate();
     while (await this.repo.findByUniqueCode(code)) {
       code = generate();
@@ -44,7 +45,7 @@ export class MentorService implements IMentorService {
   }
 
   async sendOtp(email: string): Promise<void> {
-    console.log("mentor sendotp service")
+    console.log("mentor sendotp service");
     const mentor = await this.repo.findByEmail(email);
     if (!mentor) throw new Error("Mentor not found");
 
@@ -55,7 +56,7 @@ export class MentorService implements IMentorService {
   }
 
   async verifyOtp(email: string, code: string): Promise<{ message: string }> {
-    console.log("mentor verify otp service")
+    console.log("mentor verify otp service");
     const isValid = await this.repo.verifyOTP(email, code);
     if (!isValid) throw new Error("Invalid or expired OTP");
     return { message: "Email verified successfully" };
@@ -68,7 +69,18 @@ export class MentorService implements IMentorService {
     const hashed = await bcrypt.hash(data.password, 10);
     const uniqueCode = await this.generateUniqueCode();
 
-    return this.repo.createMentor({ ...data, password: hashed, uniqueCode });
+    const document = {
+      documentUrl: data.documentUrl,
+      textMessage: data.textMessage,
+      verificationStatus: "pending",
+    };
+
+    return this.repo.createMentor({
+      ...data,
+      password: hashed,
+      uniqueCode,
+      document,
+    });
   }
 
   async login(data: any): Promise<{ mentor: IMentor; token: string } | null> {

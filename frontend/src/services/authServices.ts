@@ -18,14 +18,12 @@ API.interceptors.request.use((config) => {
 });
 
 export const signup = (data: any) => {
-  const { name, email, phone, password, role } = data;
+  const { name, email, phone, password, role,documentUrl,textMessage } = data;
 
-  const payload = {
-    name,
-    email,
-    phone,
-    password,
-  };
+  const payload =
+    role === "mentor"
+      ? { name, email, phone, password, documentUrl, textMessage }
+      : { name, email, phone, password };
 
   const endpoint =
     role === "mentor" ? "/api/mentors/signup" : "/api/users/signup";

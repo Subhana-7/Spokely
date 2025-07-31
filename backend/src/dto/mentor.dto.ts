@@ -11,4 +11,10 @@ export interface MentorResponseDTO {
   isGoogleUser?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  document?: {
+    documentUrl: string;
+    textMessage: string;
+    verificationStatus: "pending" | "approved" | "rejected";
+    rejectionReason?: string;
+  };
 }
