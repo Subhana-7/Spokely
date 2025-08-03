@@ -34,17 +34,19 @@ export class AdminRepository implements IAdminRepository {
   }
 
   async blockUser(id: string): Promise<IUser | null> {
-    try {
-      let result = User.findByIdAndUpdate(
-        id,
-        { isBlocked: true },
-        { new: true }
-      );
-      return result;
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
+    return User.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+  }
+
+  async unblockUser(id: string): Promise<IUser | null> {
+    return User.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
+  }
+
+  async blockMentor(id: string): Promise<IUser | null> {
+    return Mentor.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+  }
+
+  async unblockMentor(id: string): Promise<IUser | null> {
+    return Mentor.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
   }
 
   // async deleteUser(id: string): Promise<IUser | null> {
@@ -83,13 +85,19 @@ export class AdminRepository implements IAdminRepository {
     }
   }
 
-  async updateMentorRejection(id:string,reason:string):Promise<IMentor | null> {
+  async updateMentorRejection(
+    id: string,
+    reason: string
+  ): Promise<IMentor | null> {
     try {
       let res = await Mentor.findByIdAndUpdate(
         id,
-        { "document.verificationStatus": "rejected","document.rejectionReason": reason },
-        {new:true}
-      )
+        {
+          "document.verificationStatus": "rejected",
+          "document.rejectionReason": reason,
+        },
+        { new: true }
+      );
       return res;
     } catch (error) {
       console.log("error", error);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
-import { getAllMentors, blockMentor } from "../../services/adminService";
+import { getAllMentors, updateMentorStatus } from "../../services/adminService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -26,35 +26,36 @@ const MentorManagement = () => {
 
   const handleBlock = async (id: string) => {
     try {
-      await blockMentor(id);
-      toast.success("User blocked");
+      // Find the mentor to determine current status
+      const mentor = mentors.find(m => m._id === id);
+      if (!mentor) {
+        toast.error("Mentor not found");
+        return;
+      }
+
+      const newStatus = mentor.isBlocked ? "unBlocked" : "blocked";
+      
+      await updateMentorStatus(id, newStatus);
+
       setMentors((prev) =>
-        prev.map((mentor) =>
-          mentor._id === id
-            ? { ...mentor, isBlocked: !mentor.isBlocked }
-            : mentor
-        )
+        prev.map((m) => {
+          if (m._id === id) {
+            return { ...m, isBlocked: !m.isBlocked };
+          }
+          return m;
+        })
       );
+
+      toast.success(`Mentor ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`);
     } catch (err) {
-      toast.error("Failed to block user");
+      toast.error("Failed to update mentor status");
+      console.error("Error updating mentor status:", err);
     }
   };
 
   const handleMentorClick = (id: string) => {
       navigate(`/admin/mentors/verification/${id}`);
   };
-
-  // const handleEdit = (id: string) => console.log('Edit mentor:', id);
-
-  // const handleDelete = async (id: string) => {
-  //   try {
-  //     await deleteMentor(id);
-  //     toast.success("User deleted");
-  //     setMentors((prev) => prev.filter((mentor) => mentor._id !== id));
-  //   } catch (err) {
-  //     toast.error("Failed to delete user");
-  //   }
-  // };
 
   const mentorData = mentors.map((mentor) => ({
     id: mentor._id,
@@ -65,6 +66,7 @@ const MentorManagement = () => {
     sessions: mentor.sessionsDone || 0,
     avatar: mentor.profilePicture || undefined,
     verificationStatus: mentor.document?.verificationStatus ?? "old doc",
+    isBlocked: mentor.isBlocked, 
   }));
 
   return (
@@ -79,13 +81,6 @@ const MentorManagement = () => {
             Manage and monitor all platform mentors
           </p>
         </div>
-        {/* <button
-          className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium"
-          onClick={() => console.log('Add Mentor')}
-        >
-          <Plus className="w-4 h-4" />
-          Add Mentor
-        </button> */}
       </div>
 
       <SearchFilterBar
@@ -103,8 +98,6 @@ const MentorManagement = () => {
         type="mentor"
         onBlock={handleBlock}
         onRowClick={handleMentorClick}
-        // onEdit={handleEdit}
-        // onDelete={handleDelete}
       />
     </div>
   );

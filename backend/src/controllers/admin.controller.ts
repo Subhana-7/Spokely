@@ -12,11 +12,12 @@ export class AdminController implements IAdminController {
     this.adminLogin = this.adminLogin.bind(this);
     this.listUsers = this.listUsers.bind(this);
     this.listMentors = this.listMentors.bind(this);
-    this.blockUser = this.blockUser.bind(this);
+    this.updateUserStatus = this.updateUserStatus.bind(this);
     // this.deleteUser = this.deleteUser.bind(this);
     this.mentorVerification  = this.mentorVerification.bind(this);
     this.approveMentor = this.approveMentor.bind(this);
     this.rejectMentor = this.rejectMentor.bind(this);
+    this.updateMentorStatus = this.updateMentorStatus.bind(this);
   }
 
   async adminLogin(req: Request, res: Response): Promise<void> {
@@ -60,15 +61,69 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async blockUser(req: Request, res: Response): Promise<void> {
+  async updateUserStatus(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
-      const updated = await this.service.blockUser(id);
-      res.status(200).json(updated);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      const { id: userId } = req.params;
+      const { status } = req.body;
+
+      const actions: Record<string, () => Promise<any>> = {
+        unBlocked: () => this.service.unblockUser(userId),
+        blocked: () => this.service.blockUser(userId),
+      };
+
+      const action = actions[status];
+
+      // if (!action) {
+      //   return res.status(400).json({ error: "Invalid status value" });
+      // }
+
+      const result = await action();
+
+      res.status(200).json({
+        message: `User successfully ${status === "unBlocked" ? "unblocked" : "blocked"}.`,
+        user: result,
+      });
+    } catch (error) {
+      res.status(400).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update user status",
+      });
     }
-  }
+  };
+
+   async updateMentorStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id: mentorId } = req.params;
+      const { status } = req.body;
+
+      const actions: Record<string, () => Promise<any>> = {
+        unBlocked: () => this.service.unblockMentor(mentorId),
+        blocked: () => this.service.blockMentor(mentorId),
+      };
+
+      const action = actions[status];
+
+      // if (!action) {
+      //   return res.status(400).json({ error: "Invalid status value" });
+      // }
+
+      const result = await action();
+
+      res.status(200).json({
+        message: `Mentor successfully ${status === "unBlocked" ? "unblocked" : "blocked"}.`,
+        user: result,
+      });
+    } catch (error) {
+      res.status(400).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update user status",
+      });
+    }
+  };
 
   // async deleteUser(req: Request, res: Response): Promise<void> {
   //   try {

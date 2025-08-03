@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
-import { getAllUsers, blockUser } from "../../services/adminService";
+import { getAllUsers, updateUserStatus } from "../../services/adminService";
 import toast from "react-hot-toast";
 
 const UserManagement = () => {
@@ -22,37 +22,41 @@ const UserManagement = () => {
 
   const handleBlock = async (id: string) => {
     try {
-      await blockUser(id);
+      const user = users.find(u => u.id === id);
+      if (!user) {
+        toast.error("User not found");
+        return;
+      }
 
-      let newStatus = "";
-      setUsers((prev) => {
-        const updatedUsers = prev.map((u) => {
-          // FIX: Use the same ID field that you're passing from userData
+      const newStatus = user.isBlocked ? "unBlocked" : "blocked";
+      
+      await updateUserStatus(id, newStatus);
+
+      setUsers((prev) => 
+        prev.map((u) => {
           if (u._id === id) {
-            const updatedUser = { ...u, isBlocked: !u.isBlocked };
-            newStatus = updatedUser.isBlocked ? "blocked" : "unblocked";
-            return updatedUser;
+            return { ...u, isBlocked: !u.isBlocked };
           }
           return u;
-        });
-        return updatedUsers;
-      });
+        })
+      );
 
-      toast.success("User Blocked" + newStatus);
+      toast.success(`User ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`);
     } catch (err) {
-      toast.error("Failed to block user");
+      toast.error("Failed to update user status");
+      console.error("Error updating user status:", err);
     }
   };
 
   const userData = users.map((user) => ({
-    id: user.id, 
+    id: user.id,
     name: user.name,
     email: user.email,
     avatar: user.profilePicture || undefined,
     level: user.levels?.toString() ?? "N/A",
     students: user.students?.length ?? 0,
     dailyTask: "To be implemented",
-    status: user.isBlocked ? "Blocked" : "Active",
+    status: user.isBlocked ? "Blocked" : "unBlocked",
     isBlocked: user.isBlocked,
     sessions: user.sessionsDone,
     mentors: 0,

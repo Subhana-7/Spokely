@@ -20,21 +20,35 @@ export const getAllMentors = async () => {
   return response.data;
 };
 
-export const blockUser = async (id: string) => {
-  return API.patch(`/admin/users/${id}/block`);
+export const updateUserStatus = async (userId: string, status: "unBlocked" | "blocked") => {
+  const response = await API.patch(`/admin/users/${userId}/status`, {
+    status,
+  });
+  return response.data;
 };
 
-// export const deleteUser = async (id: string) => {
-//   return API.delete(`/admin/users/${id}`);
-// };
-
-export const blockMentor = async (id: string) => {
-  return API.patch(`/admin/mentors/${id}/block`);
+export const blockUser = async (userId: string) => {
+  return updateUserStatus(userId, "blocked");
 };
 
-// export const deleteMentor = async (id: string) => {
-//   return API.delete(`/admin/mentors/${id}`);
-// };
+export const unblockUser = async (userId: string) => {
+  return updateUserStatus(userId, "unBlocked");
+};
+
+export const updateMentorStatus = async (mentorId: string, status: "unBlocked" | "blocked") => {
+  const response = await API.patch(`/admin/mentors/${mentorId}/status`, {
+    status,
+  });
+  return response.data;
+};
+
+export const blockMentor = async (mentorId: string) => {
+  return updateMentorStatus(mentorId, "blocked");
+};
+
+export const unblockMentor = async (mentorId: string) => {
+  return updateMentorStatus(mentorId, "unBlocked");
+};
 
 export const mentorVerification = async (id: string) => {
   return API.get(`/admin/mentors/verification/${id}`);

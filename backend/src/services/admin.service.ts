@@ -41,6 +41,18 @@ export class AdminService implements IAdminService {
     return this.repo.blockUser(id);
   }
 
+  async unblockUser(id: string): Promise<IUser | null> {
+    return this.repo.unblockUser(id);
+  }
+
+  async blockMentor(id: string): Promise<IUser | null> {
+    return this.repo.blockMentor(id);
+  }
+
+  async unblockMentor(id: string): Promise<IUser | null> {
+    return this.repo.unblockMentor(id);
+  }
+
   // async deleteUser(id: string): Promise<IUser | null> {
   //   return this.repo.deleteUser(id);
   // }
