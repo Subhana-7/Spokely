@@ -1,6 +1,9 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { IEmailService } from "../services/interfaces/IEmailService";
+import { EmailService } from "../services/email.service";
+
 import { ISessionController } from "../controllers/interfaces/ISessionController";
 import { SessionController } from "../controllers/session.controller";
 
@@ -47,6 +50,8 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IEmailService>(TYPES.IEmailService).to(EmailService)
 
 container
   .bind<ISessionController>(TYPES.ISessionController)

@@ -49,6 +49,23 @@ const SignupModal: React.FC<SignupModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
+  // Function to reset all form data
+  const resetFormData = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "",
+    });
+    setMentorData({
+      documentUrl: "",
+      textMessage: "",
+    });
+    setErrors({});
+    setShowPassword(false);
+  };
+
   const validate = () => {
     const newErrors: typeof errors = {};
 
@@ -129,149 +146,171 @@ const SignupModal: React.FC<SignupModalProps> = ({
       );
       setShowOtpModal(true);
     } catch (err: any) {
-      console.log(
-        "Signup failed: " + (err.response?.data?.message || err.message)
-      );
+      const message = err.response?.data?.message || err.message;
+
+      if (message.includes("Email already")) {
+        setErrors((prev) => ({ ...prev, email: "Email already registered" }));
+      }
+      
+      console.log("Signup failed: " + message);
     }
   };
 
+  const handleCloseModal = () => {
+    resetFormData();
+    onClose();
+  };
+
+  const handleOtpModalClose = () => {
+    setShowOtpModal(false);
+    resetFormData();
+    onClose(); 
+  };
+
+  const handleSwitchToLogin = () => {
+    resetFormData();
+    onSwitchToLogin();
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Create Account"
-      icon={<UserPlus className="h-6 w-6 text-gray-800" />}
-    >
-      <div className="space-y-4">
-        <Input
-          type="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={(value) => {
-            setFormData({ ...formData, name: value });
-            if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
-          }}
-          error={errors.name}
-        />
-
-        <Input
-          type="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={(value) => {
-            setFormData({ ...formData, email: value });
-            if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
-          }}
-          error={errors.email}
-        />
-
-        <Input
-          type="text"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={(value) => {
-            setFormData({ ...formData, phone: value });
-            if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
-          }}
-          error={errors.phone}
-        />
-
-        <Input
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={formData.password}
-          onChange={(value) => {
-            setFormData({ ...formData, password: value });
-            if (errors.password)
-              setErrors((prev) => ({ ...prev, password: "" }));
-          }}
-          error={errors.password}
-          rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          onRightIconClick={() => setShowPassword((prev) => !prev)}
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Select Role
-          </label>
-          <Toggle
-            options={roleOptions}
-            selected={formData.role}
-            onChange={(value) => setFormData({ ...formData, role: value })}
+    <>
+      <Modal
+        isOpen={isOpen && !showOtpModal}
+        onClose={handleCloseModal}
+        title="Create Account"
+        icon={<UserPlus className="h-6 w-6 text-gray-800" />}
+      >
+        <div className="space-y-4">
+          <Input
+            type="name"
+            placeholder="Full Name"
+            value={formData.name}
+            onChange={(value) => {
+              setFormData({ ...formData, name: value });
+              if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+            }}
+            error={errors.name}
           />
-        </div>
 
-        {formData.role === "mentor" && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Upload Verification Document
-              </label>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.png,.jpg"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    handleFileUpload(file);
-                  }
-                }}
-                className="mt-2"
-              />
-              {errors.mentorDocument && (
-                <p className="text-sm text-red-600 mt-1">
-                  {errors.mentorDocument}
-                </p>
-              )}
-            </div>
+          <Input
+            type="email"
+            placeholder="Email Address"
+            value={formData.email}
+            onChange={(value) => {
+              setFormData({ ...formData, email: value });
+              if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            error={errors.email}
+          />
 
-            <div>
-              <Input
-                type="textarea"
-                placeholder="Write your message to the Spokely team..."
-                value={mentorData.textMessage}
-                onChange={(val) => {
-                  setMentorData({ ...mentorData, textMessage: val });
+          <Input
+            type="text"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={(value) => {
+              setFormData({ ...formData, phone: value });
+              if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
+            }}
+            error={errors.phone}
+          />
 
-                  const trimmedVal = val.trim();
-                  if (errors.mentorMessage && trimmedVal.length >= 10) {
-                    setErrors((prev) => ({ ...prev, mentorMessage: "" }));
-                  }
-                }}
-                className="resize-none h-24"
-                error={errors.mentorMessage}
-              />
-            </div>
+          <Input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={formData.password}
+            onChange={(value) => {
+              setFormData({ ...formData, password: value });
+              if (errors.password)
+                setErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            error={errors.password}
+            rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            onRightIconClick={() => setShowPassword((prev) => !prev)}
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-2">
+              Select Role
+            </label>
+            <Toggle
+              options={roleOptions}
+              selected={formData.role}
+              onChange={(value) => setFormData({ ...formData, role: value })}
+            />
           </div>
-        )}
 
-        <div className="space-y-3 pt-2">
-          <Button variant="google" onClick={handleGoogleSignup}>
-            Signup using Google
-          </Button>
+          {formData.role === "mentor" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  Upload Verification Document
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.png,.jpg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileUpload(file);
+                    }
+                  }}
+                  className="mt-2"
+                />
+                {errors.mentorDocument && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.mentorDocument}
+                  </p>
+                )}
+              </div>
 
-          <Button variant="primary" onClick={handleCreateAccount}>
-            Create Account
-          </Button>
+              <div>
+                <Input
+                  type="textarea"
+                  placeholder="Write your message to the Spokely team..."
+                  value={mentorData.textMessage}
+                  onChange={(val) => {
+                    setMentorData({ ...mentorData, textMessage: val });
+
+                    const trimmedVal = val.trim();
+                    if (errors.mentorMessage && trimmedVal.length >= 10) {
+                      setErrors((prev) => ({ ...prev, mentorMessage: "" }));
+                    }
+                  }}
+                  className="resize-none h-24"
+                  error={errors.mentorMessage}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3 pt-2">
+            <Button variant="google" onClick={handleGoogleSignup}>
+              Signup using Google
+            </Button>
+
+            <Button variant="primary" onClick={handleCreateAccount}>
+              Create Account
+            </Button>
+          </div>
+
+          <div className="text-center pt-2">
+            <button
+              onClick={handleSwitchToLogin}
+              className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
+            >
+              Already have an account? Login
+            </button>
+          </div>
         </div>
+      </Modal>
 
-        <OTPModal
-          isOpen={showOtpModal}
-          onClose={() => setShowOtpModal(false)}
-          email={formData.email}
-          role={formData.role}
-        />
-
-        <div className="text-center pt-2">
-          <button
-            onClick={onSwitchToLogin}
-            className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
-          >
-            Already have an account? Login
-          </button>
-        </div>
-      </div>
-    </Modal>
+      <OTPModal
+        isOpen={showOtpModal}
+        onClose={handleOtpModalClose}
+        email={formData.email}
+        role={formData.role}
+      />
+    </>
   );
 };
 

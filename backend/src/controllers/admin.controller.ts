@@ -14,6 +14,9 @@ export class AdminController implements IAdminController {
     this.listMentors = this.listMentors.bind(this);
     this.blockUser = this.blockUser.bind(this);
     // this.deleteUser = this.deleteUser.bind(this);
+    this.mentorVerification  = this.mentorVerification.bind(this);
+    this.approveMentor = this.approveMentor.bind(this);
+    this.rejectMentor = this.rejectMentor.bind(this);
   }
 
   async adminLogin(req: Request, res: Response): Promise<void> {
@@ -77,4 +80,35 @@ export class AdminController implements IAdminController {
   //     res.status(500).json({ error: err.message });
   //   }
   // }
+
+  async mentorVerification(req:Request,res:Response):Promise<void> {
+    try {
+      const {id} = req.params;
+      const data = await this.service.getMentor(id);
+      res.status(200).json(data);
+    } catch (error:any) {
+      res.status(400).json({error:error.message});
+    }
+  }
+
+  async approveMentor(req:Request,res:Response):Promise<void> {
+    try {
+      const {id} = req.params;
+      const data = await this.service.approveMentor(id);
+      res.status(200).json(data);
+    } catch (error:any) {
+      res.status(400).json({error:error.message});
+    }
+  }
+
+  async rejectMentor(req:Request,res:Response):Promise<void> {
+    try {
+      const {id} = req.params;
+      const {rejectionReason} = req.body;
+      const data = await this.service.rejectMentor(id,rejectionReason);
+      res.status(200).json(data);
+    } catch (error:any) {
+      res.status(400).json({error:error.message});
+    }
+  }
 }

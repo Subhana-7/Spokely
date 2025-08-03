@@ -18,7 +18,7 @@ API.interceptors.request.use((config) => {
 });
 
 export const signup = (data: any) => {
-  const { name, email, phone, password, role,documentUrl,textMessage } = data;
+  const { name, email, phone, password, role, documentUrl, textMessage } = data;
 
   const payload =
     role === "mentor"
@@ -36,26 +36,36 @@ export const login = (
 ) => {
   const endpoint =
     role === "mentor" ? "/api/mentors/login" : "/api/users/login";
-    console.log(endpoint,data)
   return API.post(endpoint, data);
 };
 
-export const sendOTP = (data: { email: string },role: "user" | "mentor") =>{
-  const endpoint = 
-  role === "mentor" ? "/api/mentors/send-otp" : "/api/users/send-otp";
-  return API.post(endpoint,data);
-}
+export const sendOTP = (data: { email: string }, role: "user" | "mentor") => {
+  const endpoint =
+    role === "mentor" ? "/api/mentors/send-otp" : "/api/users/send-otp";
+  return API.post(endpoint, data);
+};
 
-export const verifyOTP = (data: { email: string; code: string }, role: "user" | "mentor") => {
-  const endpoint = 
+export const verifyOTP = (
+  data: { email: string; code: string },
+  role: "user" | "mentor"
+) => {
+  const endpoint =
     role === "mentor" ? "/api/mentors/verify-otp" : "/api/users/verify-otp";
   return API.post(endpoint, data);
 };
 
+export const logoutService = (role: "user" | "mentor") => {
+  const endpoint =
+    role === "mentor" ? "/api/mentors/logout" : "/api/users/logout";
+  return API.post(endpoint, data);
+};
 
-
-export const logoutService = (role:"user" | "mentor") => {
-  const endpoint = 
-  role === "mentor" ? "/api/mentors/logout" : "/api/users/logout";
-  return API.post(endpoint,data);
-}
+export const resubmitDocument = (
+  email: string,
+  documentUrl: string,
+  textMessage: string
+) => {
+  console.log(email)
+  const endpoint = "/api/mentors/re-submit";
+  return API.patch(endpoint, { email, documentUrl, textMessage });
+};

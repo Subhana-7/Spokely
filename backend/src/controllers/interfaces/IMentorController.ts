@@ -7,4 +7,5 @@ export interface IMentorController {
   verifyOtp(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
   getAll(req: Request, res: Response): Promise<void>;
+  updateMentorDocument(req:Request,res:Response):Promise<void>;
 }

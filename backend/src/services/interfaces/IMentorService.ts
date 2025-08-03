@@ -7,4 +7,5 @@ export interface IMentorService {
   signup(data: any): Promise<IMentor | null>;
   login(data: any): Promise<{ mentor: IMentor; token: string } | null>;
   getAllMentors(): Promise<IMentor[] | null>;
+  updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
 }

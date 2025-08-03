@@ -1,3 +1,5 @@
+import Button from "../../modals/Button";
+
 interface DataItem {
   id: string;
   name: string;
@@ -10,17 +12,17 @@ interface DataItem {
   sessions: number;
   mentors?: number;
   isBlocked?: boolean;
+  verificationStatus?: "pending" | "approved" | "rejected";
 }
 
 interface DataTableProps {
   data: DataItem[];
   type: "user" | "mentor";
   onBlock?: (id: string) => void;
-  // onEdit?: (id: string) => void;
-  // onDelete?: (id: string) => void;
+  onRowClick?: (id: string) => void;
 }
 
-const DataTable = ({ data, type, onBlock }: DataTableProps) => {
+const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
@@ -31,6 +33,17 @@ const DataTable = ({ data, type, onBlock }: DataTableProps) => {
         return "bg-red-100 text-red-800";
       default:
         return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  // Function to get block/unblock button styles
+  const getBlockButtonStyles = (isBlocked: boolean) => {
+    if (isBlocked) {
+      // Unblock button - green color
+      return "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs";
+    } else {
+      // Block button - red color
+      return "bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs";
     }
   };
 
@@ -54,7 +67,10 @@ const DataTable = ({ data, type, onBlock }: DataTableProps) => {
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 border-t">
+              <tr
+                key={item.id}
+                className="hover:bg-gray-50 border-t"
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm overflow-hidden">
@@ -107,74 +123,39 @@ const DataTable = ({ data, type, onBlock }: DataTableProps) => {
                   </span>
                 </td>
 
-                {type === "user" && (
+                {type === "user" ? (
                   <td className="px-6 py-4">
                     <span className="font-medium text-gray-900">
                       {item.mentors}
                     </span>
+                  </td>
+                ) : (
+                  <td className="px-6 py-4">
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        onRowClick?.(item.id)
+                      }
+                    >
+                      {item.verificationStatus}
+                    </Button>
                   </td>
                 )}
 
                 <td className="px-6 py-4">
                   <div className="flex space-x-2">
                     <button
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs"
+                      className={getBlockButtonStyles(item.isBlocked || false)}
                       onClick={() => onBlock?.(item.id)}
                     >
                       {item.isBlocked ? "Unblock" : "Block"}
                     </button>
-
-                    {/* <button
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                      onClick={() => onEdit?.(item.id)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                      onClick={() => onDelete?.(item.id)}
-                    >
-                      Delete
-                    </button> */}
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex justify-center space-x-1 mt-4 text-sm">
-        <a
-          href="#"
-          className="px-3 py-1 rounded border text-gray-600 hover:bg-gray-100"
-        >
-          Previous
-        </a>
-        <a
-          href="#"
-          className="px-3 py-1 rounded border bg-blue-100 text-blue-700 font-semibold"
-        >
-          1
-        </a>
-        <a
-          href="#"
-          className="px-3 py-1 rounded border text-gray-600 hover:bg-gray-100"
-        >
-          2
-        </a>
-        <a
-          href="#"
-          className="px-3 py-1 rounded border text-gray-600 hover:bg-gray-100"
-        >
-          3
-        </a>
-        <a
-          href="#"
-          className="px-3 py-1 rounded border text-gray-600 hover:bg-gray-100"
-        >
-          Next
-        </a>
       </div>
     </div>
   );

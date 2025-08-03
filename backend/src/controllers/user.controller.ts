@@ -42,7 +42,6 @@ export class UserController implements IUserController {
     req: Request<{}, {}, LoginDTO>,
     res: Response
   ): Promise<void> => {
-    console.log("user login controller")
     try {
       const result = await this.service.login(req.body);
       if (!result) {

@@ -11,4 +11,5 @@ export interface IMentorRepository {
   ): Promise<IMentor | null>;
   verifyOTP(email: string, code: string): Promise<boolean | null>;
   findAll(): Promise<IMentor[] | null>;
+  updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
 }

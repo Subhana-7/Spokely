@@ -3,6 +3,7 @@ import { Shield } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
+import MentorSuccessModal from "./MentorSuccessModal";
 import { verifyOTP, sendOTP } from "../services/authServices";
 import { useNavigate } from "react-router-dom";
 
@@ -21,9 +22,13 @@ const OTPModal: React.FC<OTPModalProps> = ({
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [secondsLeft, setSecondsLeft] = useState(120); // 2 minutes
+  const [secondsLeft, setSecondsLeft] = useState(120); 
   const [canInteract, setCanInteract] = useState(false);
   const navigate = useNavigate();
+
+  const [showMentorSuccess, setShowMentorSuccess] = useState(false);
+  const [mentorMessage, setMentorMessage] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -56,7 +61,19 @@ const OTPModal: React.FC<OTPModalProps> = ({
     setError("");
     try {
       await verifyOTP({ email, code: otp }, role as "user" | "mentor");
-      navigate(role === "user" ? "/user/home" : "/mentor/home");
+      setIsVerified(true);
+
+      setCanInteract(false);
+      setSecondsLeft(0);
+      
+      if (role === "user") {
+        navigate("/user/home");
+      } else {
+        setMentorMessage(
+          "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
+        );
+        setShowMentorSuccess(true);
+      }
     } catch (err: any) {
       const msg =
         err.response?.data?.message || err.message || "Verification failed";
@@ -78,10 +95,35 @@ const OTPModal: React.FC<OTPModalProps> = ({
     }
   };
 
+  const handleMentorSuccessClose = () => {
+    setShowMentorSuccess(false);
+    setMentorMessage("");
+    onClose();
+  };
+
+  const handleCloseModal = () => {
+    setShowMentorSuccess(false);
+    setMentorMessage("");
+    setIsVerified(false);
+    setOtp("");
+    setError("");
+    onClose();
+  };
+
+  if (showMentorSuccess) {
+    return (
+      <MentorSuccessModal
+        isOpen={isOpen}
+        onClose={handleMentorSuccessClose}
+        message={mentorMessage}
+      />
+    );
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCloseModal}
       title="Kindly verify your email"
       icon={<Shield className="h-6 w-6 text-gray-800" />}
     >
@@ -111,7 +153,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
           onChange={setOtp}
           className="text-center text-lg tracking-widest"
           error={error}
-          disabled={canInteract}
+          disabled={canInteract || isVerified}
         />
 
         <div className="pt-2">
@@ -127,7 +169,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
         <div className="text-center pt-2">
           <button
             onClick={handleResend}
-            disabled={!canInteract}
+            disabled={!canInteract || isVerified}
             className={`font-medium transition-colors ${
               canInteract
                 ? "text-blue-600 hover:text-blue-700"

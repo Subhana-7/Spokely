@@ -3,8 +3,10 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
-import { login, sendOTP } from "../services/authServices";
+import { login } from "../services/authServices";
 import OTPModal from "./OTPModal";
+import VerificationPendingModal from "./VerificationPendingModal";
+import DocumentResubmissionModal from "./DocumentReSubmissionModal";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
 import Toggle from "./Toggle";
@@ -23,9 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onForgotPassword,
 }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
   const { setRole: setGlobalRole } = useAuthStore();
@@ -34,6 +34,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+
+  const [showDocumentResubmission, setShowDocumentResubmission] = useState(false);
+  const [verificationPendingMessage, setVerificationPendingMessage] = useState("");
 
   const validate = () => {
     const err: typeof errors = {};
@@ -63,6 +66,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
         setRole(user.role);
         setEmail(user.email);
         setShowOtpModal(true);
+      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "rejected") {
+        setShowDocumentResubmission(true);
+      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "pending") {
+        setVerificationPendingMessage("Your mentor application is under review, Kindly monitor emails for updation");
       } else {
         setGlobalRole(user.role);
         if (selectedRole === "user") {
@@ -87,16 +94,54 @@ const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
+  const handleCloseModal = () => {
+    setShowOtpModal(false);
+    setShowDocumentResubmission(false);
+    setVerificationPendingMessage("");
+    setErrors({});
+    onClose();
+  };
+
+  const handleVerificationPendingClose = () => {
+    setVerificationPendingMessage("");
+    handleCloseModal();
+  };
+
+  const handleDocumentResubmissionClose = () => {
+    setShowDocumentResubmission(false);
+    handleCloseModal();
+  };
+
   const roleOptions = [
     { value: "user", label: "User" },
     { value: "mentor", label: "Mentor" },
   ];
 
+  if (verificationPendingMessage) {
+    return (
+      <VerificationPendingModal
+        isOpen={isOpen}
+        onClose={handleVerificationPendingClose}
+        message={verificationPendingMessage}
+      />
+    );
+  }
+
+  if (showDocumentResubmission) {
+    return (
+      <DocumentResubmissionModal
+        isOpen={isOpen}
+        onClose={handleDocumentResubmissionClose}
+        email={formData.email}
+      />
+    );
+  }
+
   return (
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleCloseModal}
         title="Login"
         icon={<LogIn className="h-6 w-6 text-gray-800" />}
       >
@@ -164,13 +209,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         onClose={() => setShowOtpModal(false)}
         email={email}
         role={role}
-        onVerify={() => {
-          if (role === "user") {
-            navigate("/user/home");
-          } else {
-            navigate("/mentor/home");
-          }
-        }}
       />
     </>
   );

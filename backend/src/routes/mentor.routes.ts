@@ -13,5 +13,7 @@ router.post("/send-otp", controller.sendOtp);
 router.post("/verify-otp", controller.verifyOtp);
 router.get("/all", authMiddleware(["mentor"]), controller.getAll);
 router.post("/logout", controller.logout);
+router.patch("/re-submit",controller.updateMentorDocument)
+
 
 export default router;

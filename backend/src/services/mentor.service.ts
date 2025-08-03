@@ -1,5 +1,6 @@
 import { IMentorService } from "./interfaces/IMentorService";
 import { IMentor } from "../models/mentor.model";
+import { IEmailService } from "./interfaces/IEmailService";
 import { injectable, inject } from "inversify";
 import { IMentorRepository } from "../repositories/interfaces/IMentorRepository";
 import bcrypt from "bcrypt";
@@ -10,7 +11,8 @@ import { TYPES } from "../types/types";
 @injectable()
 export class MentorService implements IMentorService {
   constructor(
-    @inject(TYPES.IMentorRepository) private repo: IMentorRepository
+    @inject(TYPES.IMentorRepository) private repo: IMentorRepository,
+    @inject(TYPES.IEmailService) private emailService: IEmailService
   ) {}
 
   async generateUniqueCode(): Promise<string | null> {
@@ -27,38 +29,22 @@ export class MentorService implements IMentorService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async sendOTPEmail(to: string, otp: string) {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject: "Your OTP Code",
-      text: `Your verification code is ${otp}. It expires in 10 minutes.`,
-    });
-  }
-
   async sendOtp(email: string): Promise<void> {
-    console.log("mentor sendotp service");
     const mentor = await this.repo.findByEmail(email);
     if (!mentor) throw new Error("Mentor not found");
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     await this.repo.updateOTP(email, otp, expiresAt);
-    await this.sendOTPEmail(email, otp);
+    await this.emailService.sendOTP(email, otp);
   }
 
   async verifyOtp(email: string, code: string): Promise<{ message: string }> {
-    console.log("mentor verify otp service");
     const isValid = await this.repo.verifyOTP(email, code);
     if (!isValid) throw new Error("Invalid or expired OTP");
+
+    await this.emailService.sendVerificationUpdateEmail(email,'pending');
+    
     return { message: "Email verified successfully" };
   }
 
@@ -84,7 +70,6 @@ export class MentorService implements IMentorService {
   }
 
   async login(data: any): Promise<{ mentor: IMentor; token: string } | null> {
-    console.log("mentor login service");
     const mentor = await this.repo.findByEmail(data.email);
     if (!mentor) throw new Error("Invalid credentials");
 
@@ -104,5 +89,9 @@ export class MentorService implements IMentorService {
 
   async getAllMentors(): Promise<IMentor[] | null> {
     return this.repo.findAll();
+  }
+
+  async updateMentorDocument(email:string,docUrl:string,docMessage:string,):Promise<IMentor | null>{
+    return this.repo.updateMentorDocument(email,docUrl,docMessage,);
   }
 }

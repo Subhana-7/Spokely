@@ -10,9 +10,13 @@ export class MentorController implements IMentorController {
   constructor(@inject(TYPES.IMentorService) private service: IMentorService) {}
 
   signup = async (req: Request, res: Response) => {
-    const mentor = await this.service.signup(req.body);
-    const dto = toMentorResponseDTO(mentor!);
-    res.status(201).json(dto);
+    try {
+      const mentor = await this.service.signup(req.body);
+      const dto = toMentorResponseDTO(mentor!);
+      res.status(201).json(dto);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   };
 
   login = async (req: Request, res: Response) => {
@@ -66,5 +70,23 @@ export class MentorController implements IMentorController {
       secure: process.env.NODE_ENV === "production",
     });
     res.status(200).json({ message: "Logged out" });
+  };
+
+  updateMentorDocument = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, documentUrl, textMessage } = req.body;
+      const data = await this.service.updateMentorDocument(
+        email,
+        documentUrl,
+        textMessage
+      );
+      res.status(200).json({
+        success: true,
+        message: "Document resubmitted successfully",
+        data: data,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   };
 }

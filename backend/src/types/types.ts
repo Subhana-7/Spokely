@@ -1,4 +1,6 @@
 export const TYPES = {
+  IEmailService:Symbol.for("IEmailService"),
+
   ISessionController: Symbol.for("ISessionController"),
   ISessionService: Symbol.for("ISessionService"),
   ISessionRepository: Symbol.for("ISessionRepository"),

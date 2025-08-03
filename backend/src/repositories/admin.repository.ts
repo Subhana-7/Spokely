@@ -2,6 +2,7 @@ import Admin, { IAdmin } from "../models/admin.model";
 import User, { IUser } from "../models/user.model";
 import { IAdminRepository } from "./interfaces/IAdminRepository";
 import { injectable } from "inversify";
+import Mentor, { IMentor } from "../models/mentor.model";
 
 @injectable()
 export class AdminRepository implements IAdminRepository {
@@ -16,16 +17,16 @@ export class AdminRepository implements IAdminRepository {
 
   async findAllUsers(): Promise<IUser[] | null> {
     try {
-      return User.find({ role: "user" });
+      return User.find();
     } catch (error) {
       console.log("error", error);
       return null;
     }
   }
 
-  async findAllMentors(): Promise<IUser[] | null> {
+  async findAllMentors(): Promise<IMentor[] | null> {
     try {
-      return User.find({ role: "mentor" });
+      return Mentor.find();
     } catch (error) {
       console.log("error", error);
       return null;
@@ -34,7 +35,11 @@ export class AdminRepository implements IAdminRepository {
 
   async blockUser(id: string): Promise<IUser | null> {
     try {
-      let result =  User.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+      let result = User.findByIdAndUpdate(
+        id,
+        { isBlocked: true },
+        { new: true }
+      );
       return result;
     } catch (error) {
       console.log("error", error);
@@ -50,4 +55,45 @@ export class AdminRepository implements IAdminRepository {
   //     return null;
   //   }
   // }
+
+  async getMentor(id: string): Promise<IMentor[] | null> {
+    try {
+      let result = await Mentor.find({
+        _id: id,
+        isVerified: true,
+      });
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updateMentor(id: string): Promise<IMentor | null> {
+    try {
+      let res = await Mentor.findByIdAndUpdate(
+        id,
+        { "document.verificationStatus": "approved" },
+        { new: true }
+      );
+      return res;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updateMentorRejection(id:string,reason:string):Promise<IMentor | null> {
+    try {
+      let res = await Mentor.findByIdAndUpdate(
+        id,
+        { "document.verificationStatus": "rejected","document.rejectionReason": reason },
+        {new:true}
+      )
+      return res;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
 }

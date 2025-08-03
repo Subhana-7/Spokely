@@ -71,4 +71,32 @@ export class MentorRepository implements IMentorRepository {
       return null;
     }
   }
+
+  async updateMentorDocument(
+    email: string,
+    docUrl: string,
+    docMessage: string
+  ): Promise<IMentor | null> {
+    console.log("repo this is update doc");
+    try {
+      return await Mentor.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            "document.documentUrl": docUrl,
+            "document.textMessage": docMessage,
+            "document.verificationStatus": "pending",
+            "document.rejectionReason": "",
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
 }

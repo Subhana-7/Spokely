@@ -16,4 +16,10 @@ router.patch("/users/:id/block", controller.blockUser.bind(controller));
 router.patch("/mentors/:id/block", controller.blockUser.bind(controller));
 // router.delete("/mentors/:id", controller.deleteUser.bind(controller));
 
+router.get("/mentors/verification/:id",controller.mentorVerification.bind(container));
+
+router.patch("/mentors/approve/:id",controller.approveMentor.bind(container))
+
+router.post("/mentors/reject/:id",controller.rejectMentor.bind(container))
+
 export default router;

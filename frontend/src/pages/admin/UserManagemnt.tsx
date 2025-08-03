@@ -23,32 +23,29 @@ const UserManagement = () => {
   const handleBlock = async (id: string) => {
     try {
       await blockUser(id);
-      setUsers((prev) =>
-      prev.map((u) =>
-        u._id === id ? { ...u, isBlocked: !u.isBlocked } : u
-      )
-    );
 
-    toast.success("User " + (users.find(u => u._id === id)?.isBlocked ? "unblocked" : "blocked"));
+      let newStatus = "";
+      setUsers((prev) => {
+        const updatedUsers = prev.map((u) => {
+          // FIX: Use the same ID field that you're passing from userData
+          if (u._id === id) {
+            const updatedUser = { ...u, isBlocked: !u.isBlocked };
+            newStatus = updatedUser.isBlocked ? "blocked" : "unblocked";
+            return updatedUser;
+          }
+          return u;
+        });
+        return updatedUsers;
+      });
+
+      toast.success("User Blocked" + newStatus);
     } catch (err) {
       toast.error("Failed to block user");
     }
   };
 
-  // const handleEdit = (id: string) => console.log("Edit user:", id);
-
-  // const handleDelete = async (id: string) => {
-  //   try {
-  //     await deleteUser(id);
-  //     toast.success("User deleted");
-  //     setUsers((prev) => prev.filter((u) => u._id !== id));
-  //   } catch (err) {
-  //     toast.error("Failed to delete user");
-  //   }
-  // };
-
   const userData = users.map((user) => ({
-    id: user.id,
+    id: user.id, 
     name: user.name,
     email: user.email,
     avatar: user.profilePicture || undefined,
@@ -56,7 +53,7 @@ const UserManagement = () => {
     students: user.students?.length ?? 0,
     dailyTask: "To be implemented",
     status: user.isBlocked ? "Blocked" : "Active",
-    isBlocked:user.isBlocked,
+    isBlocked: user.isBlocked,
     sessions: user.sessionsDone,
     mentors: 0,
   }));
@@ -73,13 +70,6 @@ const UserManagement = () => {
             Manage and monitor all platform users
           </p>
         </div>
-        {/* <button
-          className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium"
-          onClick={() => console.log("Add User")}
-        >
-          <Plus className="w-4 h-4" />
-          Add User
-        </button> */}
       </div>
 
       <SearchFilterBar
@@ -91,8 +81,6 @@ const UserManagement = () => {
         data={userData}
         type="user"
         onBlock={handleBlock}
-        // onEdit={handleEdit}
-        // onDelete={handleDelete}
       />
     </div>
   );
