@@ -17,32 +17,31 @@ const GoogleRedirectHandler = () => {
     const token = params.get("token");
     const source = params.get("source");
 
+    console.log("✅ Full redirect URL:", window.location.href);
+    console.log("✅ token:", token, "source:", source);
+
     if (token) {
-      try {
-        const payload = jwtDecode<CustomJwtPayload>(token);
-        const { role, isGoogleUser } = payload;
-
-        setRole(role);
-
-        setTimeout(() => {
-          if (role === "mentor") {
-            navigate("/mentor/home");
-          } else {
-            navigate("/user/home");
-          }
-        }, 100);
-      } catch (e) {
-        console.error("Invalid token or decoding failed", e);
-        alert("Invalid login session.");
-        navigate("/");
+      const decoded = jwtDecode<CustomJwtPayload>(token);
+      if (decoded?.role) {
+        setRole(decoded.role);
       }
-    } else {
-      alert("Token not found");
-      navigate("/");
-    }
-  }, []);
 
-  return <div className="p-4 text-center">Logging in via Google...</div>;
+      document.cookie = `auth-token=${token}; path=/; max-age=86400; SameSite=Lax`;
+
+      // Delay slightly to make sure state is set
+      setTimeout(() => {
+        if (source === "signup") {
+          navigate(decoded.role === "mentor" ? "/mentor/home" : "/user/home");
+        } else {
+          navigate("/");
+        }
+      }, 100);
+    } else {
+      console.log("❌ Token not found in URL");
+    }
+  }, [navigate, setRole]);
+
+  return null;
 };
 
 export default GoogleRedirectHandler;

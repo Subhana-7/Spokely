@@ -8,6 +8,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { Response } from "express";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class UserService implements IUserService {
@@ -49,7 +50,11 @@ export class UserService implements IUserService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async sendOTPEmail(to: string, otp: string, isForgotPassword: boolean = false): Promise<void | null> {
+  private async sendOTPEmail(
+    to: string,
+    otp: string,
+    isForgotPassword: boolean = false
+  ): Promise<void | null> {
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -59,8 +64,10 @@ export class UserService implements IUserService {
         },
       });
 
-      const subject = isForgotPassword ? "Password Reset Code" : "Your OTP Code";
-      const text = isForgotPassword 
+      const subject = isForgotPassword
+        ? "Password Reset Code"
+        : "Your OTP Code";
+      const text = isForgotPassword
         ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
         : `Your verification code is ${otp}. It expires in 10 minutes.`;
 
@@ -105,7 +112,10 @@ export class UserService implements IUserService {
   }
 
   // New methods for forgot password
-  async forgotPassword(email: string, newPassword: string): Promise<void | null> {
+  async forgotPassword(
+    email: string,
+    newPassword: string
+  ): Promise<void | null> {
     try {
       const user = await this.repo.findByEmail(email);
       if (!user) throw new Error("User not found");
@@ -119,7 +129,12 @@ export class UserService implements IUserService {
       const otp = this.generateOTP();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      await this.repo.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
+      await this.repo.updateForgotPasswordOTP(
+        email,
+        otp,
+        expiresAt,
+        hashedPassword
+      );
       await this.sendOTPEmail(email, otp, true);
     } catch (error) {
       console.log("error", error);
@@ -191,7 +206,11 @@ export class UserService implements IUserService {
         { expiresIn: "1d" }
       );
 
-      return { user, token };
+      return {
+        user,
+        accessToken: generateAccessToken({ id: user._id, role: user.role }),
+        refreshToken: generateRefreshToken({ id: user._id, role: user.role }),
+      };
     } catch (error) {
       console.log("error", error);
       return null;
