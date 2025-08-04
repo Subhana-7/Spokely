@@ -4,14 +4,22 @@ import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
 import MentorSuccessModal from "./MentorSuccessModal";
-import { verifyOTP, sendOTP } from "../services/authServices";
+import {
+  verifyOTP,
+  sendOTP,
+  verifyForgotPasswordOTP,
+  sendForgotPasswordOTP,
+} from "../services/authServices";
 import { useNavigate } from "react-router-dom";
+import PasswordResetSuccessModal from "./PasswordResetSuccessModal";
 
 interface OTPModalProps {
   isOpen: boolean;
   onClose: () => void;
   email: string;
   role: string;
+  isForgotPassword?: boolean;
+  onVerified?: () => void;
 }
 
 const OTPModal: React.FC<OTPModalProps> = ({
@@ -19,11 +27,15 @@ const OTPModal: React.FC<OTPModalProps> = ({
   onClose,
   email,
   role,
+  isForgotPassword = false,
+  onVerified,
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [secondsLeft, setSecondsLeft] = useState(120); 
+  const [secondsLeft, setSecondsLeft] = useState(120);
   const [canInteract, setCanInteract] = useState(false);
+  const [showResetSuccess, setShowResetSuccess] = useState(false);
+
   const navigate = useNavigate();
 
   const [showMentorSuccess, setShowMentorSuccess] = useState(false);
@@ -60,19 +72,34 @@ const OTPModal: React.FC<OTPModalProps> = ({
   const handleVerify = async () => {
     setError("");
     try {
-      await verifyOTP({ email, code: otp }, role as "user" | "mentor");
-      setIsVerified(true);
-
-      setCanInteract(false);
-      setSecondsLeft(0);
-      
-      if (role === "user") {
-        navigate("/user/home");
-      } else {
-        setMentorMessage(
-          "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
+      if (isForgotPassword) {
+        await verifyForgotPasswordOTP(
+          { email, code: otp },
+          role as "user" | "mentor"
         );
-        setShowMentorSuccess(true);
+        setIsVerified(true);
+        setShowResetSuccess(true); // <-- show success modal
+        setCanInteract(false);
+        setSecondsLeft(0);
+
+        if (onVerified) {
+          onVerified();
+        }
+      } else {
+        await verifyOTP({ email, code: otp }, role as "user" | "mentor");
+        setIsVerified(true);
+
+        setCanInteract(false);
+        setSecondsLeft(0);
+
+        if (role === "user") {
+          navigate("/user/home");
+        } else {
+          setMentorMessage(
+            "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
+          );
+          setShowMentorSuccess(true);
+        }
       }
     } catch (err: any) {
       const msg =
@@ -83,7 +110,15 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
   const handleResend = async () => {
     try {
-      await sendOTP({ email: email }, role as "user" | "mentor");
+      if (isForgotPassword) {
+        await sendForgotPasswordOTP(
+          { email: email },
+          role as "user" | "mentor"
+        );
+      } else {
+        await sendOTP({ email: email }, role as "user" | "mentor");
+      }
+
       setOtp("");
       setSecondsLeft(120);
       setCanInteract(false);
@@ -120,17 +155,36 @@ const OTPModal: React.FC<OTPModalProps> = ({
     );
   }
 
+  const handleResetSuccessClose = () => {
+    setShowResetSuccess(false);
+    onClose(); 
+  };
+
+if (showResetSuccess) {
+  return (
+    <PasswordResetSuccessModal
+      isOpen={true} // ← always open
+      onClose={handleResetSuccessClose}
+    />
+  );
+}
+
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleCloseModal}
-      title="Kindly verify your email"
+      title={
+        isForgotPassword ? "Verify Password Reset" : "Kindly verify your email"
+      }
       icon={<Shield className="h-6 w-6 text-gray-800" />}
     >
       <div className="space-y-4">
         <div className="text-center">
           <p className="text-gray-800 mb-2">
-            We've sent a verification code to your email address.
+            {isForgotPassword
+              ? "We've sent a verification code to reset your password."
+              : "We've sent a verification code to your email address."}
           </p>
           <p className="text-sm text-gray-600">
             {canInteract ? (
@@ -162,7 +216,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
             onClick={handleVerify}
             disabled={canInteract}
           >
-            Verify & Continue
+            {isForgotPassword ? "Reset Password" : "Verify & Continue"}
           </Button>
         </div>
 

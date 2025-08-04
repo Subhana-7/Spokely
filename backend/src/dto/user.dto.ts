@@ -24,6 +24,17 @@ export interface UpdateRoleDTO {
   role: "user" | "mentor";
 }
 
+// New DTOs for forgot password
+export interface ForgotPasswordDTO {
+  email: string;
+  newPassword?: string;
+}
+
+export interface VerifyForgotPasswordDTO {
+  email: string;
+  code: string;
+}
+
 export interface UserResponseDTO {
   _id: string;
   name: string;

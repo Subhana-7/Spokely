@@ -14,6 +14,8 @@ import {
   SignupDTO,
   UpdateRoleDTO,
   VerifyOtpDTO,
+  ForgotPasswordDTO,
+  VerifyForgotPasswordDTO,
 } from "../dto/user.dto";
 
 @injectable()
@@ -84,6 +86,39 @@ export class UserController implements IUserController {
     try {
       const { email, code } = req.body;
       const result = await this.service.verifyOtp(email, code);
+      res.status(200).json(result);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+  // New methods for forgot password
+  forgotPassword = async (
+    req: Request<{}, {}, ForgotPasswordDTO>,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { email, newPassword } = req.body;
+      
+      if (!newPassword) {
+        res.status(400).json({ message: "New password is required" });
+        return;
+      }
+
+      await this.service.forgotPassword(email, newPassword);
+      res.status(200).json({ message: "Password reset OTP sent to email" });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+  verifyForgotPassword = async (
+    req: Request<{}, {}, VerifyForgotPasswordDTO>,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { email, code } = req.body;
+      const result = await this.service.verifyForgotPassword(email, code);
       res.status(200).json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
