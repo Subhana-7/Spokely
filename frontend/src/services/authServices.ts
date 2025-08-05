@@ -31,9 +31,6 @@ API.interceptors.response.use(
   }
 );
 
-
-
-
 export const signup = (data: any) => {
   const { name, email, phone, password, role, documentUrl, textMessage } = data;
   const payload =
@@ -69,13 +66,14 @@ export const verifyOTP = (
   return API.post(endpoint, data);
 };
 
-// New forgot password functions
 export const sendForgotPasswordOTP = (
   data: { email: string; newPassword?: string },
   role: "user" | "mentor"
 ) => {
   const endpoint =
-    role === "mentor" ? "/api/mentors/forgot-password" : "/api/users/forgot-password";
+    role === "mentor"
+      ? "/api/mentors/forgot-password"
+      : "/api/users/forgot-password";
   return API.post(endpoint, data);
 };
 
@@ -84,7 +82,9 @@ export const verifyForgotPasswordOTP = (
   role: "user" | "mentor"
 ) => {
   const endpoint =
-    role === "mentor" ? "/api/mentors/verify-forgot-password" : "/api/users/verify-forgot-password";
+    role === "mentor"
+      ? "/api/mentors/verify-forgot-password"
+      : "/api/users/verify-forgot-password";
   return API.post(endpoint, data);
 };
 
@@ -104,7 +104,6 @@ export const resubmitDocument = (
   return API.patch(endpoint, { email, documentUrl, textMessage });
 };
 
-
 export const refreshToken = async () => {
   const role = Cookies.get("role");
 
@@ -114,5 +113,13 @@ export const refreshToken = async () => {
       : "/api/users/refresh-token";
 
   const res = await API.post(endpoint);
-  return res.data; // will contain accessToken and role
+  return res.data;
+};
+
+export const home = async (id:string) => {
+  const role = Cookies.get("role");
+
+  const endpoint = role === "mentor" ? `/api/mentors/home/${id}` : `/api/users/home/${id}`;
+  const res = await API.get(endpoint);
+  return res.data;
 };
