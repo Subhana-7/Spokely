@@ -96,4 +96,16 @@ export class AdminService implements IAdminService {
   }) {
     return this.repo.findAllUsersWithQuery(params);
   }
+
+  async getAllMentorsWithQuery(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: "students" | "sessions";
+    verificationStatus?: "pending" | "approved" | "rejected";
+    isBlocked?: boolean;
+  }): Promise<{ users: IMentor[]; total: number }> {
+    const { mentors, total } = await this.repo.findAllMentorsWithQuery(params);
+    return { users: mentors, total };
+  }
 }

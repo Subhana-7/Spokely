@@ -16,9 +16,12 @@ export const getAllUsers = async (params = {}) => {
   return response.data;
 };
 
-export const getAllMentors = async () => {
-  const response = await API.get("/admin/mentors");
-  return response.data;
+export const getAllMentors = async (params: Record<string, any> = {}) => {
+  const response = await API.get("/admin/mentors", { params });
+  return {
+    mentors: response.data.users, // renamed to mentors here
+    total: response.data.total,
+  };
 };
 
 export const updateUserStatus = async (

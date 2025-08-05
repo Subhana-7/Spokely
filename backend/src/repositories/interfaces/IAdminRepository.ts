@@ -26,4 +26,13 @@ export interface IAdminRepository {
     maxMentors?: number;
     isBlocked: boolean;
   }): Promise<{ users: IUser[]; total: number }>;
+
+  findAllMentorsWithQuery(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: "students" | "sessions";
+    verificationStatus?: "pending" | "approved" | "rejected";
+    isBlocked?: boolean;
+  }): Promise<{ mentors: IMentor[]; total: number }>;
 }

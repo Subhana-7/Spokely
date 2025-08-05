@@ -160,4 +160,52 @@ export class AdminRepository implements IAdminRepository {
 
     return { users, total };
   }
+
+
+  async findAllMentorsWithQuery({
+  page = 1,
+  limit = 10,
+  search = "",
+  sortBy,
+  verificationStatus,
+  isBlocked,
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: "students" | "sessions";
+  verificationStatus?: "pending" | "approved" | "rejected";
+  isBlocked?: boolean;
+}): Promise<{ mentors: IMentor[]; total: number }> {
+  const query: any = {
+    $or: [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ],
+  };
+
+  if (verificationStatus) {
+    query["document.verificationStatus"] = verificationStatus;
+  }
+
+  if (isBlocked !== undefined) {
+    query.isBlocked = isBlocked;
+  }
+
+  const skip = (page - 1) * limit;
+
+  let sort: any = {};
+  if (sortBy === "students") sort.studentsCount = -1;
+  else if (sortBy === "sessions") sort.sessionsDone = -1;
+
+  const mentors = await Mentor.find(query)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit);
+
+  const total = await Mentor.countDocuments(query);
+
+  return { mentors, total };
+}
+
 }

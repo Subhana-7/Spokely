@@ -52,14 +52,14 @@ export class AdminController implements IAdminController {
   //   }
   // }
 
-  async listMentors(req: Request, res: Response): Promise<void> {
-    try {
-      const mentors = await this.service.getAllMentors();
-      res.status(200).json(mentors);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  }
+  // async listMentors(req: Request, res: Response): Promise<void> {
+  //   try {
+  //     const mentors = await this.service.getAllMentors();
+  //     res.status(200).json(mentors);
+  //   } catch (err: any) {
+  //     res.status(500).json({ error: err.message });
+  //   }
+  // }
 
   async updateUserStatus(req: Request, res: Response): Promise<void> {
     try {
@@ -212,4 +212,39 @@ export class AdminController implements IAdminController {
       res.status(500).json({ error: err.message });
     }
   }
+
+  async listMentors(req: Request, res: Response): Promise<void> {
+  try {
+    const {
+      page = "1",
+      limit = "10",
+      search = "",
+      sortBy,
+      verificationStatus,
+      isBlocked,
+    } = req.query;
+
+    const result = await this.service.getAllMentorsWithQuery({
+      page: parseInt(page as string),
+      limit: parseInt(limit as string),
+      search: search as string,
+      sortBy: sortBy as "students" | "sessions",
+      verificationStatus: verificationStatus as
+        | "pending"
+        | "approved"
+        | "rejected",
+      isBlocked:
+        isBlocked === "true"
+          ? true
+          : isBlocked === "false"
+          ? false
+          : undefined,
+    });
+
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 }

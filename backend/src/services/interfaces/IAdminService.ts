@@ -25,4 +25,13 @@ export interface IAdminService {
     maxMentors?: number;
     isBlocked?: boolean;
   }): Promise<{ users: IUser[]; total: number }>;
+
+  getAllMentorsWithQuery(params:{
+    page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: "students" | "sessions";
+  verificationStatus?: "pending" | "approved" | "rejected";
+  isBlocked?: boolean;
+  }): Promise<{ users: IMentor[]; total: number }>
 }
