@@ -25,6 +25,7 @@ export interface IMentor extends Document {
     verificationStatus: "pending" | "approved" | "rejected";
     rejectionReason?: string;
   };
+  role?:"mentor"|"user";
 }
 
 const mentorSchema = new Schema<IMentor>(
@@ -60,6 +61,7 @@ const mentorSchema = new Schema<IMentor>(
 
       rejectionReason: { type: String },
     },
+    role:{type:String,default:"mentor"},
   },
   { timestamps: true }
 );

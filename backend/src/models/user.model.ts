@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IUser extends Document {
-  role: any;
+  role?: "user" | "mentor";
   _id: Types.ObjectId;
   name: string;
   email: string;
@@ -62,6 +62,7 @@ const userSchema = new Schema<IUser>(
     levels: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
     completionRate: { type: Number, default: 0 },
+    role:{type:String,default:"user"}
   },
   { timestamps: true }
 );

@@ -179,7 +179,13 @@ export class UserService implements IUserService {
     }
   }
 
-  async login(data: any): Promise<{ user: IUser; token: string } | null> {
+  async login(
+    data: any
+  ): Promise<{
+    user: IUser;
+    accessToken: string;
+    refreshToken: string;
+  } | null> {
     try {
       const user = await this.repo.findByEmail(data.email);
       if (!user) throw new Error("Invalid email or password");

@@ -8,4 +8,5 @@ export interface IMentorController {
   logout(req: Request, res: Response): Promise<void>;
   getAll(req: Request, res: Response): Promise<void>;
   updateMentorDocument(req:Request,res:Response):Promise<void>;
+  refreshToken(req: Request, res: Response): Promise<void>
 }

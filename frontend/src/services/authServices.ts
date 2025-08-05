@@ -9,13 +9,41 @@ const API = axios.create({
   withCredentials: true,
 });
 
-API.interceptors.request.use((config) => {
-  const token = Cookies.get("auth-token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// API.interceptors.request.use((config) => {
+//   const token = Cookies.get("auth-token");
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// });
+
+API.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const originalRequest = err.config;
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const role = Cookies.get("role"); 
+      const endpoint =
+        role === "mentor"
+          ? "/api/mentors/refresh-token"
+          : "/api/users/refresh-token";
+
+      try {
+        await API.post(endpoint);
+        return API(originalRequest); 
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(err);
   }
-  return config;
-});
+);
+
+
 
 export const signup = (data: any) => {
   const { name, email, phone, password, role, documentUrl, textMessage } = data;
