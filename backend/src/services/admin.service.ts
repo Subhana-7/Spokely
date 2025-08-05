@@ -82,4 +82,18 @@ export class AdminService implements IAdminService {
     await this.emailService.sendVerificationUpdateEmail(email, "rejected");
     return this.repo.updateMentorRejection(id, reason);
   }
+
+  async getAllUsersWithQuery(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    level?: string;
+    minSessions?: number;
+    maxSessions?: number;
+    minMentors?: number;
+    maxMentors?: number;
+    isBlocked: boolean;
+  }) {
+    return this.repo.findAllUsersWithQuery(params);
+  }
 }

@@ -7,32 +7,52 @@ import toast from "react-hot-toast";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All Levels");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await getAllUsers();
-        setUsers(data);
+        const data = await getAllUsers({
+          search,
+          level: filter,
+          page,
+          limit,
+          isBlocked:
+            statusFilter === "blocked"
+              ? true
+              : statusFilter === "active"
+              ? false
+              : undefined,
+        });
+
+        setUsers(data.users);
+        setTotal(data.total);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
     };
+
     fetchUsers();
-  }, []);
+  }, [search, filter, statusFilter, page, limit]); // 👈 Add statusFilter here
 
   const handleBlock = async (id: string) => {
     try {
-      const user = users.find(u => u.id === id);
+      const user = users.find((u) => u.id === id);
       if (!user) {
         toast.error("User not found");
         return;
       }
 
       const newStatus = user.isBlocked ? "unBlocked" : "blocked";
-      
+
       await updateUserStatus(id, newStatus);
 
-      setUsers((prev) => 
+      setUsers((prev) =>
         prev.map((u) => {
           if (u._id === id) {
             return { ...u, isBlocked: !u.isBlocked };
@@ -41,7 +61,9 @@ const UserManagement = () => {
         })
       );
 
-      toast.success(`User ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`);
+      toast.success(
+        `User ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`
+      );
     } catch (err) {
       toast.error("Failed to update user status");
       console.error("Error updating user status:", err);
@@ -79,12 +101,19 @@ const UserManagement = () => {
       <SearchFilterBar
         searchPlaceholder="Search users by name or email"
         filterOptions={["All Levels", "Beginner", "Intermediate", "Advanced"]}
+        onSearch={setSearch}
+        onFilter={setFilter}
+        onStatusFilter={setStatusFilter}
       />
 
       <DataTable
         data={userData}
         type="user"
         onBlock={handleBlock}
+        page={page}
+        setPage={setPage}
+        total={total}
+        limit={limit}
       />
     </div>
   );

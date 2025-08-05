@@ -17,7 +17,7 @@ export class AdminRepository implements IAdminRepository {
 
   async findAllUsers(): Promise<IUser[] | null> {
     try {
-      return User.find();
+      return User.find({ isVerified: true });
     } catch (error) {
       console.log("error", error);
       return null;
@@ -26,7 +26,7 @@ export class AdminRepository implements IAdminRepository {
 
   async findAllMentors(): Promise<IMentor[] | null> {
     try {
-      return Mentor.find();
+      return Mentor.find({ isVerified: true });
     } catch (error) {
       console.log("error", error);
       return null;
@@ -103,5 +103,61 @@ export class AdminRepository implements IAdminRepository {
       console.log("error", error);
       return null;
     }
+  }
+
+  async findAllUsersWithQuery({
+    page = 1,
+    limit = 10,
+    search = "",
+    level,
+    minSessions,
+    maxSessions,
+    minMentors,
+    maxMentors,
+    isBlocked,
+  }: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    level?: string;
+    minSessions?: number;
+    maxSessions?: number;
+    minMentors?: number;
+    maxMentors?: number;
+    isBlocked: boolean;
+  }): Promise<{ users: IUser[]; total: number }> {
+    const query: any = {
+      isVerified: true,
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    if (level && level !== "All Levels") {
+      query.levels = level;
+    }
+
+    if (minSessions !== undefined || maxSessions !== undefined) {
+      query.sessionsDone = {};
+      if (minSessions !== undefined) query.sessionsDone.$gte = minSessions;
+      if (maxSessions !== undefined) query.sessionsDone.$lte = maxSessions;
+    }
+
+    if (minMentors !== undefined || maxMentors !== undefined) {
+      query.mentors = {};
+      if (minMentors !== undefined) query.mentors.$gte = minMentors;
+      if (maxMentors !== undefined) query.mentors.$lte = maxMentors;
+    }
+
+    if (isBlocked !== undefined) {
+      query.isBlocked = isBlocked;
+    }
+
+    const skip = (page - 1) * limit;
+    const users = await User.find(query).skip(skip).limit(limit);
+    const total = await User.countDocuments(query);
+
+    return { users, total };
   }
 }

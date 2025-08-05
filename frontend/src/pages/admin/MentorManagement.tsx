@@ -87,9 +87,11 @@ const MentorManagement = () => {
         searchPlaceholder="Search mentors by name or email"
         filterOptions={[
           "All Mentors",
-          "Top Rated",
+          "Verification Pendings",
           "Most Students",
           "New Mentors",
+          "Sessions", //most to leeast
+          "Students", //most to least
         ]}
       />
 
