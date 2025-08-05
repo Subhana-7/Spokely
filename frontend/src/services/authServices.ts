@@ -52,7 +52,6 @@ export const verifyOTP = (
   return API.post(endpoint, data);
 };
 
-// New forgot password functions
 export const sendForgotPasswordOTP = (
   data: { email: string; newPassword?: string },
   role: "user" | "mentor"

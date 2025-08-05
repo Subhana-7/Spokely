@@ -104,16 +104,13 @@ export class UserService implements IUserService {
     return { message: "Email verified successfully" };
   }
 
-  // New methods for forgot password
   async forgotPassword(email: string, newPassword: string): Promise<void | null> {
     try {
       const user = await this.repo.findByEmail(email);
       if (!user) throw new Error("User not found");
 
-      // Validate the new password
       await this.passwordValidation(newPassword);
 
-      // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       const otp = this.generateOTP();

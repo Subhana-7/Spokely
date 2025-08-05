@@ -12,4 +12,19 @@ export interface IMentorRepository {
   verifyOTP(email: string, code: string): Promise<boolean | null>;
   findAll(): Promise<IMentor[] | null>;
   updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
+
+  updateForgotPasswordOTP(
+    email: string,
+    code: string,
+    expiresAt: Date,
+    newPassword: string
+  ): Promise<IMentor | null>
+  verifyForgotPasswordOTP(
+    email: string,
+    code: string
+  ): Promise<boolean | null>
+  updatePassword(
+    email:string,
+    password:string
+  ):Promise<IMentor | null>
 }
