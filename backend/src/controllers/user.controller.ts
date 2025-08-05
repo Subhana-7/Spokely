@@ -206,7 +206,18 @@ export class UserController implements IUserController {
 
   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      res.json({ message: "Welcome Home!" });
+      const {id} = req.params;
+
+      const data = await this.service.getHome(id);
+
+      if (!data) {
+        res.status(401).json({ message: "Error fetching user data" });
+        return;
+      }
+
+      const usersDTO = data.map(toUserResponseDTO);
+
+      res.status(200).json(usersDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }

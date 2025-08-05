@@ -1,46 +1,36 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React, { useEffect } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../store/userAuthStore";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles?: ('user' | 'mentor')[];
-  requireAuth?: boolean;
+  allowedRoles?: ("user" | "mentor" | "admin")[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  allowedRoles = [],
-  requireAuth = true,
-}) => {
-  const { isAuthenticated, role, loading } = useAuth();
-  const location = useLocation();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const role = useAuthStore((state) => state.role);
+  const hydrationComplete = useAuthStore((state) => state.hydrationComplete);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  console.log(isAuthenticated,role,hydrationComplete,initializeAuth)
+
+  useEffect(() => {
+    initializeAuth(); // Only runs once
+  }, [initializeAuth]);
+
+  if (!hydrationComplete) {
+    return <div>Loading...</div>;
   }
 
-  if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
-  // If user is authenticated but trying to access auth pages (login/signup)
-  if (!requireAuth && isAuthenticated && role) {
-    const redirectPath = role === 'user' ? '/user/home' : '/mentor/home';
-    return <Navigate to={redirectPath} replace />;
+  if (allowedRoles && role && !allowedRoles.includes(role)) {
+    return <Navigate to="/" replace />;
   }
 
-  // If specific roles are required, check if user has the right role
-  if (requireAuth && allowedRoles.length > 0 && role && !allowedRoles.includes(role)) {
-    const redirectPath = role === 'user' ? '/user/home' : '/mentor/home';
-    return <Navigate to={redirectPath} replace />;
-  }
-
-  return <>{children}</>;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

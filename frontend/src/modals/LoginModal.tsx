@@ -29,7 +29,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
-  const { setRole: setGlobalRole } = useAuthStore();
+  // const { setRole: setGlobalRole } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [role, setRole] = useState("");
@@ -86,7 +86,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
       } else if (selectedRole === "mentor" && user.document?.verificationStatus === "pending") {
         setVerificationPendingMessage("Your mentor application is under review, Kindly monitor emails for updation");
       } else {
-        setGlobalRole(user.role);
+        // setGlobalRole(user.role);
         if (selectedRole === "user") {
           navigate("/user/home");
         } else {

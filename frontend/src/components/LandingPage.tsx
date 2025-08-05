@@ -28,7 +28,7 @@ const LandingPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("auth-token");
   const showRoleFlag = queryParams.get("showRole") === "true";
-  const { setRole: setGlobalRole } = useAuthStore();
+  // const { setRole: setGlobalRole } = useAuthStore();
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -36,6 +36,7 @@ const LandingPage: React.FC = () => {
   const closeModal = () => setActiveModal(null);
 
   const showRoleModal = location.pathname === "/role-selection";
+  
 
   // const handleRoleContinue = async (role: "user" | "mentor") => {
   //   const token = useAuthStore.getState().token;
@@ -400,7 +401,7 @@ const LandingPage: React.FC = () => {
         onClose={closeModal}
         email="demo@example.com"
         role="user"
-        onVerify={() => openModal("role")}
+        // onVerify={() => openModal("role")}
       />
 
       {/* <RoleSelectionModal

@@ -111,7 +111,6 @@ export class UserService implements IUserService {
     return { message: "Email verified successfully" };
   }
 
-  // New methods for forgot password
   async forgotPassword(
     email: string,
     newPassword: string
@@ -245,6 +244,15 @@ export class UserService implements IUserService {
   async getAllUsers(): Promise<IUser[] | null> {
     try {
       return await this.repo.findAll();
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async getHome(id:string):Promise<IUser[] | null> {
+    try {
+      return await this.repo.findById(id)
     } catch (error) {
       console.log("error", error);
       return null;
