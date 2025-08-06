@@ -35,12 +35,10 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/google-redirect" element={<GoogleRedirectHandler />} />
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* ✅ Protected User Routes */}
         {/* <Route element={<ProtectedRoute allowedRoles={["user"]} />}> */}
           <Route path="/user/home" element={<UserHome />} />
           <Route path="/user/connections" element={<Connections />} />
@@ -51,14 +49,12 @@ const AppRoutes = () => {
           <Route path ="/user/peer/profile" element={<UserViewMentorProfile/>} />
         {/* </Route> */}
 
-        {/* ✅ Protected Mentor Routes */}
         {/* <Route element={<ProtectedRoute allowedRoles={["mentor"]} />}> */}
           <Route path="/mentor/home" element={<MentorHome />} />
           <Route path="/mentor/profile" element={<MentorProfile/>}/>
           <Route path="/mentor/peer/profile" element={<MentorViewUserProfile/>}/>
         {/* </Route> */}
 
-        {/* ✅ Protected Admin Routes */}
         {/* <Route element={<ProtectedRoute allowedRoles={["admin"]} />}> */}
           <Route path="/admin" element={<AdminDashboard />}>
             <Route index element={<Dashboard />} />
@@ -68,7 +64,6 @@ const AppRoutes = () => {
           </Route>
         {/* </Route> */}
 
-        {/* ✅ Session video call (shared between user/mentor) */}
         {/* <Route
           path="/session/:id/video"
           element={
@@ -78,7 +73,6 @@ const AppRoutes = () => {
           }
         /> */}
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
