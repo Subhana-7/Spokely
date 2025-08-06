@@ -208,14 +208,14 @@ export class UserController implements IUserController {
     try {
       const { id } = req.params;
 
-      const user = await this.service.getHome(id); // returns IUser, not IUser[]
+      const user = await this.service.getHome(id); 
 
       if (!user) {
         res.status(404).json({ message: "User not found" });
         return;
       }
 
-      const userDTO = toUserResponseDTO(user); // ✅ single user conversion
+      const userDTO = toUserResponseDTO(user); 
       res.status(200).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });

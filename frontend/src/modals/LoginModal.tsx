@@ -3,7 +3,7 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
-import { login } from "../services/auth";
+import { login } from "../services/authServices";
 import OTPModal from "./OTPModal";
 import VerificationPendingModal from "./VerificationPendingModal";
 import DocumentResubmissionModal from "./DocumentReSubmissionModal";
@@ -26,7 +26,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onForgotPassword,
 }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
   const [showPassword, setShowPassword] = useState(false);
 
   // const { setRole: setGlobalRole } = useAuthStore();
@@ -36,10 +38,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const [showDocumentResubmission, setShowDocumentResubmission] = useState(false);
-  const [verificationPendingMessage, setVerificationPendingMessage] = useState("");
+  const [showDocumentResubmission, setShowDocumentResubmission] =
+    useState(false);
+  const [verificationPendingMessage, setVerificationPendingMessage] =
+    useState("");
   const [blockedMessage, setBlockedMessage] = useState("");
-  
+
   // New states for password reset flow
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
@@ -70,10 +74,19 @@ const LoginModal: React.FC<LoginModalProps> = ({
       const res = await login(formData, selectedRole);
       const user = res.data[selectedRole];
 
-      console.log(user.isBlocked)
+      useAuthStore.getState().setUser({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+
+      console.log(user.isBlocked);
       if (user.isBlocked) {
         const roleText = selectedRole === "user" ? "user" : "mentor";
-        setBlockedMessage(`Your ${roleText} account has been blocked. Please contact support for assistance.`);
+        setBlockedMessage(
+          `Your ${roleText} account has been blocked. Please contact support for assistance.`
+        );
         return;
       }
 
@@ -81,10 +94,18 @@ const LoginModal: React.FC<LoginModalProps> = ({
         setRole(user.role);
         setEmail(user.email);
         setShowOtpModal(true);
-      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "rejected") {
+      } else if (
+        selectedRole === "mentor" &&
+        user.document?.verificationStatus === "rejected"
+      ) {
         setShowDocumentResubmission(true);
-      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "pending") {
-        setVerificationPendingMessage("Your mentor application is under review, Kindly monitor emails for updation");
+      } else if (
+        selectedRole === "mentor" &&
+        user.document?.verificationStatus === "pending"
+      ) {
+        setVerificationPendingMessage(
+          "Your mentor application is under review, Kindly monitor emails for updation"
+        );
       } else {
         // setGlobalRole(user.role);
         if (selectedRole === "user") {
@@ -109,35 +130,28 @@ const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
-  // Handler for opening change password modal
   const handleForgotPasswordClick = () => {
     setShowChangePasswordModal(true);
   };
 
-  // Handler for password change submission
   const handleChangePassword = (email: string, newPassword: string) => {
-    // Here you would typically call your password reset API
-    console.log('Password reset requested for:', email);
-    
-    // Set the password reset mode and email for OTP
+    console.log("Password reset requested for:", email);
+
     setIsPasswordResetMode(true);
     setPasswordResetEmail(email);
     setShowChangePasswordModal(false);
     setShowOtpModal(true);
     setEmail(email);
-    setRole("user"); // You might want to handle role selection for password reset
+    setRole("user");
   };
 
-  // Handler for OTP verification in password reset mode
   const handlePasswordResetOTPSuccess = () => {
     setPasswordResetSuccess(true);
     setShowOtpModal(false);
     setIsPasswordResetMode(false);
-    
-    // Show success message and return to login
+
     setTimeout(() => {
       setPasswordResetSuccess(false);
-      // The login modal will show again with success message
     }, 2000);
   };
 
@@ -173,7 +187,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
-  // Show password reset success message
   if (passwordResetSuccess) {
     return (
       <Modal
@@ -186,8 +199,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -195,14 +216,17 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   Password Successfully Updated
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
-                  <p>Your password has been successfully changed. You can now login with your new password.</p>
+                  <p>
+                    Your password has been successfully changed. You can now
+                    login with your new password.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-          
-          <Button 
-            variant="primary" 
+
+          <Button
+            variant="primary"
             onClick={handleCloseModal}
             className="w-full"
           >
@@ -213,7 +237,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     );
   }
 
-  // Show blocked message modal
   if (blockedMessage) {
     return (
       <Modal
@@ -226,8 +249,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -240,9 +271,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </div>
           </div>
-          
-          <Button 
-            variant="primary" 
+
+          <Button
+            variant="primary"
             onClick={handleBlockedMessageClose}
             className="w-full"
           >

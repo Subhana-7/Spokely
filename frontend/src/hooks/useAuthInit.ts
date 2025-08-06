@@ -9,7 +9,7 @@ export const useAuthInit = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const res = await refreshToken(); // Backend will read refresh-token from cookie
+        const res = await refreshToken();
         console.log("refreshToken response:", res);
 
 

@@ -1,4 +1,3 @@
-// src/services/auth.ts
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -14,7 +13,6 @@ API.interceptors.response.use(
   async (err) => {
     const originalRequest = err.config;
 
-    // Don't retry if it's already a refresh-token request
     if (
       err.response?.status === 401 &&
       !originalRequest._retry &&
@@ -25,7 +23,6 @@ API.interceptors.response.use(
         await refreshToken();
         return API(originalRequest);
       } catch (refreshError) {
-        // Clear session and redirect
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
@@ -56,10 +53,10 @@ export const refreshToken = async () => {
 
   try {
     const res = await API.post(endpoint, null, {
-      withCredentials: true, // ✅ Ensures cookies (like HttpOnly refresh-token) are sent
+      withCredentials: true, 
     });
 
-    return res.data; // Expected: { user, message }
+    return res.data; 
   } catch (err) {
     return null;
   }

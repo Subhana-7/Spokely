@@ -76,9 +76,9 @@ const appRoutes: RouteObject[] = [
   {
     path: "/admin",
     element: (
-      <RoleProtectedRoute role="admin">
+      // <RoleProtectedRoute role="admin">
         <AdminDashboard />
-      </RoleProtectedRoute>
+      // </RoleProtectedRoute>
     ),
     children: [
       { index: true, element: <Dashboard /> },
@@ -92,7 +92,6 @@ const appRoutes: RouteObject[] = [
   },
 ];
 
-// ✅ Export a wrapper component that uses useRoutes
 export default function AppRoutes() {
   return useRoutes(appRoutes);
 }

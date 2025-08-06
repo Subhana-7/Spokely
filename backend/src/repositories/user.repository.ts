@@ -64,7 +64,6 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  // New methods for forgot password
   async updateForgotPasswordOTP(
     email: string,
     code: string,
