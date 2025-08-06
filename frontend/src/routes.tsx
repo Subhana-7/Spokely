@@ -52,6 +52,14 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
+   {
+    path: "/user/profile",
+    element: (
+      <RoleProtectedRoute role="user">
+        <SessionSchedule />
+      </RoleProtectedRoute>
+    ),
+  },
   {
     path: "/user/session/:id",
     element: (
