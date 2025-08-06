@@ -25,6 +25,12 @@ import MentorVerification from "./pages/admin/MentorVerification";
 import VideoCall from "./pages/VideoCall";
 import LandingPage from "./components/LandingPage";
 
+import UserProfile from "./pages/user/UserSelfViewProfilePage";
+import MentorProfile from "./pages/mentor/MentorSelfViewProfilePage";
+
+import MentorViewUserProfile from "./pages/mentor/MentorViewUserProfile";
+import UserViewMentorProfile from "./pages/user/UserViewMentorProfile";
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
@@ -41,11 +47,15 @@ const AppRoutes = () => {
           <Route path="/user/session" element={<Sessions />} />
           <Route path="/user/schedule-session" element={<SessionSchedule />} />
           <Route path="/user/session/:id" element={<SessionDetail />} />
+          <Route path ="/user/profile" element={<UserProfile/>} />
+          <Route path ="/user/peer/profile" element={<UserViewMentorProfile/>} />
         {/* </Route> */}
 
         {/* ✅ Protected Mentor Routes */}
         {/* <Route element={<ProtectedRoute allowedRoles={["mentor"]} />}> */}
           <Route path="/mentor/home" element={<MentorHome />} />
+          <Route path="/mentor/profile" element={<MentorProfile/>}/>
+          <Route path="/mentor/peer/profile" element={<MentorViewUserProfile/>}/>
         {/* </Route> */}
 
         {/* ✅ Protected Admin Routes */}
