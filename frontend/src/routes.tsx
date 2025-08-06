@@ -76,9 +76,9 @@ const appRoutes: RouteObject[] = [
   {
     path: "/admin",
     element: (
-      <RoleProtectedRoute role="admin">
+      // <RoleProtectedRoute role="admin">
         <AdminDashboard />
-      </RoleProtectedRoute>
+      // </RoleProtectedRoute>
     ),
     children: [
       { index: true, element: <Dashboard /> },

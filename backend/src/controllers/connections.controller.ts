@@ -20,11 +20,13 @@ export class ConnectionController implements IConnectionController {
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
+      console.log("controller:",senderId,uniqueCode)
+
       const connection = await this.service.sendConnectionRequest(
         senderId,
         uniqueCode
       );
-
+      console.log(senderId)
       res.status(201).json(connection);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -45,17 +47,23 @@ export class ConnectionController implements IConnectionController {
   }
 
   async acceptConnection(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      const { requestId } = req.params;
-      const accepted = await this.service.acceptRequest(requestId);
-      res.status(200).json(accepted);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    if (!req.id) throw new Error("User not authenticated");
+
+    const { requestId } = req.params;
+    const userId = req.id;
+
+    const accepted = await this.service.acceptRequest(requestId, userId);
+
+    res.status(200).json(accepted);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
+}
+
 
   async listConnections(
     req: AuthenticatedRequest,
@@ -83,6 +91,7 @@ export class ConnectionController implements IConnectionController {
       const userId = req.id;
       const requests = await this.service.getOutgoingRequests(userId);
 
+      console.log(requests)
       res.status(200).json(requests);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
