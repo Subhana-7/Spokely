@@ -23,9 +23,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/home",
     element: (
-      <RoleProtectedRoute role="user">
         <UserHome />
-      </RoleProtectedRoute>
     ),
   },
   {
@@ -39,17 +37,13 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/session",
     element: (
-      <RoleProtectedRoute role="user">
         <Sessions />
-      </RoleProtectedRoute>
     ),
   },
   {
     path: "/user/schedule-session",
     element: (
-      <RoleProtectedRoute role="user">
         <SessionSchedule />
-      </RoleProtectedRoute>
     ),
   },
    {
