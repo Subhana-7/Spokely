@@ -26,7 +26,9 @@ export const getConnectionRequests = () =>
 export const acceptConnectionRequest = (requestId: string) =>
   API.patch(`/accept/${requestId}`);
 
-export const getAllConnections = () => API.get("/list");
+export const getAllConnections = (search?: string) =>
+  API.get(`/list${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+
 
 export const getSentConnectionRequests = () => {
   console.log("service hitting");

@@ -20,14 +20,12 @@ export class ConnectionService implements IConnectionService {
   ): Promise<IConnection | null> {
     try {
 
-      console.log(senderId,uniqueCode)
       const receiver = await UserModel.findOne({
         uniqueCode: uniqueCode,
         isBlocked: false,
         isVerified: true,
       });
 
-      console.log(receiver);
 
       if (!receiver) throw new Error("User not found or not verified");
       if (receiver._id.equals(senderId))
@@ -76,16 +74,15 @@ export class ConnectionService implements IConnectionService {
     }
   }
 
-  async getAllConnections(
-    userId: string
-  ): Promise<PopulatedConnection[] | null> {
-    try {
-      return await this.repo.getAcceptedConnections(new Types.ObjectId(userId));
-    } catch (error) {
-      console.log("getAllConnections error", error);
-      return null;
-    }
+  async getAllConnections(userId: string, search?: string): Promise<PopulatedConnection[] | null> {
+  try {
+    return await this.repo.getAcceptedConnections(new Types.ObjectId(userId), search);
+  } catch (error) {
+    console.log("getAllConnections error", error);
+    return null;
   }
+}
+
 
   async getOutgoingRequests(
     userId: string

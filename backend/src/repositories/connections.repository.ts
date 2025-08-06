@@ -79,19 +79,37 @@ export class ConnectionRepository implements IConnectionRepository {
     }
   }
 
-  async getAcceptedConnections(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
-    try {
-      return (await ConnectionModel.find({
-        status: "accepted",
-        isBlocked: false,
-        isRemoved: false,
-        $or: [{ userId }, { connectedUserId: userId }],
-      }).populate("userId connectedUserId")) as unknown as PopulatedConnection[];
-    } catch (error) {
-      console.log("getAcceptedConnections error", error);
-      return null;
-    }
+  async getAcceptedConnections(
+  userId: Types.ObjectId,
+  search?: string
+): Promise<PopulatedConnection[] | null> {
+  try {
+    const connections = await ConnectionModel.find({
+      status: "accepted",
+      isBlocked: false,
+      isRemoved: false,
+      $or: [{ userId }, { connectedUserId: userId }],
+    })
+      .populate({
+        path: "userId connectedUserId",
+        select: "name email profilePicture role",
+        match: search
+          ? {
+              $or: [
+                { name: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } },
+              ],
+            }
+          : undefined,
+      });
+
+    return connections as unknown as PopulatedConnection[];
+  } catch (error) {
+    console.log("getAcceptedConnections error", error);
+    return null;
   }
+}
+
 
   async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
     try {

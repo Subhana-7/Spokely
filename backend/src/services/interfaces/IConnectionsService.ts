@@ -12,5 +12,5 @@ export interface IConnectionService {
 
   getOutgoingRequests(userId: string): Promise<PopulatedConnection[] | null>;
 
-  getAllConnections(userId: string): Promise<PopulatedConnection[] | null>;
+  getAllConnections(userId: string,search:string): Promise<PopulatedConnection[] | null>;
 }

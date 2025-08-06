@@ -17,7 +17,7 @@ export interface IConnectionRepository {
 
   getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null>;
 
-  getAcceptedConnections(userId: Types.ObjectId): Promise<PopulatedConnection[] | null>;
+  getAcceptedConnections(userId: Types.ObjectId,search:any): Promise<PopulatedConnection[] | null>;
 
   acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null>;
 

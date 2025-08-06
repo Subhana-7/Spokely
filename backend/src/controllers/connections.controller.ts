@@ -20,13 +20,10 @@ export class ConnectionController implements IConnectionController {
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
-      console.log("controller:",senderId,uniqueCode)
-
       const connection = await this.service.sendConnectionRequest(
         senderId,
         uniqueCode
       );
-      console.log(senderId)
       res.status(201).json(connection);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -65,21 +62,20 @@ export class ConnectionController implements IConnectionController {
 }
 
 
-  async listConnections(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      if (!req.id) throw new Error("User not authenticated");
+  async listConnections(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!req.id) throw new Error("User not authenticated");
 
-      const userId = req.id;
+    const userId = req.id;
+    const search = req.query.search as string; // <-- get query param
 
-      const connections = await this.service.getAllConnections(userId);
-      res.status(200).json(connections);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
+    const connections = await this.service.getAllConnections(userId, search);
+    res.status(200).json(connections);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
+}
+
 
   async getSentRequests(
     req: AuthenticatedRequest,

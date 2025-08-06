@@ -48,6 +48,23 @@ const Connections = () => {
     fetchConnections();
   }, []);
 
+  useEffect(() => {
+  const fetchConnections = async () => {
+    try {
+      setLoading(true);
+      const res = await getAllConnections(searchTerm); // ← pass search term
+      setConnections(res.data);
+    } catch (err) {
+      toast.error("Failed to fetch connections");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchConnections();
+}, [searchTerm]); // ← trigger on search change
+
+
   const filteredConnections = connections
     .filter((connection) => {
       const user = connection.connectedUserId;
