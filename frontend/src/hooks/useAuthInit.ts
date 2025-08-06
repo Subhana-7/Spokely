@@ -12,6 +12,7 @@ export const useAuthInit = () => {
         const res = await refreshToken(); // Backend will read refresh-token from cookie
         console.log("refreshToken response:", res);
 
+
         if (res?.user) {
           setUser(res.user);
         } else {
