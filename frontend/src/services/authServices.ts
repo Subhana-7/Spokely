@@ -114,5 +114,5 @@ export const refreshToken = async () => {
       : "/api/users/refresh-token";
 
   const res = await API.post(endpoint);
-  return res.data; // will contain accessToken and role
+  return res.data; 
 };

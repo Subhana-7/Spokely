@@ -14,5 +14,5 @@ export interface IUserRepository {
   verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null>;
   updatePassword(email: string, password: string): Promise<IUser | null>;
 
-  findById(id:string):Promise<IUser[] | null>;
+  findById(id:string):Promise<IUser | null>;
 }

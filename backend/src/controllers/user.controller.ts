@@ -206,18 +206,17 @@ export class UserController implements IUserController {
 
   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      const {id} = req.params;
+      const { id } = req.params;
 
-      const data = await this.service.getHome(id);
+      const user = await this.service.getHome(id); // returns IUser, not IUser[]
 
-      if (!data) {
-        res.status(401).json({ message: "Error fetching user data" });
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
         return;
       }
 
-      const usersDTO = data.map(toUserResponseDTO);
-
-      res.status(200).json(usersDTO);
+      const userDTO = toUserResponseDTO(user); // ✅ single user conversion
+      res.status(200).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
@@ -297,6 +296,14 @@ export class UserController implements IUserController {
         return;
       }
 
+      const user = await this.service.getHome(payload.id); 
+
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
       const newAccessToken = generateAccessToken({
         id: payload.id,
         role: payload.role,
@@ -306,14 +313,14 @@ export class UserController implements IUserController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
+        maxAge: 15 * 60 * 1000, // 15 mins
       });
 
-      res.status(200).json({ message: "Token refreshed" });
+      const userDTO = toUserResponseDTO(user);
+
+      res.status(200).json({ message: "Token refreshed", user: userDTO });
     } catch (err) {
       res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   };
-
-  
 }

@@ -140,7 +140,7 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async findById(id:string):Promise<IUser[] | null> {
+  async findById(id:string):Promise<IUser | null> {
     try {
       return await User.findById(id);
     } catch (error) {

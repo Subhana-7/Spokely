@@ -3,7 +3,7 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
-import { login } from "../services/authServices";
+import { login } from "../services/auth";
 import OTPModal from "./OTPModal";
 import VerificationPendingModal from "./VerificationPendingModal";
 import DocumentResubmissionModal from "./DocumentReSubmissionModal";
