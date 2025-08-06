@@ -14,12 +14,18 @@ API.interceptors.response.use(
   async (err) => {
     const originalRequest = err.config;
 
-    if (err.response?.status === 401 && !originalRequest._retry) {
+    // Don't retry if it's already a refresh-token request
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/refresh-token")
+    ) {
       originalRequest._retry = true;
       try {
         await refreshToken();
         return API(originalRequest);
       } catch (refreshError) {
+        // Clear session and redirect
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
@@ -28,6 +34,7 @@ API.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
 
 export const login = (data: { email: string; password: string }, role: "user" | "mentor") => {
   const endpoint = role === "mentor" ? "/api/mentors/login" : "/api/users/login";
