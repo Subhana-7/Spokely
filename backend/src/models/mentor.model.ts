@@ -26,7 +26,7 @@ export interface IMentor extends Document {
     rejectionReason?: string;
   };
   role?:"mentor"|"user";
-  forgotPasswordOtp?: {
+    forgotPasswordOtp?: {
     code: string;
     expiresAt: Date;
     newPassword: string;

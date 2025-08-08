@@ -247,4 +247,13 @@ export class UserService implements IUserService {
       return null;
     }
   }
+
+  async getHome(id:string):Promise<IUser | null> {
+    try {
+      return await this.repo.findById(id)
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
 }

@@ -153,7 +153,6 @@ export class MentorController implements IMentorController {
     }
   };
 
-  
   forgotPassword = async(
     req:Request,res:Response
   ):Promise<void> => {
