@@ -8,4 +8,7 @@ export interface IUserService {
   login(data: any): Promise<{ user: IUser; token: string } | null>;
   updateRole(userId: string, role: "user" | "mentor"): Promise<IUser | null>;
   getAllUsers(): Promise<IUser[] | null>;
+  
+  forgotPassword(email: string, newPassword: string): Promise<void | null>;
+  verifyForgotPassword(email: string, code: string): Promise<{ message: string } | null>;
 }

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema,Types } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IUser extends Document {
   role: any;
@@ -11,7 +11,7 @@ export interface IUser extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   isBlocked: boolean;
-  uniqueCode: string;
+  uniqueCode?: string;
   levels?: number;
   completionRate?: number;
   streak?: number;
@@ -20,9 +20,14 @@ export interface IUser extends Document {
     code: string;
     expiresAt: Date;
   };
+  forgotPasswordOtp?: {
+    code: string;
+    expiresAt: Date;
+    newPassword: string;
+  };
   isVerified: boolean;
-  googleId?:string;
-  isGoogleUser?:boolean;
+  googleId?: string;
+  isGoogleUser?: boolean;
 }
 
 const userSchema = new Schema<IUser>(
@@ -30,21 +35,27 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: {
-       type: String,
-        required: function(this:{googleId?:string}){
-          return !this.googleId;
-        },
+      type: String,
+      required: function (this: { googleId?: string }) {
+        return !this.googleId;
       },
+    },
     phone: { type: Number },
     otp: {
-      code: { type: String, expiresAt: Date },
+      code: { type: String },
+      expiresAt: { type: Date }
     },
-    googleId:{type:String,default:null},
-    isGoogleUser:{type:Boolean,default:false},
+    forgotPasswordOtp: {
+      code: { type: String },
+      expiresAt: { type: Date },
+      newPassword: { type: String }
+    },
+    googleId: { type: String, default: null },
+    isGoogleUser: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     profilePicture: { type: String, default: "" },
     isBlocked: { type: Boolean, default: false },
-    uniqueCode: { type: String, required: true, unique: true },
+    uniqueCode: { type: String, unique: true },
     sessionsDone: { type: Number, default: 0 },
     levels: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },

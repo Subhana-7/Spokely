@@ -51,17 +51,66 @@ export class UserRepository implements IUserRepository {
   async verifyOTP(email: string, code: string): Promise<boolean | null> {
     try {
       const user = await User.findOne({ email });
-
       if (!user || !user.otp || user.otp.code !== code) return false;
-
       const now = new Date();
       if (now > user.otp.expiresAt) return false;
-
       user.isVerified = true;
       user.otp = undefined;
       await user.save();
-
       return true;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updateForgotPasswordOTP(
+    email: string,
+    code: string,
+    expiresAt: Date,
+    newPassword: string
+  ): Promise<IUser | null> {
+    try {
+      return User.findOneAndUpdate(
+        { email },
+        { forgotPasswordOtp: { code, expiresAt, newPassword } },
+        { new: true }
+      );
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null> {
+    try {
+      const user = await User.findOne({ email });
+      if (!user || !user.forgotPasswordOtp || user.forgotPasswordOtp.code !== code) {
+        return false;
+      }
+      
+      const now = new Date();
+      if (now > user.forgotPasswordOtp.expiresAt) {
+        return false;
+      }
+
+      user.password = user.forgotPasswordOtp.newPassword;
+      user.forgotPasswordOtp = undefined;
+      await user.save();
+      return true;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updatePassword(email: string, password: string): Promise<IUser | null> {
+    try {
+      return User.findOneAndUpdate(
+        { email },
+        { password },
+        { new: true }
+      );
     } catch (error) {
       console.log("error", error);
       return null;
@@ -82,7 +131,7 @@ export class UserRepository implements IUserRepository {
 
   async findAll(): Promise<IUser[] | null> {
     try {
-      return await User.find({}, "-password -otp -googleId");
+      return await User.find({}, "-password -otp -googleId -forgotPasswordOtp");
     } catch (error) {
       console.log("error", error);
       return null;

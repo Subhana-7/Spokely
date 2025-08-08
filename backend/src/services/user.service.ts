@@ -49,7 +49,7 @@ export class UserService implements IUserService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async sendOTPEmail(to: string, otp: string): Promise<void | null> {
+  private async sendOTPEmail(to: string, otp: string, isForgotPassword: boolean = false): Promise<void | null> {
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -59,11 +59,16 @@ export class UserService implements IUserService {
         },
       });
 
+      const subject = isForgotPassword ? "Password Reset Code" : "Your OTP Code";
+      const text = isForgotPassword 
+        ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
+        : `Your verification code is ${otp}. It expires in 10 minutes.`;
+
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to,
-        subject: "Your OTP Code",
-        text: `Your verification code is ${otp}. It expires in 10 minutes.`,
+        subject,
+        text,
       });
     } catch (error) {
       console.log("error", error);
@@ -91,12 +96,49 @@ export class UserService implements IUserService {
     email: string,
     code: string
   ): Promise<{ message: string } | null> {
-      const isValid = await this.repo.verifyOTP(email, code);
+    const isValid = await this.repo.verifyOTP(email, code);
+    if (!isValid) {
+      throw new Error("Invalid or expired OTP");
+    }
+
+    return { message: "Email verified successfully" };
+  }
+
+  async forgotPassword(email: string, newPassword: string): Promise<void | null> {
+    try {
+      const user = await this.repo.findByEmail(email);
+      if (!user) throw new Error("User not found");
+
+      await this.passwordValidation(newPassword);
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      const otp = this.generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await this.repo.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
+      await this.sendOTPEmail(email, otp, true);
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
+  }
+
+  async verifyForgotPassword(
+    email: string,
+    code: string
+  ): Promise<{ message: string } | null> {
+    try {
+      const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
       if (!isValid) {
         throw new Error("Invalid or expired OTP");
       }
 
-      return { message: "Email verified successfully" };
+      return { message: "Password reset successfully" };
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
   }
 
   async signup(data: any): Promise<IUser | null> {

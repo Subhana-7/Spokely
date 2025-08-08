@@ -19,12 +19,10 @@ API.interceptors.request.use((config) => {
 
 export const signup = (data: any) => {
   const { name, email, phone, password, role, documentUrl, textMessage } = data;
-
   const payload =
     role === "mentor"
       ? { name, email, phone, password, documentUrl, textMessage }
       : { name, email, phone, password };
-
   const endpoint =
     role === "mentor" ? "/api/mentors/signup" : "/api/users/signup";
   return API.post(endpoint, payload);
@@ -54,6 +52,24 @@ export const verifyOTP = (
   return API.post(endpoint, data);
 };
 
+export const sendForgotPasswordOTP = (
+  data: { email: string; newPassword?: string },
+  role: "user" | "mentor"
+) => {
+  const endpoint =
+    role === "mentor" ? "/api/mentors/forgot-password" : "/api/users/forgot-password";
+  return API.post(endpoint, data);
+};
+
+export const verifyForgotPasswordOTP = (
+  data: { email: string; code: string },
+  role: "user" | "mentor"
+) => {
+  const endpoint =
+    role === "mentor" ? "/api/mentors/verify-forgot-password" : "/api/users/verify-forgot-password";
+  return API.post(endpoint, data);
+};
+
 export const logoutService = (role: "user" | "mentor") => {
   const endpoint =
     role === "mentor" ? "/api/mentors/logout" : "/api/users/logout";
@@ -65,7 +81,7 @@ export const resubmitDocument = (
   documentUrl: string,
   textMessage: string
 ) => {
-  console.log(email)
+  console.log(email);
   const endpoint = "/api/mentors/re-submit";
   return API.patch(endpoint, { email, documentUrl, textMessage });
 };

@@ -25,6 +25,11 @@ export interface IMentor extends Document {
     verificationStatus: "pending" | "approved" | "rejected";
     rejectionReason?: string;
   };
+    forgotPasswordOtp?: {
+    code: string;
+    expiresAt: Date;
+    newPassword: string;
+  };
 }
 
 const mentorSchema = new Schema<IMentor>(
@@ -59,6 +64,11 @@ const mentorSchema = new Schema<IMentor>(
       },
 
       rejectionReason: { type: String },
+    },
+    forgotPasswordOtp: {
+      code: { type: String },
+      expiresAt: { type: Date },
+      newPassword: { type: String }
     },
   },
   { timestamps: true }

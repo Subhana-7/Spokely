@@ -15,6 +15,10 @@ router.post("/signup", controller.signup.bind(controller));
 router.post("/login", controller.login.bind(controller));
 router.post("/send-otp", controller.sendOtp.bind(controller));
 router.post("/verify-otp", controller.verifyOtp.bind(controller));
+
+router.post("/forgot-password", controller.forgotPassword.bind(controller));
+router.post("/verify-forgot-password", controller.verifyForgotPassword.bind(controller));
+
 router.get("/home", controller.home.bind(controller));
 router.get("/google", controller.handleGoogleAccounts.bind(controller));
 router.get("/google/callback", controller.googleCallback.bind(controller));

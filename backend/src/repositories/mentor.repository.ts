@@ -99,4 +99,67 @@ export class MentorRepository implements IMentorRepository {
       return null;
     }
   }
+
+  async updateForgotPasswordOTP(
+    email: string,
+    code: string,
+    expiresAt: Date,
+    newPassword: string
+  ): Promise<IMentor | null> {
+    try {
+      return Mentor.findOneAndUpdate(
+        { email },
+        { forgotPasswordOtp: { code, expiresAt, newPassword } },
+        { new: true }
+      );
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async verifyForgotPasswordOTP(
+    email: string,
+    code: string
+  ): Promise<boolean | null> {
+    try {
+      const mentor = await Mentor.findOne({ email });
+      if (
+        !mentor ||
+        !mentor.forgotPasswordOtp ||
+        mentor.forgotPasswordOtp.code !== code
+      ) {
+        return false;
+      }
+
+      const now = new Date();
+      if (now > mentor.forgotPasswordOtp.expiresAt) {
+        return false;
+      }
+
+      mentor.password = mentor.forgotPasswordOtp.newPassword;
+      mentor.forgotPasswordOtp = undefined;
+      await mentor.save();
+      return true;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updatePassword(
+    email:string,
+    password:string
+  ):Promise<IMentor | null>{
+    try {
+      return Mentor.findOneAndUpdate(
+        {email},
+        {password},
+        {new:true}
+      )
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
 }
