@@ -49,7 +49,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
-  // Function to reset all form data
   const resetFormData = () => {
     setFormData({
       name: "",

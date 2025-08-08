@@ -20,7 +20,6 @@ export interface IUser extends Document {
     code: string;
     expiresAt: Date;
   };
-  // New field for forgot password
   forgotPasswordOtp?: {
     code: string;
     expiresAt: Date;
@@ -46,7 +45,6 @@ const userSchema = new Schema<IUser>(
       code: { type: String },
       expiresAt: { type: Date }
     },
-    // New field for forgot password functionality
     forgotPasswordOtp: {
       code: { type: String },
       expiresAt: { type: Date },

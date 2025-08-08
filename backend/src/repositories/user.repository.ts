@@ -94,7 +94,6 @@ export class UserRepository implements IUserRepository {
         return false;
       }
 
-      // Update password and clear forgot password OTP
       user.password = user.forgotPasswordOtp.newPassword;
       user.forgotPasswordOtp = undefined;
       await user.save();

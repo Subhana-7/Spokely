@@ -30,8 +30,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     {}
   );
   const [showPassword, setShowPassword] = useState(false);
-
-  // const { setRole: setGlobalRole } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [role, setRole] = useState("");
@@ -44,7 +42,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     useState("");
   const [blockedMessage, setBlockedMessage] = useState("");
 
-  // New states for password reset flow
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
   const [passwordResetEmail, setPasswordResetEmail] = useState("");
@@ -81,7 +78,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         role: user.role,
       });
 
-      console.log(user.isBlocked);
       if (user.isBlocked) {
         const roleText = selectedRole === "user" ? "user" : "mentor";
         setBlockedMessage(
@@ -107,7 +103,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
           "Your mentor application is under review, Kindly monitor emails for updation"
         );
       } else {
-        // setGlobalRole(user.role);
         if (selectedRole === "user") {
           navigate("/user/home");
         } else {
@@ -135,8 +130,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   const handleChangePassword = (email: string, newPassword: string) => {
-    console.log("Password reset requested for:", email);
-
     setIsPasswordResetMode(true);
     setPasswordResetEmail(email);
     setShowChangePasswordModal(false);
@@ -149,7 +142,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     setPasswordResetSuccess(true);
     setShowOtpModal(false);
     setIsPasswordResetMode(false);
-
     setTimeout(() => {
       setPasswordResetSuccess(false);
     }, 2000);
@@ -224,7 +216,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </div>
           </div>
-
           <Button
             variant="primary"
             onClick={handleCloseModal}
@@ -271,7 +262,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </div>
           </div>
-
           <Button
             variant="primary"
             onClick={handleBlockedMessageClose}
@@ -392,7 +382,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         email={email}
         role={role}
         isForgotPassword={isPasswordResetMode}
-        // onPasswordResetSuccess={handlePasswordResetOTPSuccess}
       />
     </>
   );
