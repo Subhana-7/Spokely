@@ -26,7 +26,9 @@ export interface IMentor extends Document {
     rejectionReason?: string;
   };
   role?:"mentor"|"user";
-    forgotPasswordOtp?: {
+  bio?:string;
+  tags?: string[];
+  forgotPasswordOtp?: {
     code: string;
     expiresAt: Date;
     newPassword: string;
@@ -67,6 +69,8 @@ const mentorSchema = new Schema<IMentor>(
       rejectionReason: { type: String },
     },
     role:{type:String,default:"mentor"},
+    bio:{type:String},
+    tags: { type: [String], default: [] }
     forgotPasswordOtp: {
       code: { type: String },
       expiresAt: { type: Date },

@@ -69,7 +69,7 @@ const DashboardHeader = () => {
           <button className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
             <Bell size={20} />
           </button>
-          <button className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+          <button onClick={() => navigate("/user/profile")} className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
             <User size={20} />
           </button>
           <button
