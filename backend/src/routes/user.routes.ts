@@ -1,3 +1,5 @@
+// routes/user.routes.ts - Fixed version
+
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
 import express from "express";
@@ -19,15 +21,12 @@ router.post("/verify-otp", controller.verifyOtp.bind(controller));
 router.post("/forgot-password", controller.forgotPassword.bind(controller));
 router.post("/verify-forgot-password", controller.verifyForgotPassword.bind(controller));
 
-router.get("/home", controller.home.bind(controller));
+// FIXED: Add auth middleware and remove :id parameter since we get it from token
+router.get("/home", authMiddleware(["user"]), controller.home.bind(controller));
+
 router.get("/google", controller.handleGoogleAccounts.bind(controller));
 router.get("/google/callback", controller.googleCallback.bind(controller));
 router.post("/logout", controller.logout.bind(controller));
-router.patch(
-  "/update-role",
-  authMiddleware(["user"]),
-  controller.updateRole.bind(controller)
-);
 router.get(
   "/all",
   authMiddleware(["user"]),
@@ -35,7 +34,5 @@ router.get(
 );
 
 router.post("/refresh-token", controller.refreshToken.bind(controller));
-
-
 
 export default router;

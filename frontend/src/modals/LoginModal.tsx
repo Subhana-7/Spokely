@@ -103,6 +103,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
           "Your mentor application is under review, Kindly monitor emails for updation"
         );
       } else {
+        // setGlobalRole(user.role);
+
         if (selectedRole === "user") {
           navigate("/user/home");
         } else {

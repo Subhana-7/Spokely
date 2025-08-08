@@ -1,4 +1,3 @@
-// src/store/useAuthStore.ts
 import { create } from "zustand";
 import Cookies from "js-cookie";
 

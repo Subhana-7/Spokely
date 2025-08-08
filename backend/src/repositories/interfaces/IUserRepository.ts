@@ -9,7 +9,6 @@ export interface IUserRepository {
   updateUserRole(userId: string, role: "user" | "mentor"): Promise<IUser | null>;
   findAll(): Promise<IUser[] | null>;
   
-  // New methods for forgot password
   updateForgotPasswordOTP(email: string, code: string, expiresAt: Date, newPassword: string): Promise<IUser | null>;
   verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null>;
   updatePassword(email: string, password: string): Promise<IUser | null>;

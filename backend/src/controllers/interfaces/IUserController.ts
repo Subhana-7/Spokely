@@ -6,7 +6,6 @@ export interface IUserController {
   sendOtp(req: Request, res: Response): Promise<void>;
   verifyOtp(req: Request, res: Response): Promise<void>;
   home(req: Request, res: Response): Promise<void>;
-  updateRole(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
   getAllUsers(req: Request, res: Response): Promise<void>;
   handleGoogleAccounts(req: Request, res: Response, next: Function): Promise<void>;
