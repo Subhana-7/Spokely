@@ -15,6 +15,10 @@ router.get("/all", authMiddleware(["mentor"]), controller.getAll);
 router.post("/logout", controller.logout);
 router.patch("/re-submit",controller.updateMentorDocument)
 router.post("/refresh-token", controller.refreshToken);
+router.patch("/re-submit",controller.updateMentorDocument);
+
+router.post("/forgot-password",controller.forgotPassword);
+router.post("/verify-forgot-password",controller.verifyForgotPassword);
 
 
 export default router;

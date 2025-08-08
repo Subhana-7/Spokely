@@ -40,7 +40,6 @@ const MentorManagement = () => {
 
         console.log(res);
 
-        // ✅ Use fallback if mentors is undefined
         setMentors(res?.mentors ?? []);
         setTotal(res?.total ?? 0);
       } catch (err) {
@@ -72,6 +71,7 @@ const MentorManagement = () => {
   const handleBlock = async (id: string) => {
     try {
       const mentor = mentors.find((m) => m._id === id);
+
       if (!mentor) {
         toast.error("Mentor not found");
         return;
@@ -99,7 +99,6 @@ const MentorManagement = () => {
     navigate(`/admin/mentors/verification/${id}`);
   };
 
-  // ✅ Safe .map with fallback
   const mentorData = (mentors || []).map((mentor) => ({
     id: mentor._id,
     name: mentor.name,

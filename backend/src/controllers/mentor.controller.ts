@@ -154,4 +154,34 @@ export class MentorController implements IMentorController {
   };
 
   
+  forgotPassword = async(
+    req:Request,res:Response
+  ):Promise<void> => {
+    try {
+      const { email, newPassword } = req.body;
+      
+      if (!newPassword) {
+        res.status(400).json({ message: "New password is required" });
+        return;
+      }
+
+      await this.service.forgotPassword(email, newPassword);
+      res.status(200).json({ message: "Password reset OTP sent to email" });
+    } catch (error:any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+    verifyForgotPassword = async (
+      req: Request,
+      res: Response
+    ): Promise<void> => {
+      try {
+        const { email, code } = req.body;
+        const result = await this.service.verifyForgotPassword(email, code);
+        res.status(200).json(result);
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
+      }
+    };
 }

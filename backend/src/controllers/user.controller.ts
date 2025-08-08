@@ -106,7 +106,6 @@ export class UserController implements IUserController {
     }
   };
 
-  // New methods for forgot password
   forgotPassword = async (
     req: Request<{}, {}, ForgotPasswordDTO>,
     res: Response
