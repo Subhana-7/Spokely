@@ -12,7 +12,6 @@ export interface IUserController {
   handleGoogleAccounts(req: Request, res: Response, next: Function): Promise<void>;
   googleCallback(req: Request, res: Response, next: Function): Promise<void>;
   
-  // New methods for forgot password
   forgotPassword(req: Request, res: Response): Promise<void>;
   verifyForgotPassword(req: Request, res: Response): Promise<void>;
 }

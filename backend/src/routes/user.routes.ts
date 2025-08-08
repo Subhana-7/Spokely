@@ -16,7 +16,6 @@ router.post("/login", controller.login.bind(controller));
 router.post("/send-otp", controller.sendOtp.bind(controller));
 router.post("/verify-otp", controller.verifyOtp.bind(controller));
 
-// New routes for forgot password
 router.post("/forgot-password", controller.forgotPassword.bind(controller));
 router.post("/verify-forgot-password", controller.verifyForgotPassword.bind(controller));
 
