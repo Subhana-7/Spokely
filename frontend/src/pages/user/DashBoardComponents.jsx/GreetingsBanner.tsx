@@ -6,18 +6,18 @@ import { refreshToken } from '../../../services/authServices';
 const GreetingBanner = () => {
   const user = useAuthStore((state) => state.user);
 
-  useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await refreshToken(); // or your own call
-      useAuthStore.getState().setUser(res.user);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+//   useEffect(() => {
+//   const fetchUser = async () => {
+//     try {
+//       const res = await refreshToken(); // or your own call
+//       useAuthStore.getState().setUser(res.user);
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   };
 
-  fetchUser();
-}, []);
+//   fetchUser();
+// }, []);
 
 
   return (

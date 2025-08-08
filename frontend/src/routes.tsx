@@ -94,7 +94,6 @@ const appRoutes: RouteObject[] = [
   },
 ];
 
-// ✅ Export a wrapper component that uses useRoutes
 export default function AppRoutes() {
   return useRoutes(appRoutes);
 }

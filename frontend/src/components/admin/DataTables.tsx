@@ -20,15 +20,26 @@ interface DataTableProps {
   type: "user" | "mentor";
   onBlock?: (id: string) => void;
   onRowClick?: (id: string) => void;
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  total: number;
+  limit: number;
 }
 
-const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
+const DataTable = ({
+  data,
+  type,
+  onBlock,
+  onRowClick,
+  page,
+  setPage,
+  total,
+  limit,
+}: DataTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-800";
-      case "inactive":
-        return "bg-gray-100 text-gray-800";
       case "blocked":
         return "bg-red-100 text-red-800";
       default:
@@ -36,13 +47,10 @@ const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
     }
   };
 
-  // Function to get block/unblock button styles
   const getBlockButtonStyles = (isBlocked: boolean) => {
     if (isBlocked) {
-      // Unblock button - green color
       return "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs";
     } else {
-      // Block button - red color
       return "bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs";
     }
   };
@@ -67,10 +75,7 @@ const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr
-                key={item.id}
-                className="hover:bg-gray-50 border-t"
-              >
+              <tr key={item.id} className="hover:bg-gray-50 border-t">
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm overflow-hidden">
@@ -133,9 +138,7 @@ const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
                   <td className="px-6 py-4">
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        onRowClick?.(item.id)
-                      }
+                      onClick={() => onRowClick?.(item.id)}
                     >
                       {item.verificationStatus}
                     </Button>
@@ -156,6 +159,33 @@ const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
             ))}
           </tbody>
         </table>
+
+        <button />
+      </div>
+
+      {/* Pagination Controls - placed outside the bordered table */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <span className="text-sm text-gray-600">
+          Page {page} of {Math.ceil(total / limit)}
+        </span>
+
+        <button
+          onClick={() =>
+            setPage((prev) => (prev * limit < total ? prev + 1 : prev))
+          }
+          disabled={page * limit >= total}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

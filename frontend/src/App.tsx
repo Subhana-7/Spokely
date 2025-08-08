@@ -14,6 +14,6 @@ function App() {
       <Toaster />
     </BrowserRouter>
   );
-}
+};
 
 export default App;

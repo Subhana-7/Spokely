@@ -18,10 +18,9 @@ API.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await refreshToken(); // hits `/refresh-token`, sets new access token cookie
-        return API(originalRequest); // retry original request
+        await refreshToken(); 
+        return API(originalRequest); 
       } catch (refreshError) {
-        // Redirect to login page if refresh fails
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
@@ -69,7 +68,6 @@ export const verifyOTP = (
   return API.post(endpoint, data);
 };
 
-// New forgot password functions
 export const sendForgotPasswordOTP = (
   data: { email: string; newPassword?: string },
   role: "user" | "mentor"

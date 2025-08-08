@@ -8,4 +8,7 @@ export interface IMentorService {
   login(data: any): Promise<{ mentor: IMentor; accessToken: string; refreshToken: string } | null>;
   getAllMentors(): Promise<IMentor[] | null>;
   updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
+
+  forgotPassword(email: string, newPassword: string): Promise<void | null>;
+  verifyForgotPassword(email: string, code: string): Promise<{ message: string } | null>;
 }

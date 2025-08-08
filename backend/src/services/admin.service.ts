@@ -82,4 +82,30 @@ export class AdminService implements IAdminService {
     await this.emailService.sendVerificationUpdateEmail(email, "rejected");
     return this.repo.updateMentorRejection(id, reason);
   }
+
+  async getAllUsersWithQuery(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    level?: string;
+    minSessions?: number;
+    maxSessions?: number;
+    minMentors?: number;
+    maxMentors?: number;
+    isBlocked: boolean;
+  }) {
+    return this.repo.findAllUsersWithQuery(params);
+  }
+
+  async getAllMentorsWithQuery(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: "students" | "sessions";
+    verificationStatus?: "pending" | "approved" | "rejected";
+    isBlocked?: boolean;
+  }): Promise<{ users: IMentor[]; total: number }> {
+    const { mentors, total } = await this.repo.findAllMentorsWithQuery(params);
+    return { users: mentors, total };
+  }
 }
