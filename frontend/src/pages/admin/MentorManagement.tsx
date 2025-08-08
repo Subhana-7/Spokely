@@ -26,7 +26,6 @@ const MentorManagement = () => {
 
   const handleBlock = async (id: string) => {
     try {
-      // Find the mentor to determine current status
       const mentor = mentors.find(m => m._id === id);
       if (!mentor) {
         toast.error("Mentor not found");
