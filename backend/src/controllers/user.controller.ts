@@ -98,7 +98,7 @@ export class UserController implements IUserController {
   ): Promise<void> => {
     try {
       const { email, newPassword } = req.body;
-      
+
       if (!newPassword) {
         res.status(400).json({ message: "New password is required" });
         return;
@@ -159,7 +159,11 @@ export class UserController implements IUserController {
         }
 
         const token = jwt.sign(
-          { id: user._id, role: user.role, isGoogleUser: user.isGoogleUser },
+          {
+            id: user._id,
+            role: user.role,
+            isGoogleUser: user.isGoogleUser,
+          },
           process.env.JWT_SECRET!,
           { expiresIn: "1d" }
         );
@@ -171,10 +175,12 @@ export class UserController implements IUserController {
           sameSite: "lax",
         });
 
+        console.log(token);
+
         const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
         const redirectUrl = isNewUser
-          ? `${process.env.CLIENT_SIDE_URL}/google-redirect?source=signup`
-          : `${process.env.CLIENT_SIDE_URL}/google-redirect`;
+          ? `${process.env.CLIENT_SIDE_URL}/google-redirect?token=${token}&source=signup`
+          : `${process.env.CLIENT_SIDE_URL}/google-redirect?token=${token}`;
 
         res.redirect(redirectUrl);
       })(req, res, next);

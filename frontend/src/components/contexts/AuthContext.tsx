@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await logoutService()
+      await logoutService(role as "user"|"mentor")
       localLogout(); 
       navigate('/');
     } catch (err) {

@@ -4,14 +4,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import User from '../models/user.model';
-import { UserService } from '../services/user.service';
+import  container from './inversify.config';
+import { TYPES } from '../types/types';
+import { IUserService } from '../services/interfaces/IUserService';
 
-const service = new UserService();
+const service = container.get<IUserService>(TYPES.IUserService); 
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      
       callbackURL: process.env.GOOGLE_CALLBACK_URL!,
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -22,12 +26,12 @@ passport.use(
           user = await User.create({
             name: profile.displayName,
             email: profile.emails?.[0].value,
-            googleId: profile.id, 
+            googleId: profile.id,
             role: 'user',
-            isVerified:true,
+            isVerified: true,
             profilePicture: profile.photos?.[0].value,
             uniqueCode: await service.generateUniqueCode(), 
-            isGoogleUser:true,
+            isGoogleUser: true,
           });
         }
         done(null, user);
