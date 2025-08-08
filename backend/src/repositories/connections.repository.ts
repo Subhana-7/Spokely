@@ -18,7 +18,7 @@ export class ConnectionRepository implements IConnectionRepository {
     }
   }
 
-  async findByReferralCode(
+  async findByUniqueCode(
     senderId: Types.ObjectId,
     receiverId: Types.ObjectId
   ): Promise<IConnection | null> {

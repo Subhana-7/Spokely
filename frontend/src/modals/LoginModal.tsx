@@ -3,10 +3,13 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
-import { login, sendOTP } from "../services/authServices";
+import { login } from "../services/authServices";
 import OTPModal from "./OTPModal";
+import VerificationPendingModal from "./VerificationPendingModal";
+import DocumentResubmissionModal from "./DocumentReSubmissionModal";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
+import Toggle from "./Toggle";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -22,9 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onForgotPassword,
 }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
   const { setRole: setGlobalRole } = useAuthStore();
@@ -33,6 +34,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+
+  const [showDocumentResubmission, setShowDocumentResubmission] = useState(false);
+  const [verificationPendingMessage, setVerificationPendingMessage] = useState("");
+  const [blockedMessage, setBlockedMessage] = useState("");
 
   const validate = () => {
     const err: typeof errors = {};
@@ -45,38 +50,45 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const handleLogin = async () => {
     if (!validate()) return;
 
+    if (role !== "user" && role !== "mentor") {
+      setErrors({ email: "Please select a role (User or Mentor)" });
+      return;
+    }
+
     setLoading(true);
     setErrors({});
+
     try {
-      const res = await login(formData);
-      const user = res.data.user;
-      const token = res.data.token;
+      const selectedRole: "user" | "mentor" = role;
+      const res = await login(formData, selectedRole);
+      const user = res.data[selectedRole];
+
+      console.log(user.isBlocked)
+      if (user.isBlocked) {
+        const roleText = selectedRole === "user" ? "user" : "mentor";
+        setBlockedMessage(`Your ${roleText} account has been blocked. Please contact support for assistance.`);
+        return;
+      }
 
       if (!user.isVerified) {
-        await sendOTP({ email: user.email });
         setRole(user.role);
         setEmail(user.email);
         setShowOtpModal(true);
+      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "rejected") {
+        setShowDocumentResubmission(true);
+      } else if (selectedRole === "mentor" && user.document?.verificationStatus === "pending") {
+        setVerificationPendingMessage("Your mentor application is under review, Kindly monitor emails for updation");
       } else {
         setGlobalRole(user.role);
-
-        if (user.role === "user") navigate("/user/home");
-        else navigate("/mentor/home");
+        if (selectedRole === "user") {
+          navigate("/user/home");
+        } else {
+          navigate("/mentor/home");
+        }
       }
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;
-
-      if (message.toLowerCase().includes("email")) {
-        setErrors({ email: message });
-      } else if (
-        message.toLowerCase().includes("password") ||
-        message.toLowerCase().includes("invalid credentials") ||
-        message.toLowerCase().includes("incorrect")
-      ) {
-        setErrors({ password: message });
-      } else {
-        setErrors({ password: message });
-      }
+      setErrors({ password: message });
     } finally {
       setLoading(false);
     }
@@ -90,11 +102,99 @@ const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
+  const handleCloseModal = () => {
+    setShowOtpModal(false);
+    setShowDocumentResubmission(false);
+    setVerificationPendingMessage("");
+    setBlockedMessage("");
+    setErrors({});
+    onClose();
+  };
+
+  const handleVerificationPendingClose = () => {
+    setVerificationPendingMessage("");
+    handleCloseModal();
+  };
+
+  const handleDocumentResubmissionClose = () => {
+    setShowDocumentResubmission(false);
+    handleCloseModal();
+  };
+
+  const handleBlockedMessageClose = () => {
+    setBlockedMessage("");
+    handleCloseModal();
+  };
+
+  const roleOptions = [
+    { value: "user", label: "User" },
+    { value: "mentor", label: "Mentor" },
+  ];
+
+  if (blockedMessage) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={handleBlockedMessageClose}
+        title="Account Blocked"
+        icon={<LogIn className="h-6 w-6 text-red-600" />}
+      >
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Account Access Restricted
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{blockedMessage}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <Button 
+            variant="primary" 
+            onClick={handleBlockedMessageClose}
+            className="w-full"
+          >
+            Understood
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (verificationPendingMessage) {
+    return (
+      <VerificationPendingModal
+        isOpen={isOpen}
+        onClose={handleVerificationPendingClose}
+        message={verificationPendingMessage}
+      />
+    );
+  }
+
+  if (showDocumentResubmission) {
+    return (
+      <DocumentResubmissionModal
+        isOpen={isOpen}
+        onClose={handleDocumentResubmissionClose}
+        email={formData.email}
+      />
+    );
+  }
+
   return (
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleCloseModal}
         title="Login"
         icon={<LogIn className="h-6 w-6 text-gray-800" />}
       >
@@ -122,6 +222,17 @@ const LoginModal: React.FC<LoginModalProps> = ({
             rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             onRightIconClick={() => setShowPassword((prev) => !prev)}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-2">
+              You are a
+            </label>
+            <Toggle
+              options={roleOptions}
+              selected={role}
+              onChange={(val) => setRole(val)}
+            />
+          </div>
 
           <Button
             variant="google"
@@ -151,10 +262,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         onClose={() => setShowOtpModal(false)}
         email={email}
         role={role}
-        onVerify={() => {
-          if (role === "user") navigate("/user/home");
-          else navigate("/mentor/home");
-        }}
       />
     </>
   );

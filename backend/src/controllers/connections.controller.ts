@@ -18,11 +18,11 @@ export class ConnectionController implements IConnectionController {
       if (!req.id) throw new Error("User not authenticated");
 
       const senderId = req.id;
-      const { referralCode } = req.body;
+      const { uniqueCode } = req.body;
 
       const connection = await this.service.sendConnectionRequest(
         senderId,
-        referralCode
+        uniqueCode
       );
 
       res.status(201).json(connection);

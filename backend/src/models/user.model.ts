@@ -1,17 +1,17 @@
 import mongoose, { Document, Schema,Types } from "mongoose";
 
 export interface IUser extends Document {
+  role: any;
   _id: Types.ObjectId;
   name: string;
   email: string;
   phone?: number;
   password?: string;
-  role: "user" | "mentor";
   profilePicture?: string;
   createdAt?: Date;
   updatedAt?: Date;
   isBlocked: boolean;
-  referalCode: string;
+  uniqueCode: string;
   levels?: number;
   completionRate?: number;
   streak?: number;
@@ -36,12 +36,6 @@ const userSchema = new Schema<IUser>(
         },
       },
     phone: { type: Number },
-    role: {
-      type: String,
-      enum: ["user", "mentor"],
-      default: "user",
-      required: true,
-    },
     otp: {
       code: { type: String, expiresAt: Date },
     },
@@ -50,7 +44,7 @@ const userSchema = new Schema<IUser>(
     isVerified: { type: Boolean, default: false },
     profilePicture: { type: String, default: "" },
     isBlocked: { type: Boolean, default: false },
-    referalCode: { type: String, required: true, unique: true },
+    uniqueCode: { type: String, required: true, unique: true },
     sessionsDone: { type: Number, default: 0 },
     levels: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },

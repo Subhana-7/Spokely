@@ -4,26 +4,25 @@ import { UserRepository } from "../repositories/user.repository";
 import nodemailer from "nodemailer";
 import { IUserService } from "./interfaces/IUserService";
 import { IUser } from "../models/user.model";
-import { inject,injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { Response } from "express";
 
 @injectable()
 export class UserService implements IUserService {
-  constructor(
-    @inject(TYPES.IUserRepository) private repo: IUserRepository
-  ) {}
+  constructor(@inject(TYPES.IUserRepository) private repo: IUserRepository) {}
 
-  async generateUniqueReferralCode(): Promise<string | null> {
+  async generateUniqueCode(): Promise<string | null> {
     try {
       const generateRandom = () =>
         Math.random().toString(36).substring(2, 8).toUpperCase();
       let code = generateRandom();
-      let exists = await this.repo.findByReferalCode(code);
+      let exists = await this.repo.findByUniqueCode(code);
 
       while (exists) {
         code = generateRandom();
-        exists = await this.repo.findByReferalCode(code);
+        exists = await this.repo.findByUniqueCode(code);
       }
       return code;
     } catch (error) {
@@ -92,14 +91,12 @@ export class UserService implements IUserService {
     email: string,
     code: string
   ): Promise<{ message: string } | null> {
-    try {
       const isValid = await this.repo.verifyOTP(email, code);
-      if (!isValid) throw new Error("Invalid or expired OTP");
+      if (!isValid) {
+        throw new Error("Invalid or expired OTP");
+      }
+
       return { message: "Email verified successfully" };
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
   }
 
   async signup(data: any): Promise<IUser | null> {
@@ -109,12 +106,12 @@ export class UserService implements IUserService {
       const existing = await this.repo.findByEmail(data.email);
       if (existing) throw new Error("Email Already in use");
       const hashed = await bcrypt.hash(data.password, 10);
-      const referalCode = await this.generateUniqueReferralCode();
+      const uniqueCode = await this.generateUniqueCode();
 
       return this.repo.createUser({
         ...data,
         password: hashed,
-        referalCode,
+        uniqueCode,
       });
     } catch (error) {
       console.log("error", error);

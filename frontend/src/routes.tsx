@@ -13,6 +13,7 @@ import Sessions from './pages/Sessions/Sessions';
 import SessionSchedule from './pages/Sessions/ScheduleSessions';
 import SessionDetail from "./pages/Sessions/SessionDetails";
 import VideoCall from "./pages/VideoCall";
+import MentorVerification from "./pages/admin/MentorVerification";
 
 export const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -28,6 +29,7 @@ export const appRoutes: RouteObject[] = [
       { index: true, element: <Dashboard /> },
       { path: "users", element: <UserManagement /> },
       { path: "mentors", element: <MentorManagement /> },
+      { path: "mentors/verification/:id", element: <MentorVerification /> }
     ],
   },
   { path: "/user/session", element: <Sessions /> },

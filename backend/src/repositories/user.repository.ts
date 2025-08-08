@@ -22,9 +22,9 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async findByReferalCode(code: String): Promise<IUser | null> {
+  async findByUniqueCode(code: String): Promise<IUser | null> {
     try {
-      return User.findOne({ referalCode: code });
+      return User.findOne({ uniqueCode: code });
     } catch (error) {
       console.log("error", error);
       return null;

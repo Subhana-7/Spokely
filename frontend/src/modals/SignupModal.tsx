@@ -6,6 +6,7 @@ import Button from "./Button";
 import Toggle from "./Toggle";
 import { signup, sendOTP } from "../services/authServices";
 import OTPModal from "./OTPModal";
+import { uploadImageToCloudinary } from "../utilis/cloudinary ";
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -19,18 +20,25 @@ const SignupModal: React.FC<SignupModalProps> = ({
   onSwitchToLogin,
 }) => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
     password: "",
-    role: "user",
+    role: "",
+  });
+
+  const [mentorData, setMentorData] = useState({
+    documentUrl: "",
+    textMessage: "",
   });
 
   const [errors, setErrors] = useState<{
-    fullName?: string;
+    name?: string;
     email?: string;
     phone?: string;
     password?: string;
+    mentorDocument?: string;
+    mentorMessage?: string;
   }>({});
 
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -41,11 +49,27 @@ const SignupModal: React.FC<SignupModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
+  const resetFormData = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "",
+    });
+    setMentorData({
+      documentUrl: "",
+      textMessage: "",
+    });
+    setErrors({});
+    setShowPassword(false);
+  };
+
   const validate = () => {
     const newErrors: typeof errors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full Name is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Full Name is required";
     }
 
     if (!formData.email.trim()) {
@@ -73,122 +97,219 @@ const SignupModal: React.FC<SignupModalProps> = ({
       newErrors.phone = "Enter a valid 10-digit phone number";
     }
 
+    if (formData.role === "mentor") {
+      if (!mentorData.documentUrl) {
+        newErrors.mentorDocument = "Verification document is required";
+      }
+
+      const trimmedMessage = mentorData.textMessage.trim();
+      if (!trimmedMessage) {
+        newErrors.mentorMessage = "Please write a message to the Spokely team";
+      } else if (trimmedMessage.length < 10) {
+        newErrors.mentorMessage = "Message must be at least 10 characters long";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/google`;
+    window.location.href = `${
+      import.meta.env.VITE_SERVER_SIDE_URL
+    }/api/users/google`;
+  };
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const url = await uploadImageToCloudinary(file);
+      setMentorData({ ...mentorData, documentUrl: url });
+      setErrors((prev) => ({ ...prev, mentorDocument: "" }));
+    } catch (error) {
+      console.error("File upload failed", error);
+      alert("Failed to upload document. Please try again.");
+    }
   };
 
   const handleCreateAccount = async () => {
     if (!validate()) return;
 
     try {
-      await signup(formData);
-      await sendOTP({ email: formData.email });
+      await signup({
+        ...formData,
+        ...mentorData,
+      });
+      await sendOTP(
+        { email: formData.email },
+        formData.role as "user" | "mentor"
+      );
       setShowOtpModal(true);
     } catch (err: any) {
-      console.log(
-        "Signup failed: " + (err.response?.data?.message || err.message)
-      );
+      const message = err.response?.data?.message || err.message;
+
+      if (message.includes("Email already")) {
+        setErrors((prev) => ({ ...prev, email: "Email already registered" }));
+      }
+      
+      console.log("Signup failed: " + message);
     }
   };
 
+  const handleCloseModal = () => {
+    resetFormData();
+    onClose();
+  };
+
+  const handleOtpModalClose = () => {
+    setShowOtpModal(false);
+    resetFormData();
+    onClose(); 
+  };
+
+  const handleSwitchToLogin = () => {
+    resetFormData();
+    onSwitchToLogin();
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Create Account"
-      icon={<UserPlus className="h-6 w-6 text-gray-800" />}
-    >
-      <div className="space-y-4">
-        <Input
-          type="name"
-          placeholder="Full Name"
-          value={formData.fullName}
-          onChange={(value) => {
-            setFormData({ ...formData, fullName: value });
-            if (errors.fullName)
-              setErrors((prev) => ({ ...prev, fullName: "" }));
-          }}
-          error={errors.fullName}
-        />
-
-        <Input
-          type="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={(value) => {
-            setFormData({ ...formData, email: value });
-            if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
-          }}
-          error={errors.email}
-        />
-
-        <Input
-          type="text"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={(value) => {
-            setFormData({ ...formData, phone: value });
-            if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
-          }}
-          error={errors.phone}
-        />
-
-        <Input
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={formData.password}
-          onChange={(value) => {
-            setFormData({ ...formData, password: value });
-            if (errors.password)
-              setErrors((prev) => ({ ...prev, password: "" }));
-          }}
-          error={errors.password}
-          rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          onRightIconClick={() => setShowPassword((prev) => !prev)}
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-800 mb-2">
-            Select Role
-          </label>
-          <Toggle
-            options={roleOptions}
-            selected={formData.role}
-            onChange={(value) => setFormData({ ...formData, role: value })}
+    <>
+      <Modal
+        isOpen={isOpen && !showOtpModal}
+        onClose={handleCloseModal}
+        title="Create Account"
+        icon={<UserPlus className="h-6 w-6 text-gray-800" />}
+      >
+        <div className="space-y-4">
+          <Input
+            type="name"
+            placeholder="Full Name"
+            value={formData.name}
+            onChange={(value) => {
+              setFormData({ ...formData, name: value });
+              if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+            }}
+            error={errors.name}
           />
+
+          <Input
+            type="email"
+            placeholder="Email Address"
+            value={formData.email}
+            onChange={(value) => {
+              setFormData({ ...formData, email: value });
+              if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            error={errors.email}
+          />
+
+          <Input
+            type="text"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={(value) => {
+              setFormData({ ...formData, phone: value });
+              if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
+            }}
+            error={errors.phone}
+          />
+
+          <Input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={formData.password}
+            onChange={(value) => {
+              setFormData({ ...formData, password: value });
+              if (errors.password)
+                setErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            error={errors.password}
+            rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            onRightIconClick={() => setShowPassword((prev) => !prev)}
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-2">
+              Select Role
+            </label>
+            <Toggle
+              options={roleOptions}
+              selected={formData.role}
+              onChange={(value) => setFormData({ ...formData, role: value })}
+            />
+          </div>
+
+          {formData.role === "mentor" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  Upload Verification Document
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.png,.jpg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileUpload(file);
+                    }
+                  }}
+                  className="mt-2"
+                />
+                {errors.mentorDocument && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.mentorDocument}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Input
+                  type="textarea"
+                  placeholder="Write your message to the Spokely team..."
+                  value={mentorData.textMessage}
+                  onChange={(val) => {
+                    setMentorData({ ...mentorData, textMessage: val });
+
+                    const trimmedVal = val.trim();
+                    if (errors.mentorMessage && trimmedVal.length >= 10) {
+                      setErrors((prev) => ({ ...prev, mentorMessage: "" }));
+                    }
+                  }}
+                  className="resize-none h-24"
+                  error={errors.mentorMessage}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3 pt-2">
+            <Button variant="google" onClick={handleGoogleSignup}>
+              Signup using Google
+            </Button>
+
+            <Button variant="primary" onClick={handleCreateAccount}>
+              Create Account
+            </Button>
+          </div>
+
+          <div className="text-center pt-2">
+            <button
+              onClick={handleSwitchToLogin}
+              className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
+            >
+              Already have an account? Login
+            </button>
+          </div>
         </div>
+      </Modal>
 
-        <div className="space-y-3 pt-2">
-          <Button variant="google" onClick={handleGoogleSignup}>
-            Signup using Google
-          </Button>
-
-          <Button variant="primary" onClick={handleCreateAccount}>
-            Create Account
-          </Button>
-        </div>
-
-        <OTPModal
-          isOpen={showOtpModal}
-          onClose={() => setShowOtpModal(false)}
-          email={formData.email}
-          role={formData.role}
-        />
-
-        <div className="text-center pt-2">
-          <button
-            onClick={onSwitchToLogin}
-            className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
-          >
-            Already have an account? Login
-          </button>
-        </div>
-      </div>
-    </Modal>
+      <OTPModal
+        isOpen={showOtpModal}
+        onClose={handleOtpModalClose}
+        email={formData.email}
+        role={formData.role}
+      />
+    </>
   );
 };
 

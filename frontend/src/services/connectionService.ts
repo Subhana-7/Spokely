@@ -17,8 +17,8 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-export const sendConnectionRequest = (referralCode: string) =>
-  API.post("/send", { referralCode });
+export const sendConnectionRequest = (uniqueeCode: string) =>
+  API.post("/send", { uniqueeCode });
 
 export const getConnectionRequests = () =>
   API.get("/requests");

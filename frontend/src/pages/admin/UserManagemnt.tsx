@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
-import { getAllUsers, blockUser } from "../../services/adminService";
+import { getAllUsers, updateUserStatus } from "../../services/adminService";
 import toast from "react-hot-toast";
 
 const UserManagement = () => {
@@ -22,30 +22,31 @@ const UserManagement = () => {
 
   const handleBlock = async (id: string) => {
     try {
-      await blockUser(id);
-      setUsers((prev) =>
-      prev.map((u) =>
-        u._id === id ? { ...u, isBlocked: !u.isBlocked } : u
-      )
-    );
+      const user = users.find(u => u.id === id);
+      if (!user) {
+        toast.error("User not found");
+        return;
+      }
 
-    toast.success("User " + (users.find(u => u._id === id)?.isBlocked ? "unblocked" : "blocked"));
+      const newStatus = user.isBlocked ? "unBlocked" : "blocked";
+      
+      await updateUserStatus(id, newStatus);
+
+      setUsers((prev) => 
+        prev.map((u) => {
+          if (u._id === id) {
+            return { ...u, isBlocked: !u.isBlocked };
+          }
+          return u;
+        })
+      );
+
+      toast.success(`User ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`);
     } catch (err) {
-      toast.error("Failed to block user");
+      toast.error("Failed to update user status");
+      console.error("Error updating user status:", err);
     }
   };
-
-  // const handleEdit = (id: string) => console.log("Edit user:", id);
-
-  // const handleDelete = async (id: string) => {
-  //   try {
-  //     await deleteUser(id);
-  //     toast.success("User deleted");
-  //     setUsers((prev) => prev.filter((u) => u._id !== id));
-  //   } catch (err) {
-  //     toast.error("Failed to delete user");
-  //   }
-  // };
 
   const userData = users.map((user) => ({
     id: user.id,
@@ -55,8 +56,8 @@ const UserManagement = () => {
     level: user.levels?.toString() ?? "N/A",
     students: user.students?.length ?? 0,
     dailyTask: "To be implemented",
-    status: user.isBlocked ? "Blocked" : "Active",
-    isBlocked:user.isBlocked,
+    status: user.isBlocked ? "Blocked" : "unBlocked",
+    isBlocked: user.isBlocked,
     sessions: user.sessionsDone,
     mentors: 0,
   }));
@@ -73,13 +74,6 @@ const UserManagement = () => {
             Manage and monitor all platform users
           </p>
         </div>
-        {/* <button
-          className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium"
-          onClick={() => console.log("Add User")}
-        >
-          <Plus className="w-4 h-4" />
-          Add User
-        </button> */}
       </div>
 
       <SearchFilterBar
@@ -91,8 +85,6 @@ const UserManagement = () => {
         data={userData}
         type="user"
         onBlock={handleBlock}
-        // onEdit={handleEdit}
-        // onDelete={handleDelete}
       />
     </div>
   );
