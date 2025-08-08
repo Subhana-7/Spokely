@@ -26,6 +26,20 @@ export class MentorService implements IMentorService {
     return code;
   }
 
+  private async passwordValidation(password: string): Promise<void> {
+    try {
+      const strongPasswordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      if (!strongPasswordRegex.test(password)) {
+        throw new Error(
+          "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
+        );
+      }
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+
   private generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
@@ -103,5 +117,44 @@ export class MentorService implements IMentorService {
     docMessage: string
   ): Promise<IMentor | null> {
     return this.repo.updateMentorDocument(email, docUrl, docMessage);
+  }
+
+  async forgotPassword(email:string,newPassword:string):Promise<void | null>{
+    try {
+      const mentor = await this.repo.findByEmail(email);
+
+      if(!mentor) throw new Error("Mentor not found");
+
+      await this.passwordValidation(newPassword);
+
+      const hashedPassword = await bcrypt.hash(newPassword,10);
+
+      const otp = this.generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await this.repo.updateForgotPasswordOTP(email,otp,expiresAt,hashedPassword);
+
+      await this.emailService.sendOTPEmail(email,otp,true);
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
+  }
+
+  async verifyForgotPassword(
+    email: string,
+    code: string
+  ): Promise<{ message: string } | null> {
+     try {
+      const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
+      if (!isValid) {
+        throw new Error("Invalid or expired OTP");
+      }
+
+      return { message: "Password reset successfully" };
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
   }
 }

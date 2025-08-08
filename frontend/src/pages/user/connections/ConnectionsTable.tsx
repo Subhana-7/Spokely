@@ -1,6 +1,6 @@
 import React from "react";
 import Button from "../../../modals/Button";
-import { MessageCircle, Ban, Trash2 } from "lucide-react";
+import { MessageCircle, Ban, Trash2, User, Users, Clock, Mail, CheckCircle } from "lucide-react";
 
 interface Connection {
   id: string;
@@ -14,83 +14,124 @@ interface ConnectionsTableProps {
   connections: Connection[];
 }
 
+
 const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
-  const handleBlock = (username: string) => {
+  const handleBlock = (username:string) => {
     console.log("Blocking user:", username);
   };
 
-  const handleChat = (username: string) => {
+  const handleChat = (username:string) => {
     console.log("Opening chat with:", username);
   };
 
-  const handleRemove = (username: string) => {
+  const handleRemove = (username:string) => {
     console.log("Removing user:", username);
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 font-semibold text-gray-700 text-sm uppercase tracking-wide">
-          <div>USERNAME</div>
-          <div className="hidden md:block">ROLE</div>
-          <div className="hidden md:block">SESSIONS</div>
-          <div className="hidden md:block">ACTIONS</div>
+    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200/50">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+          <div className="flex items-center gap-2">
+            <User size={16} />
+            Contact
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <Users size={16} />
+            Role
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <Clock size={16} />
+            Sessions
+          </div>
+          <div className="hidden md:block">Status</div>
+          <div className="hidden md:block text-center">Actions</div>
         </div>
       </div>
 
-      <div className="divide-y divide-gray-200">
+      {/* Content */}
+      <div className="divide-y divide-gray-100">
         {connections.map((connection, index) => (
           <div
             key={connection.id}
-            className={`p-6 ${
-              index % 2 === 0 ? "bg-white" : "bg-gray-50"
-            } hover:bg-gray-100 transition-colors duration-150`}
+            className={`p-8 ${
+              index % 2 === 0 ? "bg-white/50" : "bg-gray-50/30"
+            } hover:bg-blue-50/40 transition-all duration-300 group`}
           >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-              <div>
-                <div className="font-medium text-gray-900">
-                  {connection.username}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
+              {/* Contact Info */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  {connection.username.charAt(0).toUpperCase()}
                 </div>
-                <div className="text-sm text-gray-500">{connection.email}</div>
+                <div>
+                  <div className="font-semibold text-gray-900 text-lg">
+                    {connection.username}
+                  </div>
+                  <div className="text-sm text-gray-500 flex items-center gap-1">
+                    <Mail size={12} />
+                    {connection.email}
+                  </div>
+                </div>
               </div>
 
+              {/* Role */}
               <div className="md:block">
-                <div className="text-gray-800 font-medium">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  connection.role === "Mentor" 
+                    ? "bg-purple-100 text-purple-800" 
+                    : "bg-blue-100 text-blue-800"
+                }`}>
                   {connection.role}
-                </div>
-                <div className="md:hidden text-sm text-gray-500 mt-1">
-                  {connection.sessions} sessions
+                </span>
+                <div className="md:hidden text-sm text-gray-500 mt-2">
+                  {connection.sessions} sessions completed
                 </div>
               </div>
 
+              {/* Sessions */}
               <div className="hidden md:block">
-                <span className="text-lg font-semibold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900">
                   {connection.sessions}
+                </div>
+                <div className="text-sm text-gray-500">sessions</div>
+              </div>
+
+              {/* Status */}
+              <div className="hidden md:block">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  <CheckCircle size={12} />
+                  Active
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-2 md:justify-start justify-center">
-                <Button
-                  onClick={() => handleBlock(connection.username)}
-                  className="w-auto px-3 py-1 rounded-md font-medium bg-orange-500 hover:bg-orange-600 text-white text-xs flex items-center"
-                >
-                  <Ban size={14} className="mr-1" />
-                  Block
-                </Button>
-
+              {/* Actions */}
+              <div className="flex flex-wrap gap-2 md:justify-center justify-start">
                 <Button
                   onClick={() => handleChat(connection.username)}
-                  className="w-auto px-3 py-1 rounded-md font-medium bg-blue-500 hover:bg-blue-600 text-white text-xs flex items-center"
+                  variant="primary"
+                  className="px-4 py-2 text-sm"
                 >
-                  <MessageCircle size={14} className="mr-1" />
+                  <MessageCircle size={16} className="mr-2" />
                   Chat
                 </Button>
 
                 <Button
-                  onClick={() => handleRemove(connection.username)}
-                  className="w-auto px-3 py-1 rounded-md font-medium bg-red-500 hover:bg-red-600 text-white text-xs flex items-center"
+                  onClick={() => handleBlock(connection.username)}
+                  variant="warning"
+                  className="px-4 py-2 text-sm"
                 >
-                  <Trash2 size={14} className="mr-1" />
+                  <Ban size={16} className="mr-2" />
+                  Block
+                </Button>
+
+                <Button
+                  onClick={() => handleRemove(connection.username)}
+                  variant="danger"
+                  className="px-4 py-2 text-sm"
+                >
+                  <Trash2 size={16} className="mr-2" />
                   Remove
                 </Button>
               </div>
@@ -99,11 +140,15 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
         ))}
       </div>
 
+      {/* Empty State */}
       {connections.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No connections found</div>
-          <div className="text-gray-400 text-sm mt-2">
-            Try adjusting your search criteria
+        <div className="text-center py-20">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <Users size={32} className="text-gray-400" />
+          </div>
+          <div className="text-gray-500 text-xl font-medium mb-2">No connections found</div>
+          <div className="text-gray-400 text-sm">
+            Try adjusting your search criteria or add new connections
           </div>
         </div>
       )}

@@ -9,4 +9,6 @@ export interface IMentorController {
   getAll(req: Request, res: Response): Promise<void>;
   updateMentorDocument(req:Request,res:Response):Promise<void>;
   refreshToken(req: Request, res: Response): Promise<void>
+  forgotPassword(req: Request, res: Response): Promise<void>;
+  verifyForgotPassword(req: Request, res: Response): Promise<void>;
 }

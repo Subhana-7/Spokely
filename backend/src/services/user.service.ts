@@ -111,7 +111,6 @@ export class UserService implements IUserService {
     return { message: "Email verified successfully" };
   }
 
-  // New methods for forgot password
   async forgotPassword(
     email: string,
     newPassword: string
@@ -120,10 +119,8 @@ export class UserService implements IUserService {
       const user = await this.repo.findByEmail(email);
       if (!user) throw new Error("User not found");
 
-      // Validate the new password
       await this.passwordValidation(newPassword);
 
-      // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       const otp = this.generateOTP();
@@ -245,6 +242,15 @@ export class UserService implements IUserService {
   async getAllUsers(): Promise<IUser[] | null> {
     try {
       return await this.repo.findAll();
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async getHome(id:string):Promise<IUser | null> {
+    try {
+      return await this.repo.findById(id)
     } catch (error) {
       console.log("error", error);
       return null;
