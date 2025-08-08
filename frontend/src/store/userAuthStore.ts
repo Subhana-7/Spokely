@@ -1,26 +1,35 @@
-import { create } from 'zustand';
-import Cookies from 'js-cookie';
+// src/store/useAuthStore.ts
+import { create } from "zustand";
+import Cookies from "js-cookie";
 
-interface AuthState {
-  token: string | null;
-  role: string | null;
-  setRole: (role: string) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "user" | "mentor";
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: Cookies.get('auth-token') || null,  
-  role: Cookies.get('role') || null,
-  isAuthenticated: !!Cookies.get('auth-token'),
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  setUser: (user: User) => void;
+  logout: () => void;
+}
 
-  setRole: (role: string) => {
-    Cookies.set('role', role, { expires: 7 });
-    set({ role });
+
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+
+  setUser: (user) => {
+    console.log(user)
+    set({ user, isAuthenticated: true });
   },
 
+
   logout: () => {
-    Cookies.remove('role'); 
-    set({ role: null, token: null, isAuthenticated: false });
+    Cookies.remove("role");
+    set({ user: null, isAuthenticated: false });
   },
 }));

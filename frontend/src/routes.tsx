@@ -1,4 +1,4 @@
-import type { RouteObject } from "react-router-dom";
+import { useRoutes, type RouteObject } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
 import GoogleRedirectHandler from "./modals/GoogleRedirectHandler";
 import UserHome from "./pages/user/UserDashboard";
@@ -14,26 +14,84 @@ import SessionSchedule from './pages/Sessions/ScheduleSessions';
 import SessionDetail from "./pages/Sessions/SessionDetails";
 import VideoCall from "./pages/VideoCall";
 import MentorVerification from "./pages/admin/MentorVerification";
+import RoleProtectedRoute from "./components/contexts/RoleProtectedRoute";
 
-export const appRoutes: RouteObject[] = [
+const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
   { path: "/google-redirect", element: <GoogleRedirectHandler /> },
-  { path: "/user/home", element: <UserHome /> },
-  { path: "/user/connections", element: <Connections /> },
-  { path: "/mentor/home", element: <MentorHome /> },
+
+  {
+    path: "/user/home",
+    element: (
+      <RoleProtectedRoute role="user">
+        <UserHome />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/connections",
+    element: (
+      <RoleProtectedRoute role="user">
+        <Connections />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/session",
+    element: (
+      <RoleProtectedRoute role="user">
+        <Sessions />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/schedule-session",
+    element: (
+      <RoleProtectedRoute role="user">
+        <SessionSchedule />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/session/:id",
+    element: (
+      <RoleProtectedRoute role="user">
+        <SessionDetail />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/home",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <MentorHome />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/session/:id/video",
+    element: <VideoCall />,
+  },
   { path: "/admin/login", element: <AdminLogin /> },
   {
     path: "/admin",
-    element: <AdminDashboard />,
+    element: (
+      // <RoleProtectedRoute role="admin">
+        <AdminDashboard />
+      // </RoleProtectedRoute>
+    ),
     children: [
       { index: true, element: <Dashboard /> },
       { path: "users", element: <UserManagement /> },
       { path: "mentors", element: <MentorManagement /> },
-      { path: "mentors/verification/:id", element: <MentorVerification /> }
+      {
+        path: "mentors/verification/:id",
+        element: <MentorVerification />,
+      },
     ],
   },
-  { path: "/user/session", element: <Sessions /> },
-  { path: "/user/schedule-session", element: <SessionSchedule /> },
-  { path: "/user/session/:id", element: <SessionDetail /> },
-  { path: "/session/:id/video", element: <VideoCall /> },
 ];
+
+export default function AppRoutes() {
+  return useRoutes(appRoutes);
+}

@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import { TYPES } from "../types/types";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class MentorService implements IMentorService {
@@ -57,8 +58,8 @@ export class MentorService implements IMentorService {
     const isValid = await this.repo.verifyOTP(email, code);
     if (!isValid) throw new Error("Invalid or expired OTP");
 
-    await this.emailService.sendVerificationUpdateEmail(email,'pending');
-    
+    await this.emailService.sendVerificationUpdateEmail(email, "pending");
+
     return { message: "Email verified successfully" };
   }
 
@@ -83,7 +84,8 @@ export class MentorService implements IMentorService {
     });
   }
 
-  async login(data: any): Promise<{ mentor: IMentor; token: string } | null> {
+  async login(data: any): Promise<{ mentor: IMentor; accessToken: string;
+    refreshToken: string;} | null> {
     const mentor = await this.repo.findByEmail(data.email);
     if (!mentor) throw new Error("Invalid credentials");
 
@@ -98,15 +100,23 @@ export class MentorService implements IMentorService {
       { expiresIn: "1d" }
     );
 
-    return { mentor, token };
+    return {
+      mentor,
+      accessToken: generateAccessToken({ id: mentor._id, role: "mentor" }),
+      refreshToken: generateRefreshToken({ id: mentor._id, role: "mentor" }),
+    };
   }
 
   async getAllMentors(): Promise<IMentor[] | null> {
     return this.repo.findAll();
   }
 
-  async updateMentorDocument(email:string,docUrl:string,docMessage:string,):Promise<IMentor | null>{
-    return this.repo.updateMentorDocument(email,docUrl,docMessage,);
+  async updateMentorDocument(
+    email: string,
+    docUrl: string,
+    docMessage: string
+  ): Promise<IMentor | null> {
+    return this.repo.updateMentorDocument(email, docUrl, docMessage);
   }
 
   async forgotPassword(email:string,newPassword:string):Promise<void | null>{

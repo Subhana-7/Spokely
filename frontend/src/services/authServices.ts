@@ -9,13 +9,29 @@ const API = axios.create({
   withCredentials: true,
 });
 
-API.interceptors.request.use((config) => {
-  const token = Cookies.get("auth-token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+API.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const originalRequest = err.config;
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await refreshToken(); 
+        return API(originalRequest); 
+      } catch (refreshError) {
+        window.location.href = "/";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(err);
   }
-  return config;
-});
+);
+
+
+
 
 export const signup = (data: any) => {
   const { name, email, phone, password, role, documentUrl, textMessage } = data;
@@ -84,4 +100,17 @@ export const resubmitDocument = (
   console.log(email);
   const endpoint = "/api/mentors/re-submit";
   return API.patch(endpoint, { email, documentUrl, textMessage });
+};
+
+
+export const refreshToken = async () => {
+  const role = Cookies.get("role");
+
+  const endpoint =
+    role === "mentor"
+      ? "/api/mentors/refresh-token"
+      : "/api/users/refresh-token";
+
+  const res = await API.post(endpoint);
+  return res.data; 
 };

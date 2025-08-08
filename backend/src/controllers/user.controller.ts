@@ -17,6 +17,7 @@ import {
   ForgotPasswordDTO,
   VerifyForgotPasswordDTO,
 } from "../dto/user.dto";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class UserController implements IUserController {
@@ -51,13 +52,26 @@ export class UserController implements IUserController {
         return;
       }
 
-      const { user, token } = result;
+      const { user, accessToken, refreshToken } = result;
 
-      res.cookie("auth-token", token, {
+      res.cookie("auth-token", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000,
         sameSite: "lax",
+        maxAge: 15 * 60 * 1000, // 15 mins
+      });
+      res.cookie("refresh-token", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      res.cookie("role", user.role, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       const userDTO = toUserResponseDTO(user);
@@ -191,7 +205,17 @@ export class UserController implements IUserController {
 
   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      res.json({ message: "Welcome Home!" });
+      const { id } = req.params;
+
+      const user = await this.service.getHome(id); 
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      const userDTO = toUserResponseDTO(user); 
+      res.status(200).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
@@ -219,9 +243,20 @@ export class UserController implements IUserController {
   logout = async (req: Request, res: Response): Promise<void> => {
     res.clearCookie("auth-token", {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    res.clearCookie("refresh-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    res.clearCookie("role", {
+      httpOnly: false,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
+
     res.status(200).json({ message: "Logged out successfully" });
   };
 
@@ -239,6 +274,52 @@ export class UserController implements IUserController {
     } catch (err) {
       console.error("Error fetching users:", err);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  };
+
+  refreshToken = async (req: Request, res: Response): Promise<void> => {
+    const token = req.cookies["refresh-token"];
+    if (!token) {
+      res.status(401).json({ message: "Refresh token missing" });
+      return;
+    }
+
+    try {
+      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
+        id: string;
+        role: "user" | "mentor";
+      };
+
+      if (payload.role !== "user") {
+        res.status(403).json({ message: "Forbidden" });
+        return;
+      }
+
+      const user = await this.service.getHome(payload.id); 
+
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      const newAccessToken = generateAccessToken({
+        id: payload.id,
+        role: payload.role,
+      });
+
+      res.cookie("auth-token", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 15 * 60 * 1000, // 15 mins
+      });
+
+      const userDTO = toUserResponseDTO(user);
+
+      res.status(200).json({ message: "Token refreshed", user: userDTO });
+    } catch (err) {
+      res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   };
 }

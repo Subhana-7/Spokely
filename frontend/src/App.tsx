@@ -1,20 +1,17 @@
-import { BrowserRouter, useRoutes } from "react-router-dom";
-import { ThemeProvider } from "./components/contexts/ThemeContext";
-import { AuthProvider } from "./components/contexts/AuthContext";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./routes";
 import { Toaster } from "react-hot-toast";
-import { appRoutes } from "./routes";
-
-const AppRoutes = () => useRoutes(appRoutes);
+import { useAuthInit } from "./hooks/useAuthInit";
 
 function App() {
+  const loading = useAuthInit();
+
+  if (loading) return <p>Loading session...</p>;
+
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </ThemeProvider>
-      <Toaster position="top-right" reverseOrder={false} />
+      <AppRoutes />
+      <Toaster />
     </BrowserRouter>
   );
 }

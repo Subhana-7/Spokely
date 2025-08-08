@@ -5,7 +5,7 @@ export interface IMentorService {
   sendOtp(email: string): Promise<void>;
   verifyOtp(email: string, code: string): Promise<{ message: string }>;
   signup(data: any): Promise<IMentor | null>;
-  login(data: any): Promise<{ mentor: IMentor; token: string } | null>;
+  login(data: any): Promise<{ mentor: IMentor; accessToken: string; refreshToken: string } | null>;
   getAllMentors(): Promise<IMentor[] | null>;
   updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
 

@@ -34,4 +34,8 @@ router.get(
   controller.getAllUsers.bind(controller)
 );
 
+router.post("/refresh-token", controller.refreshToken.bind(controller));
+
+
+
 export default router;
