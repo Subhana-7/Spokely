@@ -10,17 +10,24 @@ export const adminLogin = async (email: string, password: string) => {
   return response.data;
 };
 
-export const getAllUsers = async () => {
-  const response = await API.get("/admin/users");
+export const getAllUsers = async (params = {}) => {
+  const query = new URLSearchParams(params as any).toString();
+  const response = await API.get(`/admin/users?${query}`);
   return response.data;
 };
 
-export const getAllMentors = async () => {
-  const response = await API.get("/admin/mentors");
-  return response.data;
+export const getAllMentors = async (params: Record<string, any> = {}) => {
+  const response = await API.get("/admin/mentors", { params });
+  return {
+    mentors: response.data.users, // renamed to mentors here
+    total: response.data.total,
+  };
 };
 
-export const updateUserStatus = async (userId: string, status: "unBlocked" | "blocked") => {
+export const updateUserStatus = async (
+  userId: string,
+  status: "unBlocked" | "blocked"
+) => {
   const response = await API.patch(`/admin/users/${userId}/status`, {
     status,
   });
@@ -35,7 +42,10 @@ export const unblockUser = async (userId: string) => {
   return updateUserStatus(userId, "unBlocked");
 };
 
-export const updateMentorStatus = async (mentorId: string, status: "unBlocked" | "blocked") => {
+export const updateMentorStatus = async (
+  mentorId: string,
+  status: "unBlocked" | "blocked"
+) => {
   const response = await API.patch(`/admin/mentors/${mentorId}/status`, {
     status,
   });

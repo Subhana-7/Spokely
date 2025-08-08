@@ -64,7 +64,6 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  // New methods for forgot password
   async updateForgotPasswordOTP(
     email: string,
     code: string,
@@ -95,7 +94,6 @@ export class UserRepository implements IUserRepository {
         return false;
       }
 
-      // Update password and clear forgot password OTP
       user.password = user.forgotPasswordOtp.newPassword;
       user.forgotPasswordOtp = undefined;
       await user.save();
@@ -139,6 +137,7 @@ export class UserRepository implements IUserRepository {
       return null;
     }
   }
+
 
   async findById(id:string):Promise<IUser | null> {
     try {
