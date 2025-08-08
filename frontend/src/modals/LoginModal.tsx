@@ -131,7 +131,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
-  // Show blocked message modal
   if (blockedMessage) {
     return (
       <Modal

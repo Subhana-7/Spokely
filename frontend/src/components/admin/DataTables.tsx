@@ -36,13 +36,10 @@ const DataTable = ({ data, type, onBlock, onRowClick }: DataTableProps) => {
     }
   };
 
-  // Function to get block/unblock button styles
   const getBlockButtonStyles = (isBlocked: boolean) => {
     if (isBlocked) {
-      // Unblock button - green color
       return "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs";
     } else {
-      // Block button - red color
       return "bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs";
     }
   };
