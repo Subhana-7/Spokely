@@ -14,12 +14,12 @@ export interface IConnection extends Document {
 
 const connectionSchema = new Schema<IConnection>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    connectedUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    connectedUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
-      default: 'pending',
+      enum: ["pending", "accepted", "rejected"],
+      default: "pending",
     },
     sessionCount: { type: Number, default: 0 },
     levelsUnlocked: { type: Number, default: 0 },
@@ -29,4 +29,14 @@ const connectionSchema = new Schema<IConnection>(
   { timestamps: true }
 );
 
-export default mongoose.model<IConnection>('Connection', connectionSchema);
+// 🔒 Ensure unique combinations (you can also enforce sorted order if needed)
+connectionSchema.index(
+  { userId: 1, connectedUserId: 1 },
+  { unique: true }
+);
+connectionSchema.index(
+  { userId: 1, connectedUserId: -1 },
+  { unique: true }
+);
+
+export default mongoose.model<IConnection>("Connection", connectionSchema);

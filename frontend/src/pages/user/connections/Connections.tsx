@@ -29,104 +29,126 @@ const Connections = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [incomingCount, setIncomingCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [incomingCount, setIncomingCount] = useState(2);
 
+  useEffect(() => {
+    const fetchConnections = async () => {
+      try {
+        setLoading(true);
+        const res = await getAllConnections();
+        setConnections(res.data); // make sure res.data is an array
+      } catch (err) {
+        toast.error("Failed to fetch connections");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConnections();
+  }, []);
+
+  useEffect(() => {
   const fetchConnections = async () => {
     try {
       setLoading(true);
-      const res = await getAllConnections();
+      const res = await getAllConnections(searchTerm); // ← pass search term
       setConnections(res.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to fetch connections");
+    } catch (err) {
+      toast.error("Failed to fetch connections");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchConnections();
-  }, []);
+  fetchConnections();
+}, [searchTerm]); // ← trigger on search change
 
-  const filteredConnections = connections.filter((connection) => {
-    const user = connection.connectedUserId;
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+
+  const filteredConnections = connections
+    .filter((connection) => {
+      const user = connection.connectedUserId;
+      return (
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+    .map((c) => {
+      const user = c.connectedUserId;
+      return {
+        id: user._id,
+        username: user.name,
+        email: user.email,
+        role: user.role === "mentor" ? "Mentor" : "Peer",
+        sessions: c.sessionCount || 0,
+      };
+    });
 
   return (
     <>
       <div
-        className={`min-h-screen bg-sky-100 transition-all duration-300 ${
+        className={`min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 transition-all duration-300 ${
           isAddModalOpen ? "blur-sm pointer-events-none select-none" : ""
         }`}
       >
+        {/* Header */}
         <DashboardHeader />
-        <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <div className="bg-lime-200 rounded-2xl p-8 shadow-lg">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-              <h1 className="text-3xl font-bold text-gray-800 tracking-wide">
-                CONNECTIONS
-              </h1>
-              <div className="relative">
-                <Button
-                  variant="secondary"
-                  className="bg-olive-600 hover:bg-olive-700 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-all duration-200 relative"
-                  onClick={() => setIsAddModalOpen(true)}
-                >
-                  <Plus size={20} className="mr-2" />
-                  Add Connection
-                  {incomingCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                      {incomingCount}
-                    </span>
-                  )}
-                </Button>
-              </div>
-            </div>
+        <div>
+          <div className="max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Your Connections
+            </h2>
+            <Button
+              variant="primary"
+              className="px-8 py-4 text-lg relative shadow-2xl hover:scale-105 transform transition-all bg-blue-400 rounded-2xl"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <Plus size={20} className="mr-3" />
+              Add Connection
+              {incomingCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full px-3 py-1 shadow-lg animate-pulse">
+                  {incomingCount}
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
 
-            <div className="relative mb-6">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="mb-8">
+            <div className="relative max-w-md">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={20}
               />
               <Input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search connections..."
                 value={searchTerm}
-                onChange={(val: string) => setSearchTerm(val)}
-                className="pl-10 w-full bg-white border-0 rounded-xl py-3 text-base shadow-sm focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+                onChange={setSearchTerm}
+                className="pl-12 pr-4 py-4 text-lg shadow-lg bg-white/90"
               />
             </div>
+          </div>
 
-            {loading ? (
-              <div className="text-center py-20 text-gray-500 font-medium">
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="text-gray-500 font-medium text-lg">
                 Loading connections...
               </div>
-            ) : (
-              <ConnectionsTable
-                connections={filteredConnections.map((c) => {
-                  const user = c.connectedUserId;
-                  return {
-                    id: user._id,
-                    username: user.name,
-                    email: user.email,
-                    role: user.role === "mentor" ? "Mentor" : "Peer",
-                    sessions: c.sessionCount || 0,
-                  };
-                })}
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <ConnectionsTable connections={filteredConnections} />
+          )}
         </div>
       </div>
 
       <AddConnectionModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onFetchIncomingCount={(count: number) => setIncomingCount(count)}
+        onFetchIncomingCount={setIncomingCount}
       />
     </>
   );

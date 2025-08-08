@@ -23,6 +23,7 @@ API.interceptors.response.use(
         await refreshToken();
         return API(originalRequest);
       } catch (refreshError) {
+        // Clear session and redirect
         window.location.href = "/";
         return Promise.reject(refreshError);
       }

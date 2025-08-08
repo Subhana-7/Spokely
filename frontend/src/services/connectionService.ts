@@ -17,8 +17,8 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-export const sendConnectionRequest = (uniqueeCode: string) =>
-  API.post("/send", { uniqueeCode });
+export const sendConnectionRequest = (uniqueCode: string) =>
+  API.post("/send", { uniqueCode });
 
 export const getConnectionRequests = () =>
   API.get("/requests");
@@ -26,10 +26,15 @@ export const getConnectionRequests = () =>
 export const acceptConnectionRequest = (requestId: string) =>
   API.patch(`/accept/${requestId}`);
 
-export const getAllConnections = () => API.get("/list");
+export const getAllConnections = (search?: string) =>
+  API.get(`/list${search ? `?search=${encodeURIComponent(search)}` : ""}`);
 
-export const getSentConnectionRequests = () =>
-  API.get("/sent-requests");
+
+export const getSentConnectionRequests = () => {
+  console.log("service hitting");
+  return API.get("/sent-requests");
+};
+
 
 export const rejectConnectionRequest = (requestId: string) =>
   API.delete(`/reject/${requestId}`); //add it 
