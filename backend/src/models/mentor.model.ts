@@ -70,7 +70,7 @@ const mentorSchema = new Schema<IMentor>(
     },
     role:{type:String,default:"mentor"},
     bio:{type:String},
-    tags: { type: [String], default: [] }
+    tags: { type: [String], default: [] },
     forgotPasswordOtp: {
       code: { type: String },
       expiresAt: { type: Date },

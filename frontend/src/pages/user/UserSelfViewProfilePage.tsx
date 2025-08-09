@@ -183,6 +183,19 @@ const UserProfile = () => {
 
                 <div className="group">
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <Mail size={16} className="mr-2" />
+                    Unique Code
+                  </label>
+                  <input
+                    type="text"
+                    value={user?.uniqueCode || ""}
+                    readOnly
+                    className="w-full p-4 border border-gray-200 rounded-xl bg-gray-50 group-hover:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div className="group">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                     <Phone size={16} className="mr-2" />
                     Phone Number
                   </label>

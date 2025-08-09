@@ -162,7 +162,6 @@ export class UserController implements IUserController {
     try {
       passport.authenticate("google", { session: false }, (err, user) => {
         if (err) {
-          console.error("Google authentication error:", err);
           return res.redirect(
             `${process.env.CLIENT_SIDE_URL}?error=auth_failed`
           );
@@ -172,29 +171,44 @@ export class UserController implements IUserController {
           return res.redirect(`${process.env.CLIENT_SIDE_URL}?error=no_user`);
         }
 
-        const token = jwt.sign(
-          {
-            id: user._id,
-            role: user.role,
-            isGoogleUser: user.isGoogleUser,
-          },
-          process.env.JWT_SECRET!,
-          { expiresIn: "1d" }
-        );
-
-        res.cookie("auth-token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 24 * 60 * 60 * 1000,
-          sameSite: "lax",
+        const accessToken = generateAccessToken({
+          id: user._id,
+          role: user.role,
+          isGoogleUser: user.isGoogleUser,
         });
 
-        console.log(token);
+        const refreshToken = generateRefreshToken({
+          id: user._id,
+          role: user.role,
+          isGoogleUser: user.isGoogleUser,
+        });
+
+        res.cookie("auth-token", accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 15 * 60 * 1000, // 15 mins
+        });
+
+        res.cookie("refresh-token", refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        res.cookie("role", user.role, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
         const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
+
         const redirectUrl = isNewUser
-          ? `${process.env.CLIENT_SIDE_URL}/google-redirect?token=${token}&source=signup`
-          : `${process.env.CLIENT_SIDE_URL}/google-redirect?token=${token}`;
+          ? `${process.env.CLIENT_SIDE_URL}/google-redirect?source=signup`
+          : `${process.env.CLIENT_SIDE_URL}/google-redirect`;
 
         res.redirect(redirectUrl);
       })(req, res, next);
@@ -207,14 +221,14 @@ export class UserController implements IUserController {
     try {
       const { id } = req.params;
 
-      const user = await this.service.getHome(id); 
+      const user = await this.service.getHome(id);
 
       if (!user) {
         res.status(404).json({ message: "User not found" });
         return;
       }
 
-      const userDTO = toUserResponseDTO(user); 
+      const userDTO = toUserResponseDTO(user);
       res.status(200).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -295,8 +309,7 @@ export class UserController implements IUserController {
         return;
       }
 
-      const user = await this.service.getHome(payload.id); 
-
+      const user = await this.service.getHome(payload.id);
 
       if (!user) {
         res.status(404).json({ message: "User not found" });
