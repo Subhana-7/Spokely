@@ -6,6 +6,8 @@ interface User {
   name: string;
   email: string;
   role: "user" | "mentor";
+  uniqueCode:string;
+  profilePicture:string;
 }
 
 interface AuthState {

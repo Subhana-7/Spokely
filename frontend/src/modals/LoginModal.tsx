@@ -72,10 +72,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
       const user = res.data[selectedRole];
 
       useAuthStore.getState().setUser({
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        profilePicture:user.profilePicture,
+        uniqueCode:user.uniqueCode,
       });
 
       if (user.isBlocked) {
