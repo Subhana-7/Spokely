@@ -14,7 +14,7 @@ export interface ISession extends Document {
   mentorId?: Types.ObjectId;
   startTime: Date;
   endTime?: Date;
-  status: 'upcoming' | 'completed' | 'cancelled' | 'flagged';
+  status: 'pending' | 'upcoming' | 'accepted' | 'completed' | 'cancelled' | 'flagged';
   createdBy: Types.ObjectId;
   participants: Types.ObjectId[];
   durationMinutes?: number;
@@ -35,21 +35,34 @@ const feedbackSchema = new Schema<IFeedback>(
 
 const sessionSchema = new Schema<ISession>(
   {
-    type: { type: String, enum: ['public', 'private', 'peer-to-peer'], required: true },
+    type: { 
+      type: String, 
+      enum: ['public', 'private', 'peer-to-peer'], 
+      required: true 
+    },
     topic: { type: String, required: true },
     description: { type: String, required: true },
     mentorId: { type: Schema.Types.ObjectId, ref: "User" },
     startTime: { type: Date, required: true },
     endTime: { type: Date },
-    status: { type: String, enum: ['upcoming', 'completed', 'cancelled', 'flagged'], default: 'upcoming' },
+    status: { 
+      type: String, 
+      enum: ['pending', 'upcoming', 'accepted', 'completed', 'cancelled', 'flagged'], 
+      default: 'pending' 
+    },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     participants: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    durationMinutes: { type: Number },
+    durationMinutes: { type: Number, default: 60 },
     recordingLink: { type: String },
     feedback: [feedbackSchema],
-    sessionFee: { type: Number },
+    sessionFee: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
+
+sessionSchema.index({ createdBy: 1, status: 1 });
+sessionSchema.index({ participants: 1, status: 1 });
+sessionSchema.index({ mentorId: 1, status: 1 });
+sessionSchema.index({ startTime: 1, status: 1 });
 
 export default model<ISession>('Session', sessionSchema);

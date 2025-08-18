@@ -6,8 +6,8 @@ interface User {
   name: string;
   email: string;
   role: "user" | "mentor";
-  uniqueCode:string;
-  profilePicture:string;
+  uniqueCode: string;
+  profilePicture: string;
 }
 
 interface AuthState {
@@ -17,17 +17,16 @@ interface AuthState {
   logout: () => void;
 }
 
-
-
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
 
   setUser: (user) => {
-    console.log(user)
+    console.log(user);
+    // 🔑 persist role cookie
+    Cookies.set("role", user.role, { sameSite: "Lax" });
     set({ user, isAuthenticated: true });
   },
-
 
   logout: () => {
     Cookies.remove("role");

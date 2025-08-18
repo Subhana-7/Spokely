@@ -67,7 +67,7 @@ export class ConnectionController implements IConnectionController {
     if (!req.id) throw new Error("User not authenticated");
 
     const userId = req.id;
-    const search = req.query.search as string; // <-- get query param
+    const search = req.query.search as string;
 
     const connections = await this.service.getAllConnections(userId, search);
     res.status(200).json(connections);

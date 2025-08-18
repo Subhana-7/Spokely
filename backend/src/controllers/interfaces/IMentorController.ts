@@ -11,4 +11,5 @@ export interface IMentorController {
   refreshToken(req: Request, res: Response): Promise<void>
   forgotPassword(req: Request, res: Response): Promise<void>;
   verifyForgotPassword(req: Request, res: Response): Promise<void>;
+  home(req: Request, res: Response): Promise<void>;
 }

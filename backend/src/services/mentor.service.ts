@@ -157,4 +157,13 @@ export class MentorService implements IMentorService {
       throw error;
     }
   }
+
+    async getHome(id:string):Promise<IMentor | null> {
+      try {
+        return await this.repo.findById(id)
+      } catch (error) {
+        console.log("error", error);
+        return null;
+      }
+    }
 }

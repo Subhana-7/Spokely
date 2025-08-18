@@ -29,7 +29,6 @@ const connectionSchema = new Schema<IConnection>(
   { timestamps: true }
 );
 
-// 🔒 Ensure unique combinations (you can also enforce sorted order if needed)
 connectionSchema.index(
   { userId: 1, connectedUserId: 1 },
   { unique: true }

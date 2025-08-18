@@ -9,7 +9,6 @@ interface PublicRouteProps {
 const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated, role, loading } = useAuth();
 
-  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -18,7 +17,6 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     );
   }
 
-  // If user is authenticated, redirect to their dashboard
   if (isAuthenticated && role) {
     const redirectPath = role === 'user' ? '/user/home' : '/mentor/home';
     return <Navigate to={redirectPath} replace />;

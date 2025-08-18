@@ -12,14 +12,18 @@ const API = axios.create({
 API.interceptors.response.use(
   (res) => res,
   async (err) => {
+    console.log("intersept of service");
     const originalRequest = err.config;
 
-    if (err.response?.status === 401 && !originalRequest._retry) {
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/refresh-token")
+    ) {
       originalRequest._retry = true;
-
       try {
-        await refreshToken(); 
-        return API(originalRequest); 
+        await refreshToken();
+        return API(originalRequest);
       } catch (refreshError) {
         window.location.href = "/";
         return Promise.reject(refreshError);
@@ -29,9 +33,6 @@ API.interceptors.response.use(
     return Promise.reject(err);
   }
 );
-
-
-
 
 export const signup = (data: any) => {
   const { name, email, phone, password, role, documentUrl, textMessage } = data;
@@ -73,7 +74,9 @@ export const sendForgotPasswordOTP = (
   role: "user" | "mentor"
 ) => {
   const endpoint =
-    role === "mentor" ? "/api/mentors/forgot-password" : "/api/users/forgot-password";
+    role === "mentor"
+      ? "/api/mentors/forgot-password"
+      : "/api/users/forgot-password";
   return API.post(endpoint, data);
 };
 
@@ -82,7 +85,9 @@ export const verifyForgotPasswordOTP = (
   role: "user" | "mentor"
 ) => {
   const endpoint =
-    role === "mentor" ? "/api/mentors/verify-forgot-password" : "/api/users/verify-forgot-password";
+    role === "mentor"
+      ? "/api/mentors/verify-forgot-password"
+      : "/api/users/verify-forgot-password";
   return API.post(endpoint, data);
 };
 
@@ -102,9 +107,10 @@ export const resubmitDocument = (
   return API.patch(endpoint, { email, documentUrl, textMessage });
 };
 
-
 export const refreshToken = async () => {
+  console.log("hitting refrsh");
   const role = Cookies.get("role");
+  console.log(role);
 
   const endpoint =
     role === "mentor"
@@ -112,5 +118,14 @@ export const refreshToken = async () => {
       : "/api/users/refresh-token";
 
   const res = await API.post(endpoint);
-  return res.data; 
+  return res.data;
+};
+
+export const home = async () => {
+  const role = Cookies.get("role");
+
+  const endpoint = role === "mentor" ? "/api/mentors/home" : "/api/user/home";
+
+  const res = await API.post(endpoint);
+  return res.data;
 };

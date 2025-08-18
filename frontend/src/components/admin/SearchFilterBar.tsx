@@ -18,7 +18,6 @@ const SearchFilterBar = ({
   return (
     <div className="mb-6">
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Search Input */}
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -29,9 +28,7 @@ const SearchFilterBar = ({
           />
         </div>
 
-        {/* Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-3 lg:flex-shrink-0">
-          {/* Primary Filter (Level/Role) */}
           <select
             onChange={(e) => onFilter?.(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-w-[140px]"
@@ -43,7 +40,6 @@ const SearchFilterBar = ({
             ))}
           </select>
 
-          {/* Status Filter */}
           <select
             onChange={(e) => onStatusFilter?.(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-w-[120px]"
@@ -53,7 +49,6 @@ const SearchFilterBar = ({
             <option value="blocked">Blocked</option>
           </select>
 
-          {/* More Options Button */}
           <button
             type="button"
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 whitespace-nowrap"
