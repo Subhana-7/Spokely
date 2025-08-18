@@ -27,4 +27,6 @@ export interface IMentorRepository {
     email:string,
     password:string
   ):Promise<IMentor | null>
+
+  findById(id:string):Promise<IMentor | null>;
 }

@@ -31,7 +31,6 @@ export const getAllConnections = (search?: string) =>
 
 
 export const getSentConnectionRequests = () => {
-  console.log("service hitting");
   return API.get("/sent-requests");
 };
 

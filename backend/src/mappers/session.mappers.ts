@@ -13,6 +13,7 @@ export const mapToCreateSessionDTO = (body: any, userId: string): CreateSessionD
     createdBy: new Types.ObjectId(userId),
     participants: body.participants,
     sessionFee: body.sessionFee,
+    status:body.status,
   };
 };
 

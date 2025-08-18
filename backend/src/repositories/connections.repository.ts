@@ -79,36 +79,61 @@ export class ConnectionRepository implements IConnectionRepository {
     }
   }
 
-  async getAcceptedConnections(
+async getAcceptedConnections(
   userId: Types.ObjectId,
   search?: string
 ): Promise<PopulatedConnection[] | null> {
   try {
-    const connections = await ConnectionModel.find({
+    const match: any = {
       status: "accepted",
       isBlocked: false,
       isRemoved: false,
       $or: [{ userId }, { connectedUserId: userId }],
-    })
-      .populate({
-        path: "userId connectedUserId",
-        select: "name email profilePicture role",
-        match: search
-          ? {
-              $or: [
-                { name: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } },
-              ],
-            }
-          : undefined,
-      });
+    };
 
-    return connections as unknown as PopulatedConnection[];
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $addFields: {
+          otherUserId: {
+            $cond: [
+              { $eq: ["$userId", userId] },
+              "$connectedUserId",
+              "$userId",
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "otherUserId",
+          foreignField: "_id",
+          as: "connectionWith",
+        },
+      },
+      { $unwind: "$connectionWith" },
+    ];
+
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { "connectionWith.name": { $regex: search, $options: "i" } },
+            { "connectionWith.email": { $regex: search, $options: "i" } },
+          ],
+        },
+      });
+    }
+
+    const connections = await ConnectionModel.aggregate(pipeline);
+    return connections as PopulatedConnection[];
   } catch (error) {
     console.log("getAcceptedConnections error", error);
     return null;
   }
 }
+
 
 
   async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {

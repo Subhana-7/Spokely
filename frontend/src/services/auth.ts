@@ -23,7 +23,6 @@ API.interceptors.response.use(
         await refreshToken();
         return API(originalRequest);
       } catch (refreshError) {
-        // Clear session and redirect
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
@@ -46,6 +45,7 @@ export const logoutService = (role: "user" | "mentor") => {
 
 export const refreshToken = async () => {
   const role = Cookies.get("role");
+  console.log(role);
 
   const endpoint =
     role === "mentor"

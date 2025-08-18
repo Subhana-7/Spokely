@@ -9,8 +9,10 @@ const controller = container.get<ISessionController>(TYPES.ISessionController);
 
 router.post("/schedule", authMiddleware(["user", "mentor"]), controller.createSession);
 router.get("/list", authMiddleware(["user", "mentor"]), controller.getAllSessions);
-router.get("/:id", authMiddleware(["user", "mentor"]), controller.getSessionById);
+router.get("/details/:id", authMiddleware(["user", "mentor"]), controller.getSessionById);
 router.patch("/:id", authMiddleware(["user", "mentor"]), controller.updateSession);
 router.get("/:id/token", authMiddleware(["user", "mentor"]), controller.getAgoraToken);
+router.get('/public-sessions',controller.getPublicSessions)
+
 
 export default router;

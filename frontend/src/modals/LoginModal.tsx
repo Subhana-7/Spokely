@@ -75,7 +75,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: selectedRole,
         profilePicture:user.profilePicture,
         uniqueCode:user.uniqueCode,
       });
@@ -106,6 +106,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
         );
       } else {
         // setGlobalRole(user.role);
+
+        console.log(selectedRole)
 
         if (selectedRole === "user") {
           navigate("/user/home");

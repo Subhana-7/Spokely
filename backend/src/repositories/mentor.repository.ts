@@ -162,4 +162,13 @@ export class MentorRepository implements IMentorRepository {
       return null;
     }
   }
+
+    async findById(id:string):Promise<IMentor | null> {
+      try {
+        return await Mentor.findById(id);
+      } catch (error) {
+        console.log("error", error);
+        return null;
+      }
+    }
 }

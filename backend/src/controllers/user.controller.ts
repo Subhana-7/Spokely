@@ -75,6 +75,8 @@ export class UserController implements IUserController {
       });
 
       const userDTO = toUserResponseDTO(user);
+
+      console.log("login",userDTO)
       res.status(200).json({ user: userDTO });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -325,7 +327,6 @@ export class UserController implements IUserController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-
         maxAge: 15 * 60 * 1000, // 15 mins
       });
 
