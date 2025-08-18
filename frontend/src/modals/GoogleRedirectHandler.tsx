@@ -1,45 +1,35 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
-
-type CustomJwtPayload = {
-  role: "user" | "mentor";
-  isGoogleUser?: boolean;
-};
+import { refreshToken } from "../services/authServices";
 
 const GoogleRedirectHandler = () => {
   const navigate = useNavigate();
-  const { setRole } = useAuthStore();
+  const location = useLocation();
+  const { setUser } = useAuthStore();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const params = new URLSearchParams(location.search);
     const source = params.get("source");
 
-    console.log("✅ Full redirect URL:", window.location.href);
-    console.log("✅ token:", token, "source:", source);
+    (async () => {
+      try {
+        const res = await refreshToken();
+        setUser(res.data.user);
 
-    if (token) {
-      const decoded = jwtDecode<CustomJwtPayload>(token);
-      if (decoded?.role) {
-        setRole(decoded.role);
-      }
-
-      document.cookie = `auth-token=${token}; path=/; max-age=86400; SameSite=Lax`;
-
-      // Delay slightly to make sure state is set
-      setTimeout(() => {
         if (source === "signup") {
-          navigate(decoded.role === "mentor" ? "/mentor/home" : "/user/home");
+          navigate(
+            res.data.user.role === "mentor" ? "/mentor/home" : "/user/home"
+          );
         } else {
           navigate("/");
         }
-      }, 100);
-    } else {
-      console.log("❌ Token not found in URL");
-    }
-  }, [navigate, setRole]);
+      } catch (err) {
+        console.error(" Google redirect failed:", err);
+        navigate("/");
+      }
+    })();
+  }, [navigate, location.search, setUser]);
 
   return null;
 };

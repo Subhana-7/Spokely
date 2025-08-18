@@ -26,9 +26,9 @@ export class SessionService {
     }
   }
 
-  async getSessions(): Promise<ISession[] | null> {
+  async getSessions(userId:string): Promise<ISession[] | null> {
     try {
-      return await this.repo.getAllSessions();
+      return await this.repo.getAllSessions(userId);
     } catch (error) {
       console.log("error", error);
       return null;
@@ -50,6 +50,14 @@ export class SessionService {
   ): Promise<ISession | null> {
     try {
       return await this.repo.updateSession(id, updates);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+  async publicSessions():Promise<ISession[] | null> {
+    try {
+      return await this.repo.getPublicSessions();
     } catch (error) {
       console.log("error", error);
       return null;

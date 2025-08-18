@@ -1,4 +1,3 @@
-// src/components/RoleProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../../store/userAuthStore";
 import type { JSX } from "react";

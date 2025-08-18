@@ -14,6 +14,7 @@ import "reflect-metadata";
 import { logger } from "./middleware/logger";
 import helmet from "helmet";
 import mentorRoutes from "./routes/mentor.routes";
+import paymentRoutes from './routes/payment.routes';
 
 dotenv.config();
 const app = express();
@@ -39,6 +40,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
+      // httpOnly:true
     },
   })
 );
@@ -50,6 +52,7 @@ app.use(logger);
 
 app.use(helmet());
 
+app.use("/payment",paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/admin", adminRoutes);

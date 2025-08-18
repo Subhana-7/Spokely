@@ -72,10 +72,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
       const user = res.data[selectedRole];
 
       useAuthStore.getState().setUser({
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: selectedRole,
+        profilePicture:user.profilePicture,
+        uniqueCode:user.uniqueCode,
       });
 
       if (user.isBlocked) {
@@ -104,6 +106,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
         );
       } else {
         // setGlobalRole(user.role);
+
+        console.log(selectedRole)
 
         if (selectedRole === "user") {
           navigate("/user/home");

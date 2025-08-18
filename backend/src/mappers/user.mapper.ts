@@ -1,5 +1,5 @@
+import { UserDTO, UserResponseDTO } from "../dto/user.dto";
 import { IUser } from "../models/user.model";
-import { UserResponseDTO,UserDTO } from "../dto/user.dto";
 
 export const toUserResponseDTO = (user: IUser): UserResponseDTO => {
   return {
@@ -7,10 +7,10 @@ export const toUserResponseDTO = (user: IUser): UserResponseDTO => {
     name: user.name,
     email: user.email,
     phone: user.phone,
-    role: user.role,
+    role: user.role ?? "user",         
     profilePicture: user.profilePicture,
     isBlocked: user.isBlocked,
-    uniqueCode: user.uniqueCode,
+    uniqueCode: user.uniqueCode ?? "", 
     levels: user.levels,
     completionRate: user.completionRate,
     streak: user.streak,
@@ -27,6 +27,6 @@ export const toUserDTO = (user: IUser): UserDTO => ({
   name: user.name,
   email: user.email,
   profilePicture: user.profilePicture,
-  role: user.role,
-  uniqueCode: user.uniqueCode,
+  role: user.role ?? "user",        
+  uniqueCode: user.uniqueCode ?? "", 
 });

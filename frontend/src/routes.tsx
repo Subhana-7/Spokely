@@ -9,21 +9,37 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagemnt";
 import MentorManagement from "./pages/admin/MentorManagement";
-import Sessions from './pages/Sessions/Sessions';
-import SessionSchedule from './pages/Sessions/ScheduleSessions';
+import Sessions from "./pages/Sessions/Sessions";
+import SessionSchedule from "./pages/Sessions/ScheduleSessions";
 import SessionDetail from "./pages/Sessions/SessionDetails";
 import VideoCall from "./pages/VideoCall";
 import MentorVerification from "./pages/admin/MentorVerification";
 import RoleProtectedRoute from "./components/contexts/RoleProtectedRoute";
+import UserProfile from "./pages/user/UserSelfViewProfilePage";
+import MentorProfile from "./pages/mentor/MentorSelfViewProfilePage";
+import UserViewMentorProfile from "./pages/user/UserViewMentorProfile";
+import MentorViewUserProfile from "./pages/mentor/MentorViewUserProfile";
+import SessionsHub from "./pages/Sessions/MentorSessionsHub";
+import MentorPublicSessions from "./pages/Sessions/PublicSessions";
+import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
-  { path: "/google-redirect", element: <GoogleRedirectHandler /> },
+  {
+    path: "/google-redirect",
+    element: (
+      <RoleProtectedRoute role="user">
+        <GoogleRedirectHandler />
+      </RoleProtectedRoute>
+    ),
+  },
 
   {
     path: "/user/home",
     element: (
+      <RoleProtectedRoute role="user">
         <UserHome />
+      </RoleProtectedRoute>
     ),
   },
   {
@@ -37,17 +53,13 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/session",
     element: (
+      <RoleProtectedRoute role="user">
         <Sessions />
+      </RoleProtectedRoute>
     ),
   },
   {
     path: "/user/schedule-session",
-    element: (
-        <SessionSchedule />
-    ),
-  },
-   {
-    path: "/user/profile",
     element: (
       <RoleProtectedRoute role="user">
         <SessionSchedule />
@@ -55,10 +67,34 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/user/session/:id",
+    path: "/user/session/details/:id",
     element: (
       <RoleProtectedRoute role="user">
         <SessionDetail />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/profile",
+    element: (
+      <RoleProtectedRoute role="user">
+        <UserProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/mentor/profile",
+    element: (
+      <RoleProtectedRoute role="user">
+        <UserViewMentorProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/sessions/public",
+    element: (
+      <RoleProtectedRoute role="user">
+        <MentorPublicSessions />
       </RoleProtectedRoute>
     ),
   },
@@ -71,6 +107,38 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
+    path: "/mentor/profile",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <MentorProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/user/profile",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <MentorViewUserProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/sessions",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <SessionsHub />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/schedule-session",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <MentorScheduleSession />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
     path: "/session/:id/video",
     element: <VideoCall />,
   },
@@ -78,9 +146,9 @@ const appRoutes: RouteObject[] = [
   {
     path: "/admin",
     element: (
-      // <RoleProtectedRoute role="admin">
-        <AdminDashboard />
-      // </RoleProtectedRoute>
+      <RoleProtectedRoute role="admin">
+      <AdminDashboard />
+      </RoleProtectedRoute>
     ),
     children: [
       { index: true, element: <Dashboard /> },

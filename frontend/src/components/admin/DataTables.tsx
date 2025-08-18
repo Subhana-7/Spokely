@@ -163,7 +163,6 @@ const DataTable = ({
         <button />
       </div>
 
-      {/* Pagination Controls - placed outside the bordered table */}
       <div className="flex justify-between items-center mt-4">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}

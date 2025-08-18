@@ -12,9 +12,26 @@ export const useAuthInit = () => {
         const res = await refreshToken();
         console.log("refreshToken response:", res);
 
+        let userData = null;
 
         if (res?.user) {
-          setUser(res.user);
+          userData = res.user;
+        } else if (res?.mentor) {
+          userData = res.mentor;
+        } else if (res?.admin) {
+          userData = res.admin;
+        }
+
+        if (userData) {
+          setUser({
+            id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+            uniqueCode: userData.uniqueCode,
+            profilePicture: userData.profilePicture,
+          });
+          console.log("Normalized userData:", userData);
         } else {
           logout();
         }

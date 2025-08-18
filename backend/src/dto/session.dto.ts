@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 
 export interface CreateSessionDTO {
+  status: 'upcoming' | 'completed' | 'cancelled' | 'flagged' | 'accepted' | 'pending';
   type: 'public' | 'private' | 'peer-to-peer';
   topic: string;
   description: string;
@@ -20,7 +21,7 @@ export interface UpdateSessionDTO {
   mentorId?: Types.ObjectId;
   startTime?: Date;
   endTime?: Date;
-  status?: 'upcoming' | 'completed' | 'cancelled' | 'flagged';
+  status?: 'upcoming' | 'completed' | 'cancelled' | 'flagged' | 'accepted' | 'pending';
   participants?: Types.ObjectId[];
   durationMinutes?: number;
   recordingLink?: string;
