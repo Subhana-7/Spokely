@@ -10,4 +10,6 @@ export interface IAdminController {
   approveMentor(req: Request, res: Response): Promise<void>;
   rejectMentor(req: Request, res: Response): Promise<void>;
   updateMentorStatus(req: Request, res: Response): Promise<void>;
+  home(req:Request,res:Response):Promise<void>;
+  refreshToken(req:Request,res:Response):Promise<void>;
 }

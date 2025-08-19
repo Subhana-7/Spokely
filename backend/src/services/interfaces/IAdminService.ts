@@ -3,7 +3,7 @@ import { IAdmin } from "../../models/admin.model";
 import { IMentor } from "../../models/mentor.model";
 
 export interface IAdminService {
-  login(email: string, rawPassword: string): Promise<Partial<IAdmin> | null>;
+  login(email: string, rawPassword: string): Promise<{ admin: IAdmin; accessToken: string; refreshToken: string } | null>;
   getAllUsers(): Promise<IUser[] | null>;
   getAllMentors(): Promise<IMentor[] | null>;
   blockUser(id: string): Promise<IUser | null>;
@@ -34,4 +34,6 @@ export interface IAdminService {
   verificationStatus?: "pending" | "approved" | "rejected";
   isBlocked?: boolean;
   }): Promise<{ users: IMentor[]; total: number }>
+
+  getHome(id:string):Promise<IAdmin | null>;
 }

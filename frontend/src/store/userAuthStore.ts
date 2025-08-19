@@ -3,11 +3,11 @@ import Cookies from "js-cookie";
 
 interface User {
   id: string;
-  name: string;
+  name?: string;
   email: string;
-  role: "user" | "mentor";
-  uniqueCode: string;
-  profilePicture: string;
+  role: "user" | "mentor" | "admin";
+  uniqueCode?: string;
+  profilePicture?: string;
 }
 
 interface AuthState {
@@ -23,7 +23,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user) => {
     console.log(user);
-    // 🔑 persist role cookie
     Cookies.set("role", user.role, { sameSite: "Lax" });
     set({ user, isAuthenticated: true });
   },

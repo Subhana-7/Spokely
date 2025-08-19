@@ -35,4 +35,6 @@ export interface IAdminRepository {
     verificationStatus?: "pending" | "approved" | "rejected";
     isBlocked?: boolean;
   }): Promise<{ mentors: IMentor[]; total: number }>;
+
+  findById(id:string):Promise<IAdmin | null>;
 }

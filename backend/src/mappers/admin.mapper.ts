@@ -7,6 +7,7 @@ export const mapAdminToDto = (admin: IAdmin): AdminResponseDto => {
   return {
     id: admin._id.toString(),
     email: admin.email,
+    role:admin.role?? "admin"
   };
 };
 
@@ -15,7 +16,7 @@ export const mapUserToSummaryDto = (user: IUser): UserSummaryDto => {
     id: user._id.toString(),
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role ?? "admin",
     isBlocked: user.isBlocked ?? false,
   };
 };

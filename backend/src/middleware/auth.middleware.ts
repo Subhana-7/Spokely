@@ -20,7 +20,7 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
         id: string;
-        role: "user" | "mentor";
+        role: "user" | "mentor" | "admin";
       };
 
       if (!allowedRoles.includes(decoded.role)) {
