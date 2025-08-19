@@ -50,7 +50,9 @@ export const refreshToken = async () => {
   const endpoint =
     role === "mentor"
       ? "/api/mentors/refresh-token"
-      : "/api/users/refresh-token";
+      : role === "user"
+      ? "/api/users/refresh-token"
+      : "/api/admin/refresh-token";
 
   try {
     const res = await API.post(endpoint, null, {

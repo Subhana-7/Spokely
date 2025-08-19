@@ -2,13 +2,35 @@ import express from "express";
 import { IAdminController } from "../controllers/interfaces/IAdminController";
 import container from "../config/inversify.config";
 import { TYPES } from "../types/types";
+import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = express.Router();
 const controller = container.get<IAdminController>(TYPES.IAdminController);
 
 router.post("/login", controller.adminLogin.bind(controller));
-router.get("/users", controller.listUsers.bind(controller));
-router.get("/mentors", controller.listMentors.bind(controller));
+
+router.get(
+  "/users",
+  authMiddleware(["admin"]),
+  controller.listUsers.bind(controller)
+);
+router.get(
+  "/mentors",
+  authMiddleware(["admin"]),
+  controller.listMentors.bind(controller)
+);
+
+router.get(
+  "/home",
+  authMiddleware(["admin"]),
+  controller.home.bind(controller)
+);
+
+router.post(
+  "/refresh-token",
+  authMiddleware(["admin"]),
+  controller.refreshToken.bind(controller)
+);
 
 router.patch("/users/:id/status", controller.updateUserStatus);
 

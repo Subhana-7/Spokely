@@ -151,7 +151,7 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
     children: [
-      { index: true, element: <Dashboard /> },
+      { path: "home", element: <Dashboard /> },
       { path: "users", element: <UserManagement /> },
       { path: "mentors", element: <MentorManagement /> },
       {

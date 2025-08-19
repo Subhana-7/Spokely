@@ -47,10 +47,15 @@ export const signup = (data: any) => {
 
 export const login = (
   data: { email: string; password: string },
-  role: "user" | "mentor"
+  role: "user" | "mentor" | "admin"
 ) => {
   const endpoint =
-    role === "mentor" ? "/api/mentors/login" : "/api/users/login";
+    role === "mentor"
+      ? "/api/mentors/login"
+      : role === "user"
+      ? "/api/users/login"
+      : "/api/admin/login";
+
   return API.post(endpoint, data);
 };
 
@@ -115,7 +120,9 @@ export const refreshToken = async () => {
   const endpoint =
     role === "mentor"
       ? "/api/mentors/refresh-token"
-      : "/api/users/refresh-token";
+      : role === "user"
+      ? "/api/users/refresh-token"
+      : "/api/admin/refresh-token";
 
   const res = await API.post(endpoint);
   return res.data;

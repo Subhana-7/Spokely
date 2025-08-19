@@ -19,7 +19,7 @@ export const getAllUsers = async (params = {}) => {
 export const getAllMentors = async (params: Record<string, any> = {}) => {
   const response = await API.get("/admin/mentors", { params });
   return {
-    mentors: response.data.users, // renamed to mentors here
+    mentors: response.data.users,
     total: response.data.total,
   };
 };

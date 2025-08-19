@@ -5,7 +5,10 @@ import { IAdminController } from "./interfaces/IAdminController";
 import { IAdminService } from "../services/interfaces/IAdminService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
-import { mapUserToSummaryDto } from "../mappers/admin.mapper";
+import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
+import { AdminLoginDto, AdminResponseDto } from "../dto/admin.dto";
+import { toUserResponseDTO } from "../mappers/user.mapper";
+import { generateAccessToken } from "../utilis/token";
 
 export class AdminController implements IAdminController {
   constructor(@inject(TYPES.IAdminService) private service: IAdminService) {
@@ -23,20 +26,38 @@ export class AdminController implements IAdminController {
   async adminLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const admin = await this.service.login(email, password);
+      const result = await this.service.login(email, password);
 
-      if (!admin) {
+      if (!result) {
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
 
-      const token = jwt.sign(
-        { id: admin._id, role: "admin" },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1d" }
-      );
+      const {admin, accessToken, refreshToken} = result;
 
-      res.status(200).json({ token });
+     res.cookie("auth-token", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 15 * 60 * 1000, // 15 mins
+      });
+      res.cookie("refresh-token", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      res.cookie("role", admin.role, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      const adminDTO = mapAdminToDto(admin)
+
+      res.status(200).json({ admin: adminDTO });
     } catch (err: any) {
       res.status(401).json({ error: err.message });
     }
@@ -214,37 +235,101 @@ export class AdminController implements IAdminController {
   }
 
   async listMentors(req: Request, res: Response): Promise<void> {
-  try {
-    const {
-      page = "1",
-      limit = "10",
-      search = "",
-      sortBy,
-      verificationStatus,
-      isBlocked,
-    } = req.query;
+    try {
+      const {
+        page = "1",
+        limit = "10",
+        search = "",
+        sortBy,
+        verificationStatus,
+        isBlocked,
+      } = req.query;
 
-    const result = await this.service.getAllMentorsWithQuery({
-      page: parseInt(page as string),
-      limit: parseInt(limit as string),
-      search: search as string,
-      sortBy: sortBy as "students" | "sessions",
-      verificationStatus: verificationStatus as
-        | "pending"
-        | "approved"
-        | "rejected",
-      isBlocked:
-        isBlocked === "true"
-          ? true
-          : isBlocked === "false"
-          ? false
-          : undefined,
-    });
+      const result = await this.service.getAllMentorsWithQuery({
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        search: search as string,
+        sortBy: sortBy as "students" | "sessions",
+        verificationStatus: verificationStatus as
+          | "pending"
+          | "approved"
+          | "rejected",
+        isBlocked:
+          isBlocked === "true"
+            ? true
+            : isBlocked === "false"
+            ? false
+            : undefined,
+      });
 
-    res.status(200).json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+      res.status(200).json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   }
-}
 
+  async home(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const admin = await this.service.getHome(id);
+
+      if (!admin) {
+        res.status(404).json({ message: "Admin not found" });
+        return;
+      }
+
+      const adminDTO = mapAdminToDto(admin);
+
+      res.status(200).json(adminDTO);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async refreshToken(req: Request, res: Response): Promise<void> {
+    const token = req.cookies["refresh-token"];
+
+    if (!token) {
+      res.status(401).json({ message: "Refresh token missing" });
+      return;
+    }
+
+    try {
+      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
+        id: string;
+        role: "user" | "mentor" | "admin";
+      };
+
+      if (payload.role !== "admin") {
+        res.status(403).json({ message: "Forbidden" });
+        return;
+      }
+
+      const admin = await this.service.getHome(payload.id);
+
+      if (!admin) {
+        res.status(404).json({ message: "Admin not found" });
+        return;
+      }
+
+      const newAccessToken = generateAccessToken({
+              id: payload.id,
+              role: payload.role,
+            });
+
+           res.cookie("auth-token", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 15 * 60 * 1000, // 15 mins
+      });
+      
+      const adminDTO = mapAdminToDto(admin);
+
+      res.status(200).json({ message: "Token refreshed", user: adminDTO });
+    } catch (error) {
+      res.status(401).json({ message: "Invalid or expired refresh token" });
+    }
+  }
 }

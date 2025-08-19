@@ -9,6 +9,8 @@ import User, { IUser } from "../models/user.model";
 import { IAdmin } from "../models/admin.model";
 import { IMentor } from "../models/mentor.model";
 import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -20,15 +22,38 @@ export class AdminService implements IAdminService {
   async login(
     email: string,
     rawPassword: string
-  ): Promise<Partial<IAdmin> | null> {
-    const admin = await this.repo.findByEmail(email);
+  ): Promise<{
+    admin: IAdmin;
+    accessToken: string;
+    refreshToken: string;
+  } | null> {
+    try {
+      const admin = await this.repo.findByEmail(email);
     if (!admin) throw new Error("Invalid credentials");
 
     const match = await bcrypt.compare(rawPassword, admin.password);
     if (!match) throw new Error("Invalid credentials");
 
-    return admin;
+    const token = jwt.sign(
+      {
+        id: admin._id,
+        role: admin.role,
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1d" }
+    );
+
+    return {
+      admin,
+      accessToken:generateAccessToken({id:admin._id, role:admin.role}),
+      refreshToken:generateRefreshToken({id:admin._id,role:admin.role}),
+    };
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
+
   async getAllUsers(): Promise<IUser[] | null> {
     return this.repo.findAllUsers();
   }
@@ -107,5 +132,14 @@ export class AdminService implements IAdminService {
   }): Promise<{ users: IMentor[]; total: number }> {
     const { mentors, total } = await this.repo.findAllMentorsWithQuery(params);
     return { users: mentors, total };
+  }
+
+  async getHome(id: string): Promise<IAdmin | null> {
+    try {
+      return await this.repo.findById(id);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 }
