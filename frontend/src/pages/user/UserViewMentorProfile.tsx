@@ -1,5 +1,4 @@
-import React from 'react'
-import DashboardHeader from './DashBoardComponents.jsx/Header';
+import DashboardHeader from './DashBoardComponents/Header';
 import SpokelyCard from '../../components/common/Cards';
 import { Award, Calendar, Clock, MapPin, Star, User, Users } from 'lucide-react';
 import Badge from '../../components/common/Badge';

@@ -337,4 +337,22 @@ export class UserController implements IUserController {
       res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   };
+
+    profile = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id  = req.params.id;
+
+      const user = await this.service.getHome(id);
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      const userDTO = toUserResponseDTO(user);
+      res.status(200).json(userDTO);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
 }

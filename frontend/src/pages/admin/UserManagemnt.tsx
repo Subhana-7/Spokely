@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
 import { getAllUsers, updateUserStatus } from "../../services/adminService";

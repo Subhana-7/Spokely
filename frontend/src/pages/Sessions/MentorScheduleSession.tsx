@@ -7,7 +7,6 @@ import Badge from "../../components/common/Badge";
 import { createSession } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { getSessions } from "../../services/sessionService";
 import { getAllConnections } from "../../services/connectionService";
 
 interface FormData {

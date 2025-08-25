@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { User, Lock, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../services/authServices"; // use the unified login
+import { login } from "../../services/authServices"; 
 import { useAuthStore } from "../../store/userAuthStore";
 
 const AdminLogin = () => {

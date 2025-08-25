@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search, X, ArrowLeft } from "lucide-react";
-import Button from "../../modals/Button";
 import Input from "../../modals/Input";
-import Card from "../../components/common/Cards";
-import Badge from "../../components/common/Badge";
 import { createSession } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -115,8 +112,6 @@ const ScheduleSession = () => {
           return "Topic must be at least 3 characters long";
         if (value.trim().length > 100)
           return "Topic must be less than 100 characters";
-        if (!/^[a-zA-Z0-9\s\-_.,!?()]+$/.test(value.trim()))
-          return "Topic contains invalid characters";
         return "";
       case "description":
         if (!value.trim()) return "Description is required";
@@ -148,14 +143,11 @@ const ScheduleSession = () => {
         return "";
       case "endTime":
         if (!value) return "End time is required";
-        if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value))
-          return "Please enter a valid time format (HH:MM)";
         if (formData.startTime && formData.date) {
           const startDateTime = new Date(
             `${formData.date}T${formData.startTime}`
           );
           const endDateTime = new Date(`${formData.date}T${value}`);
-          if (isNaN(endDateTime.getTime())) return "Invalid end time";
           if (endDateTime <= startDateTime)
             return "End time must be after start time";
           const expectedEndTime = calculateEndTime(formData.startTime);
@@ -174,7 +166,7 @@ const ScheduleSession = () => {
       (type === "private" || type === "peer-to-peer") &&
       participants.length === 0
     )
-      return "Please select at least one participant for private/peer-to-peer sessions";
+      return "Please select at least one participant";
     if (participants.length > 10) return "Maximum 10 participants allowed";
     return "";
   };
@@ -210,44 +202,57 @@ const ScheduleSession = () => {
   };
 
   const addMember = (member: any) => {
-    if (!selectedMembers.find((m) => m._id === member._id)) {
+    if (
+      !selectedMembers.find(
+        (m) => m.connectionWith?._id === member.connectionWith?._id
+      )
+    ) {
       setSelectedMembers((prev) => [...prev, member]);
     }
     setSearchTerm("");
   };
 
-  const removeMember = (memberId: string) => {
-    setSelectedMembers((prev) => prev.filter((m) => m._id !== memberId));
+  const removeMember = (userId: string) => {
+    setSelectedMembers((prev) =>
+      prev.filter((m) => m.connectionWith?._id !== userId)
+    );
   };
 
   const handleSchedule = async () => {
-    try {
-      const formErrors = validateForm(formData, selectedMembers);
-      if (Object.keys(formErrors).length > 0) {
-        setErrors((prev) => ({ ...prev, ...formErrors }));
-        toast.error("Please fix all validation errors before scheduling");
-        return;
-      }
-      const { type, topic, description, date, startTime, endTime, price } =
-        formData;
-      const start = new Date(`${date}T${startTime}`);
-      const end = new Date(`${date}T${endTime}`);
-      const payload: any = {
-        type,
-        topic: topic.trim(),
-        description: description.trim(),
-        startTime: start,
-        endTime: end,
-        participants: selectedMembers.map((m) => m._id),
-      };
-      if (type === "public" && price) payload.sessionFee = parseFloat(price);
-      await createSession(payload);
-      toast.success("Session scheduled successfully");
-      navigate("/user/session");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to schedule session");
+  try {
+    const formErrors = validateForm(formData, selectedMembers);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
+      toast.error("Please fix all validation errors before scheduling");
+      return;
     }
-  };
+
+    const { type, topic, description, date, startTime, endTime, price } = formData;
+    const start = new Date(`${date}T${startTime}`);
+    const end = new Date(`${date}T${endTime}`);
+
+    const payload: any = {
+      type,
+      topic: topic.trim(),
+      description: description.trim(),
+      startTime: start,
+      endTime: end,
+      participants: selectedMembers.map((m) => ({
+        user: m.connectionWith?._id,
+        status: "pending",
+      })),
+    };
+
+    if (type === "public" && price) payload.sessionFee = parseFloat(price);
+
+    await createSession(payload);
+    toast.success("Session scheduled successfully");
+    navigate("/user/session");
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Failed to schedule session");
+  }
+};
+
 
   const filteredResults = users.filter((member) =>
     member.connectionWith?.name
@@ -267,299 +272,235 @@ const ScheduleSession = () => {
   };
 
   const handleBlur = (field: string) => {
-  setTouched((prev) => ({ ...prev, [field]: true }));
-};
-
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:border-green-500 hover:shadow-md transition-all"
-          >
-            <ArrowLeft size={20} className="text-gray-700" />
-          </button>
-          <h1 className="text-3xl font-semibold ml-4 tracking-tight">
-            Schedule Peer-to-Peer Session
-          </h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-20">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-6 flex items-center mb-12">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
+        >
+          <ArrowLeft size={20} className="text-gray-300" />
+        </button>
+        <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+          Schedule Session
+        </h1>
+      </div>
 
-        <div className="max-w-4xl mx-auto">
-          <Card
-            padding="lg"
-            className="bg-white shadow-md rounded-2xl border border-gray-200"
-          >
-            {/* Form error */}
-            {errors.form && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {errors.form}
+      {/* Form */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-xl border border-white/10 p-8">
+          {/* Form error */}
+          {errors.form && (
+            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-lg text-sm text-red-300">
+              {errors.form}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Type */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Type <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => handleInputChange("type", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-xl border bg-gray-900/60 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    errors.type && touched.type
+                      ? "border-red-500"
+                      : "border-gray-700"
+                  }`}
+                >
+                  <option value="">Select session type</option>
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                  <option value="peer-to-peer">Peer-to-Peer</option>
+                </select>
               </div>
-            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column */}
+              {/* Price */}
+              {formData.type === "public" && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Price (₹) <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="Enter price"
+                    value={formData.price || ""}
+                    onChange={(val) => handleInputChange("price", val)}
+                    className="bg-gray-900/60 text-white"
+                  />
+                </div>
+              )}
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Date <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={formData.date}
+                  onChange={(val) => handleInputChange("date", val)}
+                  className="bg-gray-900/60 text-white"
+                />
+              </div>
+
+              {/* Times */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Start Time <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(val) => handleInputChange("startTime", val)}
+                    className="bg-gray-900/60 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    End Time <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="time"
+                    value={formData.endTime}
+                    disabled
+                    className="bg-gray-700 text-gray-400"
+                    onChange={() => {}}
+                  />
+                </div>
+              </div>
+
+              {/* Topic */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Topic <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter session topic"
+                  value={formData.topic}
+                  onChange={(val) => handleInputChange("topic", val)}
+                  className="bg-gray-900/60 text-white"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Description <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  className="w-full px-4 py-3 bg-gray-900/60 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-green-500"
+                  rows={4}
+                  placeholder="Describe session goals..."
+                />
+              </div>
+            </div>
+
+            {/* Right Column */}
+            {formData.type !== "public" && (
               <div className="space-y-6">
-                {/* Type */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Type <span className="text-red-500">*</span>
+                    Add Participants <span className="text-red-400">*</span>
                   </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => handleInputChange("type", e.target.value)}
-                    // onBlur={() => handleBlur("type")}
-                    className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.type && touched.type
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Select session type</option>
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                    <option value="peer-to-peer">Peer-to-Peer</option>
-                  </select>
-                  {errors.type && touched.type && (
-                    <p className="text-red-500 text-xs mt-1">{errors.type}</p>
-                  )}
-                </div>
 
-                {/* Price (only for public) */}
-                {formData.type === "public" && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Price (₹) <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="Enter price"
-                      value={formData.price || ""}
-                      onChange={(val) => handleInputChange("price", val)}
-                      className="bg-white"
+                  {/* Search Input */}
+                  <div className="relative mb-4">
+                    <Search
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      size={18}
                     />
-                    {errors.price && touched.price && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.price}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Date */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Date <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(val) => handleInputChange("date", val)}
-                    className="bg-white"
-                  />
-                  {errors.date && touched.date && (
-                    <p className="text-red-500 text-xs mt-1">{errors.date}</p>
-                  )}
-                </div>
-
-                {/* Times */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Start Time <span className="text-red-500">*</span>
-                    </label>
                     <Input
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(val) => handleInputChange("startTime", val)}
-                      className="bg-white"
+                      type="text"
+                      placeholder="Search by name"
+                      value={searchTerm}
+                      onChange={(val) => setSearchTerm(val)}
+                      className="pl-10 bg-gray-900/60 text-white placeholder-gray-400"
                     />
-                    {errors.startTime && touched.startTime && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.startTime}
-                      </p>
-                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      End Time <span className="text-red-500">*</span>
-                      <span className="text-gray-400 text-xs ml-1">(Auto)</span>
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.endTime}
-                      disabled
-                      className="bg-gray-100"
-                      onChange={() => {}}
-                    />
-                    {errors.endTime && touched.endTime && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.endTime}
-                      </p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Topic */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Topic <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Enter session topic"
-                    value={formData.topic}
-                    onChange={(val) => handleInputChange("topic", val)}
-                    className="bg-white"
-                  />
-                  {errors.topic && touched.topic && (
-                    <p className="text-red-500 text-xs mt-1">{errors.topic}</p>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      handleInputChange("description", e.target.value)
-                    }
-                    // onBlur={() => handleBlur("description")}
-                    className={`w-full px-4 py-2 bg-white rounded-lg border focus:ring-2 focus:ring-green-500 ${
-                      errors.description && touched.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    rows={4}
-                    placeholder="Describe session goals..."
-                  />
-                  {errors.description && touched.description && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column - Participants */}
-              {formData.type !== "public" && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Add Participants <span className="text-red-500">*</span>
-                    </label>
-
-                    {/* Search Input */}
-                    <div className="relative mb-4">
-                      <Search
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                        size={18}
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Search by name"
-                        value={searchTerm}
-                        onChange={(val) => setSearchTerm(val)}
-                        className="pl-10 bg-white"
-                      />
+                  {/* Search Results */}
+                  {searchTerm && filteredResults.length > 0 && (
+                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl max-h-40 overflow-y-auto mb-4">
+                      {filteredResults.map((member) => (
+                        <button
+                          key={member._id}
+                          onClick={() => addMember(member)}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
+                        >
+                          <span className="text-sm">
+                            {member.connectionWith?.name}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            Click to add
+                          </span>
+                        </button>
+                      ))}
                     </div>
+                  )}
 
-                    {/* Search Results */}
-                    {searchTerm && filteredResults.length > 0 && (
-                      <div className="bg-white border border-gray-200 rounded-lg max-h-40 overflow-y-auto mb-4">
-                        {filteredResults.map((member) => (
-                          <button
+                  {/* Selected Members */}
+                  {selectedMembers.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">
+                        Selected Participants ({selectedMembers.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedMembers.map((member) => (
+                          <div
                             key={member._id}
-                            onClick={() => addMember(member)}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center justify-between"
+                            className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
                           >
                             <span className="text-sm">
                               {member.connectionWith?.name}
                             </span>
-                            <span className="text-xs text-gray-500">
-                              Click to add
-                            </span>
-                          </button>
+                            <button
+                              onClick={() => removeMember(member._id)}
+                              className="text-red-400 hover:text-red-600 p-1"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
                         ))}
                       </div>
-                    )}
-
-                    {/* No Results */}
-                    {searchTerm &&
-                      filteredResults.length === 0 &&
-                      users.length > 0 && (
-                        <div className="text-gray-500 text-sm py-2">
-                          No users found matching "{searchTerm}"
-                        </div>
-                      )}
-
-                    {/* Selected Members */}
-                    {selectedMembers.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">
-                          Selected Participants ({selectedMembers.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {selectedMembers.map((member) => (
-                            <div
-                              key={member._id}
-                              className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg"
-                            >
-                              <span className="text-sm">
-                                {member.connectionWith?.name}
-                              </span>
-                              <button
-                                onClick={() => removeMember(member._id)}
-                                className="text-red-500 hover:text-red-700 p-1"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Loading state */}
-                    {formData.type === "peer-to-peer" && users.length === 0 && (
-                      <div className="text-gray-500 text-sm">
-                        Loading connections...
-                      </div>
-                    )}
-
-                    {/* Error */}
-                    {errors.participants && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.participants}
-                      </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-4 mt-8 border-t border-gray-200 pt-6">
-              <button
-                onClick={() => navigate(-1)}
-                className="px-6 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:border-green-500 hover:text-green-600 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSchedule}
-                disabled={!isFormValid()}
-                className="px-6 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Schedule Session
-              </button>
-            </div>
-          </Card>
+          {/* Actions */}
+          <div className="flex justify-end gap-4 mt-10 border-t border-gray-800 pt-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-6 py-3 rounded-full bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:scale-105 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSchedule}
+              disabled={!isFormValid()}
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Schedule Session
+            </button>
+          </div>
         </div>
       </div>
     </div>

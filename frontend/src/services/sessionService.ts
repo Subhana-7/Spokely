@@ -1,31 +1,52 @@
 import axios from "axios";
-import Cookies from "js-cookie";
+import { refreshToken } from "./authServices";
+
+const BASE = `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/session`;
 
 const API = axios.create({
-  baseURL: `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/session`,
+  baseURL: BASE,
   withCredentials: true,
 });
 
-API.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+API.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const originalRequest = err.config;
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/refresh-token")
+    ) {
+      originalRequest._retry = true;
+      try {
+        await refreshToken();
+        return API(originalRequest);
+      } catch (refreshError) {
+        window.location.href = "/";
+        return Promise.reject(refreshError);
+      }
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
+    return Promise.reject(err);
+  }
 );
 
-export const createSession = (data: any) => API.post('/schedule', data);
-export const getSessions = () => API.get('/list');
+export const createSession = (data: any) => API.post("/schedule", data);
+export const getSessions = () => API.get("/list");
 export const getSessionById = (id: string) => API.get(`/details/${id}`);
 export const updateSession = (id: string, updates: any) => API.patch(`/${id}`, updates);
-export const getPublicSessions = () => API.get(`/public-sessions`);
-export const sessionPayment = (id:string) => API.post(`/payment`)
 
-export const videoCall = async (sessionId: string) => {
-  return await API.get(`/${sessionId}/token`, {
-    withCredentials: true,
-  });
-};
+export const respondToInvite = (id: string, status: "accepted" | "rejected") =>
+  API.post(`/${id}/respond`, { status });
+
+export const cancelParticipation = (id: string, reason: string) =>
+  API.post(`/${id}/cancel-participation`, { reason });
+
+export const cancelSession = (id: string, reason: string) =>
+  API.post(`/${id}/cancel-session`, { reason });
+
+export const flagSession = (id: string, reason: string, againstUser: string) =>
+  API.post(`/${id}/flag`, { reason, againstUser });
+
+export const getAgoraToken = (id: string) => API.get(`/${id}/token`);
+
+export const getPublicSessions = () => API.get("/public-sessions");

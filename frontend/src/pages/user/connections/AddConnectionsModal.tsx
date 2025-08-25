@@ -50,7 +50,7 @@ const fetchRequests = async () => {
       getConnectionRequests(),
       getSentConnectionRequests(),
     ]);
-    setIncomingRequests(incomingRes.data); // Extracting the .data array
+    setIncomingRequests(incomingRes.data); 
     setSentRequests(sentRes.data);
     onFetchIncomingCount?.(incomingRes.data.length);
   } catch (err) {

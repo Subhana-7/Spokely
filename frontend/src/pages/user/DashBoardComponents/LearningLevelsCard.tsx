@@ -1,6 +1,4 @@
 
-import React from 'react';
-
 const LearningLevelsCard = () => {
   const levels = [
     { number: 1, title: "Self Introduction", completed: true, locked: false },

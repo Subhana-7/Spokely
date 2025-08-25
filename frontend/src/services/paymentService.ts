@@ -1,4 +1,4 @@
-import { loadScript } from "@paypal/paypal-js";
+import { loadScript, type PayPalNamespace } from "@paypal/paypal-js";
 import axios from "axios";
 
 const API = axios.create({
@@ -6,25 +6,43 @@ const API = axios.create({
   withCredentials: true,
 });
 
-export async function startPayment(sessionId: string, amount: number) {
+interface PaymentResponse {
+  id: string;
+  orderId?: string;
+  message?: string;
+  success?: boolean;
+}
+
+export async function startPayment(sessionId: string, amount: number): Promise<PaymentResponse> {
   const { data } = await API.post("/payment/create", { sessionId, amount });
 
-  const paypal = await loadScript({
+  const paypal: PayPalNamespace | null = await loadScript({
     clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
   });
-  if (!paypal) throw new Error("PayPal SDK failed to load");
 
-  if (!paypal || !paypal.Buttons) {
-    throw new Error("PayPal Buttons not available");
+  if (!paypal?.Buttons) {
+    throw new Error("PayPal SDK failed to load Buttons component");
   }
 
-  paypal
-    .Buttons({
+  return new Promise((resolve, reject) => {
+    paypal.Buttons!({
       createOrder: () => data.id,
-      onApprove: async (approveData) => {
-        await API.post("/payment/capture", { orderId: approveData.orderID });
-        alert("Payment successful");
+      onApprove: async (approveData: any) => {
+        try {
+          const res = await API.post("/payment/capture", {
+            orderId: approveData.orderID,
+          });
+          resolve(res.data);
+        } catch (err) {
+          reject(err);
+        }
       },
-    })
-    .render("#paypal-button-container");
+      onError: (err: any) => reject(err),
+    }).render("#paypal-button-container");
+  });
+}
+
+export async function confirmPayment(orderId: string, sessionId: string): Promise<PaymentResponse> {
+  const { data } = await API.post("/payment/capture", { orderId, sessionId });
+  return data;
 }

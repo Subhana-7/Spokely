@@ -1,6 +1,4 @@
 
-import React from 'react';
-
 const DailyChallengeCard = () => {
   const challenges = [
     { text: "Learn a new word", completed: true },

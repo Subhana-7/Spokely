@@ -2,8 +2,10 @@ import axios from "axios";
 import Payment from "../models/payment.model";
 import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
+import { SessionRepository } from "../repositories/session.repository";
 
 const PAYPAL_BASE_URL = "https://api-m.sandbox.paypal.com";
+const sessionRepo = new SessionRepository();
 
 export class PaymentController {
   private async getAccessToken() {
@@ -61,34 +63,46 @@ export class PaymentController {
   };
 
   captureOrder = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { orderId } = req.body;
-      const accessToken = await this.getAccessToken();
+  try {
+    const { orderId } = req.body;
+    const accessToken = await this.getAccessToken();
 
-      const capture = await axios.post(
-        `${PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+    const capture = await axios.post(
+      `${PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-      await Payment.findOneAndUpdate(
-        { paypalOrderId: orderId },
-        { status: "COMPLETED", details: capture.data },
-        { new: true }
-      );
+    const payment = await Payment.findOneAndUpdate(
+      { paypalOrderId: orderId },
+      { status: "COMPLETED", details: capture.data },
+      { new: true }
+    );
 
-      res.json({
-        message: "Payment captured successfully",
-        data: capture.data,
-      });
-    } catch (error: any) {
-      console.error("Error capturing PayPal order:", error.response?.data || error.message);
-      res.status(500).json({ message: "Failed to capture PayPal payment" });
+    if (!payment) {
+      return res.status(404).json({ message: "Payment record not found" });
     }
-  };
+
+    await sessionRepo.updateSession(payment.sessionId.toString(), {
+  participants: [{ user: payment.userId, status: "accepted" }],
+});
+
+
+    res.json({
+      message: "Payment captured successfully & session scheduled",
+      data: capture.data,
+    });
+  } catch (error: any) {
+    console.error(
+      "Error capturing PayPal order:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({ message: "Failed to capture PayPal payment" });
+  }
+};
 }

@@ -15,4 +15,6 @@ export interface IUserController {
   verifyForgotPassword(req: Request, res: Response): Promise<void>;
 
   refreshToken(req: Request, res: Response): Promise<void>;
+
+  profile(req: Request, res: Response): Promise<void>;
 }

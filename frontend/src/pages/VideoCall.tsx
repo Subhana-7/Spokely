@@ -6,7 +6,7 @@ import AgoraRTC, {
   type IAgoraRTCClient,
   type IAgoraRTCRemoteUser,
 } from "agora-rtc-sdk-ng";
-import { videoCall } from "../services/sessionService";
+import { getAgoraToken } from "../services/sessionService";
 
 
 const VideoCall = () => {
@@ -123,7 +123,7 @@ const VideoCall = () => {
           await cleanup();
         }
 
-        const response = await videoCall(sessionId);
+        const response = await getAgoraToken(sessionId);
         const { appId, token, channelName, uid } = response.data;
 
         if (!appId || !token || !channelName) {

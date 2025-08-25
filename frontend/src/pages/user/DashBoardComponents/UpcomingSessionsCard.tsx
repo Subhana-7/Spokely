@@ -1,6 +1,4 @@
 
-import React from 'react';
-
 const UpcomingSessionsCard = () => {
   const sessions = [
     { time: "9 AM", title: "Daily Mentor Session" },
