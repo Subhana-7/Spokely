@@ -1,7 +1,4 @@
-// src/components/DashBoardComponents.jsx/GreetingsBanner.tsx (or .tsx if you rename it)
-import React, { useEffect } from 'react';
-import { useAuthStore } from '../../../store/userAuthStore'; // adjust path as needed
-import { refreshToken } from '../../../services/authServices';
+import { useAuthStore } from '../../../store/userAuthStore';
 
 const GreetingBanner = () => {
   const user = useAuthStore((state) => state.user);

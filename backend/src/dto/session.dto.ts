@@ -1,5 +1,11 @@
 import { Types } from "mongoose";
 
+export interface ParticipantDTO {
+  user: Types.ObjectId;
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled'; // required
+  cancelReason?: string;
+}
+
 export interface CreateSessionDTO {
   status: 'upcoming' | 'completed' | 'cancelled' | 'flagged' | 'accepted' | 'pending';
   type: 'public' | 'private' | 'peer-to-peer';
@@ -9,10 +15,9 @@ export interface CreateSessionDTO {
   startTime: Date;
   endTime?: Date;
   createdBy: Types.ObjectId;
-  participants?: Types.ObjectId[];
+  participants?: ParticipantDTO[];
   sessionFee?: number;
 }
-
 
 export interface UpdateSessionDTO {
   type?: 'public' | 'private' | 'peer-to-peer';
@@ -22,8 +27,15 @@ export interface UpdateSessionDTO {
   startTime?: Date;
   endTime?: Date;
   status?: 'upcoming' | 'completed' | 'cancelled' | 'flagged' | 'accepted' | 'pending';
-  participants?: Types.ObjectId[];
+  participants?: ParticipantDTO[];
   durationMinutes?: number;
   recordingLink?: string;
   sessionFee?: number;
+}
+
+export interface FlagSessionDTO {
+  sessionId: string;
+  userId: string;
+  reason: string;
+  flaggedUserId?: string;
 }

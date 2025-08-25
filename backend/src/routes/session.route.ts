@@ -11,8 +11,13 @@ router.post("/schedule", authMiddleware(["user", "mentor"]), controller.createSe
 router.get("/list", authMiddleware(["user", "mentor"]), controller.getAllSessions);
 router.get("/details/:id", authMiddleware(["user", "mentor"]), controller.getSessionById);
 router.patch("/:id", authMiddleware(["user", "mentor"]), controller.updateSession);
-router.get("/:id/token", authMiddleware(["user", "mentor"]), controller.getAgoraToken);
-router.get('/public-sessions',controller.getPublicSessions)
 
+router.post("/:id/respond", authMiddleware(["user", "mentor"]), controller.respondToInvite);
+router.post("/:id/cancel-participation", authMiddleware(["user", "mentor"]), controller.cancelParticipation);
+router.post("/:id/cancel-session", authMiddleware(["user", "mentor"]), controller.cancelSession);
+router.post("/:id/flag", authMiddleware(["user", "mentor"]), controller.flagSession);
+
+router.get("/:id/token", authMiddleware(["user", "mentor"]), controller.getAgoraToken);
+router.get("/public-sessions", controller.getPublicSessions);
 
 export default router;

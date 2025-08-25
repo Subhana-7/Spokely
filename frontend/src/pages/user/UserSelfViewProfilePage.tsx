@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import DashboardHeader from './DashBoardComponents.jsx/Header';
+import  { useState } from 'react';
+import DashboardHeader from './DashBoardComponents/Header';
 import SpokelyCard from '../../components/common/Cards';
 import {
   Award, Camera, Crown, Edit, Mail, Phone,

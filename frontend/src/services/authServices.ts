@@ -131,8 +131,18 @@ export const refreshToken = async () => {
 export const home = async () => {
   const role = Cookies.get("role");
 
-  const endpoint = role === "mentor" ? "/api/mentors/home" : "/api/user/home";
+  const endpoint = role === "mentor" ? "/api/mentors/home" : "/api/users/home";
 
   const res = await API.post(endpoint);
   return res.data;
 };
+
+
+export const profiles = async(id:string) => {
+  const role = Cookies.get("role");
+
+  const endpoint = role === "mentor" ? `/api/mentors/user/profile/${id}` : `/api/users/peer/profile/${id}`;
+
+  const res = await API.get(endpoint);
+  return res.data;
+}

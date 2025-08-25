@@ -122,6 +122,14 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
+    {
+    path: "/user/peer/profile/:id",
+    element: (
+      <RoleProtectedRoute role="user">
+        <MentorViewUserProfile />
+      </RoleProtectedRoute>
+    ),
+  },
   {
     path: "/mentor/sessions",
     element: (
@@ -142,6 +150,7 @@ const appRoutes: RouteObject[] = [
     path: "/session/:id/video",
     element: <VideoCall />,
   },
+
   { path: "/admin/login", element: <AdminLogin /> },
   {
     path: "/admin",

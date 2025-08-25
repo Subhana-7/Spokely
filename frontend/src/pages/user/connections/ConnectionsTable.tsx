@@ -1,6 +1,16 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Button from "../../../modals/Button";
-import { MessageCircle, Ban, Trash2, User, Users, Clock, Mail, CheckCircle } from "lucide-react";
+import {
+  MessageCircle,
+  Ban,
+  Trash2,
+  User,
+  Users,
+  Clock,
+  Mail,
+  CheckCircle,
+} from "lucide-react";
 
 interface Connection {
   id: string;
@@ -14,17 +24,16 @@ interface ConnectionsTableProps {
   connections: Connection[];
 }
 
-
 const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
-  const handleBlock = (username:string) => {
+  const handleBlock = (username: string) => {
     console.log("Blocking user:", username);
   };
 
-  const handleChat = (username:string) => {
+  const handleChat = (username: string) => {
     console.log("Opening chat with:", username);
   };
 
-  const handleRemove = (username:string) => {
+  const handleRemove = (username: string) => {
     console.log("Removing user:", username);
   };
 
@@ -60,8 +69,11 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
             } hover:bg-blue-50/40 transition-all duration-300 group`}
           >
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
-              {/* Contact Info */}
-              <div className="flex items-center gap-4">
+              {/* Contact Info (clickable) */}
+              <Link
+                to={`/user/peer/profile/${connection.id}`}
+                className="flex items-center gap-4 hover:opacity-80 transition"
+              >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {connection.username.charAt(0).toUpperCase()}
                 </div>
@@ -74,15 +86,17 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
                     {connection.email}
                   </div>
                 </div>
-              </div>
+              </Link>
 
               {/* Role */}
               <div className="md:block">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  connection.role === "Mentor" 
-                    ? "bg-purple-100 text-purple-800" 
-                    : "bg-blue-100 text-blue-800"
-                }`}>
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    connection.role === "Mentor"
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-blue-100 text-blue-800"
+                  }`}
+                >
                   {connection.role}
                 </span>
                 <div className="md:hidden text-sm text-gray-500 mt-2">
@@ -146,7 +160,9 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <Users size={32} className="text-gray-400" />
           </div>
-          <div className="text-gray-500 text-xl font-medium mb-2">No connections found</div>
+          <div className="text-gray-500 text-xl font-medium mb-2">
+            No connections found
+          </div>
           <div className="text-gray-400 text-sm">
             Try adjusting your search criteria or add new connections
           </div>

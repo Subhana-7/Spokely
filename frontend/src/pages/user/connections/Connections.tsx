@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import DashboardHeader from "../DashBoardComponents.jsx/Header";
+import DashboardHeader from "../DashBoardComponents/Header";
 import ConnectionsTable from "./ConnectionsTable";
 import Button from "../../../modals/Button";
 import Input from "../../../modals/Input";
@@ -38,6 +38,7 @@ const Connections = () => {
       try {
         setLoading(true);
         const res = await getAllConnections();
+        console.log(res.data)
         setConnections(res.data);
       } catch (err) {
         toast.error("Failed to fetch connections");
@@ -92,7 +93,7 @@ const Connections = () => {
   return (
     <>
       <div
-        className={`min-h-screen bg-white transition-all duration-300 ${
+        className={`min-h-screen bg-gradient-to-br py-24 from-gray-900 via-gray-800 to-black text-white transition-all duration-300 ${
           isAddModalOpen ? "blur-sm pointer-events-none select-none" : ""
         }`}
       >
@@ -101,18 +102,18 @@ const Connections = () => {
 
         {/* Title + Add Button */}
         <div className="max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
             Your Connections
           </h2>
           <Button
             variant="primary"
-            className="px-6 py-3 text-base bg-[#34C759] text-white rounded-full shadow-md hover:shadow-lg hover:scale-105 transform transition-all"
+            className="relative px-6 py-3 text-base bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all"
             onClick={() => setIsAddModalOpen(true)}
           >
             <Plus size={18} className="mr-2" />
             Add Connection
             {incomingCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
+              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-md">
                 {incomingCount}
               </span>
             )}
@@ -132,7 +133,7 @@ const Connections = () => {
                 placeholder="Search connections..."
                 value={searchTerm}
                 onChange={setSearchTerm}
-                className="pl-12 pr-4 py-3 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#34C759] shadow-sm"
+                className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white placeholder-gray-400 shadow-md"
               />
             </div>
           </div>
@@ -140,13 +141,13 @@ const Connections = () => {
           {/* Table / Loader */}
           {loading ? (
             <div className="text-center py-20">
-              <div className="w-14 h-14 border-4 border-green-200 border-t-[#34C759] rounded-full animate-spin mx-auto mb-4"></div>
-              <div className="text-gray-500 font-medium text-lg">
+              <div className="w-14 h-14 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="text-gray-400 font-medium text-lg">
                 Loading connections...
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm p-4">
+            <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <ConnectionsTable connections={filteredConnections} />
             </div>
           )}

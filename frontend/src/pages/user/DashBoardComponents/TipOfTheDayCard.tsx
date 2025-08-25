@@ -1,6 +1,4 @@
 
-import React from 'react';
-
 const TipOfTheDayCard = () => {
   return (
     <div className="bg-lime-400 rounded-2xl p-6 text-white">
