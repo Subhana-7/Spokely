@@ -220,4 +220,22 @@ export class MentorController implements IMentorController {
       res.status(400).json({ message: err.message });
     }
   };
+
+      profile = async (req: Request, res: Response): Promise<void> => {
+      try {
+        const id  = req.params.id;
+  
+        const mentor = await this.service.getHome(id);
+  
+        if (!mentor) {
+          res.status(404).json({ message: "User not found" });
+          return;
+        }
+  
+        const mentorDTO = toMentorResponseDTO(mentor);
+        res.status(200).json(mentorDTO);
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
+      }
+    };
 }

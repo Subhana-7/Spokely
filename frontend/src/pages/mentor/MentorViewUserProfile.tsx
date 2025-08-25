@@ -3,7 +3,7 @@ import MentorHeader from './DashboardComponents/Header';
 import SpokelyCard from '../../components/common/Cards';
 import { Book, Calendar, TrendingUp, User } from 'lucide-react';
 import Badge from '../../components/common/Badge';
-import { profiles } from '../../services/authServices';
+import { userProfiles } from '../../services/authServices';
 import toast from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/userAuthStore';
@@ -31,7 +31,7 @@ const MentorViewUserProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await profiles(userId);
+        const res = await userProfiles(userId);
         setUserDetails(res);
       } catch (error) {
         toast.error("Failed to fetch user profile");

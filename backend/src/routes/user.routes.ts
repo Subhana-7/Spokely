@@ -32,6 +32,6 @@ router.get(
 
 router.post("/refresh-token", controller.refreshToken.bind(controller));
 
-router.get("/peer/profile/:id", controller.profile.bind(controller))
+router.get("/peer/profile/:id", controller.profile.bind(controller));
 
 export default router;
