@@ -9,7 +9,6 @@ export interface ISessionController {
   getAgoraToken(req: AuthenticatedRequest, res: Response): Promise<void>;
   getPublicSessions(req: AuthenticatedRequest, res: Response): Promise<void>;
 
-  // new flow specific
   respondToInvite(req: AuthenticatedRequest, res: Response): Promise<void>;
   cancelParticipation(req: AuthenticatedRequest, res: Response): Promise<void>;
   cancelSession(req: AuthenticatedRequest, res: Response): Promise<void>;

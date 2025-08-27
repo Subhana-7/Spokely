@@ -5,7 +5,6 @@ import {
   Users,
   Search,
   IndianRupee,
-  Plus,
 } from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import Header from "../user/DashBoardComponents/Header";
@@ -95,39 +94,14 @@ const MentorPublicSessions = () => {
     );
   });
 
-  const handlePayToSchedule = async (sessionId: string, sessionFee: number) => {
+  const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
     if (!sessionFee || sessionFee <= 0) {
       setPaymentResult({ status: "error", message: "Invalid session fee. Cannot proceed with payment." });
       return;
     }
 
-    try {
-      setActiveSession({ id: sessionId, fee: sessionFee });
-      setShowPayPalModal(true);
-
-      const result = await startPayment(sessionId, sessionFee);
-
-      setSessions((prev) =>
-        prev.map((s) =>
-          s._id === sessionId
-            ? {
-                ...s,
-                participants: [...s.participants, { user: user?.id || "", status: "accepted" }],
-              }
-            : s
-        )
-      );
-
-      setPaymentResult({
-        status: "success",
-        message: result?.message || "Your payment was successful! Session scheduled 🎉",
-      });
-    } catch (err: any) {
-      console.error("Payment failed:", err);
-      setPaymentResult({ status: "error", message: "Payment failed. Please try again." });
-    } finally {
-      setShowPayPalModal(false);
-    }
+    setActiveSession({ id: sessionId, fee: sessionFee });
+    setShowPayPalModal(true);
   };
 
   useEffect(() => {
@@ -138,112 +112,108 @@ const MentorPublicSessions = () => {
 
     container.innerHTML = "";
 
-    if (!window.paypal) {
-      const fallback = document.createElement("div");
-      fallback.className = "text-red-600 text-sm";
-      fallback.innerText = "PayPal failed to load. Please refresh and try again.";
-      container.appendChild(fallback);
-      return;
-    }
+    const loadPaypalButtons = async () => {
+      try {
+        const paypalNamespace = await import("@paypal/paypal-js");
+        const paypal = await paypalNamespace.loadScript({
+          clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
+          currency: "USD",
+        });
 
-    if (window.paypal.Buttons) {
-      const buttons = window.paypal.Buttons({
-        createOrder: async () => {
-          try {
-            const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
-            const orderId = resp?.orderId || resp?.id || resp?.data?.orderId;
-            if (!orderId) throw new Error("No order ID returned from backend.");
-            return orderId;
-          } catch (e: any) {
-            console.error("createOrder error:", e);
-            setShowPayPalModal(false);
-            setPaymentResult({
-              status: "error",
-              message: e?.message || "Failed to create order. Please try again.",
-            });
-            throw e;
-          }
-        },
+        if (!paypal?.Buttons) {
+          setPaymentResult({ status: "error", message: "PayPal failed to load" });
+          setShowPayPalModal(false);
+          return;
+        }
 
-        onApprove: async (data: any) => {
-          try {
-            setIsProcessing(true);
-            const orderId = data.orderID;
-            const verify = await confirmPayment(orderId, activeSession.id);
-            const ok = !!verify?.success;
-
-            if (ok) {
-              setSessions((prev) =>
-                prev.map((s) => {
-                  if (s._id !== activeSession.id) return s;
-                  const already = s.participants.some((p) => p.user === (user?.id || ""));
-                  return {
-                    ...s,
-                    participants: already
-                      ? s.participants
-                      : [...s.participants, { user: user?.id || "", status: "accepted" }],
-                  };
-                })
-              );
-
-              setPaymentResult({
-                status: "success",
-                message: verify?.message || "Your payment was successful! Session scheduled 🎉",
-              });
-            } else {
+        const buttons = paypal.Buttons({
+          createOrder: async () => {
+            try {
+              const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
+              return resp.orderId!;
+            } catch (err: any) {
+              console.error("createOrder error:", err);
+              setShowPayPalModal(false);
               setPaymentResult({
                 status: "error",
-                message: verify?.message || "Payment verification failed. Please contact support.",
+                message: err?.message || "Failed to create order.",
               });
+              throw err;
             }
-          } catch (e: any) {
-            console.error("onApprove/confirm error:", e);
+          },
+          onApprove: async (data: any) => {
+            try {
+              setIsProcessing(true);
+              const orderId = data.orderID;
+              const verify = await confirmPayment(orderId, activeSession.id);
+
+              if (verify?.success) {
+                setSessions((prev) =>
+                  prev.map((s) =>
+                    s._id === activeSession.id
+                      ? {
+                          ...s,
+                          participants: [
+                            ...s.participants,
+                            { user: user?.id || "", status: "accepted" },
+                          ],
+                        }
+                      : s
+                  )
+                );
+
+                setPaymentResult({
+                  status: "success",
+                  message: verify?.message || "Payment successful! Session scheduled 🎉",
+                });
+              } else {
+                setPaymentResult({
+                  status: "error",
+                  message: verify?.message || "Payment verification failed.",
+                });
+              }
+            } catch (err: any) {
+              console.error("onApprove error:", err);
+              setPaymentResult({
+                status: "error",
+                message: err?.message || "Payment failed.",
+              });
+            } finally {
+              setIsProcessing(false);
+              setShowPayPalModal(false);
+            }
+          },
+          onCancel: () => {
+            setShowPayPalModal(false);
+            setPaymentResult({ status: "error", message: "Payment cancelled." });
+          },
+          onError: (err: any) => {
+            console.error("PayPal error:", err);
+            setShowPayPalModal(false);
             setPaymentResult({
               status: "error",
-              message: e?.message || "Payment failed to verify. Please try again.",
+              message: "Payment error. Please try again.",
             });
-          } finally {
-            setIsProcessing(false);
-            setShowPayPalModal(false);
-          }
-        },
+          },
+        });
 
-        onCancel: () => {
-          setShowPayPalModal(false);
-          setPaymentResult({
-            status: "error",
-            message: "Payment was cancelled.",
-          });
-        },
+        buttons.render("#paypal-button-container");
+      } catch (err) {
+        console.error("PayPal script load error:", err);
+        container.innerText = "PayPal failed to load";
+      }
+    };
 
-        onError: (err: any) => {
-          console.error("PayPal onError:", err);
-          setShowPayPalModal(false);
-          setPaymentResult({
-            status: "error",
-            message: "A payment error occurred. Please try again.",
-          });
-        },
-      });
-
-      buttons.render("#paypal-button-container");
-
-      return () => {
-        try {
-          buttons.close && buttons.close();
-        } catch {}
-      };
-    }
+    loadPaypalButtons();
   }, [showPayPalModal, activeSession, user?.id]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
 
   const getLevelBadgeVariant = (status: string): "accepted" | "mentor" | "peer" | "public" | "upcoming" | "completed" | "private" | "pending" | "cancelled" => {
     switch (status.toLowerCase()) {
@@ -391,10 +361,7 @@ const MentorPublicSessions = () => {
               ✕
             </button>
             <h2 className="text-lg font-bold mb-4">Complete Payment</h2>
-
-            {/* PayPal renders here */}
             <div id="paypal-button-container" />
-
             {isProcessing && (
               <div className="mt-4 text-sm text-gray-600 text-center">
                 Finalizing payment… please wait
@@ -404,6 +371,7 @@ const MentorPublicSessions = () => {
         </div>
       )}
 
+      {/* Payment Result Modal */}
       {paymentResult && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">

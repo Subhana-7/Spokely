@@ -83,7 +83,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/user/mentor/profile",
+    path: "/user/mentor-profile/:id",
     element: (
       <RoleProtectedRoute role="user">
         <UserViewMentorProfile />
@@ -115,7 +115,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/mentor/user/profile",
+    path: "/user-profile",
     element: (
       <RoleProtectedRoute role="mentor">
         <MentorViewUserProfile />
@@ -123,7 +123,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
     {
-    path: "/user/peer/profile/:id",
+    path: "/user-profile/:id",
     element: (
       <RoleProtectedRoute role="user">
         <MentorViewUserProfile />

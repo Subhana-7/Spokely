@@ -20,4 +20,5 @@ router.post("/:id/flag", authMiddleware(["user", "mentor"]), controller.flagSess
 router.get("/:id/token", authMiddleware(["user", "mentor"]), controller.getAgoraToken);
 router.get("/public-sessions", controller.getPublicSessions);
 
+
 export default router;

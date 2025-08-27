@@ -5,6 +5,7 @@ import { createSession } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getAllConnections } from "../../services/connectionService";
+import { useAuthStore } from "../../store/userAuthStore";
 
 interface FormData {
   type: string;
@@ -33,6 +34,11 @@ const ScheduleSession = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const {user} = useAuthStore();
+
+  const userRole = user?.role
+
+  console.log(userRole)
 
   const [formData, setFormData] = useState<FormData>({
     type: "",
@@ -231,6 +237,9 @@ const ScheduleSession = () => {
     const start = new Date(`${date}T${startTime}`);
     const end = new Date(`${date}T${endTime}`);
 
+    const capitalizeFirstLetter = (str: string) => 
+  str.charAt(0).toUpperCase() + str.slice(1);
+
     const payload: any = {
       type,
       topic: topic.trim(),
@@ -241,6 +250,7 @@ const ScheduleSession = () => {
         user: m.connectionWith?._id,
         status: "pending",
       })),
+      role:capitalizeFirstLetter(userRole as string)
     };
 
     if (type === "public" && price) payload.sessionFee = parseFloat(price);

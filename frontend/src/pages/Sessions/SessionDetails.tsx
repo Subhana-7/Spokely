@@ -26,6 +26,7 @@ const SessionDetail = () => {
     const fetchSession = async () => {
       try {
         const res = await getSessionById(id!);
+        console.log(res);
         setSession(res.data);
       } catch (err: any) {
         toast.error(err?.response?.data?.message || "Failed to load session");
@@ -36,8 +37,14 @@ const SessionDetail = () => {
     fetchSession();
   }, [id]);
 
-  if (loading) return <div className="p-6 text-center text-lg">Loading session details...</div>;
-  if (!session) return <div className="p-6 text-red-600 text-center">Session not found.</div>;
+  if (loading)
+    return (
+      <div className="p-6 text-center text-lg">Loading session details...</div>
+    );
+  if (!session)
+    return (
+      <div className="p-6 text-red-600 text-center">Session not found.</div>
+    );
 
   return (
     <div
@@ -48,7 +55,6 @@ const SessionDetail = () => {
         backgroundPosition: "center",
       }}
     >
-
       {/* Overlay for glow effect */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
@@ -65,10 +71,14 @@ const SessionDetail = () => {
 
       {/* Hero Section */}
       <div className="relative z-10 text-center py-12">
-        <h2 className="text-4xl font-extrabold drop-shadow-lg">{session.topic}</h2>
+        <h2 className="text-4xl font-extrabold drop-shadow-lg">
+          {session.topic}
+        </h2>
         <p className="text-lg opacity-80 mt-2">{session.description}</p>
         <div className="mt-4 flex justify-center gap-3">
-          <Badge variant={session.status === "completed" ? "success" : "warning"}>
+          <Badge
+            variant={session.status === "completed" ? "success" : "warning"}
+          >
             {session.status}
           </Badge>
           <Badge variant="peer">{session.type}</Badge>
@@ -84,29 +94,37 @@ const SessionDetail = () => {
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-yellow-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">Start</div>
-                <div className="font-semibold">{new Date(session.startTime).toLocaleTimeString()}</div>
+                <div className="font-semibold">
+                  {new Date(session.startTime).toLocaleTimeString()}
+                </div>
               </div>
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-green-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">End</div>
                 <div className="font-semibold">
-                  {session.endTime ? new Date(session.endTime).toLocaleTimeString() : "Not ended"}
+                  {session.endTime
+                    ? new Date(session.endTime).toLocaleTimeString()
+                    : "Not ended"}
                 </div>
               </div>
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-blue-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">Date</div>
-                <div className="font-semibold">{new Date(session.date).toLocaleDateString()}</div>
+                <div className="font-semibold">
+                  {new Date(session.date).toLocaleDateString()}
+                </div>
               </div>
             </div>
 
             {/* Extra Info */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="p-3 rounded-lg bg-white/10 flex items-center gap-2 hover:bg-white/20 transition">
-                <DollarSign className="text-green-300" /> Fee: ${session.sessionFee || 0}
+                <DollarSign className="text-green-300" /> Fee: $
+                {session.sessionFee || 0}
               </div>
               <div className="p-3 rounded-lg bg-white/10 flex items-center gap-2 hover:bg-white/20 transition">
-                <Clock className="text-pink-300" /> Duration: {session.durationMinutes || 60} mins
+                <Clock className="text-pink-300" /> Duration:{" "}
+                {session.durationMinutes || 60} mins
               </div>
             </div>
 
@@ -121,25 +139,51 @@ const SessionDetail = () => {
           </Card>
 
           {/* Participants */}
+          {/* Participants */}
           <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl hover:shadow-2xl transition">
             <h3 className="font-semibold text-xl mb-4 flex items-center">
               <User className="w-5 h-5 mr-2 text-green-300" />
               Participants
             </h3>
+
             <div className="space-y-3">
-              {(!session.participants || session.participants.length === 0) ? (
-                <p className="text-sm opacity-70">No participants</p>
-              ) : (
-                session.participants.map((m: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded"
-                  >
-                    <span>{m.name}</span>
-                    <Badge variant="peer" size="sm">{m.level || "Beginner"}</Badge>
-                  </div>
-                ))
-              )}
+              {(() => {
+                let participants =
+                  session.participants?.map((p: any) => p.user) || [];
+
+                if (session.createdBy) {
+                  const alreadyIncluded = participants.some(
+                    (u: any) => u._id === session.createdBy._id
+                  );
+                  if (!alreadyIncluded) {
+                    participants = [session.createdBy, ...participants];
+                  }
+                }
+
+                return participants.length === 0 ? (
+                  <p className="text-sm opacity-70">No participants</p>
+                ) : (
+                  participants.map((u: any, i: number) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        console.log(u)
+                        if (u.role === "mentor") {
+                          navigate(`/user/mentor-profile/${u._id}`);
+                        } else {
+                          navigate(`/user-profile/${u._id}`);
+                        }
+                      }}
+                      className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded cursor-pointer"
+                    >
+                      <span>{u.name}</span>
+                      <Badge variant="peer" size="sm">
+                        {u.level || "Beginner"}
+                      </Badge>
+                    </div>
+                  ))
+                );
+              })()}
             </div>
           </Card>
         </div>
@@ -148,13 +192,20 @@ const SessionDetail = () => {
         <div className="space-y-6">
           <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl hover:shadow-2xl transition text-center">
             <h3 className="text-2xl font-bold mb-2">Performance & Feedback</h3>
-            <p className="text-sm opacity-80 mb-4">AI analysis and mentor feedback after session.</p>
+            <p className="text-sm opacity-80 mb-4">
+              AI analysis and mentor feedback after session.
+            </p>
             {session.feedback && session.feedback.length > 0 ? (
               <div className="space-y-3 text-left">
                 {session.feedback.map((f: any, idx: number) => (
-                  <div key={idx} className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                  <div
+                    key={idx}
+                    className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition"
+                  >
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold">{f.from?.name || "Anonymous"}</span>
+                      <span className="font-semibold">
+                        {f.from?.name || "Anonymous"}
+                      </span>
                       <span className="flex items-center gap-1 text-yellow-300">
                         <Star className="w-4 h-4" /> {f.rating || "N/A"}
                       </span>
@@ -169,8 +220,13 @@ const SessionDetail = () => {
           </Card>
 
           <div className="flex gap-4">
-            <Button variant="secondary" className="flex-1">Download Report</Button>
-            <Button variant="primary" className="flex-1 bg-green-500 hover:bg-green-600">
+            <Button variant="secondary" className="flex-1">
+              Download Report
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 bg-green-500 hover:bg-green-600"
+            >
               <CheckCircle /> Schedule Follow-up
             </Button>
           </div>

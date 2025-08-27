@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { Search, Filter, Plus, Flag } from "lucide-react";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
@@ -59,7 +59,6 @@ const Sessions = () => {
     return now >= start && now <= end;
   };
 
-  // --- Actions ---
   const handleRespond = async (id: string, status: "accepted" | "rejected") => {
     try {
       await respondToInvite(id, status);
@@ -114,34 +113,30 @@ const Sessions = () => {
     }
   };
 
-  // --- Render Action Buttons ---
-  const renderActionButtons = (session: any) => {
-    // PENDING → Accept/Reject (only for invitee)
+const renderActionButtons = (session: any) => {
+  const extraActions: JSX.Element | null = (() => {
+    // PENDING → Accept/Reject
     if (session.status === "pending") {
       if (session.createdBy === currentUserId) {
         return <p className="text-sm text-yellow-400">Waiting for response</p>;
       }
-      return (
+      return canRespond(session) ? (
         <div className="flex gap-2">
-          {canRespond(session) ? (
-            <>
-              <Button
-                onClick={() => handleRespond(session._id, "accepted")}
-                variant="success"
-              >
-                Accept
-              </Button>
-              <Button
-                onClick={() => handleRespond(session._id, "rejected")}
-                variant="danger"
-              >
-                Reject
-              </Button>
-            </>
-          ) : (
-            <p className="text-sm text-yellow-400">Too late to respond</p>
-          )}
+          <Button
+            onClick={() => handleRespond(session._id, "accepted")}
+            variant="success"
+          >
+            Accept
+          </Button>
+          <Button
+            onClick={() => handleRespond(session._id, "rejected")}
+            variant="danger"
+          >
+            Reject
+          </Button>
         </div>
+      ) : (
+        <p className="text-sm text-yellow-400">Too late to respond</p>
       );
     }
 
@@ -150,31 +145,7 @@ const Sessions = () => {
       return <p className="text-sm text-red-400">This session was cancelled</p>;
     }
 
-    // COMPLETED
-    if (session.status === "completed") {
-      return (
-        <div className="flex flex-col gap-2">
-          <Button
-            onClick={() =>
-              navigate(`/user/session/details/${session._id}`)
-            }
-            variant="secondary"
-          >
-            View Details
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              handleFlag(session._id, session.participants || [])
-            }
-          >
-            <Flag size={16} /> Flag
-          </Button>
-        </div>
-      );
-    }
-
-    // UPCOMING (after accepted)
+    // UPCOMING / ACCEPTED
     if (session.status === "upcoming" || session.status === "accepted") {
       if (isOngoing(session)) {
         return (
@@ -195,19 +166,44 @@ const Sessions = () => {
         );
       }
       return (
-        <div className="flex flex-col gap-2">
-          <Button
-            variant="danger"
-            onClick={() => handleCancelParticipation(session._id)}
-          >
-            Cancel
-          </Button>
-        </div>
+        <Button
+          variant="danger"
+          onClick={() => handleCancelParticipation(session._id)}
+        >
+          Cancel
+        </Button>
+      );
+    }
+
+    // COMPLETED
+    if (session.status === "completed") {
+      return (
+        <Button
+          variant="outline"
+          onClick={() => handleFlag(session._id, session.participants || [])}
+        >
+          <Flag size={16} /> Flag
+        </Button>
       );
     }
 
     return null;
-  };
+  })();
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Always show details button */}
+      <Button
+        onClick={() => navigate(`/user/session/details/${session._id}`)}
+        variant="secondary"
+      >
+        View Details
+      </Button>
+      {extraActions}
+    </div>
+  );
+};
+
 
   return (
     <div

@@ -37,7 +37,7 @@ const UserManagement = () => {
     };
 
     fetchUsers();
-  }, [search, filter, statusFilter, page, limit]); // 👈 Add statusFilter here
+  }, [search, filter, statusFilter, page, limit]); 
 
   const handleBlock = async (id: string) => {
     try {

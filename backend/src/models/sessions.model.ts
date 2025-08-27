@@ -27,15 +27,22 @@ export interface ISession extends Document {
   mentorId?: Types.ObjectId;
   startTime: Date;
   endTime?: Date;
-  status: "pending" | "upcoming" | "accepted" | "completed" | "cancelled" | "flagged";
+  status:
+    | "pending"
+    | "upcoming"
+    | "accepted"
+    | "completed"
+    | "cancelled"
+    | "flagged";
   createdBy: Types.ObjectId;
+  createdByModel: string;
   participants: IParticipant[];
   durationMinutes?: number;
   recordingLink?: string;
   feedback?: IFeedback[];
   flags?: IFlag[];
   sessionFee?: number;
-  cancelReason?: string; 
+  cancelReason?: string;
 }
 
 const participantSchema = new Schema<IParticipant>(
@@ -73,7 +80,11 @@ const flagSchema = new Schema<IFlag>(
 
 const sessionSchema = new Schema<ISession>(
   {
-    type: { type: String, enum: ["public", "private", "peer-to-peer"], required: true },
+    type: {
+      type: String,
+      enum: ["public", "private", "peer-to-peer"],
+      required: true,
+    },
     topic: { type: String, required: true },
     description: { type: String, required: true },
     mentorId: { type: Schema.Types.ObjectId, ref: "User" },
@@ -81,10 +92,27 @@ const sessionSchema = new Schema<ISession>(
     endTime: { type: Date },
     status: {
       type: String,
-      enum: ["pending", "upcoming", "accepted", "completed", "cancelled", "flagged"],
+      enum: [
+        "pending",
+        "upcoming",
+        "accepted",
+        "completed",
+        "cancelled",
+        "flagged",
+      ],
       default: "pending",
     },
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      refPath: "createdByModel",
+    },
+    createdByModel: {
+      type: String,
+      required: true,
+      enum: ["User", "Mentor"],
+    },
+
     participants: [participantSchema],
     durationMinutes: { type: Number, default: 60 },
     recordingLink: { type: String },

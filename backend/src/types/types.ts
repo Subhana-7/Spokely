@@ -1,5 +1,11 @@
 export const TYPES = {
-  IEmailService:Symbol.for("IEmailService"),
+  IMentorPlanRepository: Symbol.for("IMentorPlanRepository"),
+
+  ISubscriptionController: Symbol.for("ISubscriptionController"),
+  ISubscriptionService: Symbol.for("ISubscriptionService"),
+  ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
+
+  IEmailService: Symbol.for("IEmailService"),
 
   ISessionController: Symbol.for("ISessionController"),
   ISessionService: Symbol.for("ISessionService"),

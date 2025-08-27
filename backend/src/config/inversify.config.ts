@@ -1,6 +1,18 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { IMentorPlanRepository } from "../repositories/interfaces/IMentorPlanRepository";
+import { MentorPlanRepository } from "../repositories/mentorPlan.repository";
+
+import { ISubscriptionController } from "../controllers/interfaces/ISubscriptionController";
+import { SubscriptionController } from "../controllers/subscription.controller";
+
+import { ISubscriptionService } from "../services/interfaces/ISubscriptionService";
+import { SubscriptionService } from "../services/subscription.service";
+
+import { ISubscriptionRepository } from "../repositories/interfaces/ISubscriptionRepository";
+import { SubscriptionRepository } from "../repositories/subscription.repository";
+
 import { IEmailService } from "../services/interfaces/IEmailService";
 import { EmailService } from "../services/email.service";
 
@@ -50,6 +62,13 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository).to(MentorPlanRepository);
+
+container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController);
+container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService);
+container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository);
+
 
 container.bind<IEmailService>(TYPES.IEmailService).to(EmailService)
 

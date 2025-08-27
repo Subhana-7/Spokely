@@ -19,10 +19,7 @@ export class SessionRepository implements ISessionRepository {
       const objectId = new mongoose.Types.ObjectId(id);
 
       const res = await SessionModel.find({
-        $or: [
-          { createdBy: objectId },
-          { "participants.user": objectId },
-        ],
+        $or: [{ createdBy: objectId }, { "participants.user": objectId }],
       })
         .populate({
           path: "participants.user",
@@ -44,7 +41,10 @@ export class SessionRepository implements ISessionRepository {
     try {
       return await SessionModel.findById(id)
         .populate("participants.user")
-        .populate("createdBy");
+        .populate({
+          path: "createdBy",
+          select: "name email profilePicture role",
+        });
     } catch (error) {
       console.log("error", error);
       return null;
@@ -75,7 +75,9 @@ export class SessionRepository implements ISessionRepository {
         {
           $set: {
             "participants.$.status": status,
-            ...(cancelReason && { "participants.$.cancelReason": cancelReason }),
+            ...(cancelReason && {
+              "participants.$.cancelReason": cancelReason,
+            }),
           },
         },
         { new: true }

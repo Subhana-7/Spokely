@@ -64,7 +64,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   const handleOTPVerified = () => {
   setShowOTPModal(false);
   onChangePassword(formData.email, formData.newPassword);
-  handleClose(); // close ChangePasswordModal
+  handleClose();
 };
 
 
