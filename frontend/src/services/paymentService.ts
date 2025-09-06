@@ -14,7 +14,6 @@ export interface PaymentResponse {
 
 export async function startPayment(sessionId: string, amount: number): Promise<PaymentResponse> {
   const { data } = await API.post("/create", { sessionId, amount });
-  // Only return orderId. Do NOT render buttons here
   return { orderId: data.id || data.orderId };
 }
 

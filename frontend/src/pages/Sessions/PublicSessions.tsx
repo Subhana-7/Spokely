@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Calendar,
-  Clock,
-  Users,
   Search,
   IndianRupee,
 } from "lucide-react";
@@ -93,6 +91,43 @@ const MentorPublicSessions = () => {
       session.status.toLowerCase() === selectedFilter.toLowerCase()
     );
   });
+
+  // 🟢 helper to check if date is today
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return (
+      today.getFullYear() === date.getFullYear() &&
+      today.getMonth() === date.getMonth() &&
+      today.getDate() === date.getDate()
+    );
+  };
+
+  // 🟢 split sessions into todayUpcoming & others
+  const now = new Date();
+  const fifteenMinsFromNow = new Date(now.getTime() + 15 * 60000);
+
+  const todayUpcoming = filteredSessions
+    .filter(
+      (s) =>
+        isToday(s.startTime) &&
+        new Date(s.startTime) >= fifteenMinsFromNow &&
+        s.status.toLowerCase() !== "completed" &&
+        s.status.toLowerCase() !== "cancelled"
+    )
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  const otherSessions = filteredSessions
+    .filter(
+      (s) =>
+        !(
+          isToday(s.startTime) &&
+          new Date(s.startTime) >= fifteenMinsFromNow &&
+          s.status.toLowerCase() !== "completed" &&
+          s.status.toLowerCase() !== "cancelled"
+        )
+    )
+    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
   const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
     if (!sessionFee || sessionFee <= 0) {
@@ -274,76 +309,139 @@ const MentorPublicSessions = () => {
           </div>
         </SpokelyCard>
 
-        {/* Sessions */}
-        {loading ? (
-          <p className="text-center text-gray-600">Loading sessions...</p>
-        ) : filteredSessions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSessions.map((session) => {
-              const isScheduled = session.participants.some(
-                (p) => p.user === user?.id
-              );
+        {/* 🟢 Upcoming Today Section */}
+        {todayUpcoming.length > 0 && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Upcoming (Today)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              {todayUpcoming.map((session) => {
+                const isScheduled = session.participants.some(
+                  (p) => p.user === user?.id
+                );
 
-              return (
-                <SpokelyCard
-                  key={session._id}
-                  className="bg-white/10 border shadow-lg relative flex flex-col"
-                >
-                  <div className="absolute top-4 right-4">
-                    <Badge variant={getLevelBadgeVariant(session.status)}>
-                      {session.status}
-                    </Badge>
-                  </div>
-                  <h3 className="font-bold text-white">{session.topic}</h3>
-                  <p className="text-sm text-gray-200">{session.description}</p>
-                  <p className="text-xs text-gray-300">
-                    {formatDate(session.startTime)} –{" "}
-                    {new Date(session.startTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-1">
-                      <IndianRupee size={18} className="text-green-400" />
-                      <span className="text-lg font-bold">
-                        {session.sessionFee}/-
-                      </span>
+                return (
+                  <SpokelyCard
+                    key={session._id}
+                    className="bg-white/10 border shadow-lg relative flex flex-col"
+                  >
+                    <div className="absolute top-4 right-4">
+                      <Badge variant={getLevelBadgeVariant(session.status)}>
+                        {session.status}
+                      </Badge>
                     </div>
+                    <h3 className="font-bold text-white">{session.topic}</h3>
+                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-xs text-gray-300">
+                      {formatDate(session.startTime)} –{" "}
+                      {new Date(session.startTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center gap-1">
+                        <IndianRupee size={18} className="text-green-400" />
+                        <span className="text-lg font-bold">
+                          {session.sessionFee}/-
+                        </span>
+                      </div>
 
-                    {isScheduled ? (
-                      <Button variant="secondary" disabled>
-                        Scheduled
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="success"
-                        onClick={() =>
-                          handlePayToSchedule(session._id, session.sessionFee)
-                        }
-                      >
-                        Pay to Schedule
-                      </Button>
-                    )}
-                  </div>
-                </SpokelyCard>
-              );
-            })}
-          </div>
-        ) : (
-          <SpokelyCard variant="secondary" className="text-center py-12 bg-white/10">
-            <div className="max-w-md mx-auto">
-              <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                No sessions found
-              </h3>
-              <p className="text-gray-400">
-                {searchTerm || selectedFilter !== "all"
-                  ? "Try adjusting your search or filter criteria"
-                  : "No public sessions are currently available"}
-              </p>
+                      {isScheduled ? (
+                        <Button variant="secondary" disabled>
+                          Scheduled
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="success"
+                          onClick={() =>
+                            handlePayToSchedule(session._id, session.sessionFee)
+                          }
+                        >
+                          Pay to Schedule
+                        </Button>
+                      )}
+                    </div>
+                  </SpokelyCard>
+                );
+              })}
             </div>
-          </SpokelyCard>
+          </>
+        )}
+
+        {/* 🟢 Other Sessions Section */}
+        {otherSessions.length > 0 ? (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Other Sessions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherSessions.map((session) => {
+                const isScheduled = session.participants.some(
+                  (p) => p.user === user?.id
+                );
+
+                return (
+                  <SpokelyCard
+                    key={session._id}
+                    className="bg-white/10 border shadow-lg relative flex flex-col"
+                  >
+                    <div className="absolute top-4 right-4">
+                      <Badge variant={getLevelBadgeVariant(session.status)}>
+                        {session.status}
+                      </Badge>
+                    </div>
+                    <h3 className="font-bold text-white">{session.topic}</h3>
+                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-xs text-gray-300">
+                      {formatDate(session.startTime)} –{" "}
+                      {new Date(session.startTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center gap-1">
+                        <IndianRupee size={18} className="text-green-400" />
+                        <span className="text-lg font-bold">
+                          {session.sessionFee}/-
+                        </span>
+                      </div>
+
+                      {isScheduled ? (
+                        <Button variant="secondary" disabled>
+                          Scheduled
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="success"
+                          onClick={() =>
+                            handlePayToSchedule(session._id, session.sessionFee)
+                          }
+                        >
+                          Pay to Schedule
+                        </Button>
+                      )}
+                    </div>
+                  </SpokelyCard>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          !loading &&
+          todayUpcoming.length === 0 && (
+            <SpokelyCard variant="secondary" className="text-center py-12 bg-white/10">
+              <div className="max-w-md mx-auto">
+                <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                  No sessions found
+                </h3>
+                <p className="text-gray-400">
+                  {searchTerm || selectedFilter !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "No public sessions are currently available"}
+                </p>
+              </div>
+            </SpokelyCard>
+          )
         )}
       </main>
 

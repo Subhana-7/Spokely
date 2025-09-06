@@ -54,8 +54,8 @@ export class SubscriptionService implements ISubscriptionService {
 
   scheduleCronJobs() {
     // Runs daily at 12:00 AM
-    // cron.schedule("0 0 * * *", async () => {
-    cron.schedule("*/2 * * * *", async () => {
+    cron.schedule("0 0 * * *", async () => {
+    // cron.schedule("*/2 * * * *", async () => {
       console.log("Running daily subscription cron...");
 
       const subscriptions = await this.subscriptionRepo.findActive();
@@ -86,7 +86,7 @@ export class SubscriptionService implements ISubscriptionService {
 
         await this.sessionRepo.createSession({
           mentorId: sub.mentorId,
-          participants: [{ user: sub.userId, status: "pending" }],
+          participants: [{ user: sub.userId, status: "accepted" }],
           startTime: sessionStartTime,
           type: "private",
           topic: "Subscription Session",

@@ -32,4 +32,14 @@ export interface ISessionService {
     reason: string,
     flaggedUserId?: string
   ): Promise<ISession | null>;
+
+  addFeedback(
+    sessionId: string,
+    from: string,
+    to: string,
+    comment: string,
+    rating?: number
+  ): Promise<ISession | null>;
+
+  getAllSessionsAdmin(filters?: { status?: string, type?: string, mentorId?: string }): Promise<ISession[] | null>
 }

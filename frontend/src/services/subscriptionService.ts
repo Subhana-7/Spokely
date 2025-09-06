@@ -41,3 +41,7 @@ export const saveMentorPlans = (mentorId: string, plans: any[]) => {
 export const subscribeMentor = (data:any) => {
   return API.post("/subscribe", data); 
 }
+
+export const getUserSubscriptions = (userId:string) => {
+  return API.get(`/my-subscriptions/${userId}`);
+}

@@ -2,12 +2,8 @@ import { useEffect, useState } from "react";
 import DashboardHeader from "./DashBoardComponents/Header";
 import {
   Award,
-  Calendar,
-  Clock,
-  MapPin,
   Star,
   User,
-  Users,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
 import { subscriptionStartPayment, subscriptionConfirmPayment } from "../../services/paymentService";
@@ -16,6 +12,7 @@ import { useParams } from "react-router-dom";
 import {
   getMentorPlans,
   subscribeMentor,
+  getUserSubscriptions,
 } from "../../services/subscriptionService";
 import { mentorProfile } from "../../services/authServices";
 
@@ -36,9 +33,19 @@ interface Mentor {
   uniqueCode?: string;
 }
 
+interface Subscription {
+  _id: string;
+  userId: string;
+  mentorId: string;
+  plan: string;
+  price: number;
+  status: string;
+}
+
 const UserViewMentorProfile = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [mentor, setMentor] = useState<Mentor | null>(null);
+  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>([]);
 
   const [showPayPalModal, setShowPayPalModal] = useState(false);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
@@ -50,10 +57,9 @@ const UserViewMentorProfile = () => {
 
   const { user } = useAuthStore();
   const mentorId = useParams<{ id: string }>();
-  const userId = { user: user?.id };
 
   useEffect(() => {
-    if (!mentorId.id) return;
+    if (!mentorId.id || !user?.id) return;
 
     const fetchMentorDetails = async () => {
       try {
@@ -74,13 +80,32 @@ const UserViewMentorProfile = () => {
       }
     };
 
+    const fetchUserSubscriptions = async () => {
+      try {
+        const res = await getUserSubscriptions(user.id);
+        setUserSubscriptions(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch user subscriptions:", err);
+      }
+    };
+
     fetchMentorDetails();
     fetchPlans();
-  }, [mentorId]);
+    fetchUserSubscriptions();
+  }, [mentorId, user?.id]);
 
   const handleSubscribe = (plan: Plan) => {
     setActivePlan(plan);
     setShowPayPalModal(true);
+  };
+
+  const isSubscribedToPlan = (plan: Plan) => {
+    return userSubscriptions.some(
+      (sub) =>
+        sub.mentorId === mentorId.id &&
+        sub.plan.toLowerCase() === plan.type.toLowerCase() &&
+        sub.status === "ACTIVE"
+    );
   };
 
   useEffect(() => {
@@ -133,6 +158,10 @@ const UserViewMentorProfile = () => {
                 status: "success",
                 message: verify?.message || "Subscription successful! 🎉",
               });
+
+              // refresh user subscriptions after success
+              const res = await getUserSubscriptions(user!.id);
+              setUserSubscriptions(res.data || []);
             } else {
               setPaymentResult({
                 status: "error",
@@ -168,7 +197,7 @@ const UserViewMentorProfile = () => {
     };
 
     loadPaypalButtons();
-  }, [showPayPalModal, activePlan, mentorId]);
+  }, [showPayPalModal, activePlan, mentorId, user]);
 
   if (!mentor) {
     return (
@@ -290,26 +319,35 @@ const UserViewMentorProfile = () => {
                 <p className="text-gray-300">Mentor has no subscription</p>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                  {plans.map((plan) => (
-                    <div
-                      key={plan._id}
-                      className="p-4 rounded-xl bg-gray-800/40 border border-white/10"
-                    >
-                      <h4 className="text-lg font-semibold text-green-400">
-                        {plan.type}
-                      </h4>
-                      <p className="text-gray-300">₹{plan.price} / month</p>
-                      <div className="mt-4">
-                        <button
-                          disabled={isProcessing}
-                          onClick={() => handleSubscribe(plan)}
-                          className="px-6 py-2 rounded-full font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition disabled:opacity-50"
-                        >
-                          {isProcessing ? "Processing..." : "Subscribe"}
-                        </button>
+                  {plans.map((plan) => {
+                    const subscribed = isSubscribedToPlan(plan);
+                    return (
+                      <div
+                        key={plan._id}
+                        className="p-4 rounded-xl bg-gray-800/40 border border-white/10"
+                      >
+                        <h4 className="text-lg font-semibold text-green-400">
+                          {plan.type}
+                        </h4>
+                        <p className="text-gray-300">₹{plan.price} / month</p>
+                        <div className="mt-4">
+                          {subscribed ? (
+                            <div className="flex items-center gap-2 text-green-400 font-medium">
+                              ✅ Subscribed Mentor
+                            </div>
+                          ) : (
+                            <button
+                              disabled={isProcessing}
+                              onClick={() => handleSubscribe(plan)}
+                              className="px-6 py-2 rounded-full font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition disabled:opacity-50"
+                            >
+                              {isProcessing ? "Processing..." : "Subscribe"}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

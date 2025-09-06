@@ -332,4 +332,25 @@ export class AdminController implements IAdminController {
       res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   }
+
+    async logout(req: Request, res: Response): Promise<void> {
+    res.clearCookie("auth-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    res.clearCookie("refresh-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    res.clearCookie("role", {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+  };
 }

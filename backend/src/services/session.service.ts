@@ -71,9 +71,9 @@ export class SessionService {
     const session = await this.repo.getSessionById(sessionId);
     if (!session) return null;
 
-    if (session.createdBy.toString() !== userId) {
-      throw new Error("Only session creator can cancel this session");
-    }
+    // if (session.createdBy.toString() !== userId) {
+    //   throw new Error("Only session creator can cancel this session");
+    // }
 
     return await this.repo.updateSession(sessionId, {
       status: "cancelled",
@@ -100,4 +100,48 @@ export class SessionService {
   async publicSessions(): Promise<ISession[] | null> {
     return await this.repo.getPublicSessions();
   }
+
+  async addFeedback(
+    sessionId: string,
+    from: string,
+    to: string,
+    comment: string,
+    rating?: number
+  ): Promise<ISession | null> {
+    const session = await this.repo.getSessionById(sessionId);
+    if (!session) return null;
+
+    if (session.status !== "completed") {
+      throw new Error("Can only give feedback on completed sessions");
+    }
+
+    // Prevent duplicate feedback
+    const alreadyGiven = session.feedback?.some(
+      (f: any) => f.from.toString() === from && f.to.toString() === to
+    );
+    if (alreadyGiven) throw new Error("Feedback already given to this user");
+
+    return await this.repo.addFeedback(sessionId, {
+      from,
+      to,
+      comment,
+      rating,
+    });
+  }
+
+  async getAllSessionsAdmin(filters?: { status?: string, type?: string, mentorId?: string }): Promise<ISession[] | null> {
+  try {
+    console.log('he')
+    const query: any = {};
+    if (filters?.status) query.status = filters.status;
+    if (filters?.type) query.type = filters.type;
+    if (filters?.mentorId) query.mentorId = filters.mentorId;
+
+    return await this.repo.findSessions(query);
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
 }

@@ -20,5 +20,11 @@ router.post("/:id/flag", authMiddleware(["user", "mentor"]), controller.flagSess
 router.get("/:id/token", authMiddleware(["user", "mentor"]), controller.getAgoraToken);
 router.get("/public-sessions", controller.getPublicSessions);
 
+router.post("/:id/feedback", authMiddleware(["user", "mentor"]), controller.addFeedback);
+
+
+router.get("/list-session", authMiddleware(["admin"]), controller.getAllSessionsAdmin);
+router.get("/details/:id/admin", authMiddleware(["admin"]), controller.getSessionDetailsAdmin);
+
 
 export default router;

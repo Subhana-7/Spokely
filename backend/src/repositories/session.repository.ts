@@ -123,4 +123,49 @@ export class SessionRepository implements ISessionRepository {
       return null;
     }
   }
+
+  async addFeedback(
+    sessionId: string,
+    feedback: { from: string; to: string; comment: string; rating?: number }
+  ): Promise<ISession | null> {
+    try {
+      return await SessionModel.findByIdAndUpdate(
+        sessionId,
+        { $push: { feedback } },
+        { new: true }
+      )
+        .populate("participants.user")
+        .populate("createdBy")
+        .populate("feedback.from", "name profilePicture")
+        .populate("feedback.to", "name profilePicture");
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  //   async findSessions(query: any): Promise<ISession[] | null> {
+  //   try {
+  //     console.log('chek')
+  //     const res =  await SessionModel.find(query)
+  //       .populate("participants.user", "name email profilePicture")
+  //       .populate("createdBy", "name email profilePicture role");
+  //       console.log(res)
+  //       return res;
+  //   } catch (err) {
+  //     console.error(err);
+  //     return null;
+  //   }
+  // }
+
+  async findSessions(query: any): Promise<ISession[] | null> {
+    try {
+      const res = await SessionModel.find();
+      console.log(res);
+      return res;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
 }

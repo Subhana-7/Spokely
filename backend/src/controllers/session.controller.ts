@@ -17,9 +17,12 @@ export class SessionController implements ISessionController {
     private readonly sessionService: ISessionService
   ) {}
 
-  createSession = async (req: AuthenticatedRequest, res: Response) :Promise<void>=> {
+  createSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      if (!req.id)  {
+      if (!req.id) {
         res.status(401).json({ message: "Unauthorized" });
         return;
       }
@@ -35,13 +38,16 @@ export class SessionController implements ISessionController {
     }
   };
 
-  getAllSessions = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  getAllSessions = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
       const userId = req.id;
       let sessions = await this.sessionService.getSessions(userId);
-      if (!sessions)  {
+      if (!sessions) {
         res.status(404).json({ message: "No sessions found" });
         return;
       }
@@ -79,7 +85,10 @@ export class SessionController implements ISessionController {
     }
   };
 
-  getSessionById = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  getSessionById = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const session = await this.sessionService.getSessionById(req.params.id);
       if (!session) {
@@ -92,9 +101,12 @@ export class SessionController implements ISessionController {
     }
   };
 
-  updateSession = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  updateSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      if (!req.id)  {
+      if (!req.id) {
         res.status(401).json({ message: "Unauthorized" });
         return;
       }
@@ -109,7 +121,10 @@ export class SessionController implements ISessionController {
     }
   };
 
-  respondToInvite = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  respondToInvite = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const { status } = req.body;
       const sessionId = req.params.id;
@@ -125,7 +140,10 @@ export class SessionController implements ISessionController {
     }
   };
 
-  cancelParticipation = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  cancelParticipation = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const { reason } = req.body;
       const updated = await this.sessionService.cancelParticipation(
@@ -139,21 +157,31 @@ export class SessionController implements ISessionController {
     }
   };
 
-  cancelSession = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  cancelSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const { reason } = req.body;
+      const sessionId = req.params.id;
+      const userId = req.body.userId;
+      console.log(sessionId,userId,reason)
       const updated = await this.sessionService.cancelSession(
-        req.params.id,
-        req.id!,
+        sessionId,
+        userId,
         reason
       );
+      console.log('controller',updated)
       res.json({ message: "Session cancelled", session: updated });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  flagSession = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  flagSession = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const { reason, againstUser } = req.body;
       const updated = await this.sessionService.flagSession(
@@ -168,9 +196,12 @@ export class SessionController implements ISessionController {
     }
   };
 
-  getAgoraToken = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  getAgoraToken = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      if (!req.id)  res.status(401).json({ message: "Unauthorized" });
+      if (!req.id) res.status(401).json({ message: "Unauthorized" });
 
       const sessionId = req.params.id;
       const userId = req.id;
@@ -178,7 +209,7 @@ export class SessionController implements ISessionController {
       if (!session) {
         res.status(404).json({ message: "Session not found" });
         return;
-      };
+      }
 
       const now = new Date();
       const start = new Date(session.startTime);
@@ -188,26 +219,105 @@ export class SessionController implements ISessionController {
       );
 
       if (!(now >= start && now <= end)) {
-         res
-          .status(403)
-          .json({ message: "Not within session timeframe" });
+        res.status(403).json({ message: "Not within session timeframe" });
       }
 
       const channelName = `session_${sessionId}`;
       const token = generateAgoraToken(channelName, userId!.toString());
-      res.json({ token, channelName, appId: process.env.AGORA_APP_ID, uid: userId });
+      res.json({
+        token,
+        channelName,
+        appId: process.env.AGORA_APP_ID,
+        uid: userId,
+      });
     } catch {
       res.status(500).json({ message: "Failed to generate token" });
     }
   };
 
-  getPublicSessions = async (req: Request, res: Response):Promise<void> => {
+  getPublicSessions = async (req: Request, res: Response): Promise<void> => {
     try {
       let publicSessions = await this.sessionService.publicSessions();
-      if (!publicSessions) res.status(404).json({ message: "No sessions found" });
+      if (!publicSessions)
+        res.status(404).json({ message: "No sessions found" });
       res.status(200).json({ publicSessions });
     } catch {
       res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  };
+
+  addFeedback = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { to, comment, rating } = req.body;
+      const sessionId = req.params.id;
+      const from = req.id!;
+
+      const updated = await this.sessionService.addFeedback(
+        sessionId,
+        from,
+        to,
+        comment,
+        rating
+      );
+      if (!updated) {
+        res.status(404).json({ message: "Session not found or not completed" });
+        return;
+      }
+
+      res.json({ message: "Feedback added", session: updated });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+  getAllSessionsAdmin = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    console.log("hitting--")
+    try {
+      const { status, type, mentorId } = req.query as {
+        status?: string;
+        type?: string;
+        mentorId?: string;
+      };
+
+      const filters = { status, type, mentorId };
+
+      let sessions = await this.sessionService.getAllSessionsAdmin(filters);
+
+      if (!sessions || sessions.length === 0) {
+        res.status(404).json({ message: "No sessions found" });
+        return;
+      }
+
+      console.log('d')
+
+      res.status(200).json({ sessions });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  };
+
+  getSessionDetailsAdmin = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const session = await this.sessionService.getSessionById(req.params.id);
+      if (!session) {
+        res.status(404).json({ message: "Session not found" });
+        return;
+      }
+
+      console.log(session)
+
+      res.status(200).json({ session });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   };
 }

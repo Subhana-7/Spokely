@@ -13,4 +13,9 @@ export interface ISessionController {
   cancelParticipation(req: AuthenticatedRequest, res: Response): Promise<void>;
   cancelSession(req: AuthenticatedRequest, res: Response): Promise<void>;
   flagSession(req: AuthenticatedRequest, res: Response): Promise<void>;
+
+  addFeedback(req: AuthenticatedRequest, res: Response): Promise<void>;
+
+  getSessionDetailsAdmin(req: AuthenticatedRequest, res: Response): Promise<void>;
+  getAllSessionsAdmin(req: AuthenticatedRequest, res: Response): Promise<void>
 }

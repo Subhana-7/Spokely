@@ -22,6 +22,8 @@ import MentorViewUserProfile from "./pages/mentor/MentorViewUserProfile";
 import SessionsHub from "./pages/Sessions/MentorSessionsHub";
 import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
+import SessionListing from "./pages/admin/SessionListing";
+import SessionDetailsPage from './pages/admin/SessionDetailsPage';
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -70,6 +72,15 @@ const appRoutes: RouteObject[] = [
     path: "/user/session/details/:id",
     element: (
       <RoleProtectedRoute role="user">
+        <SessionDetail />
+      </RoleProtectedRoute>
+    ),
+  },
+
+   {
+    path: "/mentor/session/details/:id",
+    element: (
+      <RoleProtectedRoute role="mentor">
         <SessionDetail />
       </RoleProtectedRoute>
     ),
@@ -167,6 +178,8 @@ const appRoutes: RouteObject[] = [
         path: "mentors/verification/:id",
         element: <MentorVerification />,
       },
+      { path: "sessions", element: <SessionListing /> },
+      { path: "sessions/:id", element: <SessionDetailsPage /> },
     ],
   },
 ];
