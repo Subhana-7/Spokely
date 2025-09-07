@@ -16,10 +16,14 @@ import helmet from "helmet";
 import mentorRoutes from "./routes/mentor.routes";
 import paymentRoutes from "./routes/payment.routes";
 import subscriptionRouter from "./routes/subscription.routes";
-
-import  container  from "./config/inversify.config";
+import container from "./config/inversify.config";
 import { TYPES } from "./types/types";
 import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
+import chatRoutes from "./routes/chat.routes";
+import { initChatSocket } from "./config/chat.socket";
+
+import { createServer } from "http"; 
+import { Server } from "socket.io";  
 
 dotenv.config();
 const app = express();
@@ -53,6 +57,7 @@ app.use(passport.session());
 app.use(logger);
 app.use(helmet());
 
+// routes
 app.use("/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
@@ -60,15 +65,25 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/users/connections", connectionsRoutes);
 app.use("/api/users/session", sessionRoutes);
 app.use("/api/subscription", subscriptionRouter);
+app.use("/api/chat", chatRoutes);
+
+const server = createServer(app);
+const io = new Server(server, {
+  cors: { origin: process.env.CLIENT_SIDE_URL },
+});
+
+initChatSocket(io);
 
 connectDB()
   .then(async () => {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {  
       console.log(`Server running on port ${PORT}`);
     });
 
-    const subscriptionService = container.get<ISubscriptionService>(TYPES.ISubscriptionService);
+    const subscriptionService = container.get<ISubscriptionService>(
+      TYPES.ISubscriptionService
+    );
     subscriptionService.scheduleCronJobs();
     console.log("Subscription cron job scheduled.");
   })

@@ -1,6 +1,15 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { IChatController } from "../controllers/interfaces/IChatController";
+import { ChatController } from "../controllers/chat.controller";
+
+import { IChatService } from "../services/interfaces/IChatService";
+import { ChatService } from "../services/chat.service";
+
+import { IChatRepository } from "../repositories/interfaces/IChatRepository";
+import { ChatRepository } from "../repositories/chat.repository";
+
 import { IMentorPlanRepository } from "../repositories/interfaces/IMentorPlanRepository";
 import { MentorPlanRepository } from "../repositories/mentorPlan.repository";
 
@@ -62,6 +71,10 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IChatController>(TYPES.IChatController).to(ChatController);
+container.bind<IChatService>(TYPES.IChatService).to(ChatService);
+container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository)
 
 container.bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository).to(MentorPlanRepository);
 

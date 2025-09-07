@@ -24,6 +24,7 @@ import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
 import SessionListing from "./pages/admin/SessionListing";
 import SessionDetailsPage from './pages/admin/SessionDetailsPage';
+import ChatBox from "./chat";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -141,6 +142,14 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
+  {
+  path: "/user/chat/:id",
+  element: (
+    <RoleProtectedRoute role="user">
+      <ChatBox />
+    </RoleProtectedRoute>
+  ),
+},
   {
     path: "/mentor/sessions",
     element: (

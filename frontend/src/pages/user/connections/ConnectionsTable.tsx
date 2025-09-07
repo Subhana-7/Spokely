@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../modals/Button";
 import {
   MessageCircle,
@@ -25,12 +25,14 @@ interface ConnectionsTableProps {
 }
 
 const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
+  const navigate = useNavigate();
+
   const handleBlock = (username: string) => {
     console.log("Blocking user:", username);
   };
 
-  const handleChat = (username: string) => {
-    console.log("Opening chat with:", username);
+  const handleChat = (id: string) => {
+    navigate(`/user/chat/${id}`);
   };
 
   const handleRemove = (username: string) => {
@@ -123,9 +125,9 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
               {/* Actions */}
               <div className="flex flex-wrap gap-2 md:justify-center justify-start">
                 <Button
-                  onClick={() => handleChat(connection.username)}
+                  onClick={() => handleChat(connection.id)}
                   variant="primary"
-                  className="px-4 py-2 text-sm"
+                  className="px-4 py-2 text-sm bg-black "
                 >
                   <MessageCircle size={16} className="mr-2" />
                   Chat
