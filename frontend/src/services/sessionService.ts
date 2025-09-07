@@ -33,7 +33,8 @@ API.interceptors.response.use(
 export const createSession = (data: any) => API.post("/schedule", data);
 export const getSessions = () => API.get("/list");
 export const getSessionById = (id: string) => API.get(`/details/${id}`);
-export const updateSession = (id: string, updates: any) => API.patch(`/${id}`, updates);
+export const updateSession = (id: string, updates: any) =>
+  API.patch(`/${id}`, updates);
 
 export const respondToInvite = (id: string, status: "accepted" | "rejected") =>
   API.post(`/${id}/respond`, { status });
@@ -41,8 +42,11 @@ export const respondToInvite = (id: string, status: "accepted" | "rejected") =>
 export const cancelParticipation = (id: string, reason: string) =>
   API.post(`/${id}/cancel-participation`, { reason });
 
-export const cancelSession = (userId: string,sessionId:string, reason: string) =>
-  API.post(`/${sessionId}/cancel-session`, { reason,userId });
+export const cancelSession = (
+  userId: string,
+  sessionId: string,
+  reason: string
+) => API.post(`/${sessionId}/cancel-session`, { reason, userId });
 
 export const flagSession = (id: string, reason: string, againstUser: string) =>
   API.post(`/${id}/flag`, { reason, againstUser });
@@ -51,9 +55,10 @@ export const getAgoraToken = (id: string) => API.get(`/${id}/token`);
 
 export const getPublicSessions = () => API.get("/public-sessions");
 
-export const addFeedback = (id: string, data: { to: string; comment: string; rating?: number }) =>
-  API.post(`/${id}/feedback`, data);
-
+export const addFeedback = (
+  id: string,
+  data: { to: string; comment: string; rating?: number }
+) => API.post(`/${id}/feedback`, data);
 
 export const adminSessionListing = (params: {
   page: number;
@@ -64,5 +69,5 @@ export const adminSessionListing = (params: {
   return API.get("/list-session", { params });
 };
 
-export const adminSessionDetails = (id:string) => API.get(`/details/${id}/admin`);
-
+export const adminSessionDetails = (id: string) =>
+  API.get(`/details/${id}/admin`);

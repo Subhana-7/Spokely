@@ -1,10 +1,8 @@
-// models/message.model.ts
 import { Schema, model, Types, Document } from "mongoose";
 
 /* -------------------- MESSAGE MODEL -------------------- */
-/* -------------------- MESSAGE MODEL -------------------- */
 export interface IMessage extends Document {
-  sessionId: string; // 👈 string now
+  sessionId: string;
   sender: Types.ObjectId;
   text: string;
   createdAt: Date;
@@ -12,7 +10,7 @@ export interface IMessage extends Document {
 
 const messageSchema = new Schema<IMessage>(
   {
-    sessionId: { type: String, ref: "ChatSession", required: true }, // 👈 fixed
+    sessionId: { type: String, ref: "ChatSession", required: true },
     sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
     text: { type: String, required: true },
   },
@@ -21,19 +19,17 @@ const messageSchema = new Schema<IMessage>(
 
 export const MessageModel = model<IMessage>("Message", messageSchema);
 
-
 /* -------------------- CHAT SESSION MODEL -------------------- */
-// models/message.model.ts
 
 export interface IChatSession extends Document {
-  _id: string; // 👈 make it string
+  _id: string;
   participants: Types.ObjectId[];
   createdAt: Date;
 }
 
 const chatSessionSchema = new Schema<IChatSession>(
   {
-    _id: { type: String, required: true }, // 👈 force _id to be a string
+    _id: { type: String, required: true },
     participants: [
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
@@ -45,4 +41,3 @@ export const ChatSessionModel = model<IChatSession>(
   "ChatSession",
   chatSessionSchema
 );
-

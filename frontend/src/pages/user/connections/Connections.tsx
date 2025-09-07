@@ -38,7 +38,7 @@ const Connections = () => {
       try {
         setLoading(true);
         const res = await getAllConnections();
-        console.log(res.data)
+        console.log(res.data);
         setConnections(res.data);
       } catch (err) {
         toast.error("Failed to fetch connections");
@@ -85,7 +85,7 @@ const Connections = () => {
         id: user._id,
         username: user.name,
         email: user.email,
-        role: user.role === "mentor" ? "Mentor" : "Peer",
+        role: user.role,
         sessions: c.sessionCount || 0,
       };
     });

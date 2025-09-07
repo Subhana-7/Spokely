@@ -137,19 +137,17 @@ export const home = async () => {
   return res.data;
 };
 
-
-export const userProfiles = async(id:string) => {
+export const userProfiles = async (id: string) => {
   // const role = Cookies.get("role");
 
   const endpoint = `/api/users/peer/profile/${id}`;
 
   const res = await API.get(endpoint);
   return res.data;
-}
+};
 
-
-export const mentorProfile = async(id:string) => {
+export const mentorProfile = async (id: string) => {
   const endpoint = `/api/mentors/mentor-profile/${id}`;
   const res = await API.get(endpoint);
   return res.data;
-}
+};

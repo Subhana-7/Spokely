@@ -22,8 +22,8 @@ import { ISubscriptionService } from "./services/interfaces/ISubscriptionService
 import chatRoutes from "./routes/chat.routes";
 import { initChatSocket } from "./config/chat.socket";
 
-import { createServer } from "http"; 
-import { Server } from "socket.io";  
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 dotenv.config();
 const app = express();
@@ -77,7 +77,7 @@ initChatSocket(io);
 connectDB()
   .then(async () => {
     const PORT = process.env.PORT || 5000;
-    server.listen(PORT, () => {  
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
 

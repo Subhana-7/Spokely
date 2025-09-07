@@ -30,12 +30,10 @@ API.interceptors.response.use(
   }
 );
 
-// get all messages for a session
 export const getMessages = (sessionId: string) => {
   return API.get(`/${sessionId}`);
 };
 
-// send a message via REST (optional, you can still use socket.emit)
 export const sendMessage = (sessionId: string, text: string) => {
   return API.post(`/${sessionId}`, { text });
 };

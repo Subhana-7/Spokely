@@ -8,7 +8,11 @@ import { authMiddleware } from "../middleware/auth.middleware";
 const router = express.Router();
 const controller = container.get<IChatController>(TYPES.IChatController);
 
-router.get("/:sessionId", authMiddleware(["user", "mentor"]), controller.getMessages);
+router.get(
+  "/:sessionId",
+  authMiddleware(["user", "mentor"]),
+  controller.getMessages
+);
 
 router.post(
   "/:sessionId",

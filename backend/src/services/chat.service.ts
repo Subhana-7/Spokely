@@ -1,8 +1,8 @@
-// services/chat.service.ts
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { ChatRepository } from "../repositories/chat.repository";
-import { IMessage ,IChatSession} from "../models/message.model";
+import { IMessage, IChatSession } from "../models/message.model";
+import { Types } from "mongoose";
 
 @injectable()
 export class ChatService {
@@ -11,17 +11,25 @@ export class ChatService {
     private readonly chatRepo: ChatRepository
   ) {}
 
-  async sendMessage(sessionId: string, sender: string, text: string): Promise<IMessage> {
-    return await this.chatRepo.saveMessage({ sessionId, sender, text });
+  async sendMessage(
+    sessionId: string,
+    sender: string,
+    text: string
+  ): Promise<IMessage> {
+    return await this.chatRepo.saveMessage({
+      sessionId,
+      sender: new Types.ObjectId(sender),
+      text,
+    });
   }
 
-  async getMessages(sessionId: string, participants: string[]): Promise<IMessage[]> {
-    // ensure session exists
+  async getMessages(
+    sessionId: string,
+    participants: string[]
+  ): Promise<IMessage[]> {
     await this.chatRepo.findOrCreateSession(sessionId, participants);
 
-    // fetch messages
-    let res = await this.chatRepo.getMessages(sessionId);
-    console.log(res)
-    return res; 
+    const messages = await this.chatRepo.getMessages(sessionId);
+    return messages ?? [];
   }
 }
