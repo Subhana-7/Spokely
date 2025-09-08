@@ -10,7 +10,7 @@ const DashboardHeader = () => {
 
   const handleLogout = async () => {
     try {
-      await logoutService();
+      await logoutService("user");
       logout();
       navigate("/");
     } catch (err) {

@@ -24,6 +24,7 @@ import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
 import SessionListing from "./pages/admin/SessionListing";
 import SessionDetailsPage from './pages/admin/SessionDetailsPage';
+import MentorCard from "./pages/user/mentorListing";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -138,6 +139,14 @@ const appRoutes: RouteObject[] = [
     element: (
       <RoleProtectedRoute role="user">
         <MentorViewUserProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+    {
+    path: "/user/mentors",
+    element: (
+      <RoleProtectedRoute role="user">
+        <MentorCard />
       </RoleProtectedRoute>
     ),
   },
