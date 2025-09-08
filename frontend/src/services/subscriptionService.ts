@@ -45,3 +45,7 @@ export const subscribeMentor = (data:any) => {
 export const getUserSubscriptions = (userId:string) => {
   return API.get(`/my-subscriptions/${userId}`);
 }
+
+export const getMentorStudents = (mentorId:string) => {
+  return API.get(`/mentor-students/${mentorId}`)
+}

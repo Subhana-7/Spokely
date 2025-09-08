@@ -9,7 +9,7 @@ const controller = container.get<ISubscriptionController>(TYPES.ISubscriptionCon
 
 router.post("/subscribe", authMiddleware(["user"]), controller.subscribe.bind(controller));
 router.get("/my-subscriptions/:id", authMiddleware(["user"]), controller.getUserSubscriptions.bind(controller));
-router.get("/mentor-students", authMiddleware(["mentor"]), controller.getMentorSubscriptions.bind(controller));
+router.get("/mentor-students/:id", authMiddleware(["mentor"]), controller.getMentorSubscriptions.bind(controller));
 router.patch("/:id/cancel", authMiddleware(["user"]), controller.cancelSubscription.bind(controller));
 
 router.get("/mentor/:id/plans", authMiddleware(["mentor","user"]), controller.getMentorPlans.bind(controller));

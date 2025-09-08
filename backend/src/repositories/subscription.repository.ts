@@ -76,8 +76,77 @@ export class SubscriptionRepository implements ISubscriptionRepository {
 
 
   async findByMentor(mentorId: string) {
-    return await SubscriptionModel.find({ mentorId });
-  }
+  // Step 1: Fetch subscriptions with user details
+  const subscriptions = await SubscriptionModel.find({ mentorId })
+    .populate({
+      path: "userId",
+      model: "User",
+      select: "name email profilePicture", // adjust based on your User schema
+    })
+    .lean();
+
+  // Step 2: For each subscription, enrich with sessions & feedback
+  const enriched = await Promise.all(
+    subscriptions.map(async (sub: any) => {
+      const user = sub.userId;
+      if (!user || !user._id) {
+        return {
+          ...sub,
+          user: null,
+          sessionsCount: 0,
+          sessionsWithMentor: 0,
+          feedbackByMentor: [],
+          avgRating: null,
+        };
+      }
+
+      const userId = user._id;
+
+      // Sessions between this mentor and this user
+      const sessions = await SessionModel.find({
+        mentorId,
+        $or: [{ createdBy: userId }, { "participants.user": userId }],
+        status: "completed",
+      })
+        .populate("feedback.from feedback.to", "name email")
+        .lean();
+
+      // Sessions created by this mentor for this user
+      const sessionsWithMentor = sessions.filter(
+        (s) => s.mentorId?.toString() === mentorId.toString()
+      );
+
+      // Feedbacks given by this mentor to this user
+      const feedbackByMentor = sessions
+        .flatMap((s) => s.feedback || [])
+        .filter(
+          (fb) =>
+            fb.from &&
+            fb.to &&
+            fb.from.toString() === mentorId.toString() &&
+            fb.to.toString() === userId.toString()
+        );
+
+      // Average feedback score from this mentor
+      const avgRating =
+        feedbackByMentor.length > 0
+          ? feedbackByMentor.reduce((acc, f) => acc + (f.rating || 0), 0) /
+            feedbackByMentor.length
+          : null;
+
+      return {
+        ...sub,
+        user,
+        sessionsCount: sessions.length,
+        sessionsWithMentor: sessionsWithMentor.length,
+        feedbackByMentor,
+        avgRating,
+      };
+    })
+  );
+
+  return enriched;
+}
 
   async cancelSubscription(subscriptionId: string) {
     return await SubscriptionModel.findByIdAndUpdate(subscriptionId, { status: "CANCELLED" }, { new: true });
