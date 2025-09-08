@@ -153,3 +153,14 @@ export const mentorProfile = async(id:string) => {
   const res = await API.get(endpoint);
   return res.data;
 }
+
+
+export const editUserDetails = async (
+  id: string,
+  role: string,
+  data: Record<string, any>
+) => {
+  const endpoint = role === "mentor" ? `/api/mentors/edit/${id}` : `/api/users/edit/${id}`;
+  const res = await API.post(endpoint, data); 
+  return res.data;
+};

@@ -30,6 +30,7 @@ export const useAuthInit = () => {
             role: userData.role,
             uniqueCode: userData.uniqueCode,
             profilePicture: userData.profilePicture,
+            phone:userData.phone,
           });
           console.log("Normalized userData:", userData);
         } else {

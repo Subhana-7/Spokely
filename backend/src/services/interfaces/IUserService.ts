@@ -13,4 +13,6 @@ export interface IUserService {
   verifyForgotPassword(email: string, code: string): Promise<{ message: string } | null>;
 
   getHome(id:string):Promise<IUser | null>;
+
+  updateUser(id: string, data: any): Promise<IUser | null>
 }

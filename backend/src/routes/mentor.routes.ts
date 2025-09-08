@@ -23,7 +23,9 @@ router.post("/verify-forgot-password",controller.verifyForgotPassword.bind(contr
 
 router.get("/home", authMiddleware(["mentor"]), controller.home.bind(controller));
 
-router.get("/mentor-profile/:id",controller.profile.bind(controller))
+router.get("/mentor-profile/:id",controller.profile.bind(controller));
 
+
+router.post("/edit/:id",authMiddleware(["mentor"]),controller.editMentor.bind(controller));
 
 export default router;

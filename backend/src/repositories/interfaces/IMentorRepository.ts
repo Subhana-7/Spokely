@@ -29,4 +29,6 @@ export interface IMentorRepository {
   ):Promise<IMentor | null>
 
   findById(id:string):Promise<IMentor | null>;
+
+  updateMentor(id:string,data:any):Promise<IMentor | null>;
 }

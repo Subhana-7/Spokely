@@ -6,13 +6,19 @@ import { IMentorController } from "./interfaces/IMentorController";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
 import { generateAccessToken } from "../utilis/token";
 import jwt from "jsonwebtoken";
-import { LoginDTO,SignupDTO,SendOtpDTO,ForgotPasswordDTO,VerifyForgotPasswordDTO } from "../dto/mentor.dto";
+import {
+  LoginDTO,
+  SignupDTO,
+  SendOtpDTO,
+  ForgotPasswordDTO,
+  VerifyForgotPasswordDTO,
+} from "../dto/mentor.dto";
 
 @injectable()
 export class MentorController implements IMentorController {
   constructor(@inject(TYPES.IMentorService) private service: IMentorService) {}
 
-  signup = async (req: Request<{},{},SignupDTO>, res: Response) => {
+  signup = async (req: Request<{}, {}, SignupDTO>, res: Response) => {
     try {
       const mentor = await this.service.signup(req.body);
 
@@ -28,7 +34,10 @@ export class MentorController implements IMentorController {
     }
   };
 
-  login = async (req: Request <{} ,{} , LoginDTO> , res: Response):Promise<void> => {
+  login = async (
+    req: Request<{}, {}, LoginDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const result = await this.service.login(req.body);
 
@@ -66,12 +75,12 @@ export class MentorController implements IMentorController {
     }
   };
 
-  sendOtp = async (req: Request <{}, {}, SendOtpDTO> , res: Response) => {
-    try{
-    await this.service.sendOtp(req.body.email);
-    res.status(200).json({ message: "OTP sent to email" });
-    }catch(err:any){
-      res.status(400).json({message:err.message});
+  sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
+    try {
+      await this.service.sendOtp(req.body.email);
+      res.status(200).json({ message: "OTP sent to email" });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
     }
   };
 
@@ -152,7 +161,7 @@ export class MentorController implements IMentorController {
 
       const mentor = await this.service.getHome(payload.id);
 
-       if (!mentor) {
+      if (!mentor) {
         res.status(404).json({ message: "Mentor not found" });
         return;
       }
@@ -169,15 +178,18 @@ export class MentorController implements IMentorController {
         maxAge: 15 * 60 * 1000,
       });
 
-      const mentorDto = toMentorResponseDTO(mentor)
+      const mentorDto = toMentorResponseDTO(mentor);
 
-      res.status(200).json({ message: "Token refreshed",mentor:mentorDto });
+      res.status(200).json({ message: "Token refreshed", mentor: mentorDto });
     } catch (err) {
       res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   };
 
-  forgotPassword = async (req: Request <{} , {}, ForgotPasswordDTO>, res: Response): Promise<void> => {
+  forgotPassword = async (
+    req: Request<{}, {}, ForgotPasswordDTO>,
+    res: Response
+  ): Promise<void> => {
     try {
       const { email, newPassword } = req.body;
 
@@ -221,21 +233,42 @@ export class MentorController implements IMentorController {
     }
   };
 
-      profile = async (req: Request, res: Response): Promise<void> => {
-      try {
-        const id  = req.params.id;
-  
-        const mentor = await this.service.getHome(id);
-  
-        if (!mentor) {
-          res.status(404).json({ message: "User not found" });
-          return;
-        }
-  
-        const mentorDTO = toMentorResponseDTO(mentor);
-        res.status(200).json(mentorDTO);
-      } catch (err: any) {
-        res.status(400).json({ message: err.message });
+  profile = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+
+      const mentor = await this.service.getHome(id);
+
+      if (!mentor) {
+        res.status(404).json({ message: "User not found" });
+        return;
       }
-    };
+
+      const mentorDTO = toMentorResponseDTO(mentor);
+      console.log(mentorDTO)
+      res.status(200).json(mentorDTO);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+  editMentor = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+
+      const updateMentor = await this.service.updateMentor(id, data);
+
+      if (!updateMentor) {
+        res.status(404).json({ message: "Mentor not found" });
+        return;
+      }
+
+      const mentorDTO = toMentorResponseDTO(updateMentor);
+      res.status(200).json(mentorDTO);
+    } catch (error) {
+      console.error("editUser error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
 }

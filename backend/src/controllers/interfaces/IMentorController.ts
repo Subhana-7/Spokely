@@ -13,4 +13,5 @@ export interface IMentorController {
   verifyForgotPassword(req: Request, res: Response): Promise<void>;
   home(req: Request, res: Response): Promise<void>;
   profile(req: Request, res: Response): Promise<void>;
+  editMentor(req: Request, res: Response): Promise<void>;
 }
