@@ -166,4 +166,13 @@ export class MentorService implements IMentorService {
         return null;
       }
     }
+
+    async updateMentor(id:string,data:any):Promise<IMentor|null>{
+      try {
+        return await this.repo.updateMentor(id,data);
+      } catch (error) {
+        console.log("error", error);
+    return null;
+      }
+    }
 }

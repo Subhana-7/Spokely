@@ -5,53 +5,55 @@ import { Award, Book, Calendar, Camera, Edit, MessageCircle, Star, TrendingUp, U
 import Badge from '../../components/common/Badge';
 import { useAuthStore } from '../../store/userAuthStore';
 import { getMentorPlans, saveMentorPlans } from '../../services/subscriptionService';
+import { editUserDetails } from '../../services/authServices';
+import { uploadImageToCloudinary } from '../../utilis/cloudinary ';
 
 const MentorProfile = () => {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [bio, setBio] = useState('');
   const [mentorDetails, setMentorDetails] = useState({ name: '', email: '', phone: '', bio: '' });
+  const [profilePic, setProfilePic] = useState(user?.profilePicture || '');
 
   const [plans, setPlans] = useState<{ type: string; price: number }[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [showSaveModal, setShowSaveModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [loadingUpload, setLoadingUpload] = useState(false);
 
   useEffect(() => {
     if (user) {
       setMentorDetails({
         name: user.name || '',
         email: user.email || '',
-        phone: (user as any).phone || '',
-        bio: (user as any).bio || ''
+        phone: user.phone?.toString() || '',
+        bio: user.bio || ''
       });
       setBio((user as any).bio || '');
+      setProfilePic(user.profilePicture || '');
       setSelectedTags((user as any).tags || []);
     }
-  },[user])
+  }, [user]);
 
-    useEffect(() => {
-  if (!user?.id) return;
+  useEffect(() => {
+    if (!user?.id) return;
 
-  const fetchPlans = async () => {
-    setLoadingPlans(true);
-    try {
-      const res = await getMentorPlans(user.id);
-      console.log(res.data)
-      setPlans(res.data || []);
-      console.log(plans)
-    } catch (err) {
-      console.error("Failed to fetch mentor plans:", err);
-      setPlans([]);
-    } finally {
-      setLoadingPlans(false);
-    }
-  };
+    const fetchPlans = async () => {
+      setLoadingPlans(true);
+      try {
+        const res = await getMentorPlans(user.id);
+        setPlans(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch mentor plans:", err);
+        setPlans([]);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
 
-  fetchPlans();
-}, [user]);
-
+    fetchPlans();
+  }, [user]);
 
   const addTag = (tag: string) => {
     if (tag && !selectedTags.includes(tag)) {
@@ -63,11 +65,43 @@ const MentorProfile = () => {
     setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSaveDetails = (e: React.FormEvent) => {
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setLoadingUpload(true);
+      const url = await uploadImageToCloudinary(file);
+      setProfilePic(url);
+
+      if (user?.id) {
+        const updated = await editUserDetails(user.id, "mentor", { profilePicture: url });
+        setUser({ ...user, ...updated });
+      }
+    } catch (err) {
+      console.error("Profile pic upload failed:", err);
+      alert("Failed to upload profile picture.");
+    } finally {
+      setLoadingUpload(false);
+    }
+  };
+
+  const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMentorDetails({ ...mentorDetails, bio });
-    setShowEditModal(false);
-    // TODO: call API to save mentor info (bio, tags)
+    if (!user) return;
+
+    try {
+      const updatedData = { ...mentorDetails, bio, tags: selectedTags, profilePicture: profilePic };
+      const res = await editUserDetails(user.id, "mentor", updatedData);
+
+      setMentorDetails({ ...mentorDetails, bio });
+      setUser({ ...user, ...res });
+      setShowSaveModal({ show: true, message: "Details updated successfully!" });
+    } catch (err) {
+      console.error("Failed to update details:", err);
+      setShowSaveModal({ show: true, message: "Failed to update details." });
+    } finally {
+      setShowEditModal(false);
+    }
   };
 
   const handleSavePlans = () => {
@@ -75,10 +109,7 @@ const MentorProfile = () => {
     saveMentorPlans(user.id, plans)
       .then(() => {
         setShowSaveModal({ show: true, message: 'Plans saved successfully!' });
-        console.log('what')
-        let res = getMentorPlans(user.id);
-        console.log(res)
-        return res;
+        return getMentorPlans(user.id);
       })
       .then(res => setPlans(res.data?.plans || []))
       .catch(() => setShowSaveModal({ show: true, message: 'Failed to save plans.' }));
@@ -108,17 +139,23 @@ const MentorProfile = () => {
               <div className="text-center">
                 <div className="relative mb-6">
                   <div className="w-36 h-36 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-1 mx-auto">
-                    <div className="w-full h-full bg-gray-900 rounded-xl flex items-center justify-center">
-                      {user?.profilePicture ? (
-                        <img src={user.profilePicture} className="w-full h-full rounded-xl" />
+                    <div className="w-full h-full bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden">
+                      {profilePic ? (
+                        <img src={profilePic} className="w-full h-full rounded-xl object-cover" />
                       ) : (
                         <User size={56} className="text-gray-200" />
                       )}
                     </div>
                   </div>
-                  <button className="absolute bottom-0 right-1/2 transform translate-x-1/2 translate-y-3 bg-gray-900 rounded-xl p-3 shadow-lg border border-gray-700 hover:shadow-xl transition-all duration-200">
+                  <label className="absolute bottom-0 right-1/2 transform translate-x-1/2 translate-y-3 bg-gray-900 rounded-xl p-3 shadow-lg border border-gray-700 hover:shadow-xl transition-all duration-200 cursor-pointer">
                     <Camera size={18} className="text-gray-200" />
-                  </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePicUpload}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
 
                 <h2 className="text-2xl font-bold mb-3">{mentorDetails.name}</h2>

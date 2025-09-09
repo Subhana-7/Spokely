@@ -340,6 +340,7 @@ export class UserController implements IUserController {
 
     profile = async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log('huh')
       const id  = req.params.id;
 
       const user = await this.service.getHome(id);
@@ -350,9 +351,31 @@ export class UserController implements IUserController {
       }
 
       const userDTO = toUserResponseDTO(user);
+      console.log(userDTO)
       res.status(200).json(userDTO);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
+
+ editUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+
+    const updatedUser = await this.service.updateUser(id, data);
+
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const userDTO = toUserResponseDTO(updatedUser);
+    res.status(200).json(userDTO);
+  } catch (error) {
+    console.error("editUser error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 }
