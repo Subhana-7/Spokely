@@ -17,4 +17,6 @@ export interface IUserController {
   refreshToken(req: Request, res: Response): Promise<void>;
 
   profile(req: Request, res: Response): Promise<void>;
+
+  editUser(req: Request, res: Response): Promise<void>;
 }

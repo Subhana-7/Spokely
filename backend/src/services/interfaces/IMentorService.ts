@@ -13,4 +13,6 @@ export interface IMentorService {
   verifyForgotPassword(email: string, code: string): Promise<{ message: string } | null>;
 
   getHome(id:string):Promise<IMentor | null>;
+
+  updateMentor(id:string,data:any):Promise<IMentor|null>;
 }

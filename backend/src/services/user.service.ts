@@ -256,4 +256,14 @@ export class UserService implements IUserService {
       return null;
     }
   }
+
+ async updateUser(id: string, data: any): Promise<IUser | null> {
+  try {
+    return await this.repo.updateUser(id, data);
+  } catch (error) {
+    console.log("error", error);
+    return null;
+  }
+}
+
 }

@@ -82,13 +82,20 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null> {
+  async verifyForgotPasswordOTP(
+    email: string,
+    code: string
+  ): Promise<boolean | null> {
     try {
       const user = await User.findOne({ email });
-      if (!user || !user.forgotPasswordOtp || user.forgotPasswordOtp.code !== code) {
+      if (
+        !user ||
+        !user.forgotPasswordOtp ||
+        user.forgotPasswordOtp.code !== code
+      ) {
         return false;
       }
-      
+
       const now = new Date();
       if (now > user.forgotPasswordOtp.expiresAt) {
         return false;
@@ -106,11 +113,7 @@ export class UserRepository implements IUserRepository {
 
   async updatePassword(email: string, password: string): Promise<IUser | null> {
     try {
-      return User.findOneAndUpdate(
-        { email },
-        { password },
-        { new: true }
-      );
+      return User.findOneAndUpdate({ email }, { password }, { new: true });
     } catch (error) {
       console.log("error", error);
       return null;
@@ -138,10 +141,18 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-
-  async findById(id:string):Promise<IUser | null> {
+  async findById(id: string): Promise<IUser | null> {
     try {
       return await User.findById(id);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  async updateUser(id: string, data: any): Promise<IUser | null> {
+    try {
+      return await User.findByIdAndUpdate(id, data, { new: true });
     } catch (error) {
       console.log("error", error);
       return null;

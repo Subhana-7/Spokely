@@ -8,6 +8,8 @@ interface User {
   role: "user" | "mentor" | "admin";
   uniqueCode?: string;
   profilePicture?: string;
+  phone?:number;
+  bio?:string;
 }
 
 interface AuthState {

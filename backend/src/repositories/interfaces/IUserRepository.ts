@@ -14,4 +14,6 @@ export interface IUserRepository {
   updatePassword(email: string, password: string): Promise<IUser | null>;
 
   findById(id:string):Promise<IUser | null>;
+
+  updateUser(id: string, data: any): Promise<IUser | null>
 }
