@@ -1,4 +1,9 @@
 export const TYPES = {
+
+  IChatController: Symbol.for("IChatController"),
+  IChatService: Symbol.for("IChatService"),
+  IChatRepository: Symbol.for("IChatRepository"),
+
   IMentorPlanRepository: Symbol.for("IMentorPlanRepository"),
 
   ISubscriptionController: Symbol.for("ISubscriptionController"),

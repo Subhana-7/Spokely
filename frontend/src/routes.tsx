@@ -23,7 +23,8 @@ import SessionsHub from "./pages/Sessions/MentorSessionsHub";
 import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
 import SessionListing from "./pages/admin/SessionListing";
-import SessionDetailsPage from './pages/admin/SessionDetailsPage';
+import SessionDetailsPage from "./pages/admin/SessionDetailsPage";
+import ChatBox from "./chat";
 import MentorCard from "./pages/user/mentorListing";
 import StudentsPage from "./pages/Sessions/StudentsListing";
 
@@ -79,7 +80,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
 
-   {
+  {
     path: "/mentor/session/details/:id",
     element: (
       <RoleProtectedRoute role="mentor">
@@ -135,7 +136,7 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
-    {
+  {
     path: "/user-profile/:id",
     element: (
       <RoleProtectedRoute role="user">
@@ -148,6 +149,22 @@ const appRoutes: RouteObject[] = [
     element: (
       <RoleProtectedRoute role="user">
         <MentorCard />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/user/chat/:id",
+    element: (
+      <RoleProtectedRoute role="user">
+        <ChatBox />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/chat/:id",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <ChatBox />
       </RoleProtectedRoute>
     ),
   },
@@ -185,7 +202,7 @@ const appRoutes: RouteObject[] = [
     path: "/admin",
     element: (
       <RoleProtectedRoute role="admin">
-      <AdminDashboard />
+        <AdminDashboard />
       </RoleProtectedRoute>
     ),
     children: [
