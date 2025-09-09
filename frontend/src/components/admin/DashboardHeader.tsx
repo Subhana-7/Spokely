@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink ,useNavigate} from 'react-router-dom';
+import { logout } from '../../services/adminService';
 
 const DashboardHeader = () => {
   const navItems = [
@@ -8,7 +9,20 @@ const DashboardHeader = () => {
     { label: 'Session Management', path: '/admin/sessions' },
     { label: 'Tasks', path: '/admin/tasks' },
     { label: 'Reports', path: '/admin/reports' },
+    // { label: 'Session Details', path: '/admin/session-details' },
   ];
+
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    try {
+     logout()
+     navigate('/')
+    } catch (error) {
+      console.log("logout unsuccessful") //convert to toast message
+    }
+  }
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -37,9 +51,7 @@ const DashboardHeader = () => {
         <button
           type="button"
           className="self-end lg:self-auto px-4 py-2 border border-red-300 text-red-600 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 transition"
-          onClick={() => {
-            console.log('Logged out');
-          }}
+          onClick={() => {handleLogout()}}
         >
           Logout
         </button>

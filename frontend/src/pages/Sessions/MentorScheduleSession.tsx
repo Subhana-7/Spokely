@@ -365,6 +365,7 @@ const ScheduleSession = () => {
         startTime: start,
         endTime: end,
         participants: selectedMembers.map((m) => m._id),
+        role:"Mentor",
       };
 
       if (type === "public" && price) {

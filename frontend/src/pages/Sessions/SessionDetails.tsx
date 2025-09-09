@@ -12,8 +12,10 @@ import {
 import Button from "../../modals/Button";
 import Card from "../../components/common/Cards";
 import Badge from "../../components/common/Badge";
-import { getSessionById } from "../../services/sessionService";
+import { getSessionById, addFeedback } from "../../services/sessionService";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../../store/userAuthStore";
+import Input from "../../modals/Input";
 
 const SessionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,10 +24,28 @@ const SessionDetail = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [feedbackModal, setFeedbackModal] = useState<{
+    open: boolean;
+    toUserId?: string;
+  }>({ open: false });
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState<number | "">("");
+
+  // New state for view feedback modal
+  const [viewFeedbackModal, setViewFeedbackModal] = useState<{
+    open: boolean;
+    feedback?: any;
+  }>({ open: false });
+
+  const currentUser = useAuthStore((state) => state.user);
+  console.log(currentUser)
+  const currentUserId = currentUser?.id;
+
   useEffect(() => {
     const fetchSession = async () => {
       try {
         const res = await getSessionById(id!);
+        console.log(res);
         setSession(res.data);
       } catch (err: any) {
         toast.error(err?.response?.data?.message || "Failed to load session");
@@ -36,8 +56,58 @@ const SessionDetail = () => {
     fetchSession();
   }, [id]);
 
-  if (loading) return <div className="p-6 text-center text-lg">Loading session details...</div>;
-  if (!session) return <div className="p-6 text-red-600 text-center">Session not found.</div>;
+  const handleSubmitFeedback = async () => {
+    if (!feedbackComment.trim() || !feedbackRating || !feedbackModal.toUserId) {
+      toast.error("Please fill feedback and rating");
+      return;
+    }
+    try {
+      const res = await addFeedback(session._id, {
+        to: feedbackModal.toUserId,
+        comment: feedbackComment,
+        rating: Number(feedbackRating),
+      });
+      setSession(res.data.session);
+      toast.success("Feedback submitted successfully!");
+      setFeedbackModal({ open: false });
+      setFeedbackComment("");
+      setFeedbackRating("");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to submit feedback");
+    }
+  };
+
+  // Function to check if current user already gave feedback to a specific user
+  const hasGivenFeedback = (toUserId: string) => {
+    return session.feedback?.find(
+      (f: any) => String(f.from) === String(currentUserId) && String(f.to) === String(toUserId)
+    );
+  };
+
+  // Function to handle view feedback
+  const handleViewFeedback = (toUserId: string) => {
+    const feedback = hasGivenFeedback(toUserId);
+    if (feedback) {
+      setViewFeedbackModal({ open: true, feedback });
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="p-6 text-center text-lg">Loading session details...</div>
+    );
+  if (!session)
+    return (
+      <div className="p-6 text-red-600 text-center">Session not found.</div>
+    );
+
+  let participants = session.participants?.map((p: any) => p.user) || [];
+  if (
+    session.createdBy &&
+    !participants.some((u: any) => u._id === session.createdBy._id)
+  ) {
+    participants = [session.createdBy, ...participants];
+  }
 
   return (
     <div
@@ -48,8 +118,6 @@ const SessionDetail = () => {
         backgroundPosition: "center",
       }}
     >
-
-      {/* Overlay for glow effect */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
       {/* Header */}
@@ -63,50 +131,60 @@ const SessionDetail = () => {
         <h1 className="text-2xl font-bold">Session Details</h1>
       </div>
 
-      {/* Hero Section */}
       <div className="relative z-10 text-center py-12">
-        <h2 className="text-4xl font-extrabold drop-shadow-lg">{session.topic}</h2>
+        <h2 className="text-4xl font-extrabold drop-shadow-lg">
+          {session.topic}
+        </h2>
         <p className="text-lg opacity-80 mt-2">{session.description}</p>
         <div className="mt-4 flex justify-center gap-3">
-          <Badge variant={session.status === "completed" ? "success" : "warning"}>
+          <Badge
+            variant={session.status === "completed" ? "success" : "warning"}
+          >
             {session.status}
           </Badge>
           <Badge variant="peer">{session.type}</Badge>
         </div>
       </div>
 
-      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Left Column */}
         <div className="space-y-6">
+          {/* Session Info Card */}
           <Card className="backdrop-blur-lg bg-white/10 shadow-xl border border-white/20 hover:shadow-2xl transition">
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-yellow-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">Start</div>
-                <div className="font-semibold">{new Date(session.startTime).toLocaleTimeString()}</div>
+                <div className="font-semibold">
+                  {new Date(session.startTime).toLocaleTimeString()}
+                </div>
               </div>
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-green-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">End</div>
                 <div className="font-semibold">
-                  {session.endTime ? new Date(session.endTime).toLocaleTimeString() : "Not ended"}
+                  {session.endTime
+                    ? new Date(session.endTime).toLocaleTimeString()
+                    : "Not ended"}
                 </div>
               </div>
               <div className="text-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition">
                 <Clock className="w-8 h-8 text-blue-300 mx-auto mb-2" />
                 <div className="text-sm opacity-80">Date</div>
-                <div className="font-semibold">{new Date(session.date).toLocaleDateString()}</div>
+                <div className="font-semibold">
+                  {new Date(session.startTime).toLocaleDateString()}
+                </div>
               </div>
             </div>
 
-            {/* Extra Info */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="p-3 rounded-lg bg-white/10 flex items-center gap-2 hover:bg-white/20 transition">
-                <DollarSign className="text-green-300" /> Fee: ${session.sessionFee || 0}
+                <DollarSign className="text-green-300" /> Fee: $
+                {session.sessionFee || 0}
               </div>
               <div className="p-3 rounded-lg bg-white/10 flex items-center gap-2 hover:bg-white/20 transition">
-                <Clock className="text-pink-300" /> Duration: {session.durationMinutes || 60} mins
+                <Clock className="text-pink-300" /> Duration:{" "}
+                {session.durationMinutes || 60} mins
               </div>
             </div>
 
@@ -126,56 +204,194 @@ const SessionDetail = () => {
               <User className="w-5 h-5 mr-2 text-green-300" />
               Participants
             </h3>
+
             <div className="space-y-3">
-              {(!session.participants || session.participants.length === 0) ? (
+              {participants.length === 0 ? (
                 <p className="text-sm opacity-70">No participants</p>
               ) : (
-                session.participants.map((m: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded"
-                  >
-                    <span>{m.name}</span>
-                    <Badge variant="peer" size="sm">{m.level || "Beginner"}</Badge>
-                  </div>
-                ))
+                participants.map((u: any, i: number) => {
+                  const existingFeedback = hasGivenFeedback(u._id);
+                  
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        if (u.role === "mentor") {
+                          navigate(`/user/mentor-profile/${u._id}`);
+                        } else {
+                          navigate(`/user-profile/${u._id}`);
+                        }
+                      }}
+                      className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded cursor-pointer"
+                    >
+                      <span>{u.name}</span>
+                      <div className="flex gap-2">
+                        <Badge variant="peer" size="sm">
+                          {u.level || "Beginner"}
+                        </Badge>
+                        {session.status === "completed" &&
+                          u._id !== currentUserId && (
+                            <>
+                              {existingFeedback ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewFeedback(u._id);
+                                  }}
+                                  className="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-600"
+                                >
+                                  View Feedback
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFeedbackModal({ open: true, toUserId: u._id });
+                                  }}
+                                  className="text-sm bg-green-500 px-3 py-1 rounded hover:bg-green-600"
+                                >
+                                  Give Feedback
+                                </button>
+                              )}
+                            </>
+                          )}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </Card>
         </div>
 
-        {/* Right Column */}
+        {/* Right Column - Feedback */}
         <div className="space-y-6">
           <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl hover:shadow-2xl transition text-center">
             <h3 className="text-2xl font-bold mb-2">Performance & Feedback</h3>
-            <p className="text-sm opacity-80 mb-4">AI analysis and mentor feedback after session.</p>
-            {session.feedback && session.feedback.length > 0 ? (
-              <div className="space-y-3 text-left">
-                {session.feedback.map((f: any, idx: number) => (
-                  <div key={idx} className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold">{f.from?.name || "Anonymous"}</span>
-                      <span className="flex items-center gap-1 text-yellow-300">
-                        <Star className="w-4 h-4" /> {f.rating || "N/A"}
-                      </span>
+            <p className="text-sm opacity-80 mb-4">Feedback about you:</p>
+
+            {session.feedback?.length > 0 ? (
+              session.feedback
+                .filter((f: any) => String(f.to) === String(currentUserId))
+                .map((f: any, idx: number) => {
+                  const fromUser =
+                    participants.find((p: any) => p._id === f.from) || {};
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition"
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-semibold">
+                          {fromUser.name || f.from}
+                        </span>
+                        <span className="flex items-center gap-1 text-yellow-300">
+                          <Star className="w-4 h-4" /> {f.rating || "N/A"}
+                        </span>
+                      </div>
+                      <p className="text-sm opacity-90">{f.comment}</p>
                     </div>
-                    <p className="text-sm opacity-90">{f.comment}</p>
-                  </div>
-                ))}
-              </div>
+                  );
+                })
             ) : (
               <p className="opacity-70">No feedback yet.</p>
             )}
           </Card>
 
           <div className="flex gap-4">
-            <Button variant="secondary" className="flex-1">Download Report</Button>
-            <Button variant="primary" className="flex-1 bg-green-500 hover:bg-green-600">
+            <Button variant="secondary" className="flex-1">
+              Download Report
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 bg-green-500 hover:bg-green-600"
+            >
               <CheckCircle /> Schedule Follow-up
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Give Feedback Modal */}
+      {feedbackModal.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Give Feedback</h2>
+            <Input
+              type="text"
+              placeholder="Enter feedback..."
+              value={feedbackComment}
+              onChange={setFeedbackComment}
+              className="w-full mb-4"
+            />
+            <Input
+              type="number"
+              placeholder="Rating (1-5)"
+              value={feedbackRating}
+              onChange={(val) => setFeedbackRating(Number(val))}
+              className="w-full mb-4"
+              min={1}
+              max={5}
+            />
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setFeedbackModal({ open: false })}
+              >
+                Close
+              </Button>
+              <Button variant="primary" onClick={handleSubmitFeedback}>
+                Submit
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Feedback Modal */}
+      {viewFeedbackModal.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Your Feedback</h2>
+            
+            {viewFeedbackModal.feedback && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rating
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                    <span className="font-semibold">
+                      {viewFeedbackModal.feedback.rating}/5
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Comment
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-lg border">
+                    <p className="text-gray-800">
+                      {viewFeedbackModal.feedback.comment}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setViewFeedbackModal({ open: false })}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

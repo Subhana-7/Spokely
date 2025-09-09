@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 export interface ParticipantDTO {
   user: Types.ObjectId;
-  status: 'pending' | 'accepted' | 'rejected' | 'cancelled'; // required
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   cancelReason?: string;
 }
 
@@ -15,6 +15,7 @@ export interface CreateSessionDTO {
   startTime: Date;
   endTime?: Date;
   createdBy: Types.ObjectId;
+  createdByModel:string;
   participants?: ParticipantDTO[];
   sessionFee?: number;
 }

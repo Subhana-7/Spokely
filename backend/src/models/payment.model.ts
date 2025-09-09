@@ -1,7 +1,8 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface IPayment extends Document {
-  sessionId: Types.ObjectId;
+  sessionId?: Types.ObjectId;
+  subscriptionId?: Types.ObjectId;
   userId: Types.ObjectId;
   paypalOrderId: string;
   status: 'CREATED' | 'COMPLETED' | 'FAILED';
@@ -11,13 +12,14 @@ export interface IPayment extends Document {
 }
 
 const paymentSchema = new Schema<IPayment>({
-  sessionId: { type: Schema.Types.ObjectId, ref: "Session", required: true },
+  sessionId: { type: Schema.Types.ObjectId, ref: "Session" },
+  subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription" },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   paypalOrderId: { type: String, required: true },
-  status: { type: String, enum: ['CREATED', 'COMPLETED', 'FAILED'], required: true },
+  status: { type: String, enum: ["CREATED", "COMPLETED", "FAILED"], required: true },
   amount: { type: Number, required: true },
   currency: { type: String, default: "USD" },
-  details: { type: Object }
+  details: { type: Object },
 }, { timestamps: true });
 
 export default model<IPayment>('Payment', paymentSchema);

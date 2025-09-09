@@ -29,7 +29,7 @@ const MentorHeader = () => {
           <button onClick={() => navigate('/mentor/sessions')} className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
             Sessions
           </button>
-          <button className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+          <button onClick={() => navigate('/mentor/my-students')} className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
             Learners
           </button>
         </nav>

@@ -72,3 +72,5 @@ export const rejectMentor = async (
   id: string,
   { rejectionReason }: { rejectionReason: string }
 ) => API.post(`/admin/mentors/reject/${id}`, { rejectionReason });
+
+export const logout = async() => API.post(`/admin/logout`)

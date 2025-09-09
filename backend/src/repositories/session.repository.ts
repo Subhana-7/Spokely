@@ -19,10 +19,7 @@ export class SessionRepository implements ISessionRepository {
       const objectId = new mongoose.Types.ObjectId(id);
 
       const res = await SessionModel.find({
-        $or: [
-          { createdBy: objectId },
-          { "participants.user": objectId },
-        ],
+        $or: [{ createdBy: objectId }, { "participants.user": objectId }],
       })
         .populate({
           path: "participants.user",
@@ -44,7 +41,10 @@ export class SessionRepository implements ISessionRepository {
     try {
       return await SessionModel.findById(id)
         .populate("participants.user")
-        .populate("createdBy");
+        .populate({
+          path: "createdBy",
+          select: "name email profilePicture role",
+        });
     } catch (error) {
       console.log("error", error);
       return null;
@@ -75,7 +75,9 @@ export class SessionRepository implements ISessionRepository {
         {
           $set: {
             "participants.$.status": status,
-            ...(cancelReason && { "participants.$.cancelReason": cancelReason }),
+            ...(cancelReason && {
+              "participants.$.cancelReason": cancelReason,
+            }),
           },
         },
         { new: true }
@@ -118,6 +120,51 @@ export class SessionRepository implements ISessionRepository {
       return await SessionModel.find({ type: "public" });
     } catch (error) {
       console.log("error", error);
+      return null;
+    }
+  }
+
+  async addFeedback(
+    sessionId: string,
+    feedback: { from: string; to: string; comment: string; rating?: number }
+  ): Promise<ISession | null> {
+    try {
+      return await SessionModel.findByIdAndUpdate(
+        sessionId,
+        { $push: { feedback } },
+        { new: true }
+      )
+        .populate("participants.user")
+        .populate("createdBy")
+        .populate("feedback.from", "name profilePicture")
+        .populate("feedback.to", "name profilePicture");
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
+
+  //   async findSessions(query: any): Promise<ISession[] | null> {
+  //   try {
+  //     console.log('chek')
+  //     const res =  await SessionModel.find(query)
+  //       .populate("participants.user", "name email profilePicture")
+  //       .populate("createdBy", "name email profilePicture role");
+  //       console.log(res)
+  //       return res;
+  //   } catch (err) {
+  //     console.error(err);
+  //     return null;
+  //   }
+  // }
+
+  async findSessions(query: any): Promise<ISession[] | null> {
+    try {
+      const res = await SessionModel.find();
+      console.log(res);
+      return res;
+    } catch (error) {
+      console.error(error);
       return null;
     }
   }

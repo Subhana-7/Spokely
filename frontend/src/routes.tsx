@@ -22,6 +22,10 @@ import MentorViewUserProfile from "./pages/mentor/MentorViewUserProfile";
 import SessionsHub from "./pages/Sessions/MentorSessionsHub";
 import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
+import SessionListing from "./pages/admin/SessionListing";
+import SessionDetailsPage from './pages/admin/SessionDetailsPage';
+import MentorCard from "./pages/user/mentorListing";
+import StudentsPage from "./pages/Sessions/StudentsListing";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -74,6 +78,15 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
+
+   {
+    path: "/mentor/session/details/:id",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <SessionDetail />
+      </RoleProtectedRoute>
+    ),
+  },
   {
     path: "/user/profile",
     element: (
@@ -83,7 +96,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/user/mentor/profile",
+    path: "/user/mentor-profile/:id",
     element: (
       <RoleProtectedRoute role="user">
         <UserViewMentorProfile />
@@ -115,7 +128,7 @@ const appRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/mentor/user/profile",
+    path: "/user-profile/:id",
     element: (
       <RoleProtectedRoute role="mentor">
         <MentorViewUserProfile />
@@ -123,10 +136,18 @@ const appRoutes: RouteObject[] = [
     ),
   },
     {
-    path: "/user/peer/profile/:id",
+    path: "/user-profile/:id",
     element: (
       <RoleProtectedRoute role="user">
         <MentorViewUserProfile />
+      </RoleProtectedRoute>
+    ),
+  },
+    {
+    path: "/user/mentors",
+    element: (
+      <RoleProtectedRoute role="user">
+        <MentorCard />
       </RoleProtectedRoute>
     ),
   },
@@ -143,6 +164,14 @@ const appRoutes: RouteObject[] = [
     element: (
       <RoleProtectedRoute role="mentor">
         <MentorScheduleSession />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/mentor/my-students",
+    element: (
+      <RoleProtectedRoute role="mentor">
+        <StudentsPage />
       </RoleProtectedRoute>
     ),
   },
@@ -167,6 +196,8 @@ const appRoutes: RouteObject[] = [
         path: "mentors/verification/:id",
         element: <MentorVerification />,
       },
+      { path: "sessions", element: <SessionListing /> },
+      { path: "sessions/:id", element: <SessionDetailsPage /> },
     ],
   },
 ];

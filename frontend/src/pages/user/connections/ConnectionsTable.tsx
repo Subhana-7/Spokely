@@ -71,7 +71,7 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
               {/* Contact Info (clickable) */}
               <Link
-                to={`/user/peer/profile/${connection.id}`}
+                to={`/user-profile/${connection.id}`}
                 className="flex items-center gap-4 hover:opacity-80 transition"
               >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">

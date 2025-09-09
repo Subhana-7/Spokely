@@ -3,8 +3,8 @@ import React from "react";
 interface InputProps {
   type: string;
   placeholder?: string;
-  value: string;
-  onChange: (val: string) => void;
+  value?: string;
+  onChange?: (val: string) => void;
   error?: string;
   className?: string;
   rightIcon?: React.ReactNode;
@@ -33,7 +33,7 @@ const Input: React.FC<InputProps> = ({
           <textarea
             placeholder={placeholder}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange?.(e.target.value)}
             className={commonClasses}
             {...rest}
           />
@@ -42,7 +42,7 @@ const Input: React.FC<InputProps> = ({
             type={type}
             placeholder={placeholder}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange?.(e.target.value)}
             className={`w-full px-4 py-2 border ${
               error ? "border-red-500" : "border-black-600"
             } rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10 ${className}`}

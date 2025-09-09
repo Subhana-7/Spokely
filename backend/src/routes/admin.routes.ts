@@ -51,4 +51,6 @@ router.patch("/mentors/approve/:id", controller.approveMentor.bind(container));
 
 router.post("/mentors/reject/:id", controller.rejectMentor.bind(container));
 
+router.post('/logout',controller.logout.bind(container))
+
 export default router;

@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
   Calendar,
-  Clock,
-  Users,
   Search,
   IndianRupee,
-  Plus,
 } from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import Header from "../user/DashBoardComponents/Header";
@@ -95,39 +92,51 @@ const MentorPublicSessions = () => {
     );
   });
 
-  const handlePayToSchedule = async (sessionId: string, sessionFee: number) => {
+  // 🟢 helper to check if date is today
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return (
+      today.getFullYear() === date.getFullYear() &&
+      today.getMonth() === date.getMonth() &&
+      today.getDate() === date.getDate()
+    );
+  };
+
+  // 🟢 split sessions into todayUpcoming & others
+  const now = new Date();
+  const fifteenMinsFromNow = new Date(now.getTime() + 15 * 60000);
+
+  const todayUpcoming = filteredSessions
+    .filter(
+      (s) =>
+        isToday(s.startTime) &&
+        new Date(s.startTime) >= fifteenMinsFromNow &&
+        s.status.toLowerCase() !== "completed" &&
+        s.status.toLowerCase() !== "cancelled"
+    )
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  const otherSessions = filteredSessions
+    .filter(
+      (s) =>
+        !(
+          isToday(s.startTime) &&
+          new Date(s.startTime) >= fifteenMinsFromNow &&
+          s.status.toLowerCase() !== "completed" &&
+          s.status.toLowerCase() !== "cancelled"
+        )
+    )
+    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
+  const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
     if (!sessionFee || sessionFee <= 0) {
       setPaymentResult({ status: "error", message: "Invalid session fee. Cannot proceed with payment." });
       return;
     }
 
-    try {
-      setActiveSession({ id: sessionId, fee: sessionFee });
-      setShowPayPalModal(true);
-
-      const result = await startPayment(sessionId, sessionFee);
-
-      setSessions((prev) =>
-        prev.map((s) =>
-          s._id === sessionId
-            ? {
-                ...s,
-                participants: [...s.participants, { user: user?.id || "", status: "accepted" }],
-              }
-            : s
-        )
-      );
-
-      setPaymentResult({
-        status: "success",
-        message: result?.message || "Your payment was successful! Session scheduled 🎉",
-      });
-    } catch (err: any) {
-      console.error("Payment failed:", err);
-      setPaymentResult({ status: "error", message: "Payment failed. Please try again." });
-    } finally {
-      setShowPayPalModal(false);
-    }
+    setActiveSession({ id: sessionId, fee: sessionFee });
+    setShowPayPalModal(true);
   };
 
   useEffect(() => {
@@ -138,112 +147,108 @@ const MentorPublicSessions = () => {
 
     container.innerHTML = "";
 
-    if (!window.paypal) {
-      const fallback = document.createElement("div");
-      fallback.className = "text-red-600 text-sm";
-      fallback.innerText = "PayPal failed to load. Please refresh and try again.";
-      container.appendChild(fallback);
-      return;
-    }
+    const loadPaypalButtons = async () => {
+      try {
+        const paypalNamespace = await import("@paypal/paypal-js");
+        const paypal = await paypalNamespace.loadScript({
+          clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
+          currency: "USD",
+        });
 
-    if (window.paypal.Buttons) {
-      const buttons = window.paypal.Buttons({
-        createOrder: async () => {
-          try {
-            const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
-            const orderId = resp?.orderId || resp?.id || resp?.data?.orderId;
-            if (!orderId) throw new Error("No order ID returned from backend.");
-            return orderId;
-          } catch (e: any) {
-            console.error("createOrder error:", e);
-            setShowPayPalModal(false);
-            setPaymentResult({
-              status: "error",
-              message: e?.message || "Failed to create order. Please try again.",
-            });
-            throw e;
-          }
-        },
+        if (!paypal?.Buttons) {
+          setPaymentResult({ status: "error", message: "PayPal failed to load" });
+          setShowPayPalModal(false);
+          return;
+        }
 
-        onApprove: async (data: any) => {
-          try {
-            setIsProcessing(true);
-            const orderId = data.orderID;
-            const verify = await confirmPayment(orderId, activeSession.id);
-            const ok = !!verify?.success;
-
-            if (ok) {
-              setSessions((prev) =>
-                prev.map((s) => {
-                  if (s._id !== activeSession.id) return s;
-                  const already = s.participants.some((p) => p.user === (user?.id || ""));
-                  return {
-                    ...s,
-                    participants: already
-                      ? s.participants
-                      : [...s.participants, { user: user?.id || "", status: "accepted" }],
-                  };
-                })
-              );
-
-              setPaymentResult({
-                status: "success",
-                message: verify?.message || "Your payment was successful! Session scheduled 🎉",
-              });
-            } else {
+        const buttons = paypal.Buttons({
+          createOrder: async () => {
+            try {
+              const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
+              return resp.orderId!;
+            } catch (err: any) {
+              console.error("createOrder error:", err);
+              setShowPayPalModal(false);
               setPaymentResult({
                 status: "error",
-                message: verify?.message || "Payment verification failed. Please contact support.",
+                message: err?.message || "Failed to create order.",
               });
+              throw err;
             }
-          } catch (e: any) {
-            console.error("onApprove/confirm error:", e);
+          },
+          onApprove: async (data: any) => {
+            try {
+              setIsProcessing(true);
+              const orderId = data.orderID;
+              const verify = await confirmPayment(orderId, activeSession.id);
+
+              if (verify?.success) {
+                setSessions((prev) =>
+                  prev.map((s) =>
+                    s._id === activeSession.id
+                      ? {
+                          ...s,
+                          participants: [
+                            ...s.participants,
+                            { user: user?.id || "", status: "accepted" },
+                          ],
+                        }
+                      : s
+                  )
+                );
+
+                setPaymentResult({
+                  status: "success",
+                  message: verify?.message || "Payment successful! Session scheduled 🎉",
+                });
+              } else {
+                setPaymentResult({
+                  status: "error",
+                  message: verify?.message || "Payment verification failed.",
+                });
+              }
+            } catch (err: any) {
+              console.error("onApprove error:", err);
+              setPaymentResult({
+                status: "error",
+                message: err?.message || "Payment failed.",
+              });
+            } finally {
+              setIsProcessing(false);
+              setShowPayPalModal(false);
+            }
+          },
+          onCancel: () => {
+            setShowPayPalModal(false);
+            setPaymentResult({ status: "error", message: "Payment cancelled." });
+          },
+          onError: (err: any) => {
+            console.error("PayPal error:", err);
+            setShowPayPalModal(false);
             setPaymentResult({
               status: "error",
-              message: e?.message || "Payment failed to verify. Please try again.",
+              message: "Payment error. Please try again.",
             });
-          } finally {
-            setIsProcessing(false);
-            setShowPayPalModal(false);
-          }
-        },
+          },
+        });
 
-        onCancel: () => {
-          setShowPayPalModal(false);
-          setPaymentResult({
-            status: "error",
-            message: "Payment was cancelled.",
-          });
-        },
+        buttons.render("#paypal-button-container");
+      } catch (err) {
+        console.error("PayPal script load error:", err);
+        container.innerText = "PayPal failed to load";
+      }
+    };
 
-        onError: (err: any) => {
-          console.error("PayPal onError:", err);
-          setShowPayPalModal(false);
-          setPaymentResult({
-            status: "error",
-            message: "A payment error occurred. Please try again.",
-          });
-        },
-      });
-
-      buttons.render("#paypal-button-container");
-
-      return () => {
-        try {
-          buttons.close && buttons.close();
-        } catch {}
-      };
-    }
+    loadPaypalButtons();
   }, [showPayPalModal, activeSession, user?.id]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
 
   const getLevelBadgeVariant = (status: string): "accepted" | "mentor" | "peer" | "public" | "upcoming" | "completed" | "private" | "pending" | "cancelled" => {
     switch (status.toLowerCase()) {
@@ -304,76 +309,139 @@ const MentorPublicSessions = () => {
           </div>
         </SpokelyCard>
 
-        {/* Sessions */}
-        {loading ? (
-          <p className="text-center text-gray-600">Loading sessions...</p>
-        ) : filteredSessions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSessions.map((session) => {
-              const isScheduled = session.participants.some(
-                (p) => p.user === user?.id
-              );
+        {/* 🟢 Upcoming Today Section */}
+        {todayUpcoming.length > 0 && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Upcoming (Today)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              {todayUpcoming.map((session) => {
+                const isScheduled = session.participants.some(
+                  (p) => p.user === user?.id
+                );
 
-              return (
-                <SpokelyCard
-                  key={session._id}
-                  className="bg-white/10 border shadow-lg relative flex flex-col"
-                >
-                  <div className="absolute top-4 right-4">
-                    <Badge variant={getLevelBadgeVariant(session.status)}>
-                      {session.status}
-                    </Badge>
-                  </div>
-                  <h3 className="font-bold text-white">{session.topic}</h3>
-                  <p className="text-sm text-gray-200">{session.description}</p>
-                  <p className="text-xs text-gray-300">
-                    {formatDate(session.startTime)} –{" "}
-                    {new Date(session.startTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-1">
-                      <IndianRupee size={18} className="text-green-400" />
-                      <span className="text-lg font-bold">
-                        {session.sessionFee}/-
-                      </span>
+                return (
+                  <SpokelyCard
+                    key={session._id}
+                    className="bg-white/10 border shadow-lg relative flex flex-col"
+                  >
+                    <div className="absolute top-4 right-4">
+                      <Badge variant={getLevelBadgeVariant(session.status)}>
+                        {session.status}
+                      </Badge>
                     </div>
+                    <h3 className="font-bold text-white">{session.topic}</h3>
+                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-xs text-gray-300">
+                      {formatDate(session.startTime)} –{" "}
+                      {new Date(session.startTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center gap-1">
+                        <IndianRupee size={18} className="text-green-400" />
+                        <span className="text-lg font-bold">
+                          {session.sessionFee}/-
+                        </span>
+                      </div>
 
-                    {isScheduled ? (
-                      <Button variant="secondary" disabled>
-                        Scheduled
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="success"
-                        onClick={() =>
-                          handlePayToSchedule(session._id, session.sessionFee)
-                        }
-                      >
-                        Pay to Schedule
-                      </Button>
-                    )}
-                  </div>
-                </SpokelyCard>
-              );
-            })}
-          </div>
-        ) : (
-          <SpokelyCard variant="secondary" className="text-center py-12 bg-white/10">
-            <div className="max-w-md mx-auto">
-              <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                No sessions found
-              </h3>
-              <p className="text-gray-400">
-                {searchTerm || selectedFilter !== "all"
-                  ? "Try adjusting your search or filter criteria"
-                  : "No public sessions are currently available"}
-              </p>
+                      {isScheduled ? (
+                        <Button variant="secondary" disabled>
+                          Scheduled
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="success"
+                          onClick={() =>
+                            handlePayToSchedule(session._id, session.sessionFee)
+                          }
+                        >
+                          Pay to Schedule
+                        </Button>
+                      )}
+                    </div>
+                  </SpokelyCard>
+                );
+              })}
             </div>
-          </SpokelyCard>
+          </>
+        )}
+
+        {/* 🟢 Other Sessions Section */}
+        {otherSessions.length > 0 ? (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Other Sessions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherSessions.map((session) => {
+                const isScheduled = session.participants.some(
+                  (p) => p.user === user?.id
+                );
+
+                return (
+                  <SpokelyCard
+                    key={session._id}
+                    className="bg-white/10 border shadow-lg relative flex flex-col"
+                  >
+                    <div className="absolute top-4 right-4">
+                      <Badge variant={getLevelBadgeVariant(session.status)}>
+                        {session.status}
+                      </Badge>
+                    </div>
+                    <h3 className="font-bold text-white">{session.topic}</h3>
+                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-xs text-gray-300">
+                      {formatDate(session.startTime)} –{" "}
+                      {new Date(session.startTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center gap-1">
+                        <IndianRupee size={18} className="text-green-400" />
+                        <span className="text-lg font-bold">
+                          {session.sessionFee}/-
+                        </span>
+                      </div>
+
+                      {isScheduled ? (
+                        <Button variant="secondary" disabled>
+                          Scheduled
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="success"
+                          onClick={() =>
+                            handlePayToSchedule(session._id, session.sessionFee)
+                          }
+                        >
+                          Pay to Schedule
+                        </Button>
+                      )}
+                    </div>
+                  </SpokelyCard>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          !loading &&
+          todayUpcoming.length === 0 && (
+            <SpokelyCard variant="secondary" className="text-center py-12 bg-white/10">
+              <div className="max-w-md mx-auto">
+                <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                  No sessions found
+                </h3>
+                <p className="text-gray-400">
+                  {searchTerm || selectedFilter !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "No public sessions are currently available"}
+                </p>
+              </div>
+            </SpokelyCard>
+          )
         )}
       </main>
 
@@ -391,10 +459,7 @@ const MentorPublicSessions = () => {
               ✕
             </button>
             <h2 className="text-lg font-bold mb-4">Complete Payment</h2>
-
-            {/* PayPal renders here */}
             <div id="paypal-button-container" />
-
             {isProcessing && (
               <div className="mt-4 text-sm text-gray-600 text-center">
                 Finalizing payment… please wait
@@ -404,6 +469,7 @@ const MentorPublicSessions = () => {
         </div>
       )}
 
+      {/* Payment Result Modal */}
       {paymentResult && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">

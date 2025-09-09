@@ -14,7 +14,12 @@ import "reflect-metadata";
 import { logger } from "./middleware/logger";
 import helmet from "helmet";
 import mentorRoutes from "./routes/mentor.routes";
-import paymentRoutes from './routes/payment.routes';
+import paymentRoutes from "./routes/payment.routes";
+import subscriptionRouter from "./routes/subscription.routes";
+
+import  container  from "./config/inversify.config";
+import { TYPES } from "./types/types";
+import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
 
 dotenv.config();
 const app = express();
@@ -29,7 +34,6 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(cookieParser());
 
 app.use(
@@ -40,31 +44,33 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
-      // httpOnly:true
     },
   })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
-
 app.use(logger);
-
 app.use(helmet());
 
-app.use("/payment",paymentRoutes);
+app.use("/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users/connections", connectionsRoutes);
 app.use("/api/users/session", sessionRoutes);
+app.use("/api/subscription", subscriptionRouter);
 
 connectDB()
-  .then(() => {
+  .then(async () => {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    const subscriptionService = container.get<ISubscriptionService>(TYPES.ISubscriptionService);
+    subscriptionService.scheduleCronJobs();
+    console.log("Subscription cron job scheduled.");
   })
   .catch((error) => {
     console.error("Failed to connect to database:", error);

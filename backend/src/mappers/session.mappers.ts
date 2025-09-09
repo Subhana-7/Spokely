@@ -21,6 +21,7 @@ export const mapToCreateSessionDTO = (body: any, userId: string): CreateSessionD
     startTime: new Date(body.startTime),
     endTime: body.endTime ? new Date(body.endTime) : undefined,
     createdBy: new Types.ObjectId(userId),
+    createdByModel:body.role,
     participants,
     sessionFee: body.sessionFee,
     status: body.status || 'pending',

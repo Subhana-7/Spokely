@@ -20,4 +20,11 @@ export interface ISessionRepository {
     reason: string,
     toUser?: string
   ): Promise<ISession | null>;
+
+  addFeedback(
+    sessionId: string,
+    feedback: { from: string; to: string; comment: string; rating?: number }
+  ): Promise<ISession | null>
+
+  findSessions(query: any): Promise<ISession[] | null>
 }
