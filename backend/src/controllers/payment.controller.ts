@@ -4,6 +4,7 @@ import { IPaymentService } from "../services/interfaces/IPaymentService";
 import { IPaymentController } from "./interfaces/IPaymentController";
 import { TYPES } from "../types/types";
 import { inject, injectable } from "inversify";
+import { StatusCode } from "../utilis/status.code";
 
 @injectable()
 export class PaymentController implements IPaymentController {
@@ -11,73 +12,55 @@ export class PaymentController implements IPaymentController {
     @inject(TYPES.IPaymentService) private paymentService: IPaymentService
   ) {}
 
-  createOrder = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
+  createOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       if (!req.id) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
       const result = await this.paymentService.createOrder(req.id, req.body);
-      res.json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
   };
 
-  captureOrder = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
+  captureOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       if (!req.id) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
       const result = await this.paymentService.captureOrder(req.id, req.body);
-      res.json({ message: "Payment captured successfully", data: result });
+      res.status(StatusCode.OK).json({ message: "Payment captured successfully", data: result });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
   };
 
-  createSubscription = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
+  createSubscription = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       if (!req.id) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
-      const result = await this.paymentService.createSubscription(
-        req.id,
-        req.body
-      );
-      res.json(result);
+      const result = await this.paymentService.createSubscription(req.id, req.body);
+      res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
   };
 
-  captureSubscription = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
+  captureSubscription = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       if (!req.id) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
-      const result = await this.paymentService.captureSubscription(
-        req.id,
-        req.body
-      );
-      res.json({ message: "Subscription captured successfully", data: result });
+      const result = await this.paymentService.captureSubscription(req.id, req.body);
+      res.status(StatusCode.OK).json({ message: "Subscription captured successfully", data: result });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
   };
 }

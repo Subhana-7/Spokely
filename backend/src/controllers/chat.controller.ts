@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IChatService } from "../services/interfaces/IChatService";
+import { StatusCode } from "../utilis/status.code";
 
 @injectable()
 export class ChatController {
@@ -14,9 +15,9 @@ export class ChatController {
     try {
       const { sessionId } = req.params;
       const messages = await this.chatService.getMessages(sessionId);
-      res.json({ messages });
+      res.status(StatusCode.OK).json({ messages });
     } catch (err) {
-      res.status(500).json({ message: "Failed to fetch messages" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Failed to fetch messages" });
     }
   };
 
@@ -27,17 +28,13 @@ export class ChatController {
       const sender = req.id!;
 
       if (!sender) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
       }
 
-      const message = await this.chatService.sendMessage(
-        sessionId,
-        sender,
-        text
-      );
-      res.json({ message });
+      const message = await this.chatService.sendMessage(sessionId, sender, text);
+      res.status(StatusCode.OK).json({ message });
     } catch (err) {
-      res.status(500).json({ message: "Failed to send message" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Failed to send message" });
     }
   };
 }

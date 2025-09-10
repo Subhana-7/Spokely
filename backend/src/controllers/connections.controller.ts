@@ -4,6 +4,7 @@ import { IConnectionController } from "./interfaces/IConnectionsController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IConnectionService } from "../services/interfaces/IConnectionsService";
+import { StatusCode } from "../utilis/status.code";
 
 @injectable()
 export class ConnectionController implements IConnectionController {
@@ -18,13 +19,10 @@ export class ConnectionController implements IConnectionController {
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
-      const connection = await this.service.sendConnectionRequest(
-        senderId,
-        uniqueCode
-      );
-      res.status(201).json(connection);
+      const connection = await this.service.sendConnectionRequest(senderId, uniqueCode);
+      res.status(StatusCode.CREATED).json(connection);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   }
 
@@ -33,59 +31,47 @@ export class ConnectionController implements IConnectionController {
       if (!req.id) throw new Error("User not authenticated");
 
       const requests = await this.service.getIncomingRequests(req.id);
-      res.status(200).json(requests);
+      res.status(StatusCode.OK).json(requests);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async acceptConnection(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
+  async acceptConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
       const { requestId } = req.params;
       const userId = req.id;
-
       const accepted = await this.service.acceptRequest(requestId, userId);
-      res.status(200).json(accepted);
+      res.status(StatusCode.OK).json(accepted);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async listConnections(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
+  async listConnections(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
       const userId = req.id;
       const search = req.query.search as string;
-
       const connections = await this.service.getAllConnections(userId, search);
 
-      console.log("checkin", connections);
-      res.status(200).json(connections);
+      res.status(StatusCode.OK).json(connections);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async getSentRequests(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
+  async getSentRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error("User not authenticated");
 
       const requests = await this.service.getOutgoingRequests(req.id);
-      res.status(200).json(requests);
+      res.status(StatusCode.OK).json(requests);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   }
 }

@@ -12,6 +12,7 @@ import {
   UpdateRoleDTO,
 } from "../dto/user.dto";
 import { IUserController } from "./interfaces/IUserController";
+import { StatusCode } from "../utilis/status.code";
 
 @injectable()
 export class UserController implements IUserController {
@@ -20,9 +21,9 @@ export class UserController implements IUserController {
   signup = async (req: Request<{}, {}, SignupDTO>, res: Response) => {
     try {
       const user = await this.service.signup(req.body);
-      res.status(201).json(user);
+      res.status(StatusCode.CREATED).json(user);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -32,9 +33,9 @@ export class UserController implements IUserController {
       res.cookie("auth-token", result.accessToken, { httpOnly: true });
       res.cookie("refresh-token", result.refreshToken, { httpOnly: true });
       res.cookie("role", result.user.role, { httpOnly: false });
-      res.status(200).json({ user: result.user });
+      res.status(StatusCode.OK).json({ user: result.user });
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -42,7 +43,7 @@ export class UserController implements IUserController {
     res.clearCookie("auth-token");
     res.clearCookie("refresh-token");
     res.clearCookie("role");
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(StatusCode.OK).json({ message: "Logged out successfully" });
   };
 
   refreshToken = async (req: Request, res: Response) => {
@@ -51,9 +52,9 @@ export class UserController implements IUserController {
         req.cookies["refresh-token"]
       );
       res.cookie("auth-token", result.accessToken, { httpOnly: true });
-      res.status(200).json({ user: result.user });
+      res.status(StatusCode.OK).json({ user: result.user });
     } catch (err: any) {
-      res.status(401).json({ message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
 
@@ -62,30 +63,28 @@ export class UserController implements IUserController {
     res: Response,
     next: Function
   ) => {
-    // delegate to passport or middleware
     next();
   };
 
   googleCallback = async (req: Request, res: Response, next: Function) => {
-    // delegate to passport callback
     next();
   };
 
   home = async (req: Request, res: Response) => {
     try {
       const user = await this.service.getHome(req.params.id);
-      res.status(200).json(user);
+      res.status(StatusCode.OK).json(user);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
     try {
       await this.service.sendOtp(req.body.email);
-      res.status(200).json({ message: "OTP sent to email" });
+      res.status(StatusCode.OK).json({ message: "OTP sent to email" });
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -95,9 +94,9 @@ export class UserController implements IUserController {
         req.body.email,
         req.body.code
       );
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -107,9 +106,11 @@ export class UserController implements IUserController {
   ) => {
     try {
       await this.service.forgotPassword(req.body);
-      res.status(200).json({ message: "Password reset OTP sent to email" });
+      res
+        .status(StatusCode.OK)
+        .json({ message: "Password reset OTP sent to email" });
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -119,9 +120,9 @@ export class UserController implements IUserController {
   ) => {
     try {
       const result = await this.service.verifyForgotPassword(req.body);
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -131,36 +132,36 @@ export class UserController implements IUserController {
         (req as any).userId,
         req.body.role
       );
-      res.status(200).json({ message: "Role updated", user });
+      res.status(StatusCode.OK).json({ message: "Role updated", user });
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   getAllUsers = async (_req: Request, res: Response) => {
     try {
       const users = await this.service.getAllUsers();
-      res.status(200).json(users);
+      res.status(StatusCode.OK).json(users);
     } catch (err: any) {
-      res.status(500).json({ message: err.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: err.message });
     }
   };
 
   profile = async (req: Request, res: Response) => {
     try {
       const user = await this.service.getHome(req.params.id);
-      res.status(200).json(user);
+      res.status(StatusCode.OK).json(user);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   editUser = async (req: Request, res: Response) => {
     try {
       const user = await this.service.updateUser(req.params.id, req.body);
-      res.status(200).json(user);
+      res.status(StatusCode.OK).json(user);
     } catch (err: any) {
-      res.status(500).json({ message: err.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: err.message });
     }
   };
 }

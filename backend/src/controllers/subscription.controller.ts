@@ -7,6 +7,7 @@ import {
   mapToCreateSubscriptionDTO,
   mapToSetMentorPlansDTO,
 } from "../mappers/subscription.mapper";
+import { StatusCode } from "../utilis/status.code";
 
 @injectable()
 export class SubscriptionController implements ISubscriptionController {
@@ -19,9 +20,9 @@ export class SubscriptionController implements ISubscriptionController {
     try {
       const dto = mapToCreateSubscriptionDTO(req.body);
       const subscription = await this.subscriptionService.subscribe(dto);
-      res.json({ success: true, subscription });
+      res.status(StatusCode.OK).json({ success: true, subscription });
     } catch (err: any) {
-      res.status(400).json({
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || "Subscription failed",
       });
@@ -32,20 +33,20 @@ export class SubscriptionController implements ISubscriptionController {
     const subs = await this.subscriptionService.getUserSubscriptions(
       req.params.id
     );
-    res.json(subs);
+    res.status(StatusCode.OK).json(subs);
   }
 
   async getMentorSubscriptions(req: Request, res: Response): Promise<void> {
     const subs = await this.subscriptionService.getMentorSubscriptions(
       req.params.id
     );
-    res.json(subs);
+    res.status(StatusCode.OK).json(subs);
   }
 
   async cancelSubscription(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const sub = await this.subscriptionService.cancelSubscription(id);
-    res.json(sub);
+    res.status(StatusCode.OK).json(sub);
   }
 
   async getMentorPlans(req: Request, res: Response): Promise<void> {
@@ -54,13 +55,17 @@ export class SubscriptionController implements ISubscriptionController {
       const plans = await this.subscriptionService.getMentorPlans(mentorId);
 
       if (!plans || plans.length === 0) {
-        res.json({ message: "mentor has no subscription", plans: [] });
+        res.status(StatusCode.NOT_FOUND).json({
+          message: "mentor has no subscription",
+          plans: [],
+        });
+        return;
       }
 
-      res.json(plans);
+      res.status(StatusCode.OK).json(plans);
     } catch (err) {
       res
-        .status(500)
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: "Failed to fetch plans" });
     }
   }
@@ -69,9 +74,9 @@ export class SubscriptionController implements ISubscriptionController {
     try {
       const dto = mapToSetMentorPlansDTO(req.body);
       const result = await this.subscriptionService.saveMentorPlans(dto);
-      res.json({ success: true, plans: result });
+      res.status(StatusCode.OK).json({ success: true, plans: result });
     } catch (err: any) {
-      res.status(400).json({
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || "Failed to save mentor plans",
       });

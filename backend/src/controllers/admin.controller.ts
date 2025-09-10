@@ -5,6 +5,7 @@ import { IAdminService } from "../services/interfaces/IAdminService";
 import { inject } from "inversify";
 import { TYPES } from "../types/types";
 import { generateAccessToken } from "../utilis/token";
+import { StatusCode } from "../utilis/status.code";
 
 export class AdminController implements IAdminController {
   constructor(@inject(TYPES.IAdminService) private service: IAdminService) {}
@@ -15,7 +16,7 @@ export class AdminController implements IAdminController {
       const result = await this.service.login(email, password);
 
       if (!result) {
-        res.status(401).json({ error: "Invalid credentials" });
+        res.status(StatusCode.UNAUTHORIZED).json({ error: "Invalid credentials" });
         return;
       }
 
@@ -40,9 +41,9 @@ export class AdminController implements IAdminController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(200).json({ admin });
+      res.status(StatusCode.OK).json({ admin });
     } catch (err: any) {
-      res.status(401).json({ error: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ error: err.message });
     }
   }
 
@@ -50,12 +51,10 @@ export class AdminController implements IAdminController {
     try {
       const { id: userId } = req.params;
       const { status } = req.body;
-
       const result = await this.service.updateUserStatus(userId, status);
-
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ error: error.message });
     }
   }
 
@@ -63,12 +62,10 @@ export class AdminController implements IAdminController {
     try {
       const { id: mentorId } = req.params;
       const { status } = req.body;
-
       const result = await this.service.updateMentorStatus(mentorId, status);
-
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ error: error.message });
     }
   }
 
@@ -76,9 +73,9 @@ export class AdminController implements IAdminController {
     try {
       const { id } = req.params;
       const data = await this.service.getMentor(id);
-      res.status(200).json(data);
+      res.status(StatusCode.OK).json(data);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ error: error.message });
     }
   }
 
@@ -86,9 +83,9 @@ export class AdminController implements IAdminController {
     try {
       const { id } = req.params;
       const data = await this.service.approveMentor(id);
-      res.status(200).json(data);
+      res.status(StatusCode.OK).json(data);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ error: error.message });
     }
   }
 
@@ -97,9 +94,9 @@ export class AdminController implements IAdminController {
       const { id } = req.params;
       const { rejectionReason } = req.body;
       const data = await this.service.rejectMentor(id, rejectionReason);
-      res.status(200).json(data);
+      res.status(StatusCode.OK).json(data);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ error: error.message });
     }
   }
 
@@ -122,9 +119,9 @@ export class AdminController implements IAdminController {
             : undefined,
       });
 
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: err.message });
     }
   }
 
@@ -147,34 +144,32 @@ export class AdminController implements IAdminController {
             : undefined,
       });
 
-      res.status(200).json(result);
+      res.status(StatusCode.OK).json(result);
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: err.message });
     }
   }
 
   async home(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
       const admin = await this.service.getHome(id);
 
       if (!admin) {
-        res.status(404).json({ message: "Admin not found" });
+        res.status(StatusCode.NOT_FOUND).json({ message: "Admin not found" });
         return;
       }
 
-      res.status(200).json(admin);
+      res.status(StatusCode.OK).json(admin);
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
     }
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
     const token = req.cookies["refresh-token"];
-
     if (!token) {
-      res.status(401).json({ message: "Refresh token missing" });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: "Refresh token missing" });
       return;
     }
 
@@ -185,14 +180,13 @@ export class AdminController implements IAdminController {
       };
 
       if (payload.role !== "admin") {
-        res.status(403).json({ message: "Forbidden" });
+        res.status(StatusCode.FORBIDDEN).json({ message: "Forbidden" });
         return;
       }
 
       const result = await this.service.getHome(payload.id);
-
       if (!result) {
-        res.status(404).json({ message: "Admin not found" });
+        res.status(StatusCode.NOT_FOUND).json({ message: "Admin not found" });
         return;
       }
 
@@ -208,9 +202,9 @@ export class AdminController implements IAdminController {
         maxAge: 15 * 60 * 1000,
       });
 
-      res.status(200).json({ message: "Token refreshed", user: result });
+      res.status(StatusCode.OK).json({ message: "Token refreshed", user: result });
     } catch (error) {
-      res.status(401).json({ message: "Invalid or expired refresh token" });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: "Invalid or expired refresh token" });
     }
   }
 
@@ -225,13 +219,12 @@ export class AdminController implements IAdminController {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
-
     res.clearCookie("role", {
       httpOnly: false,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
 
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(StatusCode.OK).json({ message: "Logged out successfully" });
   }
 }
