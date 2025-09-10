@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
 import container from "../config/inversify.config";
 import { TYPES } from "../types/types";
-import { ChatService } from "../services/chat.service";
+import { IChatService } from "../services/interfaces/IChatService";
 
 export const initChatSocket = (io: Server) => {
-  const chatService = container.get<ChatService>(TYPES.IChatService);
+  const chatService = container.get<IChatService>(TYPES.IChatService);
 
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);

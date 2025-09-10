@@ -4,10 +4,11 @@ import { IEmailService } from "./interfaces/IEmailService";
 import { injectable, inject } from "inversify";
 import { IMentorRepository } from "../repositories/interfaces/IMentorRepository";
 import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { toMentorResponseDTO } from "../mappers/mentor.mapper";
+import { MentorResponseDTO } from "../dto/mentor.dto";
 
 @injectable()
 export class MentorService implements IMentorService {
@@ -27,16 +28,12 @@ export class MentorService implements IMentorService {
   }
 
   private async passwordValidation(password: string): Promise<void> {
-    try {
-      const strongPasswordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-      if (!strongPasswordRegex.test(password)) {
-        throw new Error(
-          "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
-        );
-      }
-    } catch (error) {
-      console.log("error", error);
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+      throw new Error(
+        "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
+      );
     }
   }
 
@@ -63,7 +60,7 @@ export class MentorService implements IMentorService {
     return { message: "Email verified successfully" };
   }
 
-  async signup(data: any): Promise<IMentor | null> {
+  async signup(data: any): Promise<MentorResponseDTO | null> {
     const existing = await this.repo.findByEmail(data.email);
     if (existing) throw new Error("Email already registered");
 
@@ -76,16 +73,21 @@ export class MentorService implements IMentorService {
       verificationStatus: "pending",
     };
 
-    return this.repo.createMentor({
+    const mentor = await this.repo.createMentor({
       ...data,
       password: hashed,
       uniqueCode,
       document,
     });
+
+    return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
-  async login(data: any): Promise<{ mentor: IMentor; accessToken: string;
-    refreshToken: string;} | null> {
+  async login(data: any): Promise<{
+    mentor: MentorResponseDTO;
+    accessToken: string;
+    refreshToken: string;
+  } | null> {
     const mentor = await this.repo.findByEmail(data.email);
     if (!mentor) throw new Error("Invalid credentials");
 
@@ -94,85 +96,58 @@ export class MentorService implements IMentorService {
     const match = await bcrypt.compare(data.password, mentor.password);
     if (!match) throw new Error("Invalid credentials");
 
-    const token = jwt.sign(
-      { id: mentor._id, role: "mentor" },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
-
     return {
-      mentor,
+      mentor: toMentorResponseDTO(mentor),
       accessToken: generateAccessToken({ id: mentor._id, role: "mentor" }),
       refreshToken: generateRefreshToken({ id: mentor._id, role: "mentor" }),
     };
   }
 
-  async getAllMentors(): Promise<IMentor[] | null> {
-    return this.repo.findAll();
+  async getAllMentors(): Promise<MentorResponseDTO[] | null> {
+    const mentors = await this.repo.findAll();
+    return mentors ? mentors.map(toMentorResponseDTO) : null;
   }
 
   async updateMentorDocument(
     email: string,
     docUrl: string,
     docMessage: string
-  ): Promise<IMentor | null> {
-    return this.repo.updateMentorDocument(email, docUrl, docMessage);
+  ): Promise<MentorResponseDTO | null> {
+    const mentor = await this.repo.updateMentorDocument(email, docUrl, docMessage);
+    return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
-  async forgotPassword(email:string,newPassword:string):Promise<void | null>{
-    try {
-      const mentor = await this.repo.findByEmail(email);
+  async forgotPassword(email: string, newPassword: string): Promise<void> {
+    const mentor = await this.repo.findByEmail(email);
+    if (!mentor) throw new Error("Mentor not found");
 
-      if(!mentor) throw new Error("Mentor not found");
+    await this.passwordValidation(newPassword);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      await this.passwordValidation(newPassword);
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      const hashedPassword = await bcrypt.hash(newPassword,10);
-
-      const otp = this.generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-      await this.repo.updateForgotPasswordOTP(email,otp,expiresAt,hashedPassword);
-
-      await this.emailService.sendOTPEmail(email,otp,true);
-    } catch (error) {
-      console.log("error", error);
-      throw error;
-    }
+    await this.repo.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
+    await this.emailService.sendOTPEmail(email, otp, true);
   }
 
   async verifyForgotPassword(
     email: string,
     code: string
-  ): Promise<{ message: string } | null> {
-     try {
-      const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
-      if (!isValid) {
-        throw new Error("Invalid or expired OTP");
-      }
+  ): Promise<{ message: string }> {
+    const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
+    if (!isValid) throw new Error("Invalid or expired OTP");
 
-      return { message: "Password reset successfully" };
-    } catch (error) {
-      console.log("error", error);
-      throw error;
-    }
+    return { message: "Password reset successfully" };
   }
 
-    async getHome(id:string):Promise<IMentor | null> {
-      try {
-        return await this.repo.findById(id)
-      } catch (error) {
-        console.log("error", error);
-        return null;
-      }
-    }
+  async getHome(id: string): Promise<MentorResponseDTO | null> {
+    const mentor = await this.repo.findById(id);
+    return mentor ? toMentorResponseDTO(mentor) : null;
+  }
 
-    async updateMentor(id:string,data:any):Promise<IMentor|null>{
-      try {
-        return await this.repo.updateMentor(id,data);
-      } catch (error) {
-        console.log("error", error);
-    return null;
-      }
-    }
+  async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
+    const mentor = await this.repo.updateMentor(id, data);
+    return mentor ? toMentorResponseDTO(mentor) : null;
+  }
 }

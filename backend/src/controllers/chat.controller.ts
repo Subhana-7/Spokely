@@ -2,7 +2,6 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
-import { ChatService } from "../services/chat.service";
 import { IChatService } from "../services/interfaces/IChatService";
 
 @injectable()
@@ -11,23 +10,17 @@ export class ChatController {
     @inject(TYPES.IChatService) private readonly chatService: IChatService
   ) {}
 
-  getMessages = async (req: AuthenticatedRequest, res: Response) => {
+  getMessages = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
-
-      const participants = sessionId.split("_");
-
-      const messages = await this.chatService.getMessages(
-        sessionId,
-        participants
-      );
+      const messages = await this.chatService.getMessages(sessionId);
       res.json({ messages });
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch messages" });
     }
   };
 
-  sendMessage = async (req: AuthenticatedRequest, res: Response) => {
+  sendMessage = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
       const { text } = req.body;

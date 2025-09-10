@@ -1,10 +1,11 @@
-import { IMessage } from "../../models/message.model";
+import { MessageDto } from "../../dto/chat.dto";
 
 export interface IChatService {
   sendMessage(
     sessionId: string,
     sender: string,
     text: string
-  ): Promise<IMessage>;
-  getMessages(sessionId: string, participants: string[]): Promise<IMessage[]>;
+  ): Promise<MessageDto>;
+
+  getMessages(sessionId: string): Promise<MessageDto[]>;
 }

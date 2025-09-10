@@ -1,15 +1,18 @@
-import { 
-  CreateSessionDTO, 
-  UpdateSessionDTO, 
-  ParticipantDTO, 
-  FlagSessionDTO 
+import {
+  CreateSessionDTO,
+  UpdateSessionDTO,
+  ParticipantDTO,
+  FlagSessionDTO,
 } from "../dto/session.dto";
 import { Types } from "mongoose";
 
-export const mapToCreateSessionDTO = (body: any, userId: string): CreateSessionDTO => {
+export const mapToCreateSessionDTO = (
+  body: any,
+  userId: string
+): CreateSessionDTO => {
   const participants: ParticipantDTO[] = body.participants?.map((p: any) => ({
     user: new Types.ObjectId(p.user || p),
-    status: p.status ?? 'pending', 
+    status: p.status ?? "pending",
     cancelReason: p.cancelReason,
   }));
 
@@ -21,17 +24,17 @@ export const mapToCreateSessionDTO = (body: any, userId: string): CreateSessionD
     startTime: new Date(body.startTime),
     endTime: body.endTime ? new Date(body.endTime) : undefined,
     createdBy: new Types.ObjectId(userId),
-    createdByModel:body.role,
+    createdByModel: body.role,
     participants,
     sessionFee: body.sessionFee,
-    status: body.status || 'pending',
+    status: body.status || "pending",
   };
 };
 
 export const mapToUpdateSessionDTO = (body: any): UpdateSessionDTO => {
   const participants: ParticipantDTO[] = body.participants?.map((p: any) => ({
     user: new Types.ObjectId(p.user || p),
-    status: p.status ?? 'pending',
+    status: p.status ?? "pending",
     cancelReason: p.cancelReason,
   }));
 
@@ -50,7 +53,10 @@ export const mapToUpdateSessionDTO = (body: any): UpdateSessionDTO => {
   };
 };
 
-export const mapToFlagSessionDTO = (body: any, userId: string): FlagSessionDTO => {
+export const mapToFlagSessionDTO = (
+  body: any,
+  userId: string
+): FlagSessionDTO => {
   return {
     sessionId: body.sessionId,
     userId,

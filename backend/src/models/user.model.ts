@@ -43,12 +43,12 @@ const userSchema = new Schema<IUser>(
     phone: { type: Number },
     otp: {
       code: { type: String },
-      expiresAt: { type: Date }
+      expiresAt: { type: Date },
     },
     forgotPasswordOtp: {
       code: { type: String },
       expiresAt: { type: Date },
-      newPassword: { type: String }
+      newPassword: { type: String },
     },
     googleId: { type: String, default: null },
     isGoogleUser: { type: Boolean, default: false },
@@ -60,7 +60,7 @@ const userSchema = new Schema<IUser>(
     levels: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
     completionRate: { type: Number, default: 0 },
-    role:{type:String,default:"user"}
+    role: { type: String, default: "user" },
   },
   { timestamps: true }
 );

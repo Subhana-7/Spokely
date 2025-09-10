@@ -84,56 +84,34 @@ async getAcceptedConnections(
   search?: string
 ): Promise<PopulatedConnection[] | null> {
   try {
-    const match: any = {
+    let query = ConnectionModel.find({
+      $or: [{ userId }, { connectedUserId: userId }],
       status: "accepted",
       isBlocked: false,
       isRemoved: false,
-      $or: [{ userId }, { connectedUserId: userId }],
-    };
-
-    const pipeline: any[] = [
-      { $match: match },
-      {
-        $addFields: {
-          otherUserId: {
-            $cond: [
-              { $eq: ["$userId", userId] },
-              "$connectedUserId",
-              "$userId",
-            ],
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "otherUserId",
-          foreignField: "_id",
-          as: "connectionWith",
-        },
-      },
-      { $unwind: "$connectionWith" },
-    ];
+    })
+      .populate("userId", "name email profilePicture role uniqueCode")
+      .populate("connectedUserId", "name email profilePicture role uniqueCode");
 
     if (search) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { "connectionWith.name": { $regex: search, $options: "i" } },
-            { "connectionWith.email": { $regex: search, $options: "i" } },
-          ],
-        },
+      const regex = new RegExp(search, "i");
+      query = query.find({
+        $or: [
+          { "userId.name": { $regex: regex } },
+          { "userId.email": { $regex: regex } },
+          { "connectedUserId.name": { $regex: regex } },
+          { "connectedUserId.email": { $regex: regex } },
+        ],
       });
     }
 
-    const connections = await ConnectionModel.aggregate(pipeline);
-    return connections as PopulatedConnection[];
+    const connections = await query.exec();
+    return connections as unknown as PopulatedConnection[];
   } catch (error) {
     console.log("getAcceptedConnections error", error);
     return null;
   }
 }
-
 
 
   async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {

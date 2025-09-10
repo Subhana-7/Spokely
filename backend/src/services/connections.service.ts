@@ -1,4 +1,3 @@
-import { ConnectionRepository } from "../repositories/connections.repository";
 import UserModel from "../models/user.model";
 import { Types } from "mongoose";
 import { IConnectionService } from "./interfaces/IConnectionsService";
@@ -7,6 +6,8 @@ import { TYPES } from "../types/types";
 import { inject, injectable } from "inversify";
 import { IConnectionRepository } from "../repositories/interfaces/IConnectionsRepository";
 import { PopulatedConnection } from "../types/populated";
+import { ConnectionDTO } from "../dto/connection.dto";
+import { mapConnectionToDTO } from "../mappers/connection.mappers";
 
 @injectable()
 export class ConnectionService implements IConnectionService {
@@ -17,15 +18,13 @@ export class ConnectionService implements IConnectionService {
   async sendConnectionRequest(
     senderId: string,
     uniqueCode: string
-  ): Promise<IConnection | null> {
+  ): Promise<ConnectionDTO | null> {
     try {
-
       const receiver = await UserModel.findOne({
         uniqueCode: uniqueCode,
         isBlocked: false,
         isVerified: true,
       });
-
 
       if (!receiver) throw new Error("User not found or not verified");
       if (receiver._id.equals(senderId))
@@ -38,21 +37,22 @@ export class ConnectionService implements IConnectionService {
 
       if (existing) throw new Error("Connection already exists");
 
-      return await this.repo.createConnection(
+      const connection = await this.repo.createConnection(
         new Types.ObjectId(senderId),
         receiver._id
       );
+
+      return connection ? mapConnectionToDTO(connection as unknown as PopulatedConnection) : null;
     } catch (error) {
       console.log("sendConnectionRequest error", error);
       return null;
     }
   }
 
-  async getIncomingRequests(
-    userId: string
-  ): Promise<PopulatedConnection[] | null> {
+  async getIncomingRequests(userId: string): Promise<ConnectionDTO[] | null> {
     try {
-      return await this.repo.getReceivedRequests(new Types.ObjectId(userId));
+      const requests = await this.repo.getReceivedRequests(new Types.ObjectId(userId));
+      return requests ? requests.map(mapConnectionToDTO) : null;
     } catch (error) {
       console.log("getIncomingRequests error", error);
       return null;
@@ -62,33 +62,39 @@ export class ConnectionService implements IConnectionService {
   async acceptRequest(
     requestId: string,
     userId: string
-  ): Promise<IConnection | null> {
+  ): Promise<ConnectionDTO | null> {
     try {
-      return await this.repo.acceptRequest(
+      const connection = await this.repo.acceptRequest(
         requestId,
         new Types.ObjectId(userId)
       );
+      return connection ? mapConnectionToDTO(connection as unknown as PopulatedConnection) : null;
     } catch (error) {
       console.log("acceptRequest error", error);
       return null;
     }
   }
 
-  async getAllConnections(userId: string, search?: string): Promise<PopulatedConnection[] | null> {
-  try {
-    return await this.repo.getAcceptedConnections(new Types.ObjectId(userId), search);
-  } catch (error) {
-    console.log("getAllConnections error", error);
-    return null;
-  }
-}
-
-
-  async getOutgoingRequests(
-    userId: string
-  ): Promise<PopulatedConnection[] | null> {
+  async getAllConnections(
+    userId: string,
+    search?: string
+  ): Promise<ConnectionDTO[] | null> {
     try {
-      return await this.repo.getSentRequests(new Types.ObjectId(userId));
+      const connections = await this.repo.getAcceptedConnections(
+        new Types.ObjectId(userId),
+        search
+      );
+      return connections ? connections.map(mapConnectionToDTO) : null;
+    } catch (error) {
+      console.log("getAllConnections error", error);
+      return null;
+    }
+  }
+
+  async getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null> {
+    try {
+      const requests = await this.repo.getSentRequests(new Types.ObjectId(userId));
+      return requests ? requests.map(mapConnectionToDTO) : null;
     } catch (error) {
       console.log("getOutgoingRequests error", error);
       return null;
@@ -98,12 +104,13 @@ export class ConnectionService implements IConnectionService {
   async rejectRequest(
     requestId: string,
     userId: string
-  ): Promise<IConnection | null> {
+  ): Promise<ConnectionDTO | null> {
     try {
-      return await this.repo.rejectRequest(
+      const connection = await this.repo.rejectRequest(
         requestId,
         new Types.ObjectId(userId)
       );
+      return connection ? mapConnectionToDTO(connection as unknown as PopulatedConnection) : null;
     } catch (error) {
       console.log("rejectRequest error", error);
       return null;

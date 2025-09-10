@@ -1,27 +1,13 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { AdminService } from "../services/admin.service";
 import { IAdminController } from "./interfaces/IAdminController";
 import { IAdminService } from "../services/interfaces/IAdminService";
-import { inject, injectable } from "inversify";
+import { inject } from "inversify";
 import { TYPES } from "../types/types";
-import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
-import { AdminLoginDto, AdminResponseDto } from "../dto/admin.dto";
-import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken } from "../utilis/token";
 
 export class AdminController implements IAdminController {
-  constructor(@inject(TYPES.IAdminService) private service: IAdminService) {
-    this.adminLogin = this.adminLogin.bind(this);
-    this.listUsers = this.listUsers.bind(this);
-    this.listMentors = this.listMentors.bind(this);
-    this.updateUserStatus = this.updateUserStatus.bind(this);
-    // this.deleteUser = this.deleteUser.bind(this);
-    this.mentorVerification = this.mentorVerification.bind(this);
-    this.approveMentor = this.approveMentor.bind(this);
-    this.rejectMentor = this.rejectMentor.bind(this);
-    this.updateMentorStatus = this.updateMentorStatus.bind(this);
-  }
+  constructor(@inject(TYPES.IAdminService) private service: IAdminService) {}
 
   async adminLogin(req: Request, res: Response): Promise<void> {
     try {
@@ -33,21 +19,20 @@ export class AdminController implements IAdminController {
         return;
       }
 
-      const {admin, accessToken, refreshToken} = result;
+      const { admin, accessToken, refreshToken } = result;
 
-     res.cookie("auth-token", accessToken, {
+      res.cookie("auth-token", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 15 * 60 * 1000, // 15 mins
+        maxAge: 15 * 60 * 1000,
       });
       res.cookie("refresh-token", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
       res.cookie("role", admin.role, {
         httpOnly: false,
         secure: process.env.NODE_ENV === "production",
@@ -55,64 +40,22 @@ export class AdminController implements IAdminController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      const adminDTO = mapAdminToDto(admin)
-
-      res.status(200).json({ admin: adminDTO });
+      res.status(200).json({ admin });
     } catch (err: any) {
       res.status(401).json({ error: err.message });
     }
   }
-
-  // async listUsers(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const users = await this.service.getAllUsers();
-  //     const usersDto = users?.map(mapUserToSummaryDto);
-  //     res.status(200).json(usersDto);
-  //   } catch (err: any) {
-  //     res.status(500).json({ error: err.message });
-  //   }
-  // }
-
-  // async listMentors(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const mentors = await this.service.getAllMentors();
-  //     res.status(200).json(mentors);
-  //   } catch (err: any) {
-  //     res.status(500).json({ error: err.message });
-  //   }
-  // }
 
   async updateUserStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id: userId } = req.params;
       const { status } = req.body;
 
-      const actions: Record<string, () => Promise<any>> = {
-        unBlocked: () => this.service.unblockUser(userId),
-        blocked: () => this.service.blockUser(userId),
-      };
+      const result = await this.service.updateUserStatus(userId, status);
 
-      const action = actions[status];
-
-      // if (!action) {
-      //   return res.status(400).json({ error: "Invalid status value" });
-      // }
-
-      const result = await action();
-
-      res.status(200).json({
-        message: `User successfully ${
-          status === "unBlocked" ? "unblocked" : "blocked"
-        }.`,
-        user: result,
-      });
-    } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update user status",
-      });
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   }
 
@@ -121,45 +64,13 @@ export class AdminController implements IAdminController {
       const { id: mentorId } = req.params;
       const { status } = req.body;
 
-      const actions: Record<string, () => Promise<any>> = {
-        unBlocked: () => this.service.unblockMentor(mentorId),
-        blocked: () => this.service.blockMentor(mentorId),
-      };
+      const result = await this.service.updateMentorStatus(mentorId, status);
 
-      const action = actions[status];
-
-      // if (!action) {
-      //   return res.status(400).json({ error: "Invalid status value" });
-      // }
-
-      const result = await action();
-
-      res.status(200).json({
-        message: `Mentor successfully ${
-          status === "unBlocked" ? "unblocked" : "blocked"
-        }.`,
-        user: result,
-      });
-    } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update user status",
-      });
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   }
-
-  // async deleteUser(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     console.log("controller - delete");
-  //     const { id } = req.params;
-  //     await this.service.deleteUser(id);
-  //     res.status(200).json({ message: "User deleted" });
-  //   } catch (err: any) {
-  //     res.status(500).json({ error: err.message });
-  //   }
-  // }
 
   async mentorVerification(req: Request, res: Response): Promise<void> {
     try {
@@ -194,41 +105,24 @@ export class AdminController implements IAdminController {
 
   async listUsers(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        page = "1",
-        limit = "10",
-        search = "",
-        level,
-        minSessions,
-        maxSessions,
-        minMentors,
-        maxMentors,
-        isBlocked,
-      } = req.query;
-
       const result = await this.service.getAllUsersWithQuery({
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        search: search as string,
-        level: level as string,
-        minSessions: minSessions ? +minSessions : undefined,
-        maxSessions: maxSessions ? +maxSessions : undefined,
-        minMentors: minMentors ? +minMentors : undefined,
-        maxMentors: maxMentors ? +maxMentors : undefined,
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 10,
+        search: (req.query.search as string) || "",
+        level: req.query.level as string,
+        minSessions: req.query.minSessions ? +req.query.minSessions : undefined,
+        maxSessions: req.query.maxSessions ? +req.query.maxSessions : undefined,
+        minMentors: req.query.minMentors ? +req.query.minMentors : undefined,
+        maxMentors: req.query.maxMentors ? +req.query.maxMentors : undefined,
         isBlocked:
-          isBlocked === "true"
+          req.query.isBlocked === "true"
             ? true
-            : isBlocked === "false"
+            : req.query.isBlocked === "false"
             ? false
             : undefined,
       });
 
-      const usersDto = result.users.map(mapUserToSummaryDto);
-
-      res.status(200).json({
-        users: usersDto,
-        total: result.total,
-      });
+      res.status(200).json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -236,28 +130,19 @@ export class AdminController implements IAdminController {
 
   async listMentors(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        page = "1",
-        limit = "10",
-        search = "",
-        sortBy,
-        verificationStatus,
-        isBlocked,
-      } = req.query;
-
       const result = await this.service.getAllMentorsWithQuery({
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        search: search as string,
-        sortBy: sortBy as "students" | "sessions",
-        verificationStatus: verificationStatus as
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 10,
+        search: (req.query.search as string) || "",
+        sortBy: req.query.sortBy as "students" | "sessions",
+        verificationStatus: req.query.verificationStatus as
           | "pending"
           | "approved"
           | "rejected",
         isBlocked:
-          isBlocked === "true"
+          req.query.isBlocked === "true"
             ? true
-            : isBlocked === "false"
+            : req.query.isBlocked === "false"
             ? false
             : undefined,
       });
@@ -279,9 +164,7 @@ export class AdminController implements IAdminController {
         return;
       }
 
-      const adminDTO = mapAdminToDto(admin);
-
-      res.status(200).json(adminDTO);
+      res.status(200).json(admin);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -306,34 +189,32 @@ export class AdminController implements IAdminController {
         return;
       }
 
-      const admin = await this.service.getHome(payload.id);
+      const result = await this.service.getHome(payload.id);
 
-      if (!admin) {
+      if (!result) {
         res.status(404).json({ message: "Admin not found" });
         return;
       }
 
       const newAccessToken = generateAccessToken({
-              id: payload.id,
-              role: payload.role,
-            });
+        id: payload.id,
+        role: payload.role,
+      });
 
-           res.cookie("auth-token", newAccessToken, {
+      res.cookie("auth-token", newAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 15 * 60 * 1000, // 15 mins
+        maxAge: 15 * 60 * 1000,
       });
-      
-      const adminDTO = mapAdminToDto(admin);
 
-      res.status(200).json({ message: "Token refreshed", user: adminDTO });
+      res.status(200).json({ message: "Token refreshed", user: result });
     } catch (error) {
       res.status(401).json({ message: "Invalid or expired refresh token" });
     }
   }
 
-    async logout(req: Request, res: Response): Promise<void> {
+  async logout(req: Request, res: Response): Promise<void> {
     res.clearCookie("auth-token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -352,5 +233,5 @@ export class AdminController implements IAdminController {
     });
 
     res.status(200).json({ message: "Logged out successfully" });
-  };
+  }
 }

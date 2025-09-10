@@ -53,14 +53,14 @@ export interface MentorResponseDTO {
   isGoogleUser?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-    document?: {
+  document?: {
     documentUrl: string;
     textMessage: string;
     verificationStatus: "pending" | "approved" | "rejected";
     rejectionReason?: string;
   };
-  bio?:string;
-  tags?:string[];
+  bio?: string;
+  tags?: string[];
 }
 
 export interface MentorDTO {

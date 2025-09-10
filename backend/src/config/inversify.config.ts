@@ -1,6 +1,15 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { PaymentRepository } from "../repositories/payment.repository";
+import { IPaymentRepository } from "../repositories/interfaces/IPaymentRepository";
+
+import { IPaymentService } from "../services/interfaces/IPaymentService";
+import { PaymentService } from "../services/payment.service";
+
+import { IPaymentController } from "../controllers/interfaces/IPaymentController";
+import { PaymentController } from "../controllers/payment.controller";
+
 import { IChatController } from "../controllers/interfaces/IChatController";
 import { ChatController } from "../controllers/chat.controller";
 
@@ -72,18 +81,29 @@ import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
 
+container.bind<IPaymentController>(TYPES.IPaymentController).to(PaymentController)
+container.bind<IPaymentService>(TYPES.IPaymentService).to(PaymentService);
+container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+
 container.bind<IChatController>(TYPES.IChatController).to(ChatController);
 container.bind<IChatService>(TYPES.IChatService).to(ChatService);
-container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository)
+container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository);
 
-container.bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository).to(MentorPlanRepository);
+container
+  .bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository)
+  .to(MentorPlanRepository);
 
-container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController);
-container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService);
-container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository);
+container
+  .bind<ISubscriptionController>(TYPES.ISubscriptionController)
+  .to(SubscriptionController);
+container
+  .bind<ISubscriptionService>(TYPES.ISubscriptionService)
+  .to(SubscriptionService);
+container
+  .bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository)
+  .to(SubscriptionRepository);
 
-
-container.bind<IEmailService>(TYPES.IEmailService).to(EmailService)
+container.bind<IEmailService>(TYPES.IEmailService).to(EmailService);
 
 container
   .bind<ISessionController>(TYPES.ISessionController)

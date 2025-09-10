@@ -1,5 +1,9 @@
 export const TYPES = {
 
+  IPaymentController:Symbol.for("IPaymentController"),
+  IPaymentService:Symbol.for("IPaymentService"),
+  IPaymentRepository:Symbol.for("IPaymentRepository"),
+
   IChatController: Symbol.for("IChatController"),
   IChatService: Symbol.for("IChatService"),
   IChatRepository: Symbol.for("IChatRepository"),

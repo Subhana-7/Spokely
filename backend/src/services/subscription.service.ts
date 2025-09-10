@@ -7,6 +7,7 @@ import { ISessionRepository } from "../repositories/interfaces/ISessionsReposito
 import { ISubscription } from "../models/subscription.modal";
 import { Types } from "mongoose";
 import { IMentorPlanRepository } from "../repositories/interfaces/IMentorPlanRepository";
+import { CreateSubscriptionDTO, SetMentorPlansDTO } from "../dto/subscription.dto";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
@@ -18,17 +19,12 @@ export class SubscriptionService implements ISubscriptionService {
     private mentorPlanRepo: IMentorPlanRepository
   ) {}
 
-  subscribe(
-    userId: string,
-    mentorId: string,
-    plan: ISubscription["plan"],
-    price: number
-  ) {
+  async subscribe(dto: CreateSubscriptionDTO) {
     return this.subscriptionRepo.createSubscription({
-      userId: new Types.ObjectId(userId),
-      mentorId: new Types.ObjectId(mentorId),
-      plan,
-      price,
+      userId: new Types.ObjectId(dto.userId),
+      mentorId: new Types.ObjectId(dto.mentorId),
+      plan: dto.plan,
+      price: dto.price,
     });
   }
 
@@ -44,8 +40,8 @@ export class SubscriptionService implements ISubscriptionService {
     return this.subscriptionRepo.cancelSubscription(subscriptionId);
   }
 
-  async saveMentorPlans(mentorId: string, plans: any[]) {
-    return this.mentorPlanRepo.savePlans(mentorId, plans);
+  async saveMentorPlans(dto: SetMentorPlansDTO) {
+    return this.mentorPlanRepo.savePlans(dto.mentorId, dto.plans);
   }
 
   async getMentorPlans(mentorId: string) {
@@ -55,7 +51,6 @@ export class SubscriptionService implements ISubscriptionService {
   scheduleCronJobs() {
     // Runs daily at 12:00 AM
     cron.schedule("0 0 * * *", async () => {
-    // cron.schedule("*/2 * * * *", async () => {
       console.log("Running daily subscription cron...");
 
       const subscriptions = await this.subscriptionRepo.findActive();
@@ -71,15 +66,17 @@ export class SubscriptionService implements ISubscriptionService {
             shouldCreate = true;
             break;
           case "WEEKLY":
-            shouldCreate = today.getDay() === 1; // e.g., Monday
+            shouldCreate = today.getDay() === 1; // Monday
             break;
           case "BIWEEKLY":
-            shouldCreate = today.getDate() % 14 === 0; // every 14 days
+            shouldCreate = today.getDate() % 14 === 0;
             break;
           case "TRIWEEKLY":
-            shouldCreate = today.getDate() % 7 === 0; // e.g., Mon/Wed/Fri
+            shouldCreate = today.getDate() % 7 === 0;
             break;
         }
+
+        if (!shouldCreate) continue;
 
         const sessionStartTime = new Date(today);
         sessionStartTime.setHours(12, 0, 0, 0);

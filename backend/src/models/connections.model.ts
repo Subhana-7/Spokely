@@ -1,9 +1,9 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IConnection extends Document {
   userId: Types.ObjectId;
   connectedUserId: Types.ObjectId;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   sessionCount: number;
   levelsUnlocked: number;
   isBlocked: boolean;
@@ -15,7 +15,11 @@ export interface IConnection extends Document {
 const connectionSchema = new Schema<IConnection>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    connectedUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    connectedUserId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected"],
@@ -29,13 +33,7 @@ const connectionSchema = new Schema<IConnection>(
   { timestamps: true }
 );
 
-connectionSchema.index(
-  { userId: 1, connectedUserId: 1 },
-  { unique: true }
-);
-connectionSchema.index(
-  { userId: 1, connectedUserId: -1 },
-  { unique: true }
-);
+connectionSchema.index({ userId: 1, connectedUserId: 1 }, { unique: true });
+connectionSchema.index({ userId: 1, connectedUserId: -1 }, { unique: true });
 
 export default mongoose.model<IConnection>("Connection", connectionSchema);

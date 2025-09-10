@@ -1,16 +1,15 @@
-import { IConnection } from "../../models/connections.model";
-import { PopulatedConnection } from "../../types/populated";
+import { ConnectionDTO } from "../../dto/connection.dto";
 
 export interface IConnectionService {
-  sendConnectionRequest(senderId: string, uniqueCode: string): Promise<IConnection | null>;
+  sendConnectionRequest(senderId: string, uniqueCode: string): Promise<ConnectionDTO | null>;
 
-  getIncomingRequests(userId: string): Promise<PopulatedConnection[] | null>;
+  getIncomingRequests(userId: string): Promise<ConnectionDTO[] | null>;
 
-  acceptRequest(requestId: string, userId: string): Promise<IConnection | null>;
+  acceptRequest(requestId: string, userId: string): Promise<ConnectionDTO | null>;
 
-  rejectRequest(requestId: string, userId: string): Promise<IConnection | null>;
+  rejectRequest(requestId: string, userId: string): Promise<ConnectionDTO | null>;
 
-  getOutgoingRequests(userId: string): Promise<PopulatedConnection[] | null>;
+  getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null>;
 
-  getAllConnections(userId: string,search:string): Promise<PopulatedConnection[] | null>;
+  getAllConnections(userId: string, search?: string): Promise<ConnectionDTO[] | null>;
 }

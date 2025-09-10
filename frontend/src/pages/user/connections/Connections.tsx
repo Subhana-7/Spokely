@@ -9,14 +9,13 @@ import { getAllConnections } from "../../../services/connectionService";
 import toast from "react-hot-toast";
 
 interface Connection {
-  connectionWith: any;
-  connectedUserId: {
+  connectedUser: {
     _id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
   };
-  userId: {
+  user: {
     _id: string;
     name: string;
     email: string;
@@ -25,6 +24,7 @@ interface Connection {
   sessionCount: number;
   status: string;
 }
+
 
 const Connections = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,28 +67,30 @@ const Connections = () => {
   }, [searchTerm]);
 
   const filteredConnections = connections
-    .filter((connection) => {
-      const user = connection.connectionWith as any;
-      if (!user) return false;
+  .filter((connection) => {
+    // Use 'connectedUser' instead of 'connectionWith'
+    const user = connection.connectedUser || connection.user;
+    if (!user) return false;
 
-      const name = user.name?.toLowerCase() || "";
-      const email = user.email?.toLowerCase() || "";
+    const name = user.name?.toLowerCase() || "";
+    const email = user.email?.toLowerCase() || "";
 
-      return (
-        name.includes(searchTerm.toLowerCase()) ||
-        email.includes(searchTerm.toLowerCase())
-      );
-    })
-    .map((c) => {
-      const user = c.connectionWith as any;
-      return {
-        id: user._id,
-        username: user.name,
-        email: user.email,
-        role: user.role,
-        sessions: c.sessionCount || 0,
-      };
-    });
+    return (
+      name.includes(searchTerm.toLowerCase()) ||
+      email.includes(searchTerm.toLowerCase())
+    );
+  })
+  .map((c) => {
+    const user = c.connectedUser || c.user;
+    return {
+      id: user._id || user._id,
+      username: user.name,
+      email: user.email,
+      role: user.role,
+      sessions: c.sessionCount || 0,
+    };
+  });
+
 
   return (
     <>

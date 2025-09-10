@@ -1,92 +1,86 @@
 import { Request, Response } from "express";
-import { UserService } from "../services/user.service";
-import { error } from "console";
-import jwt from "jsonwebtoken";
-import passport from "passport";
-import { IUserController } from "./interfaces/IUserController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserService } from "../services/interfaces/IUserService";
-import { toUserResponseDTO } from "../mappers/user.mapper";
 import {
+  SignupDTO,
   LoginDTO,
   SendOtpDTO,
-  SignupDTO,
-  UpdateRoleDTO,
   VerifyOtpDTO,
   ForgotPasswordDTO,
   VerifyForgotPasswordDTO,
+  UpdateRoleDTO,
 } from "../dto/user.dto";
-import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { IUserController } from "./interfaces/IUserController";
 
 @injectable()
 export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private service: IUserService) {}
 
-  signup = async (
-    req: Request<{}, {}, SignupDTO>,
-    res: Response
-  ): Promise<void> => {
+  signup = async (req: Request<{}, {}, SignupDTO>, res: Response) => {
     try {
       const user = await this.service.signup(req.body);
-
-      if (!user) {
-        res.status(401).json({ message: "Invalid credentials" });
-        return;
-      }
-      const userDTO = toUserResponseDTO(user);
-      res.status(201).json(userDTO);
+      res.status(201).json(user);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  login = async (
-    req: Request<{}, {}, LoginDTO>,
-    res: Response
-  ): Promise<void> => {
+  login = async (req: Request<{}, {}, LoginDTO>, res: Response) => {
     try {
       const result = await this.service.login(req.body);
-      if (!result) {
-        res.status(401).json({ message: "Invalid credentials" });
-        return;
-      }
-
-      const { user, accessToken, refreshToken } = result;
-
-      res.cookie("auth-token", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000, // 15 mins
-      });
-      res.cookie("refresh-token", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.cookie("role", user.role, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      const userDTO = toUserResponseDTO(user);
-
-      console.log("login",userDTO)
-      res.status(200).json({ user: userDTO });
+      res.cookie("auth-token", result.accessToken, { httpOnly: true });
+      res.cookie("refresh-token", result.refreshToken, { httpOnly: true });
+      res.cookie("role", result.user.role, { httpOnly: false });
+      res.status(200).json({ user: result.user });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  sendOtp = async (
-    req: Request<{}, {}, SendOtpDTO>,
-    res: Response
-  ): Promise<void> => {
+  logout = async (req: Request, res: Response) => {
+    res.clearCookie("auth-token");
+    res.clearCookie("refresh-token");
+    res.clearCookie("role");
+    res.status(200).json({ message: "Logged out successfully" });
+  };
+
+  refreshToken = async (req: Request, res: Response) => {
+    try {
+      const result = await this.service.refreshToken(
+        req.cookies["refresh-token"]
+      );
+      res.cookie("auth-token", result.accessToken, { httpOnly: true });
+      res.status(200).json({ user: result.user });
+    } catch (err: any) {
+      res.status(401).json({ message: err.message });
+    }
+  };
+
+  handleGoogleAccounts = async (
+    req: Request,
+    res: Response,
+    next: Function
+  ) => {
+    // delegate to passport or middleware
+    next();
+  };
+
+  googleCallback = async (req: Request, res: Response, next: Function) => {
+    // delegate to passport callback
+    next();
+  };
+
+  home = async (req: Request, res: Response) => {
+    try {
+      const user = await this.service.getHome(req.params.id);
+      res.status(200).json(user);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+  sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
     try {
       await this.service.sendOtp(req.body.email);
       res.status(200).json({ message: "OTP sent to email" });
@@ -95,13 +89,12 @@ export class UserController implements IUserController {
     }
   };
 
-  verifyOtp = async (
-    req: Request<{}, {}, VerifyOtpDTO>,
-    res: Response
-  ): Promise<void> => {
+  verifyOtp = async (req: Request<{}, {}, VerifyOtpDTO>, res: Response) => {
     try {
-      const { email, code } = req.body;
-      const result = await this.service.verifyOtp(email, code);
+      const result = await this.service.verifyOtp(
+        req.body.email,
+        req.body.code
+      );
       res.status(200).json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -111,16 +104,9 @@ export class UserController implements IUserController {
   forgotPassword = async (
     req: Request<{}, {}, ForgotPasswordDTO>,
     res: Response
-  ): Promise<void> => {
+  ) => {
     try {
-      const { email, newPassword } = req.body;
-
-      if (!newPassword) {
-        res.status(400).json({ message: "New password is required" });
-        return;
-      }
-
-      await this.service.forgotPassword(email, newPassword);
+      await this.service.forgotPassword(req.body);
       res.status(200).json({ message: "Password reset OTP sent to email" });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -130,252 +116,51 @@ export class UserController implements IUserController {
   verifyForgotPassword = async (
     req: Request<{}, {}, VerifyForgotPasswordDTO>,
     res: Response
-  ): Promise<void> => {
+  ) => {
     try {
-      const { email, code } = req.body;
-      const result = await this.service.verifyForgotPassword(email, code);
+      const result = await this.service.verifyForgotPassword(req.body);
       res.status(200).json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  handleGoogleAccounts = async (
-    req: Request,
-    res: Response,
-    next: Function
-  ): Promise<void> => {
+  updateRole = async (req: Request<{}, {}, UpdateRoleDTO>, res: Response) => {
     try {
-      passport.authenticate("google", { scope: ["profile", "email"] })(
-        req,
-        res,
-        next
+      const user = await this.service.updateRole(
+        (req as any).userId,
+        req.body.role
       );
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  };
-
-  googleCallback = async (
-    req: Request,
-    res: Response,
-    next: Function
-  ): Promise<void> => {
-    try {
-      passport.authenticate("google", { session: false }, (err, user) => {
-        if (err) {
-          return res.redirect(
-            `${process.env.CLIENT_SIDE_URL}?error=auth_failed`
-          );
-        }
-
-        if (!user) {
-          return res.redirect(`${process.env.CLIENT_SIDE_URL}?error=no_user`);
-        }
-
-        const accessToken = generateAccessToken({
-          id: user._id,
-          role: user.role,
-          isGoogleUser: user.isGoogleUser,
-        });
-
-        const refreshToken = generateRefreshToken({
-          id: user._id,
-          role: user.role,
-          isGoogleUser: user.isGoogleUser,
-        });
-
-        res.cookie("auth-token", accessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 15 * 60 * 1000, // 15 mins
-        });
-
-        res.cookie("refresh-token", refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
-
-        res.cookie("role", user.role, {
-          httpOnly: false,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-
-        const isNewUser = user.createdAt.getTime() === user.updatedAt.getTime();
-
-        const redirectUrl = isNewUser
-          ? `${process.env.CLIENT_SIDE_URL}/google-redirect?source=signup`
-          : `${process.env.CLIENT_SIDE_URL}/google-redirect`;
-
-        res.redirect(redirectUrl);
-      })(req, res, next);
+      res.status(200).json({ message: "Role updated", user });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
-  home = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { id } = req.params;
-
-      const user = await this.service.getHome(id);
-
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      const userDTO = toUserResponseDTO(user);
-      res.status(200).json(userDTO);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
-  };
-
-  updateRole = async (
-    req: Request<{}, {}, UpdateRoleDTO>,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const userId = (req as any).userId;
-      const { role } = req.body;
-      const updated = await this.service.updateRole(userId, role);
-      if (!updated) {
-        res.status(401).json({ message: "Invalid credentials" });
-        return;
-      }
-      const userDTO = toUserResponseDTO(updated);
-      res.status(200).json({ message: "Role updated", user: userDTO });
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
-  };
-
-  logout = async (req: Request, res: Response): Promise<void> => {
-    res.clearCookie("auth-token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
-    res.clearCookie("refresh-token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
-    res.clearCookie("role", {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-
-    res.status(200).json({ message: "Logged out successfully" });
-  };
-
-  getAllUsers = async (req: Request, res: Response): Promise<void> => {
+  getAllUsers = async (_req: Request, res: Response) => {
     try {
       const users = await this.service.getAllUsers();
-      if (!users) {
-        res.status(401).json({ message: "Error fetching users" });
-        return;
-      }
-
-      const usersDTO = users.map(toUserResponseDTO);
-
-      res.status(200).json(usersDTO);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      res.status(500).json({ message: "Failed to fetch users" });
+      res.status(200).json(users);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   };
 
-  refreshToken = async (req: Request, res: Response): Promise<void> => {
-    const token = req.cookies["refresh-token"];
-    if (!token) {
-      res.status(401).json({ message: "Refresh token missing" });
-      return;
-    }
-
+  profile = async (req: Request, res: Response) => {
     try {
-      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
-        id: string;
-        role: "user" | "mentor";
-      };
-
-      if (payload.role !== "user") {
-        res.status(403).json({ message: "Forbidden" });
-        return;
-      }
-
-      const user = await this.service.getHome(payload.id);
-
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      const newAccessToken = generateAccessToken({
-        id: payload.id,
-        role: payload.role,
-      });
-
-      res.cookie("auth-token", newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000, // 15 mins
-      });
-
-      const userDTO = toUserResponseDTO(user);
-
-      res.status(200).json({ message: "Token refreshed", user: userDTO });
-    } catch (err) {
-      res.status(401).json({ message: "Invalid or expired refresh token" });
-    }
-  };
-
-    profile = async (req: Request, res: Response): Promise<void> => {
-    try {
-      console.log('huh')
-      const id  = req.params.id;
-
-      const user = await this.service.getHome(id);
-
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      const userDTO = toUserResponseDTO(user);
-      console.log(userDTO)
-      res.status(200).json(userDTO);
+      const user = await this.service.getHome(req.params.id);
+      res.status(200).json(user);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
   };
 
- editUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const id = req.params.id;
-    const data = req.body;
-
-    const updatedUser = await this.service.updateUser(id, data);
-
-    if (!updatedUser) {
-      res.status(404).json({ message: "User not found" });
-      return;
+  editUser = async (req: Request, res: Response) => {
+    try {
+      const user = await this.service.updateUser(req.params.id, req.body);
+      res.status(200).json(user);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
-
-    const userDTO = toUserResponseDTO(updatedUser);
-    res.status(200).json(userDTO);
-  } catch (error) {
-    console.error("editUser error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
+  };
 }
