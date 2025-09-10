@@ -62,7 +62,7 @@ export class PaymentService implements IPaymentService {
       currency: "USD",
     };
 
-    await this.paymentRepo.create(entity);
+    await this.paymentRepo.create(PaymentMapper.toPersistence(entity));
 
     return { id: order.data.id };
   }
@@ -98,7 +98,8 @@ export class PaymentService implements IPaymentService {
       });
     }
 
-    return PaymentMapper.toResponse(paymentEntity!);
+    const entityDTO = PaymentMapper.toEntity(paymentEntity!);
+    return PaymentMapper.toResponse(entityDTO);
   }
 
   async createSubscription(

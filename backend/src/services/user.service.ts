@@ -128,8 +128,8 @@ export class UserService implements IUserService {
   }
 
   async getAllUsers(): Promise<UserResponseDTO[]> {
-    const users = await this.repo.findAll();
-    return users!.map(toUserResponseDTO);
+    const {results} = await this.repo.findAll();
+    return results.length ? results.map(toUserResponseDTO) : [];
   }
 
   async updateUser(id: string, data: Partial<IUser>): Promise<UserResponseDTO> {

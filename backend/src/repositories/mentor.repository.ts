@@ -1,9 +1,14 @@
 import Mentor, { IMentor } from "../models/mentor.model";
 import { IMentorRepository } from "./interfaces/IMentorRepository";
 import { injectable } from "inversify";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class MentorRepository implements IMentorRepository {
+export class MentorRepository extends BaseRepository<IMentor> implements IMentorRepository {
+  constructor() {
+    super(Mentor);
+  }
+
   async findByEmail(email: string): Promise<IMentor | null> {
     try {
       return Mentor.findOne({ email });
@@ -63,14 +68,28 @@ export class MentorRepository implements IMentorRepository {
     }
   }
 
-  async findAll(): Promise<IMentor[] | null> {
-    try {
-      return Mentor.find({}, "-password -otp -googleId");
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
+  async findAll(
+  query: Partial<Record<keyof IMentor, any>> = {},
+  options?: { page?: number; limit?: number }
+): Promise<{ results: IMentor[]; total: number }> {
+  try {
+    const page = options?.page || 1;
+    const limit = options?.limit || 0;
+    const skip = (page - 1) * limit;
+
+    const results = await Mentor.find(query, "-password -otp -googleId")
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Mentor.countDocuments(query);
+
+    return { results, total };
+  } catch (error) {
+    console.log("error", error);
+    return { results: [], total: 0 };
   }
+}
+
 
   async updateMentorDocument(
     email: string,
@@ -148,36 +167,27 @@ export class MentorRepository implements IMentorRepository {
   }
 
   async updatePassword(
-    email:string,
-    password:string
-  ):Promise<IMentor | null>{
+    email: string,
+    password: string
+  ): Promise<IMentor | null> {
     try {
       return Mentor.findOneAndUpdate(
-        {email},
-        {password},
-        {new:true}
-      )
+        { email },
+        { password },
+        { new: true }
+      );
     } catch (error) {
       console.log("error", error);
       return null;
     }
   }
 
-    async findById(id:string):Promise<IMentor | null> {
-      try {
-        return await Mentor.findById(id);
-      } catch (error) {
-        console.log("error", error);
-        return null;
-      }
+  async updateMentor(id: string, data: any): Promise<IMentor | null> {
+    try {
+      return await Mentor.findByIdAndUpdate(id, data, { new: true });
+    } catch (error) {
+      console.log("error", error);
+      return null;
     }
-
-    async updateMentor(id:string,data:any):Promise<IMentor | null> {
-      try {
-        return await Mentor.findByIdAndUpdate(id,data,{new:true});
-      } catch (error) {
-        console.log("error",error);
-        return null;
-      }
-    }
+  }
 }

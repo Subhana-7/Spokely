@@ -1,9 +1,14 @@
 import User, { IUser } from "../models/user.model";
 import { IUserRepository } from "./interfaces/IUserRepository";
 import { injectable } from "inversify";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class UserRepository implements IUserRepository {
+export class UserRepository extends BaseRepository<IUser> implements IUserRepository {
+  constructor() {
+    super(User);
+  }
+
   async findByEmail(email: String): Promise<IUser | null> {
     try {
       return User.findOne({ email });
@@ -132,23 +137,28 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async findAll(): Promise<IUser[] | null> {
-    try {
-      return await User.find({}, "-password -otp -googleId -forgotPasswordOtp");
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
+  async findAll(
+  query: Partial<Record<keyof IUser, any>> = {},
+  options?: { page?: number; limit?: number }
+): Promise<{ results: IUser[]; total: number }> {
+  try {
+    const page = options?.page || 1;
+    const limit = options?.limit || 0;
+    const skip = (page - 1) * limit;
 
-  async findById(id: string): Promise<IUser | null> {
-    try {
-      return await User.findById(id);
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
+    const results = await User.find(query, "-password -otp -googleId -forgotPasswordOtp")
+      .skip(skip)
+      .limit(limit);
+
+    const total = await User.countDocuments(query);
+
+    return { results, total };
+  } catch (error) {
+    console.log("error", error);
+    return { results: [], total: 0 };
   }
+}
+
 
   async updateUser(id: string, data: any): Promise<IUser | null> {
     try {

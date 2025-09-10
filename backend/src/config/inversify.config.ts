@@ -1,6 +1,9 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { IBaseRepository } from "../repositories/interfaces/IBaseRepository";
+import { BaseRepository } from "../repositories/base.repository";
+
 import { PaymentRepository } from "../repositories/payment.repository";
 import { IPaymentRepository } from "../repositories/interfaces/IPaymentRepository";
 
@@ -80,6 +83,8 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository)
 
 container.bind<IPaymentController>(TYPES.IPaymentController).to(PaymentController)
 container.bind<IPaymentService>(TYPES.IPaymentService).to(PaymentService);

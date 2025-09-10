@@ -2,9 +2,14 @@ import mongoose from "mongoose";
 import SessionModel, { ISession } from "../models/sessions.model";
 import { ISessionRepository } from "./interfaces/ISessionsRepository";
 import { injectable } from "inversify";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class SessionRepository implements ISessionRepository {
+export class SessionRepository extends BaseRepository<ISession> implements ISessionRepository {
+  constructor() {
+    super(SessionModel);
+  }
+
   async createSession(data: Partial<ISession>): Promise<ISession | null> {
     try {
       return await SessionModel.create(data);
@@ -143,20 +148,6 @@ export class SessionRepository implements ISessionRepository {
       return null;
     }
   }
-
-  //   async findSessions(query: any): Promise<ISession[] | null> {
-  //   try {
-  //     console.log('chek')
-  //     const res =  await SessionModel.find(query)
-  //       .populate("participants.user", "name email profilePicture")
-  //       .populate("createdBy", "name email profilePicture role");
-  //       console.log(res)
-  //       return res;
-  //   } catch (err) {
-  //     console.error(err);
-  //     return null;
-  //   }
-  // }
 
   async findSessions(query: any): Promise<ISession[] | null> {
     try {

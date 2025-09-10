@@ -104,9 +104,10 @@ export class MentorService implements IMentorService {
   }
 
   async getAllMentors(): Promise<MentorResponseDTO[] | null> {
-    const mentors = await this.repo.findAll();
-    return mentors ? mentors.map(toMentorResponseDTO) : null;
-  }
+  const { results } = await this.repo.findAll();
+  return results.length ? results.map(toMentorResponseDTO) : null;
+}
+
 
   async updateMentorDocument(
     email: string,

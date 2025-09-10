@@ -9,7 +9,7 @@ export interface PaymentEntityDTO {
   sessionId?: string;
   userId: string;
   paypalOrderId: string;
-  status: string;
+  status?: "CREATED" | "COMPLETED" | "FAILED";   // ✅ match IPayment
   amount: number;
   currency: string;
   details?: any;

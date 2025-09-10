@@ -3,9 +3,14 @@ import User, { IUser } from "../models/user.model";
 import { IAdminRepository } from "./interfaces/IAdminRepository";
 import { injectable } from "inversify";
 import Mentor, { IMentor } from "../models/mentor.model";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class AdminRepository implements IAdminRepository {
+export class AdminRepository extends BaseRepository<IAdmin> implements IAdminRepository {
+  constructor() {
+    super(Admin);
+  }
+
   async findByEmail(email: string): Promise<IAdmin | null> {
     try {
       return Admin.findOne({ email });
@@ -48,15 +53,6 @@ export class AdminRepository implements IAdminRepository {
   async unblockMentor(id: string): Promise<IUser | null> {
     return Mentor.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
   }
-
-  // async deleteUser(id: string): Promise<IUser | null> {
-  //   try {
-  //     return User.findByIdAndDelete(id);
-  //   } catch (error) {
-  //     console.log("error", error);
-  //     return null;
-  //   }
-  // }
 
   async getMentor(id: string): Promise<IMentor[] | null> {
     try {
@@ -202,14 +198,5 @@ export class AdminRepository implements IAdminRepository {
     const total = await Mentor.countDocuments(query);
 
     return { mentors, total };
-  }
-
-  async findById(id:string):Promise<IAdmin | null> {
-    try {
-      return Admin.findById(id);
-    } catch (error) {
-      console.log("error",error);
-      return null;
-    }
   }
 }

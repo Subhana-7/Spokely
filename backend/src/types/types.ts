@@ -1,5 +1,7 @@
 export const TYPES = {
 
+  IBaseRepository:Symbol.for("IBaseRepository"),
+
   IPaymentController:Symbol.for("IPaymentController"),
   IPaymentService:Symbol.for("IPaymentService"),
   IPaymentRepository:Symbol.for("IPaymentRepository"),

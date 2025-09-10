@@ -3,9 +3,14 @@ import { Types } from "mongoose";
 import { IConnectionRepository } from "./interfaces/IConnectionsRepository";
 import { injectable } from "inversify";
 import { PopulatedConnection } from "../types/populated";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class ConnectionRepository implements IConnectionRepository {
+export class ConnectionRepository extends BaseRepository<IConnection> implements IConnectionRepository {
+  constructor() {
+    super(ConnectionModel);
+  }
+
   async createConnection(
     userId: Types.ObjectId,
     connectedUserId: Types.ObjectId
@@ -79,40 +84,39 @@ export class ConnectionRepository implements IConnectionRepository {
     }
   }
 
-async getAcceptedConnections(
-  userId: Types.ObjectId,
-  search?: string
-): Promise<PopulatedConnection[] | null> {
-  try {
-    let query = ConnectionModel.find({
-      $or: [{ userId }, { connectedUserId: userId }],
-      status: "accepted",
-      isBlocked: false,
-      isRemoved: false,
-    })
-      .populate("userId", "name email profilePicture role uniqueCode")
-      .populate("connectedUserId", "name email profilePicture role uniqueCode");
+  async getAcceptedConnections(
+    userId: Types.ObjectId,
+    search?: string
+  ): Promise<PopulatedConnection[] | null> {
+    try {
+      let query = ConnectionModel.find({
+        $or: [{ userId }, { connectedUserId: userId }],
+        status: "accepted",
+        isBlocked: false,
+        isRemoved: false,
+      })
+        .populate("userId", "name email profilePicture role uniqueCode")
+        .populate("connectedUserId", "name email profilePicture role uniqueCode");
 
-    if (search) {
-      const regex = new RegExp(search, "i");
-      query = query.find({
-        $or: [
-          { "userId.name": { $regex: regex } },
-          { "userId.email": { $regex: regex } },
-          { "connectedUserId.name": { $regex: regex } },
-          { "connectedUserId.email": { $regex: regex } },
-        ],
-      });
+      if (search) {
+        const regex = new RegExp(search, "i");
+        query = query.find({
+          $or: [
+            { "userId.name": { $regex: regex } },
+            { "userId.email": { $regex: regex } },
+            { "connectedUserId.name": { $regex: regex } },
+            { "connectedUserId.email": { $regex: regex } },
+          ],
+        });
+      }
+
+      const connections = await query.exec();
+      return connections as unknown as PopulatedConnection[];
+    } catch (error) {
+      console.log("getAcceptedConnections error", error);
+      return null;
     }
-
-    const connections = await query.exec();
-    return connections as unknown as PopulatedConnection[];
-  } catch (error) {
-    console.log("getAcceptedConnections error", error);
-    return null;
   }
-}
-
 
   async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
     try {
@@ -128,4 +132,3 @@ async getAcceptedConnections(
     }
   }
 }
-

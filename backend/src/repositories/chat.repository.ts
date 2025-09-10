@@ -5,11 +5,21 @@ import {
   ChatSessionModel,
   IChatSession,
 } from "../models/message.model";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class ChatRepository {
-  async saveMessage(data: Partial<IMessage>): Promise<IMessage> {
-    return await MessageModel.create(data);
+export class ChatRepository extends BaseRepository<IMessage> {
+  constructor() {
+    super(MessageModel);
+  }
+
+  async saveMessage(data: Partial<IMessage>): Promise<IMessage | null> {
+    try {
+      return await MessageModel.create(data);
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
 
   async getMessages(sessionId: string, limit = 50): Promise<IMessage[] | null> {

@@ -1,6 +1,7 @@
 import { PaymentEntityDTO } from "../../dto/payment.dto";
+import { IPayment } from "../../models/payment.model";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IPaymentRepository {
-  create(data: Partial<PaymentEntityDTO>): Promise<PaymentEntityDTO>;
-  updateByPaypalId(orderId: string, update: Partial<PaymentEntityDTO>): Promise<PaymentEntityDTO | null>;
+export interface IPaymentRepository extends IBaseRepository<IPayment> {
+  updateByPaypalId(orderId: string, update: Partial<IPayment>): Promise<IPayment | null>;
 }
