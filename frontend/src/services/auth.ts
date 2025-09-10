@@ -1,65 +1,40 @@
-import axios from "axios";
+import API from "../api/axios.instance";
 import Cookies from "js-cookie";
 
-const BASE = import.meta.env.VITE_SERVER_SIDE_URL;
+// --------------------- AUTHENTICATION ---------------------
 
-const API = axios.create({
-  baseURL: BASE,
-  withCredentials: true,
-});
-
-API.interceptors.response.use(
-  (res) => res,
-  async (err) => {
-    const originalRequest = err.config;
-
-    if (
-      err.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes("/refresh-token")
-    ) {
-      originalRequest._retry = true;
-      try {
-        await refreshToken();
-        return API(originalRequest);
-      } catch (refreshError) {
-        window.location.href = "/";
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(err);
-  }
-);
-
-
-export const login = (data: { email: string; password: string }, role: "user" | "mentor") => {
-  const endpoint = role === "mentor" ? "/api/mentors/login" : "/api/users/login";
+export const login = (data: { email: string; password: string }, role: "user" | "mentor" | "admin") => {
+  const endpoint =
+    role === "mentor"
+      ? "/mentors/login"
+      : role === "user"
+      ? "/users/login"
+      : "/admin/login";
   return API.post(endpoint, data);
 };
 
-export const logoutService = (role: "user" | "mentor") => {
-  const endpoint = role === "mentor" ? "/api/mentors/logout" : "/api/users/logout";
+export const logoutService = (role: "user" | "mentor" | "admin") => {
+  const endpoint =
+    role === "mentor"
+      ? "/mentors/logout"
+      : role === "user"
+      ? "/users/logout"
+      : "/admin/logout";
   return API.post(endpoint);
 };
 
 export const refreshToken = async () => {
   const role = Cookies.get("role");
-  console.log(role);
-
   const endpoint =
     role === "mentor"
-      ? "/api/mentors/refresh-token"
+      ? "/mentors/refresh-token"
       : role === "user"
-      ? "/api/users/refresh-token"
-      : "/api/admin/refresh-token";
+      ? "/users/refresh-token"
+      : "/admin/refresh-token";
 
   try {
-    const res = await API.post(endpoint, null, {
-      withCredentials: true, 
-    });
-
-    return res.data; 
+    const res = await API.post(endpoint, null, { withCredentials: true });
+    return res.data;
   } catch (err) {
     return null;
   }

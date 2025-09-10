@@ -14,11 +14,13 @@ export class PaymentController implements IPaymentController {
 
   createOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+      console.log("create order")
       if (!req.id) {
         res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
       const result = await this.paymentService.createOrder(req.id, req.body);
+      console.log(result)
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: error.message });
@@ -27,6 +29,7 @@ export class PaymentController implements IPaymentController {
 
   captureOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+      console.log('capture order')
       if (!req.id) {
         res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;

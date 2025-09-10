@@ -165,6 +165,7 @@ const MentorPublicSessions = () => {
           createOrder: async () => {
             try {
               const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
+              console.log(resp)
               return resp.orderId!;
             } catch (err: any) {
               console.error("createOrder error:", err);

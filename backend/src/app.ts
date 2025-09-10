@@ -58,7 +58,7 @@ app.use(logger);
 app.use(helmet());
 
 // routes
-app.use("/payment", paymentRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/admin", adminRoutes);

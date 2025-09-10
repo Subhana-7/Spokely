@@ -1,40 +1,13 @@
-import axios from "axios";
-import Cookies from "js-cookie";
-
-const API = axios.create({
-  baseURL: `${import.meta.env.VITE_SERVER_SIDE_URL}/api/users/connections`,
-  withCredentials: true,
-});
-
-API.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+import API from "../api/axios.instance";
 
 export const sendConnectionRequest = (uniqueCode: string) =>
-  API.post("/send", { uniqueCode });
+  API.post("/users/connections/send", { uniqueCode });
 
-export const getConnectionRequests = () =>
-  API.get("/requests");
-
+export const getConnectionRequests = () => API.get("/users/connections/requests");
 export const acceptConnectionRequest = (requestId: string) =>
-  API.patch(`/accept/${requestId}`);
-
-export const getAllConnections = (search?: string) =>
-  API.get(`/list${search ? `?search=${encodeURIComponent(search)}` : ""}`);
-
-
-export const getSentConnectionRequests = () => {
-  return API.get("/sent-requests");
-};
-
-
+  API.patch(`/users/connections/accept/${requestId}`);
 export const rejectConnectionRequest = (requestId: string) =>
-  API.delete(`/reject/${requestId}`); //add it 
-
+  API.delete(`/users/connections/reject/${requestId}`);
+export const getAllConnections = (search?: string) =>
+  API.get(`/users/connections/list${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+export const getSentConnectionRequests = () => API.get("/users/connections/sent-requests");
