@@ -11,26 +11,26 @@ import { PaymentMapper } from "../mappers/payment.mapper";
 import { Types } from "mongoose";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
+import paypalAPI, { getPaypalAuth } from "../config/paypal.axios";
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL!;
 
 @injectable()
 export class PaymentService implements IPaymentService {
   constructor(
-    @inject(TYPES.IPaymentRepository) private paymentRepo: IPaymentRepository,
-    @inject(TYPES.ISessionRepository) private sessionRepo: ISessionRepository
+    @inject(TYPES.IPaymentRepository)
+    private _paymentRepository: IPaymentRepository,
+    @inject(TYPES.ISessionRepository)
+    private _sessionRepository: ISessionRepository
   ) {}
 
   private async getAccessToken(): Promise<string> {
-    const response = await axios.post(
-      `${PAYPAL_BASE_URL}/v1/oauth2/token`,
+    const response = await paypalAPI.post(
+      "/v1/oauth2/token",
       "grant_type=client_credentials",
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        auth: {
-          username: process.env.PAYPAL_CLIENT_ID!,
-          password: process.env.PAYPAL_CLIENT_SECRET!,
-        },
+        auth: getPaypalAuth(),
       }
     );
     return response.data.access_token;
@@ -42,8 +42,8 @@ export class PaymentService implements IPaymentService {
   ): Promise<{ id: string }> {
     const accessToken = await this.getAccessToken();
 
-    const order = await axios.post(
-      `${PAYPAL_BASE_URL}/v2/checkout/orders`,
+    const order = await paypalAPI.post(
+      "/v2/checkout/orders",
       {
         intent: "CAPTURE",
         purchase_units: [
@@ -62,7 +62,7 @@ export class PaymentService implements IPaymentService {
       currency: "USD",
     };
 
-    await this.paymentRepo.create(PaymentMapper.toPersistence(entity));
+    await this._paymentRepository.create(PaymentMapper.toPersistence(entity));
 
     return { id: order.data.id };
   }
@@ -79,7 +79,7 @@ export class PaymentService implements IPaymentService {
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
-    const paymentEntity = await this.paymentRepo.updateByPaypalId(
+    const paymentEntity = await this._paymentRepository.updateByPaypalId(
       dto.orderId!,
       {
         status: "COMPLETED",
@@ -88,14 +88,17 @@ export class PaymentService implements IPaymentService {
     );
 
     if (paymentEntity?.sessionId) {
-      await this.sessionRepo.updateSession(paymentEntity.sessionId.toString(), {
-        participants: [
-          {
-            user: new Types.ObjectId(paymentEntity.userId),
-            status: "accepted",
-          },
-        ],
-      });
+      await this._sessionRepository.updateSession(
+        paymentEntity.sessionId.toString(),
+        {
+          participants: [
+            {
+              user: new Types.ObjectId(paymentEntity.userId),
+              status: "accepted",
+            },
+          ],
+        }
+      );
     }
 
     const entityDTO = PaymentMapper.toEntity(paymentEntity!);

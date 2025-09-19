@@ -16,4 +16,5 @@ export interface ISessionService {
 
   getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null>;
   getAgoraToken(sessionId: string, userId: string): Promise<any>;
+
 }

@@ -5,30 +5,30 @@ import { IMentorService } from "../services/interfaces/IMentorService";
 import { IMentorController } from "./interfaces/IMentorController";
 import jwt from "jsonwebtoken";
 import { generateAccessToken } from "../utilis/token";
-import { StatusCode } from "../utilis/status.code";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class MentorController implements IMentorController {
-  constructor(@inject(TYPES.IMentorService) private service: IMentorService) {}
+  constructor(@inject(TYPES.IMentorService) private _mentorService: IMentorService) {}
 
   signup = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentorDTO = await this.service.signup(req.body);
+      const mentorDTO = await this._mentorService.signup(req.body);
       if (!mentorDTO) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Signup failed" });
+        res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
-      res.status(StatusCode.CREATED).json(mentorDTO);
+      res.status(STATUS_CODES.CREATED).json(mentorDTO);
     } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
   };
 
   login = async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await this.service.login(req.body);
+      const result = await this._mentorService.login(req.body);
       if (!result) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Invalid credentials" });
+        res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_CREDENTIALS });
         return;
       }
 
@@ -53,36 +53,36 @@ export class MentorController implements IMentorController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(StatusCode.OK).json({ mentor });
+      res.status(STATUS_CODES.OK).json({ mentor });
     } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
   };
 
   sendOtp = async (req: Request, res: Response): Promise<void> => {
     try {
-      await this.service.sendOtp(req.body.email);
-      res.status(StatusCode.OK).json({ message: "OTP sent to email" });
+      await this._mentorService.sendOtp(req.body.email);
+      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.OTP_SENT });
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   verifyOtp = async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await this.service.verifyOtp(req.body.email, req.body.code);
-      res.status(StatusCode.OK).json(result);
+      const result = await this._mentorService.verifyOtp(req.body.email, req.body.code);
+      res.status(STATUS_CODES.OK).json(result);
     } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
   };
 
   getAll = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentors = await this.service.getAllMentors();
-      res.status(StatusCode.OK).json(mentors);
+      const mentors = await this._mentorService.getAllMentors();
+      res.status(STATUS_CODES.OK).json(mentors);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -90,27 +90,27 @@ export class MentorController implements IMentorController {
     res.clearCookie("auth-token");
     res.clearCookie("refresh-token");
     res.clearCookie("role");
-    res.status(StatusCode.OK).json({ message: "Logged out successfully" });
+    res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.LOGOUT });
   };
 
   updateMentorDocument = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, documentUrl, textMessage } = req.body;
-      const data = await this.service.updateMentorDocument(email, documentUrl, textMessage);
-      res.status(StatusCode.OK).json({
+      const data = await this._mentorService.updateMentorDocument(email, documentUrl, textMessage);
+      res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Document resubmitted successfully",
         data,
       });
     } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
   };
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     const token = req.cookies["refresh-token"];
     if (!token) {
-      res.status(StatusCode.UNAUTHORIZED).json({ message: "Refresh token missing" });
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_TOKEN });
       return;
     }
 
@@ -121,13 +121,13 @@ export class MentorController implements IMentorController {
       };
 
       if (payload.role !== "mentor") {
-        res.status(StatusCode.FORBIDDEN).json({ message: "Forbidden" });
+        res.status(STATUS_CODES.FORBIDDEN).json({ message: MESSAGES.ERROR.FORBIDDEN });
         return;
       }
 
-      const mentor = await this.service.getHome(payload.id);
+      const mentor = await this._mentorService.getHome(payload.id);
       if (!mentor) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "Mentor not found" });
+        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
 
@@ -140,9 +140,9 @@ export class MentorController implements IMentorController {
         maxAge: 15 * 60 * 1000,
       });
 
-      res.status(StatusCode.OK).json({ message: "Token refreshed", mentor });
+      res.status(STATUS_CODES.OK).json({ message: "Token refreshed", mentor });
     } catch (err) {
-      res.status(StatusCode.UNAUTHORIZED).json({ message: "Invalid or expired refresh token" });
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_TOKEN });
     }
   };
 
@@ -150,62 +150,62 @@ export class MentorController implements IMentorController {
     try {
       const { email, newPassword } = req.body;
       if (!newPassword) {
-        res.status(StatusCode.BAD_REQUEST).json({ message: "New password is required" });
+        res.status(STATUS_CODES.BAD_REQUEST).json({ message: MESSAGES.ERROR.INVALID_INPUT });
         return;
       }
 
-      await this.service.forgotPassword(email, newPassword);
-      res.status(StatusCode.OK).json({ message: "Password reset OTP sent to email" });
+      await this._mentorService.forgotPassword(email, newPassword);
+      res.status(STATUS_CODES.OK).json({ message: "Password reset OTP sent to email" });
     } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: error.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
   };
 
   verifyForgotPassword = async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await this.service.verifyForgotPassword(req.body.email, req.body.code);
-      res.status(StatusCode.OK).json(result);
+      const result = await this._mentorService.verifyForgotPassword(req.body.email, req.body.code);
+      res.status(STATUS_CODES.OK).json(result);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentor = await this.service.getHome(req.params.id);
+      const mentor = await this._mentorService.getHome(req.params.id);
       if (!mentor) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "Mentor not found" });
+        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
-      res.status(StatusCode.OK).json(mentor);
+      res.status(STATUS_CODES.OK).json(mentor);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   profile = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentor = await this.service.getHome(req.params.id);
+      const mentor = await this._mentorService.getHome(req.params.id);
       if (!mentor) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "User not found" });
+        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
-      res.status(StatusCode.OK).json(mentor);
+      res.status(STATUS_CODES.OK).json(mentor);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
   editMentor = async (req: Request, res: Response): Promise<void> => {
     try {
-      const updateMentor = await this.service.updateMentor(req.params.id, req.body);
+      const updateMentor = await this._mentorService.updateMentor(req.params.id, req.body);
       if (!updateMentor) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "Mentor not found" });
+        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
-      res.status(StatusCode.OK).json(updateMentor);
+      res.status(STATUS_CODES.OK).json(updateMentor);
     } catch {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 }

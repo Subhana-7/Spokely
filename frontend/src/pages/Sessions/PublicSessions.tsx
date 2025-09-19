@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Calendar,
-  Search,
-  IndianRupee,
-} from "lucide-react";
+import { Calendar, Search, IndianRupee } from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import Header from "../user/DashBoardComponents/Header";
 import SpokelyCard from "../../components/common/Cards";
@@ -56,10 +52,16 @@ const MentorPublicSessions = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const [showPayPalModal, setShowPayPalModal] = useState(false);
-  const [activeSession, setActiveSession] = useState<{ id: string; fee: number } | null>(null);
+  const [activeSession, setActiveSession] = useState<{
+    id: string;
+    fee: number;
+  } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [paymentResult, setPaymentResult] = useState<{ status: "success" | "error"; message: string } | null>(null);
+  const [paymentResult, setPaymentResult] = useState<{
+    status: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const { user } = useAuthStore();
 
@@ -115,7 +117,10 @@ const MentorPublicSessions = () => {
         s.status.toLowerCase() !== "completed" &&
         s.status.toLowerCase() !== "cancelled"
     )
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
 
   const otherSessions = filteredSessions
     .filter(
@@ -127,11 +132,17 @@ const MentorPublicSessions = () => {
           s.status.toLowerCase() !== "cancelled"
         )
     )
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
 
   const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
     if (!sessionFee || sessionFee <= 0) {
-      setPaymentResult({ status: "error", message: "Invalid session fee. Cannot proceed with payment." });
+      setPaymentResult({
+        status: "error",
+        message: "Invalid session fee. Cannot proceed with payment.",
+      });
       return;
     }
 
@@ -156,7 +167,10 @@ const MentorPublicSessions = () => {
         });
 
         if (!paypal?.Buttons) {
-          setPaymentResult({ status: "error", message: "PayPal failed to load" });
+          setPaymentResult({
+            status: "error",
+            message: "PayPal failed to load",
+          });
           setShowPayPalModal(false);
           return;
         }
@@ -164,9 +178,13 @@ const MentorPublicSessions = () => {
         const buttons = paypal.Buttons({
           createOrder: async () => {
             try {
-              const resp: PaymentResponse = await startPayment(activeSession.id, activeSession.fee);
-              console.log(resp)
-              return resp.orderId!;
+              const resp = await startPayment(
+                activeSession.id,
+                activeSession.fee
+              );
+              console.log("Payment response:", resp);
+
+              return resp.data?.id;
             } catch (err: any) {
               console.error("createOrder error:", err);
               setShowPayPalModal(false);
@@ -177,6 +195,7 @@ const MentorPublicSessions = () => {
               throw err;
             }
           },
+
           onApprove: async (data: any) => {
             try {
               setIsProcessing(true);
@@ -200,7 +219,9 @@ const MentorPublicSessions = () => {
 
                 setPaymentResult({
                   status: "success",
-                  message: verify?.message || "Payment successful! Session scheduled 🎉",
+                  message:
+                    verify?.message ||
+                    "Payment successful! Session scheduled 🎉",
                 });
               } else {
                 setPaymentResult({
@@ -221,7 +242,10 @@ const MentorPublicSessions = () => {
           },
           onCancel: () => {
             setShowPayPalModal(false);
-            setPaymentResult({ status: "error", message: "Payment cancelled." });
+            setPaymentResult({
+              status: "error",
+              message: "Payment cancelled.",
+            });
           },
           onError: (err: any) => {
             console.error("PayPal error:", err);
@@ -251,7 +275,18 @@ const MentorPublicSessions = () => {
       day: "numeric",
     });
 
-  const getLevelBadgeVariant = (status: string): "accepted" | "mentor" | "peer" | "public" | "upcoming" | "completed" | "private" | "pending" | "cancelled" => {
+  const getLevelBadgeVariant = (
+    status: string
+  ):
+    | "accepted"
+    | "mentor"
+    | "peer"
+    | "public"
+    | "upcoming"
+    | "completed"
+    | "private"
+    | "pending"
+    | "cancelled" => {
     switch (status.toLowerCase()) {
       case "upcoming":
         return "upcoming";
@@ -273,7 +308,9 @@ const MentorPublicSessions = () => {
       <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Public Sessions</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Public Sessions
+          </h1>
           <p className="text-gray-300">
             Discover and join our mentor's upcoming public sessions
           </p>
@@ -331,7 +368,9 @@ const MentorPublicSessions = () => {
                       </Badge>
                     </div>
                     <h3 className="font-bold text-white">{session.topic}</h3>
-                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-sm text-gray-200">
+                      {session.description}
+                    </p>
                     <p className="text-xs text-gray-300">
                       {formatDate(session.startTime)} –{" "}
                       {new Date(session.startTime).toLocaleTimeString([], {
@@ -390,7 +429,9 @@ const MentorPublicSessions = () => {
                       </Badge>
                     </div>
                     <h3 className="font-bold text-white">{session.topic}</h3>
-                    <p className="text-sm text-gray-200">{session.description}</p>
+                    <p className="text-sm text-gray-200">
+                      {session.description}
+                    </p>
                     <p className="text-xs text-gray-300">
                       {formatDate(session.startTime)} –{" "}
                       {new Date(session.startTime).toLocaleTimeString([], {
@@ -429,7 +470,10 @@ const MentorPublicSessions = () => {
         ) : (
           !loading &&
           todayUpcoming.length === 0 && (
-            <SpokelyCard variant="secondary" className="text-center py-12 bg-white/10">
+            <SpokelyCard
+              variant="secondary"
+              className="text-center py-12 bg-white/10"
+            >
               <div className="max-w-md mx-auto">
                 <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-semibold text-gray-200 mb-2">
@@ -453,7 +497,9 @@ const MentorPublicSessions = () => {
             <button
               onClick={() => (isProcessing ? null : setShowPayPalModal(false))}
               className={`absolute top-2 right-2 ${
-                isProcessing ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"
+                isProcessing
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-gray-500 hover:text-gray-800"
               }`}
               disabled={isProcessing}
             >
@@ -476,10 +522,14 @@ const MentorPublicSessions = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">
             <h2
               className={`text-lg font-bold mb-4 ${
-                paymentResult.status === "success" ? "text-green-600" : "text-red-600"
+                paymentResult.status === "success"
+                  ? "text-green-600"
+                  : "text-red-600"
               }`}
             >
-              {paymentResult.status === "success" ? "Payment Successful" : "Payment Failed"}
+              {paymentResult.status === "success"
+                ? "Payment Successful"
+                : "Payment Failed"}
             </h2>
             <p className="text-gray-700 mb-6">{paymentResult.message}</p>
             <button

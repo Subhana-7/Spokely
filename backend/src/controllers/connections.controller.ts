@@ -4,74 +4,74 @@ import { IConnectionController } from "./interfaces/IConnectionsController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IConnectionService } from "../services/interfaces/IConnectionsService";
-import { StatusCode } from "../utilis/status.code";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
-export class ConnectionController implements IConnectionController {
+export class ConnectionController implements IConnectionController { 
   constructor(
-    @inject(TYPES.IConnectionService) private service: IConnectionService
+    @inject(TYPES.IConnectionService) private _connectionsService: IConnectionService
   ) {}
 
   async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
-      const connection = await this.service.sendConnectionRequest(senderId, uniqueCode);
-      res.status(StatusCode.CREATED).json(connection);
+      const connection = await this._connectionsService.sendConnectionRequest(senderId, uniqueCode);
+      res.status(STATUS_CODES.CREATED).json(connection);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   async getRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      const requests = await this.service.getIncomingRequests(req.id);
-      res.status(StatusCode.OK).json(requests);
+      const requests = await this._connectionsService.getIncomingRequests(req.id);
+      res.status(STATUS_CODES.OK).json(requests);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   async acceptConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const { requestId } = req.params;
       const userId = req.id;
-      const accepted = await this.service.acceptRequest(requestId, userId);
-      res.status(StatusCode.OK).json(accepted);
+      const accepted = await this._connectionsService.acceptRequest(requestId, userId);
+      res.status(STATUS_CODES.OK).json(accepted);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   async listConnections(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const userId = req.id;
       const search = req.query.search as string;
-      const connections = await this.service.getAllConnections(userId, search);
+      const connections = await this._connectionsService.getAllConnections(userId, search);
 
-      res.status(StatusCode.OK).json(connections);
+      res.status(STATUS_CODES.OK).json(connections);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   async getSentRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      const requests = await this.service.getOutgoingRequests(req.id);
-      res.status(StatusCode.OK).json(requests);
+      const requests = await this._connectionsService.getOutgoingRequests(req.id);
+      res.status(STATUS_CODES.OK).json(requests);
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 }

@@ -3,21 +3,25 @@ import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IChatService } from "../services/interfaces/IChatService";
-import { StatusCode } from "../utilis/status.code";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class ChatController {
   constructor(
-    @inject(TYPES.IChatService) private readonly chatService: IChatService
+    @inject(TYPES.IChatService) private readonly _chatService: IChatService
   ) {}
 
   getMessages = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
-      const messages = await this.chatService.getMessages(sessionId);
-      res.status(StatusCode.OK).json({ messages });
+      const messages = await this._chatService.getMessages(sessionId);
+      return res
+        .status(STATUS_CODES.OK)
+        .json({ messages, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
     } catch (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Failed to fetch messages" });
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 
@@ -28,13 +32,19 @@ export class ChatController {
       const sender = req.id!;
 
       if (!sender) {
-        return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        return res
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
       }
 
-      const message = await this.chatService.sendMessage(sessionId, sender, text);
-      res.status(StatusCode.OK).json({ message });
+      const message = await this._chatService.sendMessage(sessionId, sender, text);
+      return res
+        .status(STATUS_CODES.OK)
+        .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });
     } catch (err) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Failed to send message" });
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 }

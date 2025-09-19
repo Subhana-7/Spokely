@@ -15,18 +15,17 @@ import {
 } from "../dto/user.dto";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class UserService implements IUserService {
-  constructor(@inject(TYPES.IUserRepository) private repo: IUserRepository) {}
+  constructor(@inject(TYPES.IUserRepository) private _userRepository: IUserRepository) {}
 
   private async passwordValidation(password: string) {
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     if (!strongPasswordRegex.test(password)) {
-      throw new Error(
-        "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
-      );
+      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
   }
 
@@ -51,23 +50,23 @@ export class UserService implements IUserService {
   async signup(data: SignupDTO): Promise<UserResponseDTO> {
     await this.passwordValidation(data.password);
 
-    const existing = await this.repo.findByEmail(data.email);
-    if (existing) throw new Error("Email Already in use");
+    const existing = await this._userRepository.findByEmail(data.email);
+    if (existing) throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
 
     const hashed = await bcrypt.hash(data.password, 10);
     const uniqueCode = await this.generateUniqueCode();
 
-    const user = await this.repo.createUser({ ...data, password: hashed, uniqueCode });
+    const user = await this._userRepository.createUser({ ...data, password: hashed, uniqueCode });
     return toUserResponseDTO(user!);
   }
 
   async login(data: LoginDTO): Promise<{ user: UserResponseDTO; accessToken: string; refreshToken: string }> {
-    const user = await this.repo.findByEmail(data.email);
-    if (!user) throw new Error("Invalid email or password");
-    if (!user.password) throw new Error("Google registered user. Use Google sign-in.");
+    const user = await this._userRepository.findByEmail(data.email);
+    if (!user) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
+    if (!user.password) throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED); // Google registered case
 
     const match = await bcrypt.compare(data.password, user.password);
-    if (!match) throw new Error("Invalid email or password");
+    if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
     return {
       user: toUserResponseDTO(user),
@@ -77,26 +76,26 @@ export class UserService implements IUserService {
   }
 
   async sendOtp(email: string): Promise<void> {
-    const user = await this.repo.findByEmail(email);
-    if (!user) throw new Error("User not found");
+    const user = await this._userRepository.findByEmail(email);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.repo.updateOTP(email, otp, expiresAt);
+    await this._userRepository.updateOTP(email, otp, expiresAt);
     await this.sendOTPEmail(email, otp);
   }
 
   async verifyOtp(email: string, code: string): Promise<{ message: string }> {
-    const isValid = await this.repo.verifyOTP(email, code);
-    if (!isValid) throw new Error("Invalid or expired OTP");
-    return { message: "Email verified successfully" };
+    const isValid = await this._userRepository.verifyOTP(email, code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+    return { message: MESSAGES.SUCCESS.OTP_VERIFIED };
   }
 
   async forgotPassword(data: ForgotPasswordDTO): Promise<void> {
-    const user = await this.repo.findByEmail(data.email);
-    if (!user) throw new Error("User not found");
-    if (!data.newPassword) throw new Error("New password is required");
+    const user = await this._userRepository.findByEmail(data.email);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+    if (!data.newPassword) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
 
     await this.passwordValidation(data.newPassword);
     const hashedPassword = await bcrypt.hash(data.newPassword, 10);
@@ -104,62 +103,60 @@ export class UserService implements IUserService {
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.repo.updateForgotPasswordOTP(data.email, otp, expiresAt, hashedPassword);
+    await this._userRepository.updateForgotPasswordOTP(data.email, otp, expiresAt, hashedPassword);
     await this.sendOTPEmail(data.email, otp, true);
   }
 
   async verifyForgotPassword(data: VerifyForgotPasswordDTO): Promise<{ message: string }> {
-    const isValid = await this.repo.verifyForgotPasswordOTP(data.email, data.code);
-    if (!isValid) throw new Error("Invalid or expired OTP");
-    return { message: "Password reset successfully" };
+    const isValid = await this._userRepository.verifyForgotPasswordOTP(data.email, data.code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+    return { message: MESSAGES.SUCCESS.PASSWORD_RESET };
   }
 
   async updateRole(userId: string, role: "user" | "mentor"): Promise<UserResponseDTO> {
-    if (!["user", "mentor"].includes(role)) throw new Error("Invalid role");
-    const updated = await this.repo.updateUserRole(userId, role);
-    if (!updated) throw new Error("User not found");
+    if (!["user", "mentor"].includes(role)) throw new Error(MESSAGES.ERROR.INVALID_ROLE);
+    const updated = await this._userRepository.updateUserRole(userId, role);
+    if (!updated) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     return toUserResponseDTO(updated);
   }
 
   async getHome(id: string): Promise<UserResponseDTO> {
-    const user = await this.repo.findById(id);
-    if (!user) throw new Error("User not found");
+    const user = await this._userRepository.findById(id);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     return toUserResponseDTO(user);
   }
 
   async getAllUsers(): Promise<UserResponseDTO[]> {
-    const {results} = await this.repo.findAll();
+    const { results } = await this._userRepository.findAll();
     return results.length ? results.map(toUserResponseDTO) : [];
   }
 
   async updateUser(id: string, data: Partial<IUser>): Promise<UserResponseDTO> {
-    const updatedUser = await this.repo.updateUser(id, data);
-    if (!updatedUser) throw new Error("User not found");
+    const updatedUser = await this._userRepository.updateUser(id, data);
+    if (!updatedUser) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     return toUserResponseDTO(updatedUser);
   }
 
   private async generateUniqueCode(): Promise<string> {
     let code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    while (await this.repo.findByUniqueCode(code)) {
+    while (await this._userRepository.findByUniqueCode(code)) {
       code = Math.random().toString(36).substring(2, 8).toUpperCase();
     }
     return code;
   }
 
   async refreshToken(token: string): Promise<{ user: UserResponseDTO; accessToken: string }> {
-  if (!token) throw new Error("Refresh token missing");
+    if (!token) throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
 
-  try {
-    const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as { id: string; role: "user" | "mentor" };
+    try {
+      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as { id: string; role: "user" | "mentor" };
 
-    const user = await this.getHome(payload.id);
+      const user = await this.getHome(payload.id);
+      const newAccessToken = generateAccessToken({ id: payload.id, role: payload.role });
 
-    const newAccessToken = generateAccessToken({ id: payload.id, role: payload.role });
-
-    return { user, accessToken: newAccessToken };
-  } catch (err) {
-    throw new Error("Invalid or expired refresh token");
+      return { user, accessToken: newAccessToken };
+    } catch {
+      throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
+    }
   }
-}
-
 }

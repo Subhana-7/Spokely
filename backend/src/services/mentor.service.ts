@@ -9,19 +9,20 @@ import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
 import { MentorResponseDTO } from "../dto/mentor.dto";
+import { MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class MentorService implements IMentorService {
   constructor(
-    @inject(TYPES.IMentorRepository) private repo: IMentorRepository,
-    @inject(TYPES.IEmailService) private emailService: IEmailService
+    @inject(TYPES.IMentorRepository) private _mentorRepository: IMentorRepository,
+    @inject(TYPES.IEmailService) private _emailService: IEmailService
   ) {}
 
   async generateUniqueCode(): Promise<string | null> {
     const generate = () =>
       Math.random().toString(36).substring(2, 8).toUpperCase();
     let code = generate();
-    while (await this.repo.findByUniqueCode(code)) {
+    while (await this._mentorRepository.findByUniqueCode(code)) {
       code = generate();
     }
     return code;
@@ -31,9 +32,7 @@ export class MentorService implements IMentorService {
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     if (!strongPasswordRegex.test(password)) {
-      throw new Error(
-        "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
-      );
+      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
   }
 
@@ -42,27 +41,27 @@ export class MentorService implements IMentorService {
   }
 
   async sendOtp(email: string): Promise<void> {
-    const mentor = await this.repo.findByEmail(email);
-    if (!mentor) throw new Error("Mentor not found");
+    const mentor = await this._mentorRepository.findByEmail(email);
+    if (!mentor) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await this.repo.updateOTP(email, otp, expiresAt);
-    await this.emailService.sendOTP(email, otp);
+    await this._mentorRepository.updateOTP(email, otp, expiresAt);
+    await this._emailService.sendOTP(email, otp);
   }
 
   async verifyOtp(email: string, code: string): Promise<{ message: string }> {
-    const isValid = await this.repo.verifyOTP(email, code);
-    if (!isValid) throw new Error("Invalid or expired OTP");
+    const isValid = await this._mentorRepository.verifyOTP(email, code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
-    await this.emailService.sendVerificationUpdateEmail(email, "pending");
+    await this._emailService.sendVerificationUpdateEmail(email, "pending");
 
-    return { message: "Email verified successfully" };
+    return { message: MESSAGES.SUCCESS.USER_FETCHED };
   }
 
   async signup(data: any): Promise<MentorResponseDTO | null> {
-    const existing = await this.repo.findByEmail(data.email);
-    if (existing) throw new Error("Email already registered");
+    const existing = await this._mentorRepository.findByEmail(data.email);
+    if (existing) throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
 
     const hashed = await bcrypt.hash(data.password, 10);
     const uniqueCode = await this.generateUniqueCode();
@@ -73,7 +72,7 @@ export class MentorService implements IMentorService {
       verificationStatus: "pending",
     };
 
-    const mentor = await this.repo.createMentor({
+    const mentor = await this._mentorRepository.createMentor({
       ...data,
       password: hashed,
       uniqueCode,
@@ -88,13 +87,13 @@ export class MentorService implements IMentorService {
     accessToken: string;
     refreshToken: string;
   } | null> {
-    const mentor = await this.repo.findByEmail(data.email);
-    if (!mentor) throw new Error("Invalid credentials");
+    const mentor = await this._mentorRepository.findByEmail(data.email);
+    if (!mentor) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
-    if (!mentor.password) throw new Error("Use Google login");
+    if (!mentor.password) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
 
     const match = await bcrypt.compare(data.password, mentor.password);
-    if (!match) throw new Error("Invalid credentials");
+    if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
     return {
       mentor: toMentorResponseDTO(mentor),
@@ -104,23 +103,22 @@ export class MentorService implements IMentorService {
   }
 
   async getAllMentors(): Promise<MentorResponseDTO[] | null> {
-  const { results } = await this.repo.findAll();
-  return results.length ? results.map(toMentorResponseDTO) : null;
-}
-
+    const { results } = await this._mentorRepository.findAll();
+    return results.length ? results.map(toMentorResponseDTO) : null;
+  }
 
   async updateMentorDocument(
     email: string,
     docUrl: string,
     docMessage: string
   ): Promise<MentorResponseDTO | null> {
-    const mentor = await this.repo.updateMentorDocument(email, docUrl, docMessage);
+    const mentor = await this._mentorRepository.updateMentorDocument(email, docUrl, docMessage);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
   async forgotPassword(email: string, newPassword: string): Promise<void> {
-    const mentor = await this.repo.findByEmail(email);
-    if (!mentor) throw new Error("Mentor not found");
+    const mentor = await this._mentorRepository.findByEmail(email);
+    if (!mentor) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     await this.passwordValidation(newPassword);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -128,27 +126,27 @@ export class MentorService implements IMentorService {
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.repo.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
-    await this.emailService.sendOTPEmail(email, otp, true);
+    await this._mentorRepository.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
+    await this._emailService.sendOTPEmail(email, otp, true);
   }
 
   async verifyForgotPassword(
     email: string,
     code: string
   ): Promise<{ message: string }> {
-    const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
-    if (!isValid) throw new Error("Invalid or expired OTP");
+    const isValid = await this._mentorRepository.verifyForgotPasswordOTP(email, code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
-    return { message: "Password reset successfully" };
+    return { message: MESSAGES.SUCCESS.PASSWORD_RESET };
   }
 
   async getHome(id: string): Promise<MentorResponseDTO | null> {
-    const mentor = await this.repo.findById(id);
+    const mentor = await this._mentorRepository.findById(id);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
-    const mentor = await this.repo.updateMentor(id, data);
+    const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
 }

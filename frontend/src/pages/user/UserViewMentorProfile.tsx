@@ -131,6 +131,7 @@ const UserViewMentorProfile = () => {
         createOrder: async () => {
           try {
             const resp = await subscriptionStartPayment(activePlan._id, activePlan.price);
+            console.log(resp)
             return resp.orderId;
           } catch (err: any) {
             console.error("createOrder error:", err);

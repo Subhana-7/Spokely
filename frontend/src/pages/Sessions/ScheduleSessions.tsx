@@ -34,11 +34,11 @@ const ScheduleSession = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
-  const userRole = user?.role
+  const userRole = user?.role;
 
-  console.log(userRole)
+  console.log(userRole);
 
   const [formData, setFormData] = useState<FormData>({
     type: "",
@@ -65,15 +65,19 @@ const ScheduleSession = () => {
   const navigate = useNavigate();
 
   async function connectedUsers() {
-    let res = await getAllConnections();
-    return res;
+    try {
+      let res = await getAllConnections();
+      console.log(res);
+      return res;
+    } catch (err) {
+      toast.error("Failed to fetch users");
+      return { data: [] };
+    }
   }
 
   useEffect(() => {
     if (formData.type === "peer-to-peer") {
-      connectedUsers()
-        .then((res) => setUsers(res.data))
-        .catch(() => toast.error("Failed to fetch users"));
+      connectedUsers().then((res) => setUsers(res.data));
     } else {
       setUsers([]);
       setSelectedMembers([]);
@@ -168,10 +172,7 @@ const ScheduleSession = () => {
 
   const validateParticipants = (type: string, participants: any[]) => {
     if (type === "public") return "";
-    if (
-      (type === "private" || type === "peer-to-peer") &&
-      participants.length === 0
-    )
+    if ((type === "private" || type === "peer-to-peer") && participants.length === 0)
       return "Please select at least one participant";
     if (participants.length > 10) return "Maximum 10 participants allowed";
     return "";
@@ -208,11 +209,7 @@ const ScheduleSession = () => {
   };
 
   const addMember = (member: any) => {
-    if (
-      !selectedMembers.find(
-        (m) => m.connectionWith?._id === member.connectionWith?._id
-      )
-    ) {
+    if (!selectedMembers.find((m) => m.connectedUser?.id === member.connectedUser?.id)) {
       setSelectedMembers((prev) => [...prev, member]);
     }
     setSearchTerm("");
@@ -220,54 +217,51 @@ const ScheduleSession = () => {
 
   const removeMember = (userId: string) => {
     setSelectedMembers((prev) =>
-      prev.filter((m) => m.connectionWith?._id !== userId)
+      prev.filter((m) => m.connectedUser?.id !== userId)
     );
   };
 
   const handleSchedule = async () => {
-  try {
-    const formErrors = validateForm(formData, selectedMembers);
-    if (Object.keys(formErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
-      toast.error("Please fix all validation errors before scheduling");
-      return;
+    try {
+      const formErrors = validateForm(formData, selectedMembers);
+      if (Object.keys(formErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
+        toast.error("Please fix all validation errors before scheduling");
+        return;
+      }
+
+      const { type, topic, description, date, startTime, endTime, price } = formData;
+      const start = new Date(`${date}T${startTime}`);
+      const end = new Date(`${date}T${endTime}`);
+
+      const capitalizeFirstLetter = (str: string) =>
+        str.charAt(0).toUpperCase() + str.slice(1);
+
+      const payload: any = {
+        type,
+        topic: topic.trim(),
+        description: description.trim(),
+        startTime: start,
+        endTime: end,
+        participants: selectedMembers.map((m) => ({
+          user: m.connectedUser?.id,
+          status: "pending",
+        })),
+        role: capitalizeFirstLetter(userRole as string),
+      };
+
+      if (type === "public" && price) payload.sessionFee = parseFloat(price);
+
+      await createSession(payload);
+      toast.success("Session scheduled successfully");
+      navigate("/user/session");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to schedule session");
     }
-
-    const { type, topic, description, date, startTime, endTime, price } = formData;
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-
-    const capitalizeFirstLetter = (str: string) => 
-  str.charAt(0).toUpperCase() + str.slice(1);
-
-    const payload: any = {
-      type,
-      topic: topic.trim(),
-      description: description.trim(),
-      startTime: start,
-      endTime: end,
-      participants: selectedMembers.map((m) => ({
-        user: m.connectionWith?._id,
-        status: "pending",
-      })),
-      role:capitalizeFirstLetter(userRole as string)
-    };
-
-    if (type === "public" && price) payload.sessionFee = parseFloat(price);
-
-    await createSession(payload);
-    toast.success("Session scheduled successfully");
-    navigate("/user/session");
-  } catch (err: any) {
-    toast.error(err.response?.data?.message || "Failed to schedule session");
-  }
-};
-
+  };
 
   const filteredResults = users.filter((member) =>
-    member.connectionWith?.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    member.connectedUser?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const isFormValid = () => {
@@ -275,9 +269,9 @@ const ScheduleSession = () => {
       if (key === "price" && formData.type !== "public") return true;
       return value.trim() !== "";
     });
-    const noFieldErrors = Object.values(
-      validateForm(formData, selectedMembers)
-    ).every((err) => !err);
+    const noFieldErrors = Object.values(validateForm(formData, selectedMembers)).every(
+      (err) => !err
+    );
     return hasRequiredFields && noFieldErrors;
   };
 
@@ -322,9 +316,7 @@ const ScheduleSession = () => {
                   value={formData.type}
                   onChange={(e) => handleInputChange("type", e.target.value)}
                   className={`w-full px-4 py-3 rounded-xl border bg-gray-900/60 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    errors.type && touched.type
-                      ? "border-red-500"
-                      : "border-gray-700"
+                    errors.type && touched.type ? "border-red-500" : "border-gray-700"
                   }`}
                 >
                   <option value="">Select session type</option>
@@ -411,9 +403,7 @@ const ScheduleSession = () => {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("description", e.target.value)}
                   className="w-full px-4 py-3 bg-gray-900/60 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-green-500"
                   rows={4}
                   placeholder="Describe session goals..."
@@ -449,16 +439,12 @@ const ScheduleSession = () => {
                     <div className="bg-gray-900/50 border border-gray-700 rounded-xl max-h-40 overflow-y-auto mb-4">
                       {filteredResults.map((member) => (
                         <button
-                          key={member._id}
+                          key={member.id}
                           onClick={() => addMember(member)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
                         >
-                          <span className="text-sm">
-                            {member.connectionWith?.name}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            Click to add
-                          </span>
+                          <span className="text-sm">{member.connectedUser?.name}</span>
+                          <span className="text-xs text-gray-400">Click to add</span>
                         </button>
                       ))}
                     </div>
@@ -473,14 +459,12 @@ const ScheduleSession = () => {
                       <div className="space-y-2">
                         {selectedMembers.map((member) => (
                           <div
-                            key={member._id}
+                            key={member.id}
                             className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
                           >
-                            <span className="text-sm">
-                              {member.connectionWith?.name}
-                            </span>
+                            <span className="text-sm">{member.connectedUser?.name}</span>
                             <button
-                              onClick={() => removeMember(member._id)}
+                              onClick={() => removeMember(member.connectedUser?.id)}
                               className="text-red-400 hover:text-red-600 p-1"
                             >
                               <X size={16} />

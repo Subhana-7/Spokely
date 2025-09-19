@@ -1,4 +1,3 @@
-// src/services/axios.instance.ts
 import axios, { AxiosError } from "axios";
 import { refreshToken } from "../services/authServices";
 
@@ -9,13 +8,11 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Response interceptor for handling 401 and general errors
 API.interceptors.response.use(
   (res) => res,
   async (err: AxiosError & { config: any }) => {
     const originalRequest = err.config;
 
-    // Handle 401 - refresh token
     if (
       err.response?.status === 401 &&
       !originalRequest._retry &&

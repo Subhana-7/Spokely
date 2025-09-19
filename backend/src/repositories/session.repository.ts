@@ -5,7 +5,10 @@ import { injectable } from "inversify";
 import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class SessionRepository extends BaseRepository<ISession> implements ISessionRepository {
+export class SessionRepository
+  extends BaseRepository<ISession>
+  implements ISessionRepository
+{
   constructor() {
     super(SessionModel);
   }
@@ -153,6 +156,24 @@ export class SessionRepository extends BaseRepository<ISession> implements ISess
     try {
       const res = await SessionModel.find();
       console.log(res);
+      return res;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+  async publicSessionAvailability(
+    userId: string,
+    mentorId: string,
+    date: Date
+  ): Promise<ISession[] | null> {
+    try {
+      const res = await SessionModel.find({
+        type: "Public",
+        mentorId: mentorId,
+        "participants.user": userId,
+        startTime: date,
+      });
       return res;
     } catch (error) {
       console.error(error);

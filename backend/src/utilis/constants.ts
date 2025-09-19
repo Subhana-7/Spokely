@@ -44,5 +44,29 @@ export const MESSAGES = {
     OTP_INVALID: "Invalid OTP",
     OTP_EXPIRED: "OTP has expired",
     ALREADY_VERIFIED: "User is already verified",
+
+    // 🔥 New ones for connections
+    SELF_CONNECTION: "You can't connect with yourself",
+    CONNECTION_EXISTS: "Connection already exists",
+  },
+  SESSION: {
+    CREATED: "Session created",
+    CREATE_FAILED: "Failed to create session",
+    UPDATED: "Session updated",
+    UPDATE_FAILED: "Failed to update session",
+    NOT_FOUND: "Session not found",
+    FETCH_FAILED: "Failed to fetch session",
+    PARTICIPATION_CANCELLED: "Participation cancelled",
+    CANCELLED: "Session cancelled",
+    FLAGGED: "Session flagged",
+    OUTSIDE_TIMEFRAME: "Not within session timeframe",
+    TOKEN_FAILED: "Failed to generate token",
+    FEEDBACK_ADDED: "Feedback added",
+  },
+  SUBSCRIPTION: {
+    FAILED: "Subscription failed",
+    NOT_FOUND: "Mentor has no subscription",
+    FETCH_FAILED: "Failed to fetch plans",
+    SAVE_FAILED: "Failed to save mentor plans",
   },
 };

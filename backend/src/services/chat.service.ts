@@ -8,10 +8,10 @@ import { MessageDto } from "../dto/chat.dto";
 
 
 @injectable()
-export class ChatService {
+export class ChatService { 
   constructor(
     @inject(TYPES.IChatRepository)
-    private readonly chatRepo: IChatRepository
+    private readonly _chatRepository: IChatRepository
   ) {}
 
   async sendMessage(
@@ -19,10 +19,10 @@ export class ChatService {
     senderId: string,
     text: string
   ): Promise<MessageDto> {
-    const participants = sessionId.split("_"); // ✅ moved here
-    await this.chatRepo.findOrCreateSession(sessionId, participants);
+    const participants = sessionId.split("_"); 
+    await this._chatRepository.findOrCreateSession(sessionId, participants);
 
-    const message: IMessage = await this.chatRepo.saveMessage({
+    const message: IMessage = await this._chatRepository.saveMessage({
       sessionId,
       sender: new Types.ObjectId(senderId),
       text,
@@ -32,10 +32,10 @@ export class ChatService {
   }
 
   async getMessages(sessionId: string): Promise<MessageDto[]> {
-    const participants = sessionId.split("_"); // ✅ moved here
-    await this.chatRepo.findOrCreateSession(sessionId, participants);
+    const participants = sessionId.split("_"); 
+    await this._chatRepository.findOrCreateSession(sessionId, participants);
 
-    const messages = await this.chatRepo.getMessages(sessionId);
+    const messages = await this._chatRepository.getMessages(sessionId);
     return mapMessagesToDto(messages ?? []);
   }
 }
