@@ -28,4 +28,6 @@ router.get("/mentor-profile/:id",controller.profile.bind(controller));
 
 router.post("/edit/:id",authMiddleware(["mentor"]),controller.editMentor.bind(controller));
 
+router.post('change-password',authMiddleware(["mentor"]),controller.changePassword.bind(controller));
+
 export default router;

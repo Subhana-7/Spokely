@@ -36,4 +36,6 @@ router.get("/peer/profile/:id", controller.profile.bind(controller));
 
 router.post("/edit/:id",controller.editUser.bind(controller));
 
+router.post("/change-password",controller.changePassword.bind(controller));
+
 export default router;

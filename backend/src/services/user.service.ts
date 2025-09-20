@@ -12,6 +12,7 @@ import {
   UserResponseDTO,
   ForgotPasswordDTO,
   VerifyForgotPasswordDTO,
+  changePasswordDTO
 } from "../dto/user.dto";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
@@ -159,4 +160,34 @@ export class UserService implements IUserService {
       throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
     }
   }
+
+ async changePassword(data: changePasswordDTO): Promise<{ message: string }> {
+  const user = await this._userRepository.findById(data.id);
+  if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+
+  if (!data.currentPassword || !data.newPassword) {
+    throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+  }
+
+  if(!user.password){
+    throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+  }
+
+  await this.passwordValidation(data.newPassword);
+
+  const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
+  }
+
+  const newHashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+  const updation = await this._userRepository.updatePassword(data.id, newHashedPassword);
+  if (!updation) {
+    throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
+  }
+
+  return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
+}
+
 }

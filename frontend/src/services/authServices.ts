@@ -112,3 +112,9 @@ export const editUserDetails = async (id: string, role: string, data: Record<str
   const res = await API.post(endpoint, data);
   return res.data;
 };
+
+export const changePassword = async(role:string,data:any) => {
+  const endpoint = role === "mentor" ? `/mentors/change-password` : `/users/change-password`;
+  const res = await API.post(endpoint,data);
+  return res.data;
+}

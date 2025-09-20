@@ -15,27 +15,57 @@ import {
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
 import { useAuthStore } from "../../store/userAuthStore";
-import { editUserDetails } from "../../services/authServices";
+import { editUserDetails, changePassword } from "../../services/authServices";
 import { uploadImageToCloudinary } from "../../utilis/cloudinary ";
+import ChangePasswordModal from "../../modals/ChangePassword";
+import SuccessModal from "../../modals/SuccessModal"; // ✅ import
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const { user, setUser } = useAuthStore();
+  console.log("user", user?.id);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: user?.phone || "",
+    phone: user?.phone ? String(user.phone) : "",
     uniqueCode: user?.uniqueCode || "",
     profilePicture: user?.profilePicture || "",
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // ✅ new state
+
+  const userId = user?.id;
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+    if (name === "name") {
+      if (!value.trim()) {
+        error = "Name is required.";
+      } else if (value.length < 3) {
+        error = "Name must be at least 3 characters.";
+      }
+    }
+    if (name === "phone") {
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!value.trim()) {
+        error = "Phone number is required.";
+      } else if (!phoneRegex.test(value)) {
+        error = "Enter a valid 10-digit phone number.";
+      }
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // Handle Cloudinary Upload for Profile Pic
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
+
   const handleProfilePicUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -53,12 +83,32 @@ const UserProfile = () => {
     }
   };
 
+  const isFormValid = () => {
+    return (
+      !errors.name &&
+      !errors.phone &&
+      formData.name.trim().length >= 3 &&
+      /^[0-9]{10}$/.test(formData.phone)
+    );
+  };
+
   const handleSave = async () => {
+    console.log("Saving with data:", formData);
+    validateField("name", formData.name);
+    validateField("phone", formData.phone);
+
+    if (!isFormValid()) return;
+
     try {
       setLoading(true);
       if (!user?.id || !user?.role) return;
 
-      const updated = await editUserDetails(user.id, user.role, formData);
+      const payload = {
+        ...formData,
+        phone: Number(formData.phone),
+      };
+
+      const updated = await editUserDetails(user.id, user.role, payload);
       setUser(updated);
       setIsEditing(false);
     } catch (err) {
@@ -66,6 +116,17 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePasswordChange = async (oldPass: string, newPass: string) => {
+    const payload = {
+      currentPassword: oldPass,
+      newPassword: newPass,
+      id: userId,
+    };
+    await changePassword("user", payload);
+    setIsPasswordModalOpen(false); // close modal
+    setIsSuccessModalOpen(true); // show success modal
   };
 
   return (
@@ -143,7 +204,9 @@ const UserProfile = () => {
                 <div className="text-3xl font-bold text-indigo-300 mb-2">
                   {user?.sessionsDone ?? 0}
                 </div>
-                <div className="text-sm text-gray-200 font-medium">Sessions</div>
+                <div className="text-sm text-gray-200 font-medium">
+                  Sessions
+                </div>
               </SpokelyCard>
               <SpokelyCard className="p-6 text-center bg-white/10 border shadow-lg">
                 <div className="text-3xl font-bold text-purple-300 mb-2">23</div>
@@ -166,8 +229,12 @@ const UserProfile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-semibold">Overall Progress</span>
-                    <span className="text-3xl font-bold text-indigo-300">87%</span>
+                    <span className="text-lg font-semibold">
+                      Overall Progress
+                    </span>
+                    <span className="text-3xl font-bold text-indigo-300">
+                      87%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-100/30 rounded-full h-3">
                     <div
@@ -186,7 +253,9 @@ const UserProfile = () => {
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
                       (day, index) => (
                         <div key={day} className="flex-1 text-center">
-                          <div className="text-xs text-gray-300 mb-1">{day}</div>
+                          <div className="text-xs text-gray-300 mb-1">
+                            {day}
+                          </div>
                           <div
                             className={`h-12 rounded-lg ${
                               index < 5
@@ -251,7 +320,7 @@ const UserProfile = () => {
                 ) : (
                   <button
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={loading || !isFormValid()}
                     className="flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium disabled:opacity-50"
                   >
                     {loading ? "Saving..." : "Save"}
@@ -271,12 +340,15 @@ const UserProfile = () => {
                     value={formData.name}
                     onChange={handleChange}
                     readOnly={!isEditing}
-                    className={`w-full p-4 border border-gray-200 rounded-xl text-black ${
+                    className={`w-full p-4 border rounded-xl text-black ${
                       isEditing
-                        ? "bg-white focus:ring-2 focus:ring-indigo-500"
-                        : "bg-gray-50"
+                        ? "bg-white focus:ring-2 focus:ring-indigo-500 border-gray-200"
+                        : "bg-gray-50 border-gray-200"
                     } transition-all duration-200`}
                   />
+                  {errors.name && (
+                    <p className="text-red-400 text-sm mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 {/* Email (always read-only) */}
@@ -318,15 +390,22 @@ const UserProfile = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     readOnly={!isEditing}
-                    className={`w-full p-4 border border-gray-200 rounded-xl text-black ${
+                    className={`w-full p-4 border rounded-xl text-black ${
                       isEditing
-                        ? "bg-white focus:ring-2 focus:ring-indigo-500"
-                        : "bg-gray-50"
+                        ? "bg-white focus:ring-2 focus:ring-indigo-500 border-gray-200"
+                        : "bg-gray-50 border-gray-200"
                     }`}
                   />
+                  {errors.phone && (
+                    <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
-                <button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                {/* Change Password Button */}
+                <button
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                >
                   <Lock size={16} className="mr-2" />
                   Change Password
                 </button>
@@ -335,6 +414,20 @@ const UserProfile = () => {
           </div>
         </div>
       </main>
+
+      {/* 🔹 Password Modal */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSubmit={handlePasswordChange}
+      />
+
+      {/* 🔹 Success Modal */}
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        message="Your password has been successfully updated."
+      />
     </div>
   );
 };

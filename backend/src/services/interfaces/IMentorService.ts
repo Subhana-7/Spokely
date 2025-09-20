@@ -1,4 +1,4 @@
-import { MentorResponseDTO } from "../../dto/mentor.dto";
+import { ChangePasswordDTO, MentorResponseDTO } from "../../dto/mentor.dto";
 
 export interface IMentorService {
   generateUniqueCode(): Promise<string | null>;
@@ -30,4 +30,6 @@ export interface IMentorService {
 
   getHome(id: string): Promise<MentorResponseDTO | null>;
   updateMentor(id: string, data: any): Promise<MentorResponseDTO | null>;
+
+  changePassword(data: ChangePasswordDTO): Promise<{ message: string }>;
 }

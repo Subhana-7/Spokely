@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
-import { MentorResponseDTO } from "../dto/mentor.dto";
+import { ChangePasswordDTO, MentorResponseDTO } from "../dto/mentor.dto";
 import { MESSAGES } from "../utilis/constants";
 
 @injectable()
@@ -148,5 +148,34 @@ export class MentorService implements IMentorService {
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
     const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
+  }
+
+  async changePassword(data: ChangePasswordDTO): Promise<{ message: string }> {
+    const mentor = await this._mentorRepository.findById(data.id);
+    if (!mentor) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+  
+    if (!data.currentPassword || !data.newPassword) {
+      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+    }
+  
+    if(!mentor.password){
+      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+    }
+  
+    await this.passwordValidation(data.newPassword);
+  
+    const isMatch = await bcrypt.compare(data.currentPassword, mentor.password);
+    if (!isMatch) {
+      throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
+    }
+  
+    const newHashedPassword = await bcrypt.hash(data.newPassword, 10);
+  
+    const updation = await this._mentorRepository.updatePassword(data.id, newHashedPassword);
+    if (!updation) {
+      throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
+    }
+  
+    return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
   }
 }

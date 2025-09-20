@@ -29,6 +29,12 @@ export interface ForgotPasswordDTO {
   newPassword?: string;
 }
 
+export interface changePasswordDTO {
+  id: string;
+  currentPassword:string;
+  newPassword?: string;
+}
+
 export interface VerifyForgotPasswordDTO {
   email: string;
   code: string;

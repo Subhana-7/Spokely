@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { MentorResponseDTO } from "../../dto/mentor.dto";
+import { ChangePasswordDTO, MentorResponseDTO } from "../../dto/mentor.dto";
 
 export interface IMentorController {
   signup(
@@ -59,5 +59,10 @@ export interface IMentorController {
   editMentor(
     req: Request,
     res: Response<MentorResponseDTO | { message: string }>
+  ): Promise<void>;
+
+  changePassword(
+    req: Request<{}, {}, ChangePasswordDTO>,
+    res: Response
   ): Promise<void>;
 }

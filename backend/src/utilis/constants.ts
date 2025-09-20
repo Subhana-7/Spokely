@@ -28,6 +28,7 @@ export const MESSAGES = {
     ROLE_UPDATED: "User role updated successfully",
     SESSIONS_FETCHED: "Sessions fetched successfully",
     USER_FETCHED: "User data fetched successfully",
+    PASSWORD_CHANGED:"New password updated successfully"
   },
   ERROR: {
     INVALID_CREDENTIALS: "Invalid email or password",
@@ -44,10 +45,9 @@ export const MESSAGES = {
     OTP_INVALID: "Invalid OTP",
     OTP_EXPIRED: "OTP has expired",
     ALREADY_VERIFIED: "User is already verified",
-
-    // 🔥 New ones for connections
     SELF_CONNECTION: "You can't connect with yourself",
     CONNECTION_EXISTS: "Connection already exists",
+    PASSWORD_NOT_CHANGED:"Password is not changed",
   },
   SESSION: {
     CREATED: "Session created",

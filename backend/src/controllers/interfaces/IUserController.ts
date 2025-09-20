@@ -20,4 +20,8 @@ export interface IUserController {
   ): Promise<void>;
   googleCallback(req: Request, res: Response, next: Function): Promise<void>;
   home(req: Request, res: Response): Promise<void>;
+  changePassword(
+      req:Request,
+      res:Response
+    ):Promise<void>;
 }

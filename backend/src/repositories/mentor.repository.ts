@@ -167,13 +167,13 @@ export class MentorRepository extends BaseRepository<IMentor> implements IMentor
   }
 
   async updatePassword(
-    email: string,
-    password: string
+    id: string,
+    newPassword: string
   ): Promise<IMentor | null> {
     try {
-      return Mentor.findOneAndUpdate(
-        { email },
-        { password },
+      return Mentor.findByIdAndUpdate(
+        id,
+        { newPassword },
         { new: true }
       );
     } catch (error) {

@@ -6,6 +6,7 @@ import { IMentorController } from "./interfaces/IMentorController";
 import jwt from "jsonwebtoken";
 import { generateAccessToken } from "../utilis/token";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { ChangePasswordDTO } from "../dto/mentor.dto";
 
 @injectable()
 export class MentorController implements IMentorController {
@@ -208,4 +209,19 @@ export class MentorController implements IMentorController {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
+
+
+  changePassword = async(
+      req:Request<{},{},ChangePasswordDTO>,
+      res:Response
+    ) => {
+      try {
+        await this._mentorService.changePassword(req.body);
+        res
+          .status(STATUS_CODES.OK)
+          .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
+      } catch (error:any) {
+        res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
+      }
+    }
 }

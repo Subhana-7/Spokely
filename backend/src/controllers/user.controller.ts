@@ -10,6 +10,7 @@ import {
   ForgotPasswordDTO,
   VerifyForgotPasswordDTO,
   UpdateRoleDTO,
+  changePasswordDTO
 } from "../dto/user.dto";
 import { IUserController } from "./interfaces/IUserController";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
@@ -166,4 +167,18 @@ export class UserController implements IUserController {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
     }
   };
+
+  changePassword = async(
+    req:Request<{},{},changePasswordDTO>,
+    res:Response
+  ) => {
+    try {
+      await this._userService.changePassword(req.body);
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
+    } catch (error:any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
+    }
+  }
 }
