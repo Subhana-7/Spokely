@@ -14,30 +14,35 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await getAllUsers({
-          search,
-          level: filter,
-          page,
-          limit,
-          isBlocked:
-            statusFilter === "blocked"
-              ? true
-              : statusFilter === "active"
-              ? false
-              : undefined,
-        });
+  const fetchUsers = async () => {
+    try {
+      const response = await getAllUsers({
+        search,
+        level: filter,
+        page,
+        limit,
+        isBlocked:
+          statusFilter === "blocked"
+            ? true
+            : statusFilter === "active"
+            ? false
+            : undefined,
+      });
 
-        setUsers(data.users);
-        setTotal(data.total);
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      }
-    };
+      const { result } = response.data;
 
-    fetchUsers();
-  }, [search, filter, statusFilter, page, limit]); 
+      console.log(result);
+
+      setUsers(result.users);
+      setTotal(result.total);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
+  fetchUsers();
+}, [search, filter, statusFilter, page, limit]);
+
 
   const handleBlock = async (id: string) => {
     try {

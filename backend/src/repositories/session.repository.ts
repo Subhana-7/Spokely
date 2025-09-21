@@ -155,7 +155,6 @@ export class SessionRepository
   async findSessions(query: any): Promise<ISession[] | null> {
     try {
       const res = await SessionModel.find();
-      console.log(res);
       return res;
     } catch (error) {
       console.error(error);
