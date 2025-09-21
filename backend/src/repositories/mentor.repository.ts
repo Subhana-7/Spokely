@@ -182,12 +182,12 @@ export class MentorRepository extends BaseRepository<IMentor> implements IMentor
     }
   }
 
-  async updateMentor(id: string, data: any): Promise<IMentor | null> {
-    try {
-      return await Mentor.findByIdAndUpdate(id, data, { new: true });
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
+ async updateMentor(id: string, data: any): Promise<IMentor | null> {
+  return Mentor.findByIdAndUpdate(
+    id,
+    { $set: data },
+    { new: true }
+  );
+}
+
 }

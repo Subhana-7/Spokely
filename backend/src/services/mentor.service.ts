@@ -146,6 +146,7 @@ export class MentorService implements IMentorService {
   }
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
+    console.log(data)
     const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
