@@ -433,11 +433,9 @@ const MentorProfile = () => {
               <input
                 type="email"
                 value={mentorDetails.email}
-                onChange={(e) =>
-                  setMentorDetails({ ...mentorDetails, email: e.target.value })
-                }
+                readOnly
                 placeholder="Email"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
               />
               <input
                 type="text"
