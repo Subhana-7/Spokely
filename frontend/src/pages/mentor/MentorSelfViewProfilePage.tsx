@@ -35,6 +35,7 @@ const MentorProfile = () => {
     phone: "",
     bio: "",
   });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [profilePic, setProfilePic] = useState(user?.profilePicture || "");
   const [plans, setPlans] = useState<{ type: string; price: number }[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
@@ -54,7 +55,7 @@ const MentorProfile = () => {
         phone: user.phone?.toString() || "",
         bio: user.bio || "",
       });
-      setBio((user as any).bio || "");
+      setBio(user.bio || "");
       setProfilePic(user.profilePicture || "");
       setSelectedTags((user as any).tags || []);
     }
@@ -110,9 +111,23 @@ const MentorProfile = () => {
     }
   };
 
+  const validateFields = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!mentorDetails.name.trim()) newErrors.name = "Name is required.";
+    if (!mentorDetails.phone.trim()) newErrors.phone = "Phone is required.";
+    else if (!/^\d{10,15}$/.test(mentorDetails.phone.trim()))
+      newErrors.phone = "Enter a valid phone number.";
+    if (!bio.trim()) newErrors.bio = "Bio is required.";
+    else if (bio.trim().length > 500)
+      newErrors.bio = "Bio cannot exceed 500 characters.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!validateFields()) return;
     try {
       const updatedData = {
         ...mentorDetails,
@@ -262,8 +277,7 @@ const MentorProfile = () => {
             <SpokelyCard className="p-8 bg-white/10 backdrop-blur-lg border border-white/20">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center">
-                  <Book size={24} className="mr-3 text-green-400" />{" "}
-                  Professional Bio
+                  <Book size={24} className="mr-3 text-green-400" /> Professional Bio
                 </h3>
                 <button
                   className="flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium"
@@ -276,9 +290,7 @@ const MentorProfile = () => {
                 <p>{mentorDetails.bio}</p>
               </div>
               <div className="mt-8">
-                <h4 className="text-lg font-semibold mb-4">
-                  Areas of Expertise
-                </h4>
+                <h4 className="text-lg font-semibold mb-4">Areas of Expertise</h4>
                 <div className="flex flex-wrap gap-3">
                   {selectedTags.map((tag, index) => (
                     <span
@@ -312,8 +324,7 @@ const MentorProfile = () => {
             </SpokelyCard>
             <SpokelyCard className="p-8 bg-white/10 backdrop-blur-lg border border-white/20">
               <h3 className="text-xl font-bold flex items-center mb-6">
-                <TrendingUp size={24} className="mr-3 text-green-400" />{" "}
-                Mentoring Analytics
+                <TrendingUp size={24} className="mr-3 text-green-400" /> Mentoring Analytics
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {[
@@ -329,14 +340,10 @@ const MentorProfile = () => {
                     key={i}
                     className="text-center p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl"
                   >
-                    <div
-                      className={`text-3xl font-bold text-${stat.color}-400 mb-2`}
-                    >
+                    <div className={`text-3xl font-bold text-${stat.color}-400 mb-2`}>
                       {stat.val}
                     </div>
-                    <div className="text-sm text-gray-300 font-medium">
-                      {stat.label}
-                    </div>
+                    <div className="text-sm text-gray-300 font-medium">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -365,9 +372,7 @@ const MentorProfile = () => {
               ) : (
                 <>
                   {plans.length === 0 && (
-                    <p className="text-gray-300">
-                      No subscription plans added yet.
-                    </p>
+                    <p className="text-gray-300">No subscription plans added yet.</p>
                   )}
                   <div className="space-y-4">
                     {planTypes.map((type) => (
@@ -387,9 +392,7 @@ const MentorProfile = () => {
                         <input
                           type="number"
                           placeholder="Price"
-                          value={
-                            plans.find((p) => p.type === type)?.price ?? ""
-                          }
+                          value={plans.find((p) => p.type === type)?.price ?? ""}
                           onChange={(e) => {
                             const val = Number(e.target.value);
                             setPlans(
@@ -421,15 +424,18 @@ const MentorProfile = () => {
           <div className="bg-gray-900 p-8 rounded-2xl max-w-lg w-full">
             <h2 className="text-2xl font-bold mb-6">Edit Mentor Details</h2>
             <form className="space-y-4" onSubmit={handleSaveDetails}>
-              <input
-                type="text"
-                value={mentorDetails.name}
-                onChange={(e) =>
-                  setMentorDetails({ ...mentorDetails, name: e.target.value })
-                }
-                placeholder="Full Name"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={mentorDetails.name}
+                  onChange={(e) =>
+                    setMentorDetails({ ...mentorDetails, name: e.target.value })
+                  }
+                  placeholder="Full Name"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
               <input
                 type="email"
                 value={mentorDetails.email}
@@ -437,15 +443,18 @@ const MentorProfile = () => {
                 placeholder="Email"
                 className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
               />
-              <input
-                type="text"
-                value={mentorDetails.phone}
-                onChange={(e) =>
-                  setMentorDetails({ ...mentorDetails, phone: e.target.value })
-                }
-                placeholder="Phone"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={mentorDetails.phone}
+                  onChange={(e) =>
+                    setMentorDetails({ ...mentorDetails, phone: e.target.value })
+                  }
+                  placeholder="Phone"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+              </div>
               <input
                 type="text"
                 value={user?.uniqueCode || ""}
@@ -453,12 +462,15 @@ const MentorProfile = () => {
                 placeholder="Mentor ID"
                 className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
               />
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Bio"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-              />
+              <div>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Bio"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                />
+                {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+              </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
