@@ -38,7 +38,7 @@ const SessionDetail = () => {
   }>({ open: false });
 
   const currentUser = useAuthStore((state) => state.user);
-  console.log(currentUser)
+  console.log(currentUser);
   const currentUserId = currentUser?.id;
 
   useEffect(() => {
@@ -80,7 +80,9 @@ const SessionDetail = () => {
   // Function to check if current user already gave feedback to a specific user
   const hasGivenFeedback = (toUserId: string) => {
     return session.feedback?.find(
-      (f: any) => String(f.from) === String(currentUserId) && String(f.to) === String(toUserId)
+      (f: any) =>
+        String(f.from) === String(currentUserId) &&
+        String(f.to) === String(toUserId)
     );
   };
 
@@ -202,65 +204,76 @@ const SessionDetail = () => {
           <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl hover:shadow-2xl transition">
             <h3 className="font-semibold text-xl mb-4 flex items-center">
               <User className="w-5 h-5 mr-2 text-green-300" />
-              Participants
+              {session.type === "public"
+                ? "Participants Count"
+                : "Participants"}
             </h3>
 
-            <div className="space-y-3">
-              {participants.length === 0 ? (
-                <p className="text-sm opacity-70">No participants</p>
-              ) : (
-                participants.map((u: any, i: number) => {
-                  const existingFeedback = hasGivenFeedback(u._id);
-                  
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        if (u.role === "mentor") {
-                          navigate(`/user/mentor-profile/${u._id}`);
-                        } else {
-                          navigate(`/user-profile/${u._id}`);
-                        }
-                      }}
-                      className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded cursor-pointer"
-                    >
-                      <span>{u.name}</span>
-                      <div className="flex gap-2">
-                        <Badge variant="peer" size="sm">
-                          {u.level || "Beginner"}
-                        </Badge>
-                        {session.status === "completed" &&
-                          u._id !== currentUserId && (
-                            <>
-                              {existingFeedback ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewFeedback(u._id);
-                                  }}
-                                  className="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-600"
-                                >
-                                  View Feedback
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setFeedbackModal({ open: true, toUserId: u._id });
-                                  }}
-                                  className="text-sm bg-green-500 px-3 py-1 rounded hover:bg-green-600"
-                                >
-                                  Give Feedback
-                                </button>
-                              )}
-                            </>
-                          )}
+            {session.type === "public" ? (
+              <p className="text-lg font-bold">
+                {session.participants?.length || 0} / 25 joined
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {participants.length === 0 ? (
+                  <p className="text-sm opacity-70">No participants</p>
+                ) : (
+                  participants.map((u: any, i: number) => {
+                    const existingFeedback = hasGivenFeedback(u._id);
+
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          if (u.role === "mentor") {
+                            navigate(`/user/mentor-profile/${u._id}`);
+                          } else {
+                            navigate(`/user-profile/${u._id}`);
+                          }
+                        }}
+                        className="flex justify-between items-center border-b border-white/20 py-2 hover:bg-white/10 rounded cursor-pointer"
+                      >
+                        <span>{u.name}</span>
+                        <div className="flex gap-2">
+                          <Badge variant="peer" size="sm">
+                            {u.level || "Beginner"}
+                          </Badge>
+                          {session.status === "completed" &&
+                            u._id !== currentUserId && (
+                              <>
+                                {existingFeedback ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleViewFeedback(u._id);
+                                    }}
+                                    className="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-600"
+                                  >
+                                    View Feedback
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setFeedbackModal({
+                                        open: true,
+                                        toUserId: u._id,
+                                      });
+                                    }}
+                                    className="text-sm bg-green-500 px-3 py-1 rounded hover:bg-green-600"
+                                  >
+                                    Give Feedback
+                                  </button>
+                                )}
+                              </>
+                            )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </Card>
         </div>
 
@@ -353,7 +366,7 @@ const SessionDetail = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Your Feedback</h2>
-            
+
             {viewFeedbackModal.feedback && (
               <div className="space-y-4">
                 <div>
@@ -367,7 +380,7 @@ const SessionDetail = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Comment
@@ -380,7 +393,7 @@ const SessionDetail = () => {
                 </div>
               </div>
             )}
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <Button
                 variant="secondary"

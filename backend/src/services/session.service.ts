@@ -14,13 +14,24 @@ export class SessionService {
 
 
   async createSession(body: any, userId: string): Promise<ISession | null> {
-    const dto = mapToCreateSessionDTO(body, userId);
-    
+  const dto = mapToCreateSessionDTO(body, userId);
 
-    if (dto.type === "private" || dto.mentorId) dto.status = "pending";
-    else dto.status = "upcoming";
-    return await this._sessionRepository.createSession(dto);
+  // session type decides max participants
+  let maxParticipants = 2; // default 1-to-1
+  if (dto.type === "peer-to-peer") maxParticipants = 10;
+  if (dto.type === "private" || dto.type === "public") maxParticipants = 25;
+
+  // Ensure participants list doesn’t exceed max
+  if (dto.participants && dto.participants.length > maxParticipants) {
+    throw new Error(`Exceeded participant limit for ${dto.type} session`);
   }
+
+  if (dto.type === "private" || dto.mentorId) dto.status = "pending";
+  else dto.status = "upcoming";
+
+  return await this._sessionRepository.createSession(dto);
+}
+
 
   async getSessions(userId: string): Promise<ISession[] | null> {
     let sessions = await this._sessionRepository.getAllSessions(userId);

@@ -181,7 +181,7 @@ const Sessions = () => {
       <DashboardHeader />
       <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Sessions</h1>
+          <h1 className="text-3xl font-bold text-white mb-6">Sessions</h1>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search
@@ -191,7 +191,7 @@ const Sessions = () => {
               <Input
                 type="text"
                 placeholder="Search by topic or type..."
-                className="pl-10 h-12 bg-white border-gray-300"
+                className="pl-10 h-12 bg-gray border-gray-300 text-black"
               />
             </div>
             <div className="flex gap-3">

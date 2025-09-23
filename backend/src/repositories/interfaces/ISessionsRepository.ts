@@ -28,4 +28,6 @@ export interface ISessionRepository {
 
   findSessions(query: any): Promise<ISession[] | null>;
 
+  addParticipant(sessionId: string, userId: string): Promise<ISession | null>;
+
 }

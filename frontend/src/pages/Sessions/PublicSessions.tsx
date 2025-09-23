@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, Search, IndianRupee } from "lucide-react";
+import { Calendar, Search, IndianRupee, DollarSign } from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import Header from "../user/DashBoardComponents/Header";
 import SpokelyCard from "../../components/common/Cards";
@@ -9,6 +9,7 @@ import Button from "../../modals/Button";
 import { getPublicSessions } from "../../services/sessionService";
 import { startPayment, confirmPayment } from "../../services/paymentService";
 import { useAuthStore } from "../../store/userAuthStore";
+import { useNavigate } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -51,6 +52,8 @@ const MentorPublicSessions = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
 
+  const navigate = useNavigate();
+
   const [showPayPalModal, setShowPayPalModal] = useState(false);
   const [activeSession, setActiveSession] = useState<{
     id: string;
@@ -82,6 +85,8 @@ const MentorPublicSessions = () => {
     fetchSessions();
   }, []);
 
+  console.log(sessions);
+
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
       session.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,7 +99,6 @@ const MentorPublicSessions = () => {
     );
   });
 
-  // 🟢 helper to check if date is today
   const isToday = (dateString: string) => {
     const today = new Date();
     const date = new Date(dateString);
@@ -105,7 +109,6 @@ const MentorPublicSessions = () => {
     );
   };
 
-  // 🟢 split sessions into todayUpcoming & others
   const now = new Date();
   const fifteenMinsFromNow = new Date(now.getTime() + 15 * 60000);
 
@@ -202,7 +205,14 @@ const MentorPublicSessions = () => {
               const orderId = data.orderID;
               const verify = await confirmPayment(orderId, activeSession.id);
 
-              if (verify?.success) {
+              console.log("Verify response:", verify);
+
+              if (
+                verify.data?.status === "COMPLETED" ||
+                verify.data?.message
+                  ?.toLowerCase()
+                  .includes("captured successfully")
+              ) {
                 setSessions((prev) =>
                   prev.map((s) =>
                     s._id === activeSession.id
@@ -220,13 +230,14 @@ const MentorPublicSessions = () => {
                 setPaymentResult({
                   status: "success",
                   message:
-                    verify?.message ||
+                    verify.data?.message ||
                     "Payment successful! Session scheduled 🎉",
                 });
               } else {
                 setPaymentResult({
                   status: "error",
-                  message: verify?.message || "Payment verification failed.",
+                  message:
+                    verify.data?.message || "Payment verification failed.",
                 });
               }
             } catch (err: any) {
@@ -240,6 +251,7 @@ const MentorPublicSessions = () => {
               setShowPayPalModal(false);
             }
           },
+
           onCancel: () => {
             setShowPayPalModal(false);
             setPaymentResult({
@@ -321,15 +333,15 @@ const MentorPublicSessions = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                 size={20}
               />
               <Input
                 type="text"
-                placeholder="Search sessions by topic or description..."
+                placeholder="Search sessions by topic..."
                 value={searchTerm}
                 onChange={setSearchTerm}
-                className="pl-10 h-12 bg-white border-gray-300"
+                className="pl-10 h-12 bg-gray border-gray-300 text-black"
               />
             </div>
             <div className="lg:w-48">
@@ -338,10 +350,10 @@ const MentorPublicSessions = () => {
                 onChange={(e) => setSelectedFilter(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="all">All Status</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="completed">Completed</option>
-                <option value="scheduled">Scheduled</option>
+                <option value="all" className="border-gray-300 text-black bg-gray" >All Status</option>
+                <option value="upcoming" className="border-gray-300 text-black bg-gray">Upcoming</option>
+                <option value="completed" className="border-gray-300 text-black bg-gray">Completed</option>
+                {/* <option value="scheduled" className="border-gray-300 text-black bg-gray">Scheduled</option> */}
               </select>
             </div>
           </div>
@@ -368,9 +380,9 @@ const MentorPublicSessions = () => {
                       </Badge>
                     </div>
                     <h3 className="font-bold text-white">{session.topic}</h3>
-                    <p className="text-sm text-gray-200">
+                    {/* <p className="text-sm text-gray-200">
                       {session.description}
-                    </p>
+                    </p> */}
                     <p className="text-xs text-gray-300">
                       {formatDate(session.startTime)} –{" "}
                       {new Date(session.startTime).toLocaleTimeString([], {
@@ -380,26 +392,40 @@ const MentorPublicSessions = () => {
                     </p>
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex items-center gap-1">
-                        <IndianRupee size={18} className="text-green-400" />
+                        <DollarSign size={18} className="text-green-400" />
                         <span className="text-lg font-bold">
                           {session.sessionFee}/-
                         </span>
                       </div>
 
-                      {isScheduled ? (
-                        <Button variant="secondary" disabled>
-                          Scheduled
-                        </Button>
-                      ) : (
+                      <div className="flex flex-col gap-2 m-5">
                         <Button
-                          variant="success"
+                          variant="secondary"
                           onClick={() =>
-                            handlePayToSchedule(session._id, session.sessionFee)
+                            navigate(`/user/session/details/${session._id}`)
                           }
                         >
-                          Pay to Schedule
+                          View Details
                         </Button>
-                      )}
+
+                        {isScheduled ? (
+                          <Button variant="secondary" disabled>
+                            Scheduled
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="success"
+                            onClick={() =>
+                              handlePayToSchedule(
+                                session._id,
+                                session.sessionFee
+                              )
+                            }
+                          >
+                            Pay to Schedule
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </SpokelyCard>
                 );
@@ -429,9 +455,9 @@ const MentorPublicSessions = () => {
                       </Badge>
                     </div>
                     <h3 className="font-bold text-white">{session.topic}</h3>
-                    <p className="text-sm text-gray-200">
+                    {/* <p className="text-sm text-gray-200">
                       {session.description}
-                    </p>
+                    </p> */}
                     <p className="text-xs text-gray-300">
                       {formatDate(session.startTime)} –{" "}
                       {new Date(session.startTime).toLocaleTimeString([], {
@@ -441,26 +467,44 @@ const MentorPublicSessions = () => {
                     </p>
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex items-center gap-1">
-                        <IndianRupee size={18} className="text-green-400" />
+                        <DollarSign size={18} className="text-green-400" />
                         <span className="text-lg font-bold">
                           {session.sessionFee}/-
                         </span>
                       </div>
 
-                      {isScheduled ? (
-                        <Button variant="secondary" disabled>
-                          Scheduled
-                        </Button>
-                      ) : (
+                      <div className="flex flex-col gap-2">
                         <Button
-                          variant="success"
+                          variant="secondary"
                           onClick={() =>
-                            handlePayToSchedule(session._id, session.sessionFee)
+                            navigate(`/user/session/details/${session._id}`)
                           }
                         >
-                          Pay to Schedule
+                          View Details
                         </Button>
-                      )}
+
+                        {isScheduled ? (
+                          <Button variant="secondary" disabled>
+                            Scheduled
+                          </Button>
+                        ) : session.participants.length >= 25 ? (
+                          <Button variant="secondary" disabled>
+                            Session Full
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="success"
+                            onClick={() =>
+                              handlePayToSchedule(
+                                session._id,
+                                session.sessionFee
+                              )
+                            }
+                          >
+                            Pay to Schedule
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </SpokelyCard>
                 );
