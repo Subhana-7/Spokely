@@ -10,13 +10,13 @@ import toast from "react-hot-toast";
 
 interface Connection {
   connectedUser: {
-    _id: string;
+    id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
   };
   user: {
-    _id: string;
+    id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
@@ -83,7 +83,7 @@ const Connections = () => {
   .map((c) => {
     const user = c.connectedUser || c.user;
     return {
-      id: user._id || user._id,
+      id: user.id || user.id,
       username: user.name,
       email: user.email,
       role: user.role,

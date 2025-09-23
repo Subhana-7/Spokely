@@ -11,12 +11,37 @@ export const initChatSocket = (io: Server) => {
 
     socket.on("join-room", (sessionId: string) => {
       socket.join(sessionId);
+      console.log(`User ${socket.id} joined room ${sessionId}`);
     });
 
-    socket.on("chat-message", async ({ sessionId, sender, text }) => {
-      const msg = await chatService.sendMessage(sessionId, sender, text);
-      io.to(sessionId).emit("chat-message", msg);
-    });
+    socket.on(
+      "chat-message",
+      async ({ sessionId, sender, text }: { sessionId: string; sender: string; text: string }) => {
+        try {
+          const msg = await chatService.sendMessage(sessionId, sender, text);
+
+          if (msg) {
+            io.to(sessionId).emit("chat-message", msg);
+          } else {
+            io.to(sessionId).emit("chat-message", {
+              id: new Date().getTime().toString(),
+              sender: { _id: sender },
+              text,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        } catch (err) {
+          console.error("Socket sendMessage error:", err);
+
+          io.to(sessionId).emit("chat-message", {
+            id: new Date().getTime().toString(),
+            sender: { _id: sender },
+            text,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+    );
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);

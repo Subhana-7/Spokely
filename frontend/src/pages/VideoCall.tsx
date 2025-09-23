@@ -12,6 +12,7 @@ const VideoCall = () => {
   const { id: sessionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const isInitializingRef = useRef(false); // Prevent multiple simultaneous initializations
 
   if (!clientRef.current) {
     clientRef.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -26,15 +27,18 @@ const VideoCall = () => {
   const [remoteUsers, setRemoteUsers] = useState<Set<string>>(new Set());
 
   const localVideoRef = useRef<HTMLDivElement>(null);
-  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
   const localTracks = useRef<{
     audioTrack: IMicrophoneAudioTrack | null;
     videoTrack: ICameraVideoTrack | null;
   }>({ audioTrack: null, videoTrack: null });
 
-  // cleanup function
+  // Enhanced cleanup function with proper state checking
   const cleanup = useCallback(async () => {
     try {
+      console.log("Starting cleanup, client state:", client.connectionState);
+      
+      // Stop and close local tracks
       if (localTracks.current.audioTrack) {
         localTracks.current.audioTrack.stop();
         localTracks.current.audioTrack.close();
@@ -45,17 +49,25 @@ const VideoCall = () => {
         localTracks.current.videoTrack.close();
         localTracks.current.videoTrack = null;
       }
-      if (
-        client.connectionState === "CONNECTED" ||
-        client.connectionState === "CONNECTING"
-      ) {
+      
+      // Only attempt to leave if actually connected
+      if (client.connectionState === "CONNECTED") {
+        console.log("Leaving channel...");
         await client.leave();
+        console.log("Left channel successfully");
       }
+      
+      // Remove all listeners
       client.removeAllListeners();
+      
+      // Reset state
       setJoined(false);
       setRemoteUsers(new Set());
+      isInitializingRef.current = false;
+      
     } catch (error) {
       console.error("Error during cleanup:", error);
+      isInitializingRef.current = false;
     }
   }, [client]);
 
@@ -63,12 +75,16 @@ const VideoCall = () => {
     async (user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
       try {
         await client.subscribe(user, mediaType);
-        if (
-          mediaType === "video" &&
-          user.videoTrack &&
-          remoteVideoRef.current
-        ) {
-          user.videoTrack.play(remoteVideoRef.current);
+        if (mediaType === "video" && user.videoTrack) {
+          const remoteContainer = document.createElement("div");
+          remoteContainer.id = `remote-user-${user.uid}`;
+          remoteContainer.className =
+            "w-full h-full bg-black rounded-lg overflow-hidden";
+          if (remoteVideoContainerRef.current) {
+            remoteVideoContainerRef.current.innerHTML = ""; // clear old video
+            remoteVideoContainerRef.current.appendChild(remoteContainer);
+          }
+          user.videoTrack.play(remoteContainer);
           setRemoteUsers((prev) => new Set(prev).add(user.uid.toString()));
         }
         if (mediaType === "audio" && user.audioTrack) {
@@ -78,12 +94,14 @@ const VideoCall = () => {
         console.error("Error handling user published:", error);
       }
     },
-    []
+    [client]
   );
 
   const handleUserUnpublished = useCallback(
     (user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
       if (mediaType === "video") {
+        const remoteEl = document.getElementById(`remote-user-${user.uid}`);
+        if (remoteEl) remoteEl.remove();
         setRemoteUsers((prev) => {
           const newSet = new Set(prev);
           newSet.delete(user.uid.toString());
@@ -95,6 +113,8 @@ const VideoCall = () => {
   );
 
   const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
+    const remoteEl = document.getElementById(`remote-user-${user.uid}`);
+    if (remoteEl) remoteEl.remove();
     setRemoteUsers((prev) => {
       const newSet = new Set(prev);
       newSet.delete(user.uid.toString());
@@ -104,7 +124,14 @@ const VideoCall = () => {
 
   useEffect(() => {
     let isMounted = true;
+
     const initCall = async () => {
+      // Prevent multiple simultaneous initializations
+      if (isInitializingRef.current) {
+        console.log("Already initializing, skipping...");
+        return;
+      }
+
       if (!sessionId) {
         if (isMounted) {
           setError("Session ID not found");
@@ -112,31 +139,59 @@ const VideoCall = () => {
         }
         return;
       }
+
       try {
+        isInitializingRef.current = true;
+        
         if (isMounted) {
           setIsLoading(true);
           setError(null);
         }
-        if (
-          client.connectionState === "CONNECTED" ||
-          client.connectionState === "CONNECTING"
-        ) {
+
+        // Enhanced cleanup with state checking
+        if (client.connectionState === "CONNECTED" || client.connectionState === "CONNECTING") {
+          console.log("Client already connected/connecting, cleaning up first...");
           await cleanup();
+          // Wait a bit for cleanup to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
+
+        // Double check we're not mounted after cleanup delay
+        if (!isMounted) {
+          isInitializingRef.current = false;
+          return;
+        }
+
+        console.log("Getting Agora token...");
         const response = await getAgoraToken(sessionId);
         const { appId, token, channelName, uid } = response.data;
-        if (!appId || !token || !channelName)
+        
+        if (!appId || !token || !channelName) {
           throw new Error("Missing required connection parameters");
+        }
 
+        console.log("Setting up event listeners...");
         client.on("user-published", handleUserPublished);
         client.on("user-unpublished", handleUserUnpublished);
         client.on("user-left", handleUserLeft);
 
-        if (client.connectionState === "DISCONNECTED") {
-          await client.join(appId, channelName, token, uid);
-          if (isMounted) setJoined(true);
-        }
+        // Additional error handling
+        client.on("connection-state-change", (curState, revState) => {
+          console.log(`Connection state changed from ${revState} to ${curState}`);
+        });
 
+        console.log("Joining channel...", { appId, channelName, uid });
+        await client.join(appId, channelName, token, uid);
+        console.log("Joined channel successfully");
+        
+        if (!isMounted) {
+          isInitializingRef.current = false;
+          return;
+        }
+        
+        setJoined(true);
+
+        console.log("Creating local tracks...");
         const [audioTrack, videoTrack] = await Promise.all([
           AgoraRTC.createMicrophoneAudioTrack({
             encoderConfig: "music_standard",
@@ -146,46 +201,82 @@ const VideoCall = () => {
             encoderConfig: "720p_1",
           }),
         ]);
-        if (!isMounted) return;
+
+        if (!isMounted) {
+          // Clean up tracks if component unmounted
+          audioTrack.stop();
+          audioTrack.close();
+          videoTrack.stop();
+          videoTrack.close();
+          isInitializingRef.current = false;
+          return;
+        }
 
         localTracks.current = { audioTrack, videoTrack };
+        
         if (localVideoRef.current && videoTrack) {
           videoTrack.play(localVideoRef.current);
         }
+
+        console.log("Publishing tracks...");
         await client.publish([audioTrack, videoTrack]);
+        console.log("Tracks published successfully");
+        
       } catch (error) {
+        console.error("Error in initCall:", error);
         if (isMounted) {
           setError(
             error instanceof Error ? error.message : "Failed to join call"
           );
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        isInitializingRef.current = false;
       }
     };
+
     initCall();
+
     return () => {
+      console.log("Component unmounting, cleaning up...");
       isMounted = false;
       cleanup();
     };
-  }, [
-    sessionId,
-    handleUserPublished,
-    handleUserUnpublished,
-    handleUserLeft,
-    cleanup,
-  ]);
+  }, [sessionId, client]); // Removed the callback dependencies to prevent re-runs
+
+  // Set up event listeners separately to avoid effect re-runs
+  useEffect(() => {
+    client.on("user-published", handleUserPublished);
+    client.on("user-unpublished", handleUserUnpublished);
+    client.on("user-left", handleUserLeft);
+
+    return () => {
+      client.off("user-published", handleUserPublished);
+      client.off("user-unpublished", handleUserUnpublished);
+      client.off("user-left", handleUserLeft);
+    };
+  }, [handleUserPublished, handleUserUnpublished, handleUserLeft, client]);
 
   const toggleVideo = useCallback(async () => {
     if (!localTracks.current.videoTrack || !joined) return;
-    await localTracks.current.videoTrack.setEnabled(!isVideoOn);
-    setIsVideoOn(!isVideoOn);
+    try {
+      await localTracks.current.videoTrack.setEnabled(!isVideoOn);
+      setIsVideoOn(!isVideoOn);
+    } catch (error) {
+      console.error("Error toggling video:", error);
+    }
   }, [isVideoOn, joined]);
 
   const toggleMic = useCallback(async () => {
     if (!localTracks.current.audioTrack || !joined) return;
-    await localTracks.current.audioTrack.setEnabled(!isMicOn);
-    setIsMicOn(!isMicOn);
+    try {
+      await localTracks.current.audioTrack.setEnabled(!isMicOn);
+      setIsMicOn(!isMicOn);
+    } catch (error) {
+      console.error("Error toggling mic:", error);
+    }
   }, [isMicOn, joined]);
 
   const endCall = useCallback(async () => {
@@ -224,11 +315,11 @@ const VideoCall = () => {
           </div>
         </div>
 
-        {/* Remote Video */}
+        {/* Remote Video(s) */}
         <div className="relative flex-1 shadow-xl rounded-2xl overflow-hidden border border-blue-400/60">
           <div
-            ref={remoteVideoRef}
-            className="w-full h-[300px] sm:h-[400px] lg:h-[500px] bg-blue-950"
+            ref={remoteVideoContainerRef}
+            className="w-full h-[300px] sm:h-[400px] lg:h-[500px] bg-blue-950 flex items-center justify-center"
           />
           <div className="absolute top-3 left-3 bg-blue-800/70 backdrop-blur-md px-3 py-1 rounded text-sm">
             {remoteUsers.size > 0

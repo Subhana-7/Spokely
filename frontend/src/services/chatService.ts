@@ -1,5 +1,7 @@
 import API from "../api/axios.instance";
 
-export const getMessages = (sessionId: string) => API.get(`/chat/${sessionId}`);
+export const getMessages = (sessionId: string) => API.get(`/chat/messages/${sessionId}`);
 export const sendMessage = (sessionId: string, text: string) =>
-  API.post(`/chat/${sessionId}`, { text });
+  API.post(`/chat/messages/${sessionId}`, { text });
+
+export const getChatList = () => API.get(`/chat/all`);

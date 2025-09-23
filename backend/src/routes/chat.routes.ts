@@ -8,15 +8,18 @@ const router = express.Router();
 const controller = container.get<IChatController>(TYPES.IChatController);
 
 router.get(
-  "/:sessionId",
+  "/messages/:sessionId",
   authMiddleware(["user", "mentor"]),
   controller.getMessages.bind(controller)
 );
 
 router.post(
-  "/:sessionId",
+  "/messages/:sessionId",
   authMiddleware(["user", "mentor"]),
   controller.sendMessage.bind(controller)
 );
+
+
+router.get("/all", authMiddleware(["user","mentor"]),controller.getChats.bind(controller));
 
 export default router;

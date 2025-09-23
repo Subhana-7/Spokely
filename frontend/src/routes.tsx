@@ -24,9 +24,10 @@ import MentorPublicSessions from "./pages/Sessions/PublicSessions";
 import MentorScheduleSession from "./pages/Sessions/MentorScheduleSession";
 import SessionListing from "./pages/admin/SessionListing";
 import SessionDetailsPage from "./pages/admin/SessionDetailsPage";
-import ChatBox from "./chat";
+import ChatBox from "./pages/chat/ChatBox";
 import MentorCard from "./pages/user/mentorListing";
 import StudentsPage from "./pages/Sessions/StudentsListing";
+import ChatPage from "./pages/chat/ChatPage";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -152,22 +153,22 @@ const appRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
   },
-  {
-    path: "/user/chat/:id",
-    element: (
-      <RoleProtectedRoute role="user">
-        <ChatBox />
-      </RoleProtectedRoute>
-    ),
-  },
-  {
-    path: "/mentor/chat/:id",
-    element: (
-      <RoleProtectedRoute role="mentor">
-        <ChatBox />
-      </RoleProtectedRoute>
-    ),
-  },
+{
+  path: "/user/chat",
+  element: (
+    <RoleProtectedRoute role="user">
+      <ChatPage />
+    </RoleProtectedRoute>
+  ),
+},
+{
+  path: "/mentor/chat",
+  element: (
+    <RoleProtectedRoute role="mentor">
+      <ChatPage />
+    </RoleProtectedRoute>
+  ),
+},
   {
     path: "/mentor/sessions",
     element: (

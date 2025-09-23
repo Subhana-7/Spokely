@@ -10,4 +10,6 @@ export interface IChatController {
     req: AuthenticatedRequest,
     res: Response
   ): Promise<void>;
+
+  getChats(req: AuthenticatedRequest, res: Response): Promise<void>;
 }

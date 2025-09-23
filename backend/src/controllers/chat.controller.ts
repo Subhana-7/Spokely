@@ -47,4 +47,29 @@ export class ChatController {
         .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
+
+
+  getChats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.id!; // comes from your Auth middleware
+
+    if (!userId) {
+       res
+        .status(STATUS_CODES.UNAUTHORIZED)
+        .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
+    }
+
+    const chats = await this._chatService.getChats(userId);
+
+     res
+      .status(STATUS_CODES.OK)
+      .json({ chats, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
+  } catch (err) {
+    console.error("Error fetching chats:", err);
+     res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: MESSAGES.ERROR.SERVER_ERROR });
+  }
+};
+
 }
