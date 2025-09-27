@@ -10,12 +10,15 @@ import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
 import { AdminResponseDto, UserSummaryDto } from "../dto/admin.dto";
 import { MESSAGES } from "../utilis/constants";
+import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
+import { ISession } from "../models/sessions.model";
 
 @injectable()
 export class AdminService implements IAdminService { 
   constructor(
     @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository,
-    @inject(TYPES.IEmailService) private _emailService: IEmailService
+    @inject(TYPES.IEmailService) private _emailService: IEmailService,
+    @inject(TYPES.ISessionRepository) private _sessionRepository:ISessionRepository,
   ) {}
 
   async login(
@@ -125,4 +128,18 @@ export class AdminService implements IAdminService {
     const admin = await this._adminRepository.findById(id);
     return admin ? mapAdminToDto(admin) : null;
   }
+
+  async getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null> {
+  const query: any = {};
+
+  if (filters?.status && filters.status !== "all") {
+    query.status = filters.status;
+  }
+
+  if (filters?.type) query.type = filters.type;
+  if (filters?.mentorId) query.mentorId = filters.mentorId;
+
+  return await this._sessionRepository.findSessions(query);
+}
+
 }

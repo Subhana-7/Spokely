@@ -6,11 +6,18 @@ import cron from "node-cron";
 import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
 import { Types } from "mongoose";
 import { IMentorPlanRepository } from "../repositories/interfaces/IMentorPlanRepository";
-import { CreateSubscriptionDTO, SetMentorPlansDTO } from "../dto/subscription.dto";
+import {
+  CreateSubscriptionDTO,
+  SetMentorPlansDTO,
+} from "../dto/subscription.dto";
 import {
   mapToCreateSubscriptionDTO,
   mapToSetMentorPlansDTO,
 } from "../mappers/subscription.mapper";
+import { STATUS_CODES } from "../utilis/constants";
+import { IChatRepository } from "../repositories/interfaces/IChatRepository";
+import { privateDecrypt } from "crypto";
+import session from "express-session";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
@@ -20,19 +27,24 @@ export class SubscriptionService implements ISubscriptionService {
     @inject(TYPES.ISessionRepository)
     private _sessionRepository: ISessionRepository,
     @inject(TYPES.IMentorPlanRepository)
-    private _mentorPlanRepository: IMentorPlanRepository
+    private _mentorPlanRepository: IMentorPlanRepository,
+    @inject(TYPES.IChatRepository) private _chatRepository:IChatRepository,
   ) {}
 
   async subscribe(raw: any) {
     const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
 
-    return this._subscriptionRepository.createSubscription({
+    let res =  this._subscriptionRepository.createSubscription({
       userId: new Types.ObjectId(dto.userId),
       mentorId: new Types.ObjectId(dto.mentorId),
       plan: dto.plan,
       price: dto.price,
+      time: dto.time, 
     });
+
+    return res
   }
+
 
   getUserSubscriptions(userId: string) {
     return this._subscriptionRepository.findByUser(userId);
@@ -47,12 +59,29 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async saveMentorPlans(raw: any) {
+    // console.log(raw,'service')
     const dto: SetMentorPlansDTO = mapToSetMentorPlansDTO(raw);
+
+    // console.log(this.saveMentorPlans);
+
     return this._mentorPlanRepository.savePlans(dto.mentorId, dto.plans);
   }
 
   async getMentorPlans(mentorId: string) {
-    return this._mentorPlanRepository.getPlans(mentorId);
+    const plans = await this._mentorPlanRepository.getPlans(mentorId);
+
+    console.log("plans", plans);
+
+    if (!plans || plans.length === 0) {
+      return [];
+    }
+
+    return plans;
+  }
+
+  convertTo24Hour(hour: number): number {
+    if (hour >= 1 && hour <= 8) return hour + 12;
+    return hour;
   }
 
   scheduleCronJobs() {
@@ -61,18 +90,20 @@ export class SubscriptionService implements ISubscriptionService {
 
       const subscriptions = await this._subscriptionRepository.findActive();
 
+      console.log(subscriptions)
+
       for (const sub of subscriptions) {
         if (sub.status !== "ACTIVE") continue;
 
-        let shouldCreate = false;
         const today = new Date();
+        let shouldCreate = false;
 
         switch (sub.plan) {
           case "DAILY":
             shouldCreate = true;
             break;
           case "WEEKLY":
-            shouldCreate = today.getDay() === 1; // Monday
+            shouldCreate = today.getDay() === 1;
             break;
           case "BIWEEKLY":
             shouldCreate = today.getDate() % 14 === 0;
@@ -84,8 +115,12 @@ export class SubscriptionService implements ISubscriptionService {
 
         if (!shouldCreate) continue;
 
+        const hour24 = this.convertTo24Hour(sub.time);
+
         const sessionStartTime = new Date(today);
-        sessionStartTime.setHours(12, 0, 0, 0);
+        sessionStartTime.setHours(hour24, 0, 0, 0);
+
+        console.log(sessionStartTime)
 
         await this._sessionRepository.createSession({
           mentorId: sub.mentorId,

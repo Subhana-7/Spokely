@@ -1,4 +1,4 @@
-import UserModel from "../models/user.model";
+import UserModel, { IUser } from "../models/user.model";
 import { Types } from "mongoose";
 import { IConnectionService } from "./interfaces/IConnectionsService";
 import { IConnection } from "../models/connections.model";
@@ -9,11 +9,15 @@ import { PopulatedConnection } from "../types/populated";
 import { ConnectionDTO } from "../dto/connection.dto";
 import { mapConnectionToDTO } from "../mappers/connection.mappers";
 import { MESSAGES } from "../utilis/constants";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { IChatRepository } from "../repositories/interfaces/IChatRepository";
 
 @injectable()
 export class ConnectionService implements IConnectionService {
   constructor(
-    @inject(TYPES.IConnectionRepository) private _connectionRepository: IConnectionRepository
+    @inject(TYPES.IConnectionRepository) private _connectionRepository: IConnectionRepository,
+    @inject(TYPES.IUserRepository) private _userRepository:IUserRepository,
+    @inject(TYPES.IChatRepository) private _chatRepository:IChatRepository,
   ) {}
 
   async sendConnectionRequest(
@@ -21,11 +25,11 @@ export class ConnectionService implements IConnectionService {
     uniqueCode: string
   ): Promise<ConnectionDTO | null> {
     try {
-      const receiver = await UserModel.findOne({
-        uniqueCode: uniqueCode,
+      const receiver = await this._userRepository.findOne({uniqueCode: uniqueCode,
         isBlocked: false,
-        isVerified: true,
-      });
+        isVerified: true,})
+
+      console.log(receiver,senderId,uniqueCode)
 
       if (!receiver) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
       if (receiver._id.equals(senderId))
@@ -61,20 +65,35 @@ export class ConnectionService implements IConnectionService {
   }
 
   async acceptRequest(
-    requestId: string,
-    userId: string
-  ): Promise<ConnectionDTO | null> {
-    try {
-      const connection = await this._connectionRepository.acceptRequest(
-        requestId,
-        new Types.ObjectId(userId)
-      );
-      return connection ? mapConnectionToDTO(connection as unknown as PopulatedConnection) : null;
-    } catch (error) {
-      console.log("acceptRequest error", error);
-      return null;
-    }
+  requestId: string,
+  userId: string
+): Promise<ConnectionDTO | null> {
+  try {
+    console.log(requestId, userId);
+
+    const connection = await this._connectionRepository.acceptRequest(
+      requestId,
+      new Types.ObjectId(userId)
+    );
+
+    if (!connection) return null;
+
+    const participants = [
+      connection.userId.toString(),
+      connection.connectedUserId.toString(),
+    ].sort(); 
+
+    const sessionId = participants.join("_");
+
+    await this._chatRepository.findOrCreateSession(sessionId, participants);
+
+    return mapConnectionToDTO(connection as unknown as PopulatedConnection);
+  } catch (error) {
+    console.log("acceptRequest error", error);
+    return null;
   }
+}
+
 
   async getAllConnections(
     userId: string,

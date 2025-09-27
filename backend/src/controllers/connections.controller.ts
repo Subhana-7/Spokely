@@ -40,9 +40,11 @@ export class ConnectionController implements IConnectionController {
   async acceptConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
-
-      const { requestId } = req.params;
+      console.log(req.body.requestId)
+      const { requestId } = req.body;
       const userId = req.id;
+
+      console.log("contro",requestId,userId)
       const accepted = await this._connectionsService.acceptRequest(requestId, userId);
       res.status(STATUS_CODES.OK).json(accepted);
     } catch (err: any) {

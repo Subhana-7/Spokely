@@ -32,7 +32,10 @@ export class PaymentService implements IPaymentService {
   }
 
   async createOrder(userId: string, dto: PaymentRequestDTO): Promise<{ id: string }> {
+    console.log("service pay")
     const accessToken = await this.getAccessToken();
+
+    console.log(accessToken,"access","price:",dto.amount)
 
     const order = await paypalAPI.post(
       "/v2/checkout/orders",
@@ -69,7 +72,6 @@ export class PaymentService implements IPaymentService {
   });
 
   if (paymentEntity?.sessionId) {
-    // Convert ObjectId to string
     const sessionIdStr = paymentEntity.sessionId.toString();
     const userIdStr = paymentEntity.userId.toString();
 

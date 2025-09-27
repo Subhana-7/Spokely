@@ -1,5 +1,5 @@
 import { useEffect, useState, type JSX } from "react";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
 import Card from "../../components/common/Cards";
@@ -13,10 +13,21 @@ import { useAuthStore } from "../../store/userAuthStore";
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [cancelModal, setCancelModal] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [cancelModal, setCancelModal] = useState<{
+    open: boolean;
+    id?: string;
+  }>({ open: false });
   const [cancelReason, setCancelReason] = useState<string>("");
 
- const userId = useAuthStore((state) => state.user?.id!); 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "upcoming" | "on-going" | "completed" | "cancelled"
+  >("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "public" | "private">(
+    "all"
+  );
+
+  const userId = useAuthStore((state) => state.user?.id!);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +35,7 @@ const Sessions = () => {
       setCurrentUserId(userId);
     }
     fetchSessions();
-  }, [userId]); 
+  }, [userId]);
 
   function handleScheduleButton() {
     navigate("/user/schedule-session");
@@ -34,27 +45,17 @@ const Sessions = () => {
     try {
       const res = await getSessions();
       const data = res.data?.sessions || res.data;
-      console.log(data)
       setSessions(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to load sessions");
+      const message = err?.response?.data?.message || "Failed to load sessions";
+
+      if (err?.response?.status === 404 && message === "Session not found") {
+        setSessions([]);
+        return;
+      }
+
+      toast.error(message);
     }
-  };
-
-  const isOngoing = (session: any) => {
-    const now = new Date().getTime();
-    const start = new Date(session.startTime).getTime();
-    const end =
-      session.endTime ? new Date(session.endTime).getTime() : start + (session.durationMinutes || 60) * 60 * 1000;
-    return now >= start && now <= end;
-  };
-
-  const isCompleted = (session: any) => {
-    const now = new Date().getTime();
-    const start = new Date(session.startTime).getTime();
-    const end =
-      session.endTime ? new Date(session.endTime).getTime() : start + (session.durationMinutes || 60) * 60 * 1000;
-    return now > end;
   };
 
   const handleCancelConfirm = async () => {
@@ -63,8 +64,7 @@ const Sessions = () => {
       return;
     }
     try {
-      console.log(cancelModal.id)
-      await cancelSession(userId,cancelModal.id as string, cancelReason);
+      await cancelSession(userId, cancelModal.id as string, cancelReason);
       toast.success("Session cancelled");
       setCancelModal({ open: false });
       setCancelReason("");
@@ -77,19 +77,12 @@ const Sessions = () => {
   const renderStatus = (session: any) => {
     const now = new Date().getTime();
     const start = new Date(session.startTime).getTime();
-    const end =
-      session.endTime ? new Date(session.endTime).getTime() : start + (session.durationMinutes || 60) * 60 * 1000;
+    const end = session.endTime
+      ? new Date(session.endTime).getTime()
+      : start + (session.durationMinutes || 60) * 60 * 1000;
 
     if (session.status === "cancelled") return "cancelled";
-
-    // Automatically mark past sessions as completed
-    if (session.status !== "cancelled") {
-      if (now > end) {
-        session.status = "completed";
-        return "completed";
-      }
-    }
-
+    if (now > end) return "completed";
     if (now >= start && now <= end) return "on-going";
     return "upcoming";
   };
@@ -164,14 +157,31 @@ const Sessions = () => {
     );
   };
 
-  // split and sort sessions
-  const todaySessions = sessions
-    .filter((s) => isToday(s.startTime))
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  // 🔎 Apply search & filter
+  const filteredSessions = sessions.filter((s) => {
+    const matchesSearch = s.topic
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || renderStatus(s) === statusFilter;
+    const matchesType = typeFilter === "all" || s.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-  const otherSessions = sessions
+  // split and sort sessions
+  const todaySessions = filteredSessions
+    .filter((s) => isToday(s.startTime))
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
+
+  const otherSessions = filteredSessions
     .filter((s) => !isToday(s.startTime))
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
 
   return (
     <div
@@ -190,15 +200,83 @@ const Sessions = () => {
               />
               <Input
                 type="text"
-                placeholder="Search by topic or type..."
-                className="pl-10 h-12 bg-gray border-gray-300 text-black"
+                placeholder="Search by topic..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+                className="pl-10 h-12 bg-gray border-gray-300 text-white"
               />
             </div>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-green-50 transition-colors">
-                <Filter size={16} />
-                All
-              </button>
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option
+                  value="all"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  All Status
+                </option>
+                <option
+                  value="upcoming"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Upcoming
+                </option>
+                <option
+                  value="on-going"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  On-going
+                </option>
+                <option
+                  value="completed"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Completed
+                </option>
+                <option
+                  value="cancelled"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Cancelled
+                </option>
+              </select>
+
+              {/* Type Filter */}
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option
+                  value="all"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  All Types
+                </option>
+                <option
+                  value="public"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Public
+                </option>
+                <option
+                  value="private"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Private
+                </option>
+                <option
+                  value="peer-to-peer"
+                  className="border-gray-300 text-black bg-gray"
+                >
+                  Peer-to-peer
+                </option>
+              </select>
+
               <Button
                 onClick={() => navigate("/user/sessions/public")}
                 variant="success"
@@ -209,19 +287,39 @@ const Sessions = () => {
           </div>
         </div>
 
+        {todaySessions.length === 0 && otherSessions.length === 0 && (
+          <div className="text-center text-gray-300 py-12">
+            <p className="text-lg">No sessions found.</p>
+            <Button
+              onClick={handleScheduleButton}
+              variant="primary"
+              className="mt-4"
+            >
+              Schedule Your First Session
+            </Button>
+          </div>
+        )}
+
         {/* Today’s Upcoming Sessions */}
         {todaySessions.length > 0 && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Upcoming (Today)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
               {todaySessions.map((session) => (
-                <Card key={session._id} className="bg-white/10 border shadow-lg relative">
+                <Card
+                  key={session._id}
+                  className="bg-white/10 border shadow-lg relative"
+                >
                   <div className="absolute top-4 right-4">
-                    <Badge variant={renderStatus(session)}>{renderStatus(session)}</Badge>
+                    <Badge variant={renderStatus(session)}>
+                      {renderStatus(session)}
+                    </Badge>
                   </div>
                   <h3 className="font-bold">{session.topic}</h3>
                   <p className="text-sm">{session.type}</p>
-                  <p className="text-xs text-gray-300">{new Date(session.startTime).toLocaleString()}</p>
+                  <p className="text-xs text-gray-300">
+                    {new Date(session.startTime).toLocaleString()}
+                  </p>
                   {renderActionButtons(session)}
                 </Card>
               ))}
@@ -235,13 +333,20 @@ const Sessions = () => {
             <h2 className="text-2xl font-semibold mb-4">Other Sessions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {otherSessions.map((session) => (
-                <Card key={session._id} className="bg-white/10 border shadow-lg relative">
+                <Card
+                  key={session._id}
+                  className="bg-white/10 border shadow-lg relative"
+                >
                   <div className="absolute top-4 right-4">
-                    <Badge variant={renderStatus(session)}>{renderStatus(session)}</Badge>
+                    <Badge variant={renderStatus(session)}>
+                      {renderStatus(session)}
+                    </Badge>
                   </div>
                   <h3 className="font-bold">{session.topic}</h3>
                   <p className="text-sm">{session.type}</p>
-                  <p className="text-xs text-gray-300">{new Date(session.startTime).toLocaleString()}</p>
+                  <p className="text-xs text-gray-300">
+                    {new Date(session.startTime).toLocaleString()}
+                  </p>
                   {renderActionButtons(session)}
                 </Card>
               ))}
@@ -270,7 +375,10 @@ const Sessions = () => {
               className="w-full mb-4"
             />
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setCancelModal({ open: false })}>
+              <Button
+                variant="secondary"
+                onClick={() => setCancelModal({ open: false })}
+              >
                 Close
               </Button>
               <Button variant="danger" onClick={handleCancelConfirm}>

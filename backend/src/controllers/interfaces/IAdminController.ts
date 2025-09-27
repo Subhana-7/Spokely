@@ -12,4 +12,6 @@ export interface IAdminController {
   home(req: Request, res: Response): Promise<void>;
   refreshToken(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
+
+  getAllSessionsAdmin(req: Request, res: Response): Promise<void>
 }

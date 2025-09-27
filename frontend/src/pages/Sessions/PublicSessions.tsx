@@ -341,7 +341,7 @@ const MentorPublicSessions = () => {
                 placeholder="Search sessions by topic..."
                 value={searchTerm}
                 onChange={setSearchTerm}
-                className="pl-10 h-12 bg-gray border-gray-300 text-black"
+                className="pl-10 h-12 bg-gray border-gray-300 text-white"
               />
             </div>
             <div className="lg:w-48">

@@ -51,7 +51,7 @@ export class ChatController {
 
   getChats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.id!; // comes from your Auth middleware
+    const userId = req.id!; 
 
     if (!userId) {
        res

@@ -200,6 +200,28 @@ const SessionDetail = () => {
             )}
           </Card>
 
+          {/* Creator Info */}
+          {session.createdBy && (
+            <div
+              className="cursor-pointer"
+              onClick={() =>
+                navigate(`/user/mentor-profile/${session.createdBy._id}`)
+              }
+            >
+              <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg hover:shadow-2xl transition">
+                <div className="flex items-center gap-3">
+                  <User className="w-6 h-6 text-blue-300" />
+                  <div>
+                    <p className="text-sm opacity-80">Session Creator</p>
+                    <p className="font-semibold hover:underline">
+                      {session.createdBy.name}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
           {/* Participants */}
           <Card className="backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl hover:shadow-2xl transition">
             <h3 className="font-semibold text-xl mb-4 flex items-center">

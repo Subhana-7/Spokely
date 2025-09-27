@@ -50,6 +50,8 @@ export class PaymentController implements IPaymentController {
         res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+      
+      console.log(req.body)
       const result = await this._paymentService.createSubscription(req.id, req.body);
       res.status(STATUS_CODES.OK).json(result);
     } catch (error: any) {

@@ -4,7 +4,7 @@ import {
 } from "../dto/subscription.dto";
 
 export function mapToCreateSubscriptionDTO(body: any): CreateSubscriptionDTO {
-  if (!body.userId || !body.mentorId || !body.plan || !body.price) {
+  if (!body.userId || !body.mentorId || !body.plan || !body.price || !body.time) {
     throw new Error("Missing subscription data");
   }
 
@@ -13,8 +13,10 @@ export function mapToCreateSubscriptionDTO(body: any): CreateSubscriptionDTO {
     mentorId: body.mentorId.toString(),
     plan: body.plan,
     price: Number(body.price),
+    time: Number(body.time),   // 👈 added
   };
 }
+
 
 export function mapToSetMentorPlansDTO(body: any): SetMentorPlansDTO {
   if (!body.mentorId || !body.plans) {
@@ -24,8 +26,10 @@ export function mapToSetMentorPlansDTO(body: any): SetMentorPlansDTO {
   return {
     mentorId: body.mentorId.toString(),
     plans: body.plans.map((p: any) => ({
-      plan: p.plan,
+      type: p.type,   // must match schema field
       price: Number(p.price),
+      time: Number(p.time),
     })),
   };
 }
+

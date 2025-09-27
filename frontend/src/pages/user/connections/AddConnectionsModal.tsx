@@ -17,8 +17,8 @@ interface AddConnectionModalProps {
 }
 
 interface IncomingRequest {
-  _id: string;
-  userId: {
+  id: string;
+  user?: {
     _id: string;
     name: string;
     email: string;
@@ -27,7 +27,7 @@ interface IncomingRequest {
 
 interface SentRequest {
   _id: string;
-  connectedUserId: {
+  connectedUser?: {
     _id: string;
     name: string;
     email: string;
@@ -41,29 +41,32 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
 }) => {
   const [uniqueCode, setUniqueCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>(
+    []
+  );
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
 
-const fetchRequests = async () => {
-  try {
-    const [incomingRes, sentRes] = await Promise.all([
-      getConnectionRequests(),
-      getSentConnectionRequests(),
-    ]);
-    setIncomingRequests(incomingRes.data); 
-    setSentRequests(sentRes.data);
-    onFetchIncomingCount?.(incomingRes.data.length);
-  } catch (err) {
-    toast.error("Failed to load connection requests");
-  }
-};
+  const fetchRequests = async () => {
+    try {
+      const [incomingRes, sentRes] = await Promise.all([
+        getConnectionRequests(),
+        getSentConnectionRequests(),
+      ]);
+      setIncomingRequests(incomingRes.data || []);
+      setSentRequests(sentRes.data || []);
+      onFetchIncomingCount?.((incomingRes.data || []).length);
+    } catch (err) {
+      toast.error("Failed to load connection requests");
+    }
+  };
 
+  console.log("incom", incomingRequests);
+  console.log("send req", sentRequests);
 
   const handleAddConnection = async () => {
     if (!uniqueCode.trim()) return;
     setLoading(true);
     try {
-      console.log(uniqueCode)
       await sendConnectionRequest(uniqueCode.trim());
       toast.success("Connection request sent!");
       setUniqueCode("");
@@ -77,6 +80,7 @@ const fetchRequests = async () => {
 
   const handleAccept = async (requestId: string) => {
     try {
+      console.log(requestId, "req id");
       await acceptConnectionRequest(requestId);
       toast.success("Connection accepted!");
       fetchRequests();
@@ -86,9 +90,7 @@ const fetchRequests = async () => {
   };
 
   useEffect(() => {
-    if (isOpen) {
-      fetchRequests();
-    }
+    if (isOpen) fetchRequests();
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -158,7 +160,7 @@ const fetchRequests = async () => {
           </div>
 
           {/* Incoming Requests */}
-          {incomingRequests.length > 0 && (
+          {incomingRequests.length > 0 ? (
             <div className="border-t pt-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -172,28 +174,30 @@ const fetchRequests = async () => {
               <div className="space-y-4">
                 {incomingRequests.map((req) => (
                   <div
-                    key={req._id}
+                    key={req.id}
                     className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-100 hover:shadow-lg transition-all duration-200"
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
-                          {req.userId.name.charAt(0).toUpperCase()}
+                          {req.user?.name
+                            ? req.user.name.charAt(0).toUpperCase()
+                            : "?"}
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 text-lg">
-                            {req.userId.name}
+                            {req.user?.name || "Unknown User"}
                           </p>
                           <p className="text-sm text-gray-600 flex items-center gap-1">
                             <Mail size={12} />
-                            {req.userId.email}
+                            {req.user?.email || "-"}
                           </p>
                         </div>
                       </div>
                       <Button
                         variant="success"
                         className="px-6 py-2"
-                        onClick={() => handleAccept(req._id)}
+                        onClick={() => handleAccept(req.id)}
                       >
                         <CheckCircle size={16} className="mr-2" />
                         Accept
@@ -203,10 +207,14 @@ const fetchRequests = async () => {
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="text-gray-500 text-center mt-4">
+              No incoming requests
+            </p>
           )}
 
           {/* Sent Requests */}
-          {sentRequests.length > 0 && (
+          {sentRequests.length > 0 ? (
             <div className="border-t pt-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
@@ -226,15 +234,17 @@ const fetchRequests = async () => {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-yellow-500 flex items-center justify-center text-white font-bold text-lg">
-                          {req.connectedUserId.name.charAt(0).toUpperCase()}
+                          {req.connectedUser?.name
+                            ? req.connectedUser.name.charAt(0).toUpperCase()
+                            : "?"}
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 text-lg">
-                            {req.connectedUserId.name}
+                            {req.connectedUser?.name || "Unknown User"}
                           </p>
                           <p className="text-sm text-gray-600 flex items-center gap-1">
                             <Mail size={12} />
-                            {req.connectedUserId.email}
+                            {req.connectedUser?.email || "-"}
                           </p>
                         </div>
                       </div>
@@ -247,6 +257,8 @@ const fetchRequests = async () => {
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="text-gray-500 text-center mt-4">No sent requests</p>
           )}
         </div>
       </div>

@@ -21,6 +21,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
 
   async findOne(query: Partial<Record<keyof T, any>>): Promise<T | null> {
     try {
+      console.log(query)
       return this.model.findOne(query);
     } catch (error) {
       console.error("findOne error:", error);

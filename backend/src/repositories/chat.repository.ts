@@ -101,7 +101,6 @@ async getMessages(sessionId: string, limit = 50): Promise<MessageDto[] | null> {
           .sort({ createdAt: -1 })
           .populate("sender", "name");
 
-        // now TypeScript knows these are IUser[]
         const otherUser = session.participants.find(
           (p) => p._id.toString() !== userId.toString()
         ) as IUser | undefined;

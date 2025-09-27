@@ -57,6 +57,7 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
   async acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null> {
     try {
       const connection = await ConnectionModel.findById(requestId);
+      console.log(connection)
       if (!connection) throw new Error("Connection not found");
       if (!connection.connectedUserId.equals(userId)) throw new Error("Unauthorized action");
 

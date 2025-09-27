@@ -16,7 +16,6 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
   }
 
   async findByUser(userId: string) {
-    // Step 1: Fetch subscriptions with mentor details
     const subscriptions = await SubscriptionModel.find({ userId })
       .populate({
         path: "mentorId",
@@ -25,7 +24,6 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
       })
       .lean();
 
-    // Step 2: For each subscription, enrich with sessions & feedback
     const enriched = await Promise.all(
       subscriptions.map(async (sub: any) => {
         const mentor = sub.mentorId;
@@ -35,7 +33,6 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
 
         const mentorId = mentor._id;
 
-        // Sessions between this user and mentor
         const sessions = await SessionModel.find({
           mentorId,
           $or: [{ createdBy: userId }, { "participants.user": userId }],
@@ -44,12 +41,10 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
           .populate("feedback.from feedback.to", "name email")
           .lean();
 
-        // Sessions created by this user
         const sessionsByUser = sessions.filter(
           (s) => s.createdBy?.toString() === userId.toString()
         );
 
-        // Feedbacks given by this user to this mentor
         const feedbackByUser = sessions
           .flatMap((s) => s.feedback || [])
           .filter(
@@ -59,7 +54,6 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
               fb.to.toString() === mentorId.toString()
           );
 
-        // Average feedback score from this user
         const avgRating =
           feedbackByUser.length > 0
             ? feedbackByUser.reduce((acc, f) => acc + (f.rating || 0), 0) /

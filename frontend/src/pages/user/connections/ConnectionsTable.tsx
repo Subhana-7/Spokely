@@ -114,7 +114,7 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
                 <Button
                   onClick={() => handleChat(connection.id, connection.role)}
                   variant="primary"
-                  className="px-4 py-2 text-sm bg-black"
+                  className="px-4 py-2 text-sm"
                 >
                   <MessageCircle size={16} className="mr-2" /> Chat
                 </Button>

@@ -11,6 +11,7 @@ export class MentorPlanRepository extends BaseRepository<IMentorPlan> implements
 
   async savePlans(mentorId: string, plans: any[]) {
     try {
+      console.log('heh')
       return MentorPlanModel.findOneAndUpdate(
         { mentorId },
         { mentorId, plans },

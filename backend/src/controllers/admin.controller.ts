@@ -276,4 +276,29 @@ export class AdminController implements IAdminController {
       .status(STATUS_CODES.OK)
       .json({ message: MESSAGES.SUCCESS.LOGOUT });
   }
+
+  getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const filters = {
+      status: req.query.status as string,
+      type: req.query.type as string,
+      mentorId: req.query.mentorId as string,
+    };
+
+    const sessions = await this._adminService.getAllSessionsAdmin(filters);
+
+    if (!sessions || sessions.length === 0) {
+      res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.SESSION.NOT_FOUND });
+      return;
+    }
+
+    res.status(STATUS_CODES.OK).json({
+      sessions,
+      total: sessions.length,
+    });
+  } catch (err: any) {
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+  }
+};
+
 }

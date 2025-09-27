@@ -40,12 +40,11 @@ export class ChatService {
   async getMessages(sessionId: string): Promise<MessageDto[] | null> {
   try {
     const participants = sessionId.split("_"); 
-    await this._chatRepository.findOrCreateSession(sessionId, participants);
+    // await this._chatRepository.findOrCreateSession(sessionId, participants);
 
-    // Repository already returns MessageDto[], no mapping needed
     const messages = await this._chatRepository.getMessages(sessionId);
     
-    console.log("Service returning:", JSON.stringify(messages, null, 2));
+    
     return messages;
   } catch (error) {
     console.log("Service error:", error);

@@ -7,6 +7,7 @@ import AddConnectionModal from "./AddConnectionsModal";
 import { Search, Plus } from "lucide-react";
 import { getAllConnections } from "../../../services/connectionService";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../../../store/userAuthStore";
 
 interface Connection {
   connectedUser: {
@@ -32,6 +33,8 @@ const Connections = () => {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
   const [incomingCount, setIncomingCount] = useState(2);
+
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
     const fetchConnections = async () => {
@@ -66,30 +69,36 @@ const Connections = () => {
     fetchConnections();
   }, [searchTerm]);
 
-  const filteredConnections = connections
-  .filter((connection) => {
-    // Use 'connectedUser' instead of 'connectionWith'
-    const user = connection.connectedUser || connection.user;
-    if (!user) return false;
+  console.log('con',connections)
 
+  const filteredConnections = connections
+  .map((c) => {
+    // Pick the other user in the connection
+    if (c.user.id === currentUserId) return c.connectedUser;
+    if (c.connectedUser.id === currentUserId) return c.user;
+    return null; // skip invalid
+  })
+  // Type guard to remove null and tell TS this is a Connection user
+  .filter((user): user is NonNullable<typeof user> => user !== null)
+  .filter((user) => {
     const name = user.name?.toLowerCase() || "";
     const email = user.email?.toLowerCase() || "";
-
     return (
       name.includes(searchTerm.toLowerCase()) ||
       email.includes(searchTerm.toLowerCase())
     );
   })
-  .map((c) => {
-    const user = c.connectedUser || c.user;
-    return {
-      id: user.id || user.id,
-      username: user.name,
-      email: user.email,
-      role: user.role,
-      sessions: c.sessionCount || 0,
-    };
-  });
+  .map((user) => ({
+    id: user.id,
+    username: user.name,
+    email: user.email,
+    role: user.role,
+    sessions:
+      connections.find(
+        (c) => c.user.id === user.id || c.connectedUser.id === user.id
+      )?.sessionCount || 0,
+  }));
+
 
 
   return (

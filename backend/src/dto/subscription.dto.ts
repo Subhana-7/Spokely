@@ -3,9 +3,10 @@ export interface CreateSubscriptionDTO {
   mentorId: string;
   plan: "DAILY" | "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY";
   price: number;
+  time: number;   // 👈 added as number
 }
 
 export interface SetMentorPlansDTO {
   mentorId: string;
-  plans: { plan: string; price: number }[];
+  plans: { type: "DAILY" | "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY"; price: number; time: number }[];
 }

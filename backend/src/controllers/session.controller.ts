@@ -30,10 +30,7 @@ export class SessionController implements ISessionController {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
       const sessions = await this._sessionService.getSessions(req.id);
-      if (!sessions || sessions.length === 0) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.SESSION.NOT_FOUND });
-        return;
-      }
+      
       res.status(STATUS_CODES.OK).json({ sessions });
     } catch {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: MESSAGES.SESSION.FETCH_FAILED });

@@ -8,6 +8,7 @@ export interface ISubscription extends Document {
   startDate: Date;
   endDate: Date;
   status: "ACTIVE" | "CANCELLED" | "EXPIRED";
+  time:number,
 }
 
 const subscriptionSchema = new Schema<ISubscription>(
@@ -27,6 +28,7 @@ const subscriptionSchema = new Schema<ISubscription>(
       enum: ["ACTIVE", "CANCELLED", "EXPIRED"],
       default: "ACTIVE",
     },
+    time:{type:Number,required:true},
   },
   { timestamps: true }
 );

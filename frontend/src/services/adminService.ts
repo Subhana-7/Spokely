@@ -41,3 +41,6 @@ export const rejectMentor = (id: string, rejectionReason: string) =>
   API.post(`/admin/mentors/reject/${id}`, { rejectionReason });
 
 export const logout = () => API.post("/admin/logout");
+
+export const adminSessionListing = (params: { page: number; limit: number; search: string; status: string }) =>
+  API.get("/admin/sessions", { params });

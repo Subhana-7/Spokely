@@ -51,6 +51,8 @@ router.patch("/mentors/approve/:id", controller.approveMentor.bind(controller));
 
 router.post("/mentors/reject/:id", controller.rejectMentor.bind(controller));
 
-router.post('/logout',controller.logout.bind(controller))
+router.post('/logout',controller.logout.bind(controller));
+
+router.get("/sessions",authMiddleware(["admin"]),controller.getAllSessionsAdmin.bind(controller))
 
 export default router;

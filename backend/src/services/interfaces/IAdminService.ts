@@ -1,5 +1,6 @@
 import { IMentor } from "../../models/mentor.model";
 import { AdminResponseDto, UserSummaryDto } from "../../dto/admin.dto";
+import { ISession } from "../../models/sessions.model";
 
 export interface IAdminService {
   login(
@@ -45,4 +46,6 @@ export interface IAdminService {
   }): Promise<{ mentors: IMentor[]; total: number }>;
 
   getHome(id: string): Promise<AdminResponseDto | null>;
+
+  getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null>;
 }
