@@ -26,7 +26,7 @@ export class PaymentService implements IPaymentService {
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         auth: getPaypalAuth(),
-      }
+      } //here open api
     );
     return response.data.access_token;
   }

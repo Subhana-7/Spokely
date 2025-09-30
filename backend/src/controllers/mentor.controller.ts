@@ -100,7 +100,7 @@ export class MentorController implements IMentorController {
       const data = await this._mentorService.updateMentorDocument(email, documentUrl, textMessage);
       res.status(STATUS_CODES.OK).json({
         success: true,
-        message: "Document resubmitted successfully",
+        message: MESSAGES.SUCCESS.DOCUMENT_RESUBMITTED,
         data,
       });
     } catch (error: any) {
@@ -141,7 +141,7 @@ export class MentorController implements IMentorController {
         maxAge: 15 * 60 * 1000,
       });
 
-      res.status(STATUS_CODES.OK).json({ message: "Token refreshed", mentor });
+      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.TOKEN_REFRESHED, mentor });
     } catch (err) {
       res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_TOKEN });
     }
@@ -156,7 +156,7 @@ export class MentorController implements IMentorController {
       }
 
       await this._mentorService.forgotPassword(email, newPassword);
-      res.status(STATUS_CODES.OK).json({ message: "Password reset OTP sent to email" });
+      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.PASSWORD_RESET_OTP_SENT });
     } catch (error: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }

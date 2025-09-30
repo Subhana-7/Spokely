@@ -18,11 +18,11 @@ export interface IAdminService {
     status: string
   ): Promise<{ message: string; user: IMentor }>;
 
-  getMentor(id: string): Promise<IMentor[] | null>;
+  getMentor(mentorId: string): Promise<IMentor[] | null>;
 
-  approveMentor(id: string): Promise<IMentor | null>;
+  approveMentor(mentorId: string): Promise<IMentor | null>;
 
-  rejectMentor(id: string, reason: string): Promise<IMentor | null>;
+  rejectMentor(mentorId: string, reason: string): Promise<IMentor | null>;
 
   getAllUsersWithQuery(params: {
     page?: number;
@@ -45,7 +45,7 @@ export interface IAdminService {
     isBlocked?: boolean;
   }): Promise<{ mentors: IMentor[]; total: number }>;
 
-  getHome(id: string): Promise<AdminResponseDto | null>;
+  getHome(adminId: string): Promise<AdminResponseDto | null>;
 
   getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null>;
 }

@@ -14,11 +14,12 @@ import { ISessionRepository } from "../repositories/interfaces/ISessionsReposito
 import { ISession } from "../models/sessions.model";
 
 @injectable()
-export class AdminService implements IAdminService { 
+export class AdminService implements IAdminService {
   constructor(
     @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository,
     @inject(TYPES.IEmailService) private _emailService: IEmailService,
-    @inject(TYPES.ISessionRepository) private _sessionRepository:ISessionRepository,
+    @inject(TYPES.ISessionRepository)
+    private _sessionRepository: ISessionRepository
   ) {}
 
   async login(
@@ -53,9 +54,10 @@ export class AdminService implements IAdminService {
 
     const result = await action();
     return {
-      message: `User successfully ${
-        status === "unBlocked" ? "unblocked" : "blocked"
-      }.`,
+      message:
+        status === "unBlocked"
+          ? MESSAGES.SUCCESS.USER_UNBLOCKED
+          : MESSAGES.SUCCESS.USER_BLOCKED,
       user: mapUserToSummaryDto(result),
     };
   }
@@ -71,31 +73,32 @@ export class AdminService implements IAdminService {
 
     const result = await action();
     return {
-      message: `Mentor successfully ${
-        status === "unBlocked" ? "unblocked" : "blocked"
-      }.`,
+      message:
+        status === "unBlocked"
+          ? MESSAGES.SUCCESS.MENTOR_UNBLOCKED
+          : MESSAGES.SUCCESS.MENTOR_BLOCKED,
       user: result,
     };
   }
 
-  async getMentor(id: string): Promise<IMentor[] | null> {
-    return this._adminRepository.getMentor(id);
+  async getMentor(mentorId: string): Promise<IMentor[] | null> {
+    return this._adminRepository.getMentor(mentorId);
   }
 
-  async approveMentor(id: string): Promise<IMentor | null> {
-    const mentor = await this._adminRepository.getMentor(id);
+  async approveMentor(mentorId: string): Promise<IMentor | null> {
+    const mentor = await this._adminRepository.getMentor(mentorId);
     const email = mentor?.[0]?.email;
     if (email)
       await this._emailService.sendVerificationUpdateEmail(email, "approved");
-    return this._adminRepository.updateMentor(id);
+    return this._adminRepository.updateMentor(mentorId);
   }
 
-  async rejectMentor(id: string, reason: string): Promise<IMentor | null> {
-    const mentor = await this._adminRepository.getMentor(id);
+  async rejectMentor(mentorId: string, reason: string): Promise<IMentor | null> {
+    const mentor = await this._adminRepository.getMentor(mentorId);
     const email = mentor?.[0]?.email;
     if (email)
       await this._emailService.sendVerificationUpdateEmail(email, "rejected");
-    return this._adminRepository.updateMentorRejection(id, reason);
+    return this._adminRepository.updateMentorRejection(mentorId, reason);
   }
 
   async getAllUsersWithQuery(params: {
@@ -109,7 +112,9 @@ export class AdminService implements IAdminService {
     maxMentors?: number;
     isBlocked?: boolean;
   }): Promise<{ users: UserSummaryDto[]; total: number }> {
-    const { users, total } = await this._adminRepository.findAllUsersWithQuery(params);
+    const { users, total } = await this._adminRepository.findAllUsersWithQuery(
+      params
+    );
     return { users: users.map(mapUserToSummaryDto), total };
   }
 
@@ -124,22 +129,25 @@ export class AdminService implements IAdminService {
     return this._adminRepository.findAllMentorsWithQuery(params);
   }
 
-  async getHome(id: string): Promise<AdminResponseDto | null> {
-    const admin = await this._adminRepository.findById(id);
+  async getHome(adminId: string): Promise<AdminResponseDto | null> {
+    const admin = await this._adminRepository.findById(adminId);
     return admin ? mapAdminToDto(admin) : null;
   }
 
-  async getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null> {
-  const query: any = {};
+  async getAllSessionsAdmin(filters?: {
+    status?: string;
+    type?: string;
+    mentorId?: string;
+  }): Promise<ISession[] | null> {
+    const query: any = {};
 
-  if (filters?.status && filters.status !== "all") {
-    query.status = filters.status;
+    if (filters?.status && filters.status !== "all") {
+      query.status = filters.status;
+    }
+
+    if (filters?.type) query.type = filters.type;
+    if (filters?.mentorId) query.mentorId = filters.mentorId;
+
+    return await this._sessionRepository.findSessions(query);
   }
-
-  if (filters?.type) query.type = filters.type;
-  if (filters?.mentorId) query.mentorId = filters.mentorId;
-
-  return await this._sessionRepository.findSessions(query);
-}
-
 }

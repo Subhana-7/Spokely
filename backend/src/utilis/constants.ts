@@ -28,7 +28,19 @@ export const MESSAGES = {
     ROLE_UPDATED: "User role updated successfully",
     SESSIONS_FETCHED: "Sessions fetched successfully",
     USER_FETCHED: "User data fetched successfully",
-    PASSWORD_CHANGED:"New password updated successfully"
+    PASSWORD_CHANGED: "New password updated successfully",
+    PAYMENT_CAPTURED: "Payment captured successfully",
+    SUBSCRIPTION_CREATED: "Subscription created successfully",
+    SUBSCRIPTION_CAPTURED: "Subscription captured successfully",
+    DOCUMENT_RESUBMITTED: "Document resubmitted successfully",
+    TOKEN_REFRESHED: "Token refreshed",
+    PASSWORD_RESET_OTP_SENT: "Password reset OTP sent to email",
+    USER_BLOCKED: "User successfully blocked",
+    USER_UNBLOCKED: "User successfully unblocked",
+    MENTOR_BLOCKED: "Mentor successfully blocked",
+    MENTOR_UNBLOCKED: "Mentor successfully unblocked",
+
+    PAYMENT_CREATED: "Payment order created successfully",
   },
   ERROR: {
     INVALID_CREDENTIALS: "Invalid email or password",
@@ -47,7 +59,7 @@ export const MESSAGES = {
     ALREADY_VERIFIED: "User is already verified",
     SELF_CONNECTION: "You can't connect with yourself",
     CONNECTION_EXISTS: "Connection already exists",
-    PASSWORD_NOT_CHANGED:"Password is not changed",
+    PASSWORD_NOT_CHANGED: "Password is not changed",
   },
   SESSION: {
     CREATED: "Session created",
@@ -62,6 +74,12 @@ export const MESSAGES = {
     OUTSIDE_TIMEFRAME: "Not within session timeframe",
     TOKEN_FAILED: "Failed to generate token",
     FEEDBACK_ADDED: "Feedback added",
+    PARTICIPANT_LIMIT_EXCEEDED:
+      "Exceeded participant limit for this session type",
+    INVITE_TOO_LATE: "Too late to accept/reject this session",
+    FEEDBACK_NOT_ALLOWED: "Can only give feedback on completed sessions",
+    FEEDBACK_ALREADY_GIVEN: "Feedback already given to this user",
+    FLAG_NOT_ALLOWED: "Can only flag completed sessions",
   },
   SUBSCRIPTION: {
     FAILED: "Subscription failed",

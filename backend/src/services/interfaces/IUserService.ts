@@ -25,8 +25,8 @@ export interface IUserService {
   ): Promise<{ message: string }>;
   updateRole(userId: string, role: "user" | "mentor"): Promise<UserResponseDTO>;
   getAllUsers(): Promise<UserResponseDTO[]>;
-  getHome(id: string): Promise<UserResponseDTO>;
-  updateUser(id: string, data: Partial<any>): Promise<UserResponseDTO>;
+  getHome(userId: string): Promise<UserResponseDTO>;
+  updateUser(userId: string, data: Partial<any>): Promise<UserResponseDTO>;
   refreshToken(
     token: string
   ): Promise<{ user: UserResponseDTO; accessToken: string }>;

@@ -121,8 +121,8 @@ export class UserService implements IUserService {
     return toUserResponseDTO(updated);
   }
 
-  async getHome(id: string): Promise<UserResponseDTO> {
-    const user = await this._userRepository.findById(id);
+  async getHome(userId: string): Promise<UserResponseDTO> {
+    const user = await this._userRepository.findById(userId);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     return toUserResponseDTO(user);
   }
@@ -132,8 +132,8 @@ export class UserService implements IUserService {
     return results.length ? results.map(toUserResponseDTO) : [];
   }
 
-  async updateUser(id: string, data: Partial<IUser>): Promise<UserResponseDTO> {
-    const updatedUser = await this._userRepository.updateUser(id, data);
+  async updateUser(userId: string, data: Partial<IUser>): Promise<UserResponseDTO> {
+    const updatedUser = await this._userRepository.updateUser(userId, data);
     if (!updatedUser) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     return toUserResponseDTO(updatedUser);
   }

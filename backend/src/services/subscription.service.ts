@@ -70,8 +70,6 @@ export class SubscriptionService implements ISubscriptionService {
   async getMentorPlans(mentorId: string) {
     const plans = await this._mentorPlanRepository.getPlans(mentorId);
 
-    console.log("plans", plans);
-
     if (!plans || plans.length === 0) {
       return [];
     }

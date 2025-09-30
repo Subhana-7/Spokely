@@ -63,9 +63,7 @@ export class SubscriptionController implements ISubscriptionController {
 
   async setMentorPlans(req: Request, res: Response): Promise<void> {
     try {
-      console.log("controller")
       const result = await this._subscriptionService.saveMentorPlans(req.body);
-      console.log(result,'set plan controler')
       res.status(STATUS_CODES.OK).json({ success: true, plans: result });
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
