@@ -19,36 +19,24 @@ export class SessionService {
     @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
   ) {}
 
- async createSession(body: any, userId: string): Promise<ISession | null> {
-  const dto = mapToCreateSessionDTO(body, userId);
+  async createSession(body: any, userId: string): Promise<ISession | null> {
+    console.log('create session')
+    const dto = mapToCreateSessionDTO(body, userId);
 
-  let maxParticipants = 2;
-  if (dto.type === "peer-to-peer") maxParticipants = 10;
-  if (dto.type === "private" || dto.type === "public") maxParticipants = 25;
+    let maxParticipants = 2;
+    if (dto.type === "peer-to-peer") maxParticipants = 10;
+    if (dto.type === "private" || dto.type === "public") maxParticipants = 25;
 
-  if (dto.participants && dto.participants.length > maxParticipants) {
-    throw new Error(MESSAGES.SESSION.PARTICIPANT_LIMIT_EXCEEDED);
+    if (dto.participants && dto.participants.length > maxParticipants) {
+      throw new Error(MESSAGES.SESSION.PARTICIPANT_LIMIT_EXCEEDED);
+    }
+
+    if (dto.type === "private" || dto.mentorId) dto.status = "pending";
+    else dto.status = "upcoming";
+
+
+    return await this._sessionRepository.createSession(dto);
   }
-
-  if (dto.type === "private" || dto.mentorId) dto.status = "pending";
-  else dto.status = "upcoming";
-
-  const session = await this._sessionRepository.createSession(dto);
-
-  if (session?.type === "public" && session.sessionFee && dto.mentorId && session._id) {
-    await this._walletService.credit(
-      dto.mentorId.toString(), 
-      session.sessionFee, 
-      `Payment for public session: ${session.topic}`, 
-      undefined,
-      session._id.toString() 
-    );
-  }
-
-  return session;
-}
-
-
 
   async getSessions(userId: string): Promise<ISession[] | null> {
     let sessions = await this._sessionRepository.getAllSessions(userId);
@@ -85,7 +73,9 @@ export class SessionService {
   }
 
   async updateSession(sessionId: string, body: any): Promise<ISession | null> {
+    console.log('update session',body)
     const dto: UpdateSessionDTO = mapToUpdateSessionDTO(body);
+    console.log(dto)
     return await this._sessionRepository.updateSession(sessionId, dto);
   }
 
