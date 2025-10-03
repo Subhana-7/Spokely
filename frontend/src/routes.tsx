@@ -28,6 +28,7 @@ import ChatBox from "./pages/chat/ChatBox";
 import MentorCard from "./pages/user/mentorListing";
 import StudentsPage from "./pages/Sessions/StudentsListing";
 import ChatPage from "./pages/chat/ChatPage";
+import DailyTaskPage from "./pages/user/dailyTask/DailyTask";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -79,6 +80,14 @@ const appRoutes: RouteObject[] = [
         <SessionDetail />
       </RoleProtectedRoute>
     ),
+  },
+  {
+    path:"/user/daily/task",
+    element:(
+      <RoleProtectedRoute role="user">
+        <DailyTaskPage/>
+      </RoleProtectedRoute>
+    )
   },
 
   {

@@ -1,6 +1,15 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import {DailyTaskController} from "../controllers/daily.task.controller";
+import { IDailyTaskController } from "../controllers/interfaces/IDailyTaskController";
+
+import { DailyTaskService } from "../services/daily.task.service";
+import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
+
+import { DailyTaskRepository } from "../repositories/daily.task.repository";
+import { IDailyTaskRepository } from "../repositories/interfaces/IDailyTaskRepository";
+
 import { IBaseRepository } from "../repositories/interfaces/IBaseRepository";
 import { BaseRepository } from "../repositories/base.repository";
 
@@ -83,6 +92,10 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IDailyTaskController>(TYPES.IDailyTaskController).to(DailyTaskController)
+container.bind<IDailyTaskService>(TYPES.IDailyTaskService).to(DailyTaskService)
+container.bind<IDailyTaskRepository>(TYPES.IDailyTaskRepository).to(DailyTaskRepository)
 
 container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository)
 

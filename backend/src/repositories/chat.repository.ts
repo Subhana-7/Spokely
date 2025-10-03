@@ -35,7 +35,6 @@ async getMessages(sessionId: string, limit = 50): Promise<MessageDto[] | null> {
 
     console.log("Raw MongoDB data:", res);
 
-    // Transform and return MessageDto array
     const messages = res
       .filter((msg: any) => msg.sender && msg.sender._id)
       .map((msg: any) => ({
