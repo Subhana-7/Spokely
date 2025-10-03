@@ -1,5 +1,8 @@
 export const TYPES = {
 
+  IWalletService:Symbol.for("IWalletService"),
+  IWalletRepository:Symbol.for("IWalletRepository"),
+
   IDailyTaskController:Symbol.for("IDailyTaskController"),
   IDailyTaskService:Symbol.for("IDailyTaskService"),
   IDailyTaskRepository:Symbol.for("IDailyTaskRepository"),

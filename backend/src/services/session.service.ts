@@ -9,30 +9,46 @@ import {
 } from "../mappers/session.mappers";
 import { generateAgoraToken } from "../config/agora";
 import { MESSAGES } from "../utilis/constants";
+import { IWalletService } from "./interfaces/IWalletService";
 
 @injectable()
 export class SessionService {
   constructor(
     @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository
+    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
   ) {}
 
-  async createSession(body: any, userId: string): Promise<ISession | null> {
-    const dto = mapToCreateSessionDTO(body, userId);
+ async createSession(body: any, userId: string): Promise<ISession | null> {
+  const dto = mapToCreateSessionDTO(body, userId);
 
-    let maxParticipants = 2;
-    if (dto.type === "peer-to-peer") maxParticipants = 10;
-    if (dto.type === "private" || dto.type === "public") maxParticipants = 25;
+  let maxParticipants = 2;
+  if (dto.type === "peer-to-peer") maxParticipants = 10;
+  if (dto.type === "private" || dto.type === "public") maxParticipants = 25;
 
-    if (dto.participants && dto.participants.length > maxParticipants) {
-      throw new Error(MESSAGES.SESSION.PARTICIPANT_LIMIT_EXCEEDED);
-    }
-
-    if (dto.type === "private" || dto.mentorId) dto.status = "pending";
-    else dto.status = "upcoming";
-
-    return await this._sessionRepository.createSession(dto);
+  if (dto.participants && dto.participants.length > maxParticipants) {
+    throw new Error(MESSAGES.SESSION.PARTICIPANT_LIMIT_EXCEEDED);
   }
+
+  if (dto.type === "private" || dto.mentorId) dto.status = "pending";
+  else dto.status = "upcoming";
+
+  const session = await this._sessionRepository.createSession(dto);
+
+  if (session?.type === "public" && session.sessionFee && dto.mentorId && session._id) {
+    await this._walletService.credit(
+      dto.mentorId.toString(), 
+      session.sessionFee, 
+      `Payment for public session: ${session.topic}`, 
+      undefined,
+      session._id.toString() 
+    );
+  }
+
+  return session;
+}
+
+
 
   async getSessions(userId: string): Promise<ISession[] | null> {
     let sessions = await this._sessionRepository.getAllSessions(userId);
@@ -113,6 +129,17 @@ export class SessionService {
   ): Promise<ISession | null> {
     const session = await this._sessionRepository.getSessionById(sessionId);
     if (!session) return null;
+
+    console.log(session)
+
+    if (session.type === "public") {
+      await this._walletService.credit(
+        userId,
+        session.sessionFee ?? 0,
+        "Refund for cancelled public session",
+        sessionId
+      );
+    }
 
     return await this._sessionRepository.updateSession(sessionId, {
       status: "cancelled",

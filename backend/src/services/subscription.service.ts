@@ -18,6 +18,7 @@ import { STATUS_CODES } from "../utilis/constants";
 import { IChatRepository } from "../repositories/interfaces/IChatRepository";
 import { privateDecrypt } from "crypto";
 import session from "express-session";
+import { IWalletService } from "./interfaces/IWalletService";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
@@ -28,22 +29,40 @@ export class SubscriptionService implements ISubscriptionService {
     private _sessionRepository: ISessionRepository,
     @inject(TYPES.IMentorPlanRepository)
     private _mentorPlanRepository: IMentorPlanRepository,
-    @inject(TYPES.IChatRepository) private _chatRepository:IChatRepository,
+    @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository,
+    @inject(TYPES.IWalletService)
+    private readonly _walletService: IWalletService
   ) {}
 
-  async subscribe(raw: any) {
-    const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
+ async subscribe(raw: any) {
+  const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
 
-    let res =  this._subscriptionRepository.createSubscription({
-      userId: new Types.ObjectId(dto.userId),
-      mentorId: new Types.ObjectId(dto.mentorId),
-      plan: dto.plan,
-      price: dto.price,
-      time: dto.time, 
-    });
+  const subscription = await this._subscriptionRepository.createSubscription({
+    userId: new Types.ObjectId(dto.userId),
+    mentorId: new Types.ObjectId(dto.mentorId),
+    plan: dto.plan,
+    price: dto.price,
+    time: dto.time,
+  });
 
-    return res
+  if (!subscription) {
+    throw new Error("Failed to create subscription");
   }
+
+  if (dto.price === undefined) {
+    throw new Error("Subscription price is not defined");
+  }
+
+  await this._walletService.credit(
+    dto.mentorId,
+    dto.price,
+    `Subscription payment from user ${dto.userId}`,
+    undefined,
+    subscription._id?.toString() 
+  );
+
+  return subscription;
+}
 
 
   getUserSubscriptions(userId: string) {
@@ -88,7 +107,7 @@ export class SubscriptionService implements ISubscriptionService {
 
       const subscriptions = await this._subscriptionRepository.findActive();
 
-      console.log(subscriptions)
+      console.log(subscriptions);
 
       for (const sub of subscriptions) {
         if (sub.status !== "ACTIVE") continue;
@@ -118,7 +137,7 @@ export class SubscriptionService implements ISubscriptionService {
         const sessionStartTime = new Date(today);
         sessionStartTime.setHours(hour24, 0, 0, 0);
 
-        console.log(sessionStartTime)
+        console.log(sessionStartTime);
 
         await this._sessionRepository.createSession({
           mentorId: sub.mentorId,
