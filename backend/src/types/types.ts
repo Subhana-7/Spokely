@@ -1,5 +1,9 @@
 export const TYPES = {
 
+  IDailyTaskController:Symbol.for("IDailyTaskController"),
+  IDailyTaskService:Symbol.for("IDailyTaskService"),
+  IDailyTaskRepository:Symbol.for("IDailyTaskRepository"),
+
   IBaseRepository:Symbol.for("IBaseRepository"),
 
   IPaymentController:Symbol.for("IPaymentController"),
