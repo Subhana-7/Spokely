@@ -8,4 +8,5 @@ export interface IDailyTaskService {
       userResponse: string
     ): Promise<DailyTaskDto | null>;
 submitAll(taskId: string, responses: any, userId: string):Promise<DailyTaskDto|null>;
+getUserLatestTask(userId: string): Promise<DailyTaskDto | null>;
 }

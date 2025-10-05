@@ -28,39 +28,37 @@ export class ChatRepository extends BaseRepository<IMessage> {
     }
   }
 
-  async getMessages(
-    sessionId: string,
-    limit = 50
-  ): Promise<MessageDto[] | null> {
-    try {
-      const res = await MessageModel.find({ sessionId })
-        .populate("sender", "name profilePicture role")
-        .sort({ createdAt: 1 })
-        .limit(limit)
-        .lean();
 
-      const messages: MessageDto[] = res
-        .filter((msg: any) => msg.sender && msg.sender._id)
-        .map((msg: any) => ({
-          _id: msg._id.toString(), 
-          id: msg._id.toString(), 
-          sessionId: msg.sessionId,
-          text: msg.text,
-          createdAt: msg.createdAt,
-          sender: {
-            _id: msg.sender._id.toString(),
-            id: msg.sender._id.toString(), 
-            name: msg.sender.name || "Unknown User",
-            profilePicture: msg.sender.profilePicture || null,
-            role: msg.sender.role || "user",
-          },
-        }));
+async getMessages(sessionId: string, limit = 50): Promise<MessageDto[] | null> {
+  try {
+    const res = await MessageModel.find({ sessionId })
+      .populate("sender", "name profilePicture role")
+      .sort({ createdAt: 1 })
+      .limit(limit)
+      .lean();
 
-      return messages;
-    } catch (error) {
-      console.log("Repository error:", error);
-      return null;
-    }
+    console.log("Raw MongoDB data:", res);
+
+    const messages = res
+      .filter((msg: any) => msg.sender && msg.sender._id)
+      .map((msg: any) => ({
+        id: msg._id.toString(),
+        sessionId: msg.sessionId,
+        text: msg.text,
+        createdAt: msg.createdAt,
+        sender: {
+          id: msg.sender._id.toString(),
+          name: msg.sender.name || 'Unknown User',
+          profilePicture: msg.sender.profilePicture || null,
+          role: msg.sender.role || 'user',
+        },
+      }));
+
+    console.log("Transformed messages:", JSON.stringify(messages, null, 2));
+    return messages;
+  } catch (error) {
+    console.log("Repository error:", error);
+    return null;
   }
 
   async findOrCreateSession(
