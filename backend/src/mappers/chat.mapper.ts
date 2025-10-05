@@ -1,9 +1,6 @@
-// chat.mapper.ts
-
 import { MessageDto } from "../dto/chat.dto";
 
 export function mapMessageToDto(message: any): MessageDto {
-  // Check if message and sender exist
   if (!message || !message.sender) {
     throw new Error("Invalid message data");
   }
@@ -24,6 +21,6 @@ export function mapMessageToDto(message: any): MessageDto {
 
 export function mapMessagesToDto(messages: any[]): MessageDto[] {
   return messages
-    .filter(msg => msg && msg.sender && msg.sender._id) // Filter out invalid messages
+    .filter(msg => msg && msg.sender && msg.sender._id) 
     .map(mapMessageToDto);
 }

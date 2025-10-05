@@ -31,7 +31,6 @@ export class DailyTaskService {
     let prompt = "";
 
     if (type === "writing" || type === "speaking") {
-      // only a short prompt
       prompt = `
         Generate a ${type} task for topic "${topic}".
         Difficulty: Level ${level}.
@@ -42,7 +41,6 @@ export class DailyTaskService {
         }
       `;
     } else {
-      // reading or listening → paragraph + 5 questions
       prompt = `
         Generate a ${type} task for topic "${topic}".
         Difficulty: Level ${level}.

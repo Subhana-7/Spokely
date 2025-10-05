@@ -31,7 +31,6 @@ export const initChatSocket = (io: Server) => {
         text: string;
       }) => {
         try {
-          // Save the message
           const msg = await chatService.sendMessage(sessionId, sender, text);
 
           if (!msg) {
@@ -46,11 +45,8 @@ export const initChatSocket = (io: Server) => {
             sessionId,
           };
 
-          // Emit to everyone in the room (including sender)
-          // This is the ONLY place the message should be added to state
           io.in(sessionId).emit("chat-message", outgoing);
 
-          // Emit global update for sidebar/unread (with proper message data)
           io.emit("chat-updated", { 
             sessionId, 
             message: {
@@ -64,7 +60,6 @@ export const initChatSocket = (io: Server) => {
         } catch (err) {
           console.error("Socket sendMessage error:", err);
 
-          // Send error to the sender only
           socket.emit("chat-error", {
             error: "Failed to send message",
             sessionId,
@@ -78,7 +73,6 @@ export const initChatSocket = (io: Server) => {
         await chatService.markMessagesRead(sessionId, userId);
         console.log(`Messages marked as read for user ${userId} in session ${sessionId}`);
 
-        // Notify that messages were read (optional - for read receipts)
         io.in(sessionId).emit("messages-read", {
           sessionId,
           userId,
