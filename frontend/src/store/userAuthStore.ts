@@ -10,6 +10,7 @@ interface User {
   profilePicture?: string;
   phone?:number;
   bio?:string;
+  level?:number;
 }
 
 interface AuthState {

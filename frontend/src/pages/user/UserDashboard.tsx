@@ -1,17 +1,51 @@
-import DashboardHeader from './DashBoardComponents/Header';
-import GreetingBanner from './DashBoardComponents/GreetingsBanner';
-import StreakCard from './DashBoardComponents/StreakCard';
-import DailyChallengeCard from './DashBoardComponents/DailyChallengeCard';
-import UpcomingSessionsCard from './DashBoardComponents/UpcomingSessionsCard';
-import LearningLevelsCard from './DashBoardComponents/LearningLevelsCard';
-import TipOfTheDayCard from './DashBoardComponents/TipOfTheDayCard';
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/userAuthStore";
+
+import DashboardHeader from "./DashBoardComponents/Header";
+import GreetingBanner from "./DashBoardComponents/GreetingsBanner";
+import DailyChallengeCard from "./DashBoardComponents/DailyChallengeCard";
+import LearningLevelsCard from "./DashBoardComponents/LearningLevelsCard";
+import {
+  MessageCircle,
+  Users,
+  CalendarCheck,
+  type LucideIcon,
+} from "lucide-react";
+
+interface QuickAccessCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  route: string;
+}
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const user = useAuthStore();
+
+  const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
+    icon: Icon,
+    title,
+    description,
+    route,
+  }) => (
+    <div
+      onClick={() => navigate(route)}
+      className="cursor-pointer backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="w-6 h-6 text-lime-400" />
+        <h3 className="text-lg font-semibold">{title}</h3>
+      </div>
+      <p className="mt-2 text-sm text-gray-300">{description}</p>
+    </div>
+  );
+
   return (
     <div
       className="min-h-screen text-white relative"
       style={{
-        backgroundImage: `url('/gradient-bg.jpg')`, 
+        backgroundImage: `url('/gradient-bg.jpg')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -20,32 +54,43 @@ const Dashboard = () => {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
       {/* Header */}
-      {/* <div className="relative z-10"> */}
-        <DashboardHeader />
-      {/* </div> */}
+      <DashboardHeader />
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Section */}
           <div className="lg:col-span-2 space-y-6">
             <GreetingBanner />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                {/* Card Wrappers with blur + glow */}
-                <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition">
-                  <StreakCard />
-                </div>
-                <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition">
-                  <DailyChallengeCard />
-                </div>
-              </div>
+            {/* Quick Access Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <QuickAccessCard
+                icon={MessageCircle}
+                title="Chat"
+                description="Connect instantly with mentors and peers."
+                route="/user/chat"
+              />
+              <QuickAccessCard
+                icon={CalendarCheck}
+                title="Sessions"
+                description="Every session gets you one step closer to mastery 🚀"
+                route="/user/session"
+              />
+              <QuickAccessCard
+                icon={Users}
+                title="Connections"
+                description="Grow your circle of learners and mentors."
+                route="/user/connections"
+              />
+            </div>
 
-              <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition">
-                <UpcomingSessionsCard />
-              </div>
+            {/* Daily Challenge */}
+            <div
+              onClick={() => navigate("/user/daily/task")}
+              className="cursor-pointer backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition"
+            >
+              <DailyChallengeCard />
             </div>
           </div>
 
@@ -55,11 +100,6 @@ const Dashboard = () => {
               <LearningLevelsCard />
             </div>
           </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="mt-8 backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition">
-          <TipOfTheDayCard />
         </div>
       </div>
     </div>
