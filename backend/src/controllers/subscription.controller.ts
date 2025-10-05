@@ -45,14 +45,6 @@ export class SubscriptionController implements ISubscriptionController {
       const mentorId = req.params.id;
       const plans = await this._subscriptionService.getMentorPlans(mentorId);
 
-      // if (!plans || plans.length === 0) {
-      //   res.status(STATUS_CODES.NOT_FOUND).json({
-      //     message: MESSAGES.SUBSCRIPTION.NOT_FOUND,
-      //     plans: [],
-      //   });
-      //   return;
-      // }
-
       res.status(STATUS_CODES.OK).json(plans);
     } catch (err) {
       res

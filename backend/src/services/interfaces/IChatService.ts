@@ -10,4 +10,7 @@ export interface IChatService {
   getMessages(sessionId: string): Promise<MessageDto[] | null>;
 
   getChats(userId: string): Promise<IChatPreview[]>;
+
+  markMessagesRead(sessionId: string, userId: string): Promise<void>;
+
 }

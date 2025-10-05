@@ -3,7 +3,6 @@ import { IPayment } from "../models/payment.model";
 import { PaymentEntityDTO, PaymentResponseDTO } from "../dto/payment.dto";
 
 export class PaymentMapper {
-  // DB → DTO
   static toEntity(doc: IPayment): PaymentEntityDTO {
     return {
       id: doc._id?.toString(),
@@ -17,7 +16,6 @@ export class PaymentMapper {
     };
   }
 
-  // DTO → DB (fix for your create/update issue)
   static toPersistence(dto: PaymentEntityDTO): Partial<IPayment> {
     return {
       sessionId: dto.sessionId ? new Types.ObjectId(dto.sessionId) : undefined,
@@ -30,7 +28,6 @@ export class PaymentMapper {
     };
   }
 
-  // DTO → Response (for API output)
   static toResponse(entity: PaymentEntityDTO): PaymentResponseDTO {
     return {
       id: entity.id,

@@ -1,8 +1,8 @@
 export interface TaskDetailDto {
-  prompt: string;                // For all tasks
-  paragraph?: string;            // Only for reading & listening
-  questions?: string[];          // Only for reading & listening
-  userResponse?: string;         // User answer
+  prompt: string;                
+  paragraph?: string;           
+  questions?: string[];        
+  userResponse?: string;        
 }
 
 

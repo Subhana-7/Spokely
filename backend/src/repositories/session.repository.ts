@@ -88,7 +88,7 @@ export class SessionRepository
       const session = await SessionModel.findById(sessionId);
       if (!session) return null;
 
-      let maxParticipants = 2; // default
+      let maxParticipants = 2; 
       if (session.type === "peer-to-peer") maxParticipants = 10;
       if (session.type === "private" || session.type === "public") maxParticipants = 25;
 

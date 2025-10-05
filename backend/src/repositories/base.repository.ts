@@ -35,7 +35,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   ): Promise<{ results: T[]; total: number }> {
     try {
       const page = options?.page || 1;
-      const limit = options?.limit || 0; // 0 = no limit
+      const limit = options?.limit || 0; 
       const skip = (page - 1) * limit;
 
       const results = await this.model.find(query).skip(skip).limit(limit);

@@ -64,7 +64,7 @@ export class UserService implements IUserService {
   async login(data: LoginDTO): Promise<{ user: UserResponseDTO; accessToken: string; refreshToken: string }> {
     const user = await this._userRepository.findByEmail(data.email);
     if (!user) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
-    if (!user.password) throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED); // Google registered case
+    if (!user.password) throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
 
     const match = await bcrypt.compare(data.password, user.password);
     if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);

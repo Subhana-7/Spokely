@@ -13,7 +13,7 @@ export function mapToCreateSubscriptionDTO(body: any): CreateSubscriptionDTO {
     mentorId: body.mentorId.toString(),
     plan: body.plan,
     price: Number(body.price),
-    time: Number(body.time),   // 👈 added
+    time: Number(body.time),  
   };
 }
 
@@ -26,7 +26,7 @@ export function mapToSetMentorPlansDTO(body: any): SetMentorPlansDTO {
   return {
     mentorId: body.mentorId.toString(),
     plans: body.plans.map((p: any) => ({
-      type: p.type,   // must match schema field
+      type: p.type,   
       price: Number(p.price),
       time: Number(p.time),
     })),

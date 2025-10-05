@@ -34,8 +34,8 @@ export class DailyTaskController {
   submitAll = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { taskId, responses } = req.body;
-    const result = await this._dailyTaskService.submitAll(taskId, responses, req.id!);
-    res.status(200).json(result);
+    const task = await this._dailyTaskService.submitAll(taskId, responses, req.id!);
+    res.status(200).json({ task });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to submit all tasks" });

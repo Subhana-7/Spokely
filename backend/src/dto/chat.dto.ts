@@ -1,4 +1,5 @@
 export interface MessageDto {
+  _id: string;
   id: string;
   sessionId: string;
   text: string;

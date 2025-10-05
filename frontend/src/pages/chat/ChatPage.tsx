@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../store/userAuthStore";
 import { getChatList } from "../../services/chatService";
 import ChatBox from "./ChatBox";
 import { ArrowLeft, MoreVertical, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+
+const socket = io(import.meta.env.VITE_SERVER_SIDE_URL, { autoConnect: true });
 
 interface Chat {
   id: string;
@@ -11,7 +14,7 @@ interface Chat {
   name: string;
   lastMessage: string;
   createdAt: string;
-  unread?: number;
+  unread: number;
   online?: boolean;
   profilePicture?: string;
 }
@@ -21,18 +24,23 @@ export default function ChatPage() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const activeChatRef = useRef<Chat | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    getChatList().then((res) => {
+    (async () => {
+      const res = await getChatList();
       const chatData = res.data.chats.map((chat: any) => ({
         id: chat.id,
         role: chat.role,
         name: chat.name,
-        lastMessage: chat.lastMessage,
+        lastMessage: chat.lastMessage || "No messages yet",
         createdAt: chat.createdAt,
         profilePicture: chat.profilePicture,
         unread: 0,
@@ -40,8 +48,52 @@ export default function ChatPage() {
       }));
       setChats(chatData);
       if (chatData.length) setActiveChat(chatData[0]);
-    });
+    })();
+
+    // Listen for new messages on ANY chat
+    const handleChatUpdated = ({ sessionId, message }: any) => {
+      setChats((prevChats) => {
+        const updatedChats = prevChats.map((chat) => {
+          if (chat.id === sessionId) {
+            const isActive = activeChatRef.current?.id === sessionId;
+            const isFromCurrentUser = message.sender?.id === currentUser?.id;
+            
+            // Only increment unread if:
+            // 1. Not the active chat
+            // 2. Not from the current user
+            const unread = isActive || isFromCurrentUser ? 0 : (chat.unread || 0) + 1;
+
+            return {
+              ...chat,
+              lastMessage: message.text,
+              createdAt: message.createdAt,
+              unread,
+            };
+          }
+          return chat;
+        });
+
+        // Sort chats by most recent message
+        return updatedChats.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+    };
+
+    socket.on("chat-updated", handleChatUpdated);
+
+    return () => {
+      socket.off("chat-updated", handleChatUpdated);
+    };
   }, [currentUser]);
+
+  const handleSelectChat = (chat: Chat) => {
+    setActiveChat(chat);
+    // Reset unread count for selected chat
+    setChats((prev) =>
+      prev.map((c) => (c.id === chat.id ? { ...c, unread: 0 } : c))
+    );
+  };
 
   const filteredChats = chats.filter((chat) =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -51,21 +103,20 @@ export default function ChatPage() {
     <div className="h-screen flex bg-slate-700 text-white">
       {/* Sidebar */}
       <div className="w-96 bg-slate-800 border-r border-slate-600 flex flex-col">
-        
         <div className="bg-slate-900 px-4 py-3 border-b border-slate-600">
-          
           <div className="flex items-center justify-between mb-3">
             <button
-          onClick={() => navigate(-1)}
-          className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
-        >
-          <ArrowLeft size={20} className="text-gray-300" />
-        </button>
+              onClick={() => navigate(-1)}
+              className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
+            >
+              <ArrowLeft size={20} className="text-gray-300" />
+            </button>
             <h1 className="text-xl font-semibold">Chats</h1>
             <button className="p-2 hover:bg-slate-700 rounded-full">
               <MoreVertical size={20} className="text-gray-300" />
             </button>
           </div>
+
           <div className="relative">
             <Search
               size={18}
@@ -86,7 +137,7 @@ export default function ChatPage() {
           {filteredChats.map((chat) => (
             <div
               key={chat.id}
-              onClick={() => setActiveChat(chat)}
+              onClick={() => handleSelectChat(chat)}
               className={`px-4 py-3 cursor-pointer hover:bg-slate-700 border-b border-slate-600 ${
                 activeChat?.id === chat.id ? "bg-slate-700" : ""
               }`}
@@ -119,10 +170,14 @@ export default function ChatPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-gray-300 truncate">
-                      {chat.lastMessage || "No messages yet"}
+                    <p
+                      className={`text-sm truncate ${
+                        chat.unread > 0 ? "text-white font-medium" : "text-gray-300"
+                      }`}
+                    >
+                      {chat.lastMessage}
                     </p>
-                    {chat.unread && chat.unread > 0 && (
+                    {chat.unread > 0 && (
                       <span className="ml-2 px-2 py-1 text-xs bg-emerald-500 text-white rounded-full min-w-[20px] text-center">
                         {chat.unread}
                       </span>
@@ -139,16 +194,21 @@ export default function ChatPage() {
       <div className="flex-1">
         {activeChat ? (
           <ChatBox
+            key={activeChat.id} // Force remount when chat changes
+            socket={socket}
             chatId={activeChat.id}
             chatRole={activeChat.role}
             chatName={activeChat.name}
+            profilePicture={activeChat.profilePicture}
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-slate-800">
             <div className="w-64 h-64 bg-slate-700 rounded-full flex items-center justify-center mb-8">
               <div className="text-6xl">💬</div>
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-2">Welcome to Chat</h2>
+            <h2 className="text-2xl font-semibold text-white mb-2">
+              Welcome to Chat
+            </h2>
             <p className="text-center max-w-md">
               Select a chat from the sidebar to start messaging with your mentors and students.
             </p>

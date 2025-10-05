@@ -17,7 +17,11 @@ export class ChatRepository extends BaseRepository<IMessage> {
 
   async saveMessage(data: Partial<IMessage>): Promise<IMessage | null> {
     try {
-      return await MessageModel.create(data);
+      const msg = await MessageModel.create(data);
+      await ChatSessionModel.findByIdAndUpdate(data.sessionId, {
+        $set: { updatedAt: new Date() },
+      });
+      return msg;
     } catch (error) {
       console.log("error", error);
       return null;
@@ -56,9 +60,6 @@ async getMessages(sessionId: string, limit = 50): Promise<MessageDto[] | null> {
     console.log("Repository error:", error);
     return null;
   }
-}
-
-
 
   async findOrCreateSession(
     sessionId: string,
@@ -79,48 +80,72 @@ async getMessages(sessionId: string, limit = 50): Promise<MessageDto[] | null> {
     }
   }
 
-
-
-  async getUserChats(userId: string):Promise<IChatPreview[] | null> {
-  try {
-    const sessions = await ChatSessionModel.find({
-      participants: userId,
-    })
-      .populate<{ participants: IUser[] }>({
-        path: "participants",
-        select: "name role profilePicture",
+  /* ✅ UPDATED: includes unread count + latest message */
+  async getUserChats(userId: string): Promise<IChatPreview[] | null> {
+    try {
+      const sessions = await ChatSessionModel.find({
+        participants: userId,
       })
-      .sort({ createdAt: -1 });
-
-    const chats = await Promise.all(
-      sessions.map(async (session) => {
-        const lastMessage = await MessageModel.findOne({
-          sessionId: session._id,
+        .populate<{ participants: IUser[] }>({
+          path: "participants",
+          select: "name role profilePicture",
         })
-          .sort({ createdAt: -1 })
-          .populate("sender", "name");
+        .sort({ updatedAt: -1 });
 
-        const otherUser = session.participants.find(
-          (p) => p._id.toString() !== userId.toString()
-        ) as IUser | undefined;
+      const chats = await Promise.all(
+        sessions.map(async (session) => {
+          const [lastMessage, unreadCount] = await Promise.all([
+            MessageModel.findOne({ sessionId: session._id })
+              .sort({ createdAt: -1 })
+              .populate("sender", "name"),
+            MessageModel.countDocuments({
+              sessionId: session._id,
+              sender: { $ne: userId },
+              readBy: { $ne: userId },
+            }),
+          ]);
 
-        return {
-          id: session._id,
-          name: otherUser?.name || "Unknown",
-          role: otherUser?.role || "user",
-          profilePicture: otherUser?.profilePicture || null,
-          lastMessage: lastMessage?.text || null,
-          lastMessageSender: (lastMessage?.sender as unknown as IUser)?.name || null,
-          createdAt: session.createdAt,
-        };
-      })
-    );
+          const otherUser = session.participants.find(
+            (p) => p._id.toString() !== userId.toString()
+          ) as IUser | undefined;
 
-    return chats;
-  } catch (err) {
-    console.error("Error fetching user chats:", err);
-    return [];
+          return {
+            id: session._id,
+            name: otherUser?.name || "Unknown",
+            role: otherUser?.role || "user",
+            profilePicture: otherUser?.profilePicture || null,
+            lastMessage: lastMessage?.text || null,
+            lastMessageSender:
+              (lastMessage?.sender as unknown as IUser)?.name || null,
+            createdAt: lastMessage?.createdAt || session.updatedAt,
+            unread: unreadCount || 0,
+          };
+        })
+      );
+
+      return chats;
+    } catch (err) {
+      console.error("Error fetching user chats:", err);
+      return [];
+    }
   }
-}
 
+  async markMessagesRead(sessionId: string, userId: string): Promise<void> {
+    try {
+      await MessageModel.updateMany(
+        { sessionId, readBy: { $ne: userId } },
+        { $addToSet: { readBy: userId } }
+      );
+    } catch (err) {
+      console.error("Error marking messages as read:", err);
+    }
+  }
+
+  async getUnreadCount(sessionId: string, userId: string): Promise<number> {
+    return await MessageModel.countDocuments({
+      sessionId,
+      sender: { $ne: userId },
+      readBy: { $ne: userId },
+    });
+  }
 }
