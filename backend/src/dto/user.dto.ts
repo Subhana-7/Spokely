@@ -29,6 +29,12 @@ export interface ForgotPasswordDTO {
   newPassword?: string;
 }
 
+export interface changePasswordDTO {
+  id: string;
+  currentPassword:string;
+  newPassword?: string;
+}
+
 export interface VerifyForgotPasswordDTO {
   email: string;
   code: string;
@@ -39,10 +45,10 @@ export interface UserResponseDTO {
   name: string;
   email: string;
   phone?: number;
-  role?: "user" | "mentor"; 
+  role?: "user" | "mentor";
   profilePicture?: string;
   isBlocked: boolean;
-  uniqueCode?: string;        
+  uniqueCode?: string;
   levels?: number;
   completionRate?: number;
   streak?: number;
@@ -58,6 +64,6 @@ export interface UserDTO {
   name: string;
   email: string;
   profilePicture?: string;
-  role?: "user" | "mentor";   
-  uniqueCode?: string;        
+  role?: "user" | "mentor";
+  uniqueCode?: string;
 }

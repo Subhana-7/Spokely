@@ -6,7 +6,7 @@ export interface AdminLoginDto {
 export interface AdminResponseDto {
   id: string;
   email: string;
-  role?: "user" | "mentor" | "admin";
+  role: "user" | "mentor" | "admin";
 }
 
 export interface UserSummaryDto {

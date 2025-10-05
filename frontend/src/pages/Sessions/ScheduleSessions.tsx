@@ -14,11 +14,9 @@ interface FormData {
   date: string;
   startTime: string;
   endTime: string;
-  price?: string;
 }
 
 interface FormErrors {
-  type: string;
   topic: string;
   description: string;
   date: string;
@@ -26,7 +24,6 @@ interface FormErrors {
   endTime: string;
   participants: string;
   form: string;
-  price?: string;
 }
 
 const ScheduleSession = () => {
@@ -34,24 +31,20 @@ const ScheduleSession = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
-  const userRole = user?.role
-
-  console.log(userRole)
+  const userRole = user?.role;
 
   const [formData, setFormData] = useState<FormData>({
-    type: "",
+    type: "peer-to-peer", // Fixed to peer-to-peer
     topic: "",
     description: "",
     date: "",
     startTime: "",
     endTime: "",
-    price: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
-    type: "",
     topic: "",
     description: "",
     date: "",
@@ -59,26 +52,25 @@ const ScheduleSession = () => {
     endTime: "",
     participants: "",
     form: "",
-    price: "",
   });
 
   const navigate = useNavigate();
 
   async function connectedUsers() {
-    let res = await getAllConnections();
-    return res;
+    try {
+      let res = await getAllConnections();
+      console.log(res);
+      return res;
+    } catch (err) {
+      toast.error("Failed to fetch users");
+      return { data: [] };
+    }
   }
 
   useEffect(() => {
-    if (formData.type === "peer-to-peer") {
-      connectedUsers()
-        .then((res) => setUsers(res.data))
-        .catch(() => toast.error("Failed to fetch users"));
-    } else {
-      setUsers([]);
-      setSelectedMembers([]);
-    }
-  }, [formData.type]);
+    // Always load connected users since type is always peer-to-peer
+    connectedUsers().then((res) => setUsers(res.data));
+  }, []);
 
   const calculateEndTime = (startTime: string) => {
     if (!startTime) return "";
@@ -98,20 +90,6 @@ const ScheduleSession = () => {
     const currentTime = now.toTimeString().slice(0, 5);
 
     switch (field) {
-      case "type":
-        if (!value.trim()) return "Session type is required";
-        if (!["public", "private", "peer-to-peer"].includes(value))
-          return "Please select a valid session type";
-        return "";
-      case "price":
-        if (formData.type === "public") {
-          if (!value.trim()) return "Price is required for public sessions";
-          const priceNum = parseFloat(value);
-          if (isNaN(priceNum) || priceNum < 0)
-            return "Please enter a valid price";
-          if (priceNum > 10000) return "Price cannot exceed ₹10,000";
-        }
-        return "";
       case "topic":
         if (!value.trim()) return "Topic is required";
         if (value.trim().length < 3)
@@ -166,12 +144,8 @@ const ScheduleSession = () => {
     }
   };
 
-  const validateParticipants = (type: string, participants: any[]) => {
-    if (type === "public") return "";
-    if (
-      (type === "private" || type === "peer-to-peer") &&
-      participants.length === 0
-    )
+  const validateParticipants = (participants: any[]) => {
+    if (participants.length === 0)
       return "Please select at least one participant";
     if (participants.length > 10) return "Maximum 10 participants allowed";
     return "";
@@ -180,22 +154,31 @@ const ScheduleSession = () => {
   const validateForm = (formData: FormData, participants: any[]) => {
     const fieldErrors: Partial<FormErrors> = {};
     Object.keys(formData).forEach((field) => {
-      const error = validateField(
-        field,
-        formData[field as keyof FormData] || "",
-        formData
-      );
-      if (error) fieldErrors[field as keyof FormErrors] = error;
+      if (field !== "type") { // Skip type validation since it's fixed
+        const error = validateField(
+          field,
+          formData[field as keyof FormData] || "",
+          formData
+        );
+        if (error) fieldErrors[field as keyof FormErrors] = error;
+      }
     });
-    const participantError = validateParticipants(formData.type, participants);
+    const participantError = validateParticipants(participants);
     if (participantError) fieldErrors.participants = participantError;
     return fieldErrors;
   };
 
   useEffect(() => {
     const formErrors = validateForm(formData, selectedMembers);
-    setErrors((prev) => ({ ...prev, ...formErrors }));
-  }, [formData, selectedMembers]);
+    // Only show errors for fields that have been touched
+    const filteredErrors: Partial<FormErrors> = {};
+    Object.keys(formErrors).forEach((key) => {
+      if (touched[key] || key === 'form') {
+        filteredErrors[key as keyof FormErrors] = formErrors[key as keyof FormErrors];
+      }
+    });
+    setErrors((prev) => ({ ...prev, ...filteredErrors }));
+  }, [formData, selectedMembers, touched]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
@@ -205,79 +188,77 @@ const ScheduleSession = () => {
       }
       return newFormData;
     });
+    
+    // Mark field as touched when user changes it
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const addMember = (member: any) => {
-    if (
-      !selectedMembers.find(
-        (m) => m.connectionWith?._id === member.connectionWith?._id
-      )
-    ) {
+    if (!selectedMembers.find((m) => m.connectedUser?.id === member.connectedUser?.id)) {
       setSelectedMembers((prev) => [...prev, member]);
     }
     setSearchTerm("");
+    // Mark participants as touched when user adds a member
+    setTouched((prev) => ({ ...prev, participants: true }));
   };
 
   const removeMember = (userId: string) => {
     setSelectedMembers((prev) =>
-      prev.filter((m) => m.connectionWith?._id !== userId)
+      prev.filter((m) => m.connectedUser?.id !== userId)
     );
+    // Mark participants as touched when user removes a member
+    setTouched((prev) => ({ ...prev, participants: true }));
   };
 
   const handleSchedule = async () => {
-  try {
-    const formErrors = validateForm(formData, selectedMembers);
-    if (Object.keys(formErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
-      toast.error("Please fix all validation errors before scheduling");
-      return;
+    try {
+      const formErrors = validateForm(formData, selectedMembers);
+      if (Object.keys(formErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
+        toast.error("Please fix all validation errors before scheduling");
+        return;
+      }
+
+      const { type, topic, description, date, startTime, endTime } = formData;
+      const start = new Date(`${date}T${startTime}`);
+      const end = new Date(`${date}T${endTime}`);
+
+      const capitalizeFirstLetter = (str: string) =>
+        str.charAt(0).toUpperCase() + str.slice(1);
+
+      const payload: any = {
+        type,
+        topic: topic.trim(),
+        description: description.trim(),
+        startTime: start,
+        endTime: end,
+        participants: selectedMembers.map((m) => ({
+          user: m.connectedUser?.id,
+          status: "pending",
+        })),
+        role: capitalizeFirstLetter(userRole as string),
+      };
+
+      await createSession(payload);
+      toast.success("Session scheduled successfully");
+      navigate("/user/session");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to schedule session");
     }
-
-    const { type, topic, description, date, startTime, endTime, price } = formData;
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-
-    const capitalizeFirstLetter = (str: string) => 
-  str.charAt(0).toUpperCase() + str.slice(1);
-
-    const payload: any = {
-      type,
-      topic: topic.trim(),
-      description: description.trim(),
-      startTime: start,
-      endTime: end,
-      participants: selectedMembers.map((m) => ({
-        user: m.connectionWith?._id,
-        status: "pending",
-      })),
-      role:capitalizeFirstLetter(userRole as string)
-    };
-
-    if (type === "public" && price) payload.sessionFee = parseFloat(price);
-
-    await createSession(payload);
-    toast.success("Session scheduled successfully");
-    navigate("/user/session");
-  } catch (err: any) {
-    toast.error(err.response?.data?.message || "Failed to schedule session");
-  }
-};
-
+  };
 
   const filteredResults = users.filter((member) =>
-    member.connectionWith?.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    member.connectedUser?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const isFormValid = () => {
     const hasRequiredFields = Object.entries(formData).every(([key, value]) => {
-      if (key === "price" && formData.type !== "public") return true;
+      if (key === "type") return true; // Skip type check since it's fixed
       return value.trim() !== "";
     });
-    const noFieldErrors = Object.values(
-      validateForm(formData, selectedMembers)
-    ).every((err) => !err);
+    const noFieldErrors = Object.values(validateForm(formData, selectedMembers)).every(
+      (err) => !err
+    );
     return hasRequiredFields && noFieldErrors;
   };
 
@@ -296,7 +277,7 @@ const ScheduleSession = () => {
           <ArrowLeft size={20} className="text-gray-300" />
         </button>
         <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
-          Schedule Session
+          Schedule Peer-to-Peer Session
         </h1>
       </div>
 
@@ -313,43 +294,6 @@ const ScheduleSession = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Left Column */}
             <div className="space-y-6">
-              {/* Type */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Type <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => handleInputChange("type", e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border bg-gray-900/60 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    errors.type && touched.type
-                      ? "border-red-500"
-                      : "border-gray-700"
-                  }`}
-                >
-                  <option value="">Select session type</option>
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                  <option value="peer-to-peer">Peer-to-Peer</option>
-                </select>
-              </div>
-
-              {/* Price */}
-              {formData.type === "public" && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Price (₹) <span className="text-red-400">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="Enter price"
-                    value={formData.price || ""}
-                    onChange={(val) => handleInputChange("price", val)}
-                    className="bg-gray-900/60 text-white"
-                  />
-                </div>
-              )}
-
               {/* Date */}
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -359,8 +303,12 @@ const ScheduleSession = () => {
                   type="date"
                   value={formData.date}
                   onChange={(val) => handleInputChange("date", val)}
+                  onBlur={() => handleBlur("date")}
                   className="bg-gray-900/60 text-white"
                 />
+                {errors.date && touched.date && (
+                  <p className="text-red-400 text-xs mt-1">{errors.date}</p>
+                )}
               </div>
 
               {/* Times */}
@@ -373,8 +321,12 @@ const ScheduleSession = () => {
                     type="time"
                     value={formData.startTime}
                     onChange={(val) => handleInputChange("startTime", val)}
+                    onBlur={() => handleBlur("startTime")}
                     className="bg-gray-900/60 text-white"
                   />
+                  {errors.startTime && touched.startTime && (
+                    <p className="text-red-400 text-xs mt-1">{errors.startTime}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -387,6 +339,9 @@ const ScheduleSession = () => {
                     className="bg-gray-700 text-gray-400"
                     onChange={() => {}}
                   />
+                  {errors.endTime && touched.endTime && (
+                    <p className="text-red-400 text-xs mt-1">{errors.endTime}</p>
+                  )}
                 </div>
               </div>
 
@@ -400,8 +355,12 @@ const ScheduleSession = () => {
                   placeholder="Enter session topic"
                   value={formData.topic}
                   onChange={(val) => handleInputChange("topic", val)}
+                  onBlur={() => handleBlur("topic")}
                   className="bg-gray-900/60 text-white"
                 />
+                {errors.topic && touched.topic && (
+                  <p className="text-red-400 text-xs mt-1">{errors.topic}</p>
+                )}
               </div>
 
               {/* Description */}
@@ -411,88 +370,86 @@ const ScheduleSession = () => {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  onBlur={() => handleBlur("description")}
                   className="w-full px-4 py-3 bg-gray-900/60 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-green-500"
                   rows={4}
                   placeholder="Describe session goals..."
                 />
+                {errors.description && touched.description && (
+                  <p className="text-red-400 text-xs mt-1">{errors.description}</p>
+                )}
               </div>
             </div>
 
             {/* Right Column */}
-            {formData.type !== "public" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Add Participants <span className="text-red-400">*</span>
-                  </label>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Add Participants <span className="text-red-400">*</span>
+                </label>
 
-                  {/* Search Input */}
-                  <div className="relative mb-4">
-                    <Search
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      size={18}
-                    />
-                    <Input
-                      type="text"
-                      placeholder="Search by name"
-                      value={searchTerm}
-                      onChange={(val) => setSearchTerm(val)}
-                      className="pl-10 bg-gray-900/60 text-white placeholder-gray-400"
-                    />
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Search by name"
+                    value={searchTerm}
+                    onChange={(val) => setSearchTerm(val)}
+                    className="pl-10 bg-gray-900/60 text-white placeholder-gray-400"
+                  />
+                </div>
+
+                {/* Search Results */}
+                {searchTerm && filteredResults.length > 0 && (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl max-h-40 overflow-y-auto mb-4">
+                    {filteredResults.map((member) => (
+                      <button
+                        key={member.id}
+                        onClick={() => addMember(member)}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
+                      >
+                        <span className="text-sm">{member.connectedUser?.name}</span>
+                        <span className="text-xs text-gray-400">Click to add</span>
+                      </button>
+                    ))}
                   </div>
+                )}
 
-                  {/* Search Results */}
-                  {searchTerm && filteredResults.length > 0 && (
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl max-h-40 overflow-y-auto mb-4">
-                      {filteredResults.map((member) => (
-                        <button
-                          key={member._id}
-                          onClick={() => addMember(member)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
+                {/* Selected Members */}
+                {selectedMembers.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">
+                      Selected Participants ({selectedMembers.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedMembers.map((member) => (
+                        <div
+                          key={member.id}
+                          className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
                         >
-                          <span className="text-sm">
-                            {member.connectionWith?.name}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            Click to add
-                          </span>
-                        </button>
+                          <span className="text-sm">{member.connectedUser?.name}</span>
+                          <button
+                            onClick={() => removeMember(member.connectedUser?.id)}
+                            className="text-red-400 hover:text-red-600 p-1"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
                       ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Selected Members */}
-                  {selectedMembers.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">
-                        Selected Participants ({selectedMembers.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {selectedMembers.map((member) => (
-                          <div
-                            key={member._id}
-                            className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
-                          >
-                            <span className="text-sm">
-                              {member.connectionWith?.name}
-                            </span>
-                            <button
-                              onClick={() => removeMember(member._id)}
-                              className="text-red-400 hover:text-red-600 p-1"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {errors.participants && touched.participants && (
+                  <p className="text-red-400 text-xs mt-2">{errors.participants}</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Actions */}

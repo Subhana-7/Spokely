@@ -1,9 +1,18 @@
 import User, { IUser } from "../models/user.model";
 import { IUserRepository } from "./interfaces/IUserRepository";
 import { injectable } from "inversify";
+import { BaseRepository } from "./base.repository";
+import passport from "passport";
 
 @injectable()
-export class UserRepository implements IUserRepository {
+export class UserRepository
+  extends BaseRepository<IUser>
+  implements IUserRepository
+{
+  constructor() {
+    super(User);
+  }
+
   async findByEmail(email: String): Promise<IUser | null> {
     try {
       return User.findOne({ email });
@@ -111,14 +120,21 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async updatePassword(email: string, password: string): Promise<IUser | null> {
-    try {
-      return User.findOneAndUpdate({ email }, { password }, { new: true });
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
+  async updatePassword(id: string, newPassword: string): Promise<IUser | null> {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { password: newPassword },
+      { new: true }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    console.log("error", error);
+    return null;
   }
+}
+
 
   async updateUserRole(
     userId: string,
@@ -132,21 +148,28 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async findAll(): Promise<IUser[] | null> {
+  async findAll(
+    query: Partial<Record<keyof IUser, any>> = {},
+    options?: { page?: number; limit?: number }
+  ): Promise<{ results: IUser[]; total: number }> {
     try {
-      return await User.find({}, "-password -otp -googleId -forgotPasswordOtp");
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
+      const page = options?.page || 1;
+      const limit = options?.limit || 0;
+      const skip = (page - 1) * limit;
 
-  async findById(id: string): Promise<IUser | null> {
-    try {
-      return await User.findById(id);
+      const results = await User.find(
+        query,
+        "-password -otp -googleId -forgotPasswordOtp"
+      )
+        .skip(skip)
+        .limit(limit);
+
+      const total = await User.countDocuments(query);
+
+      return { results, total };
     } catch (error) {
       console.log("error", error);
-      return null;
+      return { results: [], total: 0 };
     }
   }
 

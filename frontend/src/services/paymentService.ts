@@ -1,9 +1,4 @@
-import axios from "axios";
-
-const API = axios.create({
-  baseURL: `${import.meta.env.VITE_SERVER_SIDE_URL}/payment`,
-  withCredentials: true,
-});
+import API from "../api/axios.instance";
 
 export interface PaymentResponse {
   orderId: string;
@@ -12,23 +7,16 @@ export interface PaymentResponse {
   success?: boolean;
 }
 
-export async function startPayment(sessionId: string, amount: number): Promise<PaymentResponse> {
-  const { data } = await API.post("/create", { sessionId, amount });
-  return { orderId: data.id || data.orderId };
-}
+export const startPayment = (sessionId: string, amount: number) =>
+  API.post("/payment/create", { sessionId, amount });
 
-export async function confirmPayment(orderId: string, sessionId: string): Promise<PaymentResponse> {
-  const { data } = await API.post("/capture", { orderId, sessionId });
-  return data;
-}
+export const confirmPayment = (orderId: string, sessionId: string) =>
+  API.post("/payment/capture", { orderId, sessionId });
 
+export const subscriptionStartPayment = (sessionId: string, amount: number) => {
+  console.log("subscriptionStartPayment payload:", { sessionId, amount });
+  return API.post("/payment/create-subscription", { sessionId, amount }); 
+};
 
-export async function subscriptionStartPayment(sessionId: string, amount: number): Promise<PaymentResponse> {
-  const { data } = await API.post("/create-subscription", { sessionId, price: amount });
-  return { orderId: data.id || data.orderId };
-}
-
-export async function subscriptionConfirmPayment(orderId: string, sessionId: string): Promise<PaymentResponse> {
-  const { data } = await API.post("/capture-subscription", { orderId, sessionId });
-  return data;
-}
+export const subscriptionConfirmPayment = (orderId: string, sessionId: string) =>
+  API.post("/payment/capture-subscription", { orderId, sessionId });

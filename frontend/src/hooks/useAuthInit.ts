@@ -31,6 +31,7 @@ export const useAuthInit = () => {
             uniqueCode: userData.uniqueCode,
             profilePicture: userData.profilePicture,
             phone:userData.phone,
+            bio:userData.bio,
           });
           console.log("Normalized userData:", userData);
         } else {

@@ -7,17 +7,17 @@ import AddConnectionModal from "./AddConnectionsModal";
 import { Search, Plus } from "lucide-react";
 import { getAllConnections } from "../../../services/connectionService";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../../../store/userAuthStore";
 
 interface Connection {
-  connectionWith: any;
-  connectedUserId: {
-    _id: string;
+  connectedUser: {
+    id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
   };
-  userId: {
-    _id: string;
+  user: {
+    id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
@@ -26,12 +26,15 @@ interface Connection {
   status: string;
 }
 
+
 const Connections = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
   const [incomingCount, setIncomingCount] = useState(2);
+
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
     const fetchConnections = async () => {
@@ -66,29 +69,37 @@ const Connections = () => {
     fetchConnections();
   }, [searchTerm]);
 
+  console.log('con',connections)
+
   const filteredConnections = connections
-    .filter((connection) => {
-      const user = connection.connectionWith as any;
-      if (!user) return false;
+  .map((c) => {
+    // Pick the other user in the connection
+    if (c.user.id === currentUserId) return c.connectedUser;
+    if (c.connectedUser.id === currentUserId) return c.user;
+    return null; // skip invalid
+  })
+  // Type guard to remove null and tell TS this is a Connection user
+  .filter((user): user is NonNullable<typeof user> => user !== null)
+  .filter((user) => {
+    const name = user.name?.toLowerCase() || "";
+    const email = user.email?.toLowerCase() || "";
+    return (
+      name.includes(searchTerm.toLowerCase()) ||
+      email.includes(searchTerm.toLowerCase())
+    );
+  })
+  .map((user) => ({
+    id: user.id,
+    username: user.name,
+    email: user.email,
+    role: user.role,
+    sessions:
+      connections.find(
+        (c) => c.user.id === user.id || c.connectedUser.id === user.id
+      )?.sessionCount || 0,
+  }));
 
-      const name = user.name?.toLowerCase() || "";
-      const email = user.email?.toLowerCase() || "";
 
-      return (
-        name.includes(searchTerm.toLowerCase()) ||
-        email.includes(searchTerm.toLowerCase())
-      );
-    })
-    .map((c) => {
-      const user = c.connectionWith as any;
-      return {
-        id: user._id,
-        username: user.name,
-        email: user.email,
-        role: user.role,
-        sessions: c.sessionCount || 0,
-      };
-    });
 
   return (
     <>

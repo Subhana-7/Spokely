@@ -5,6 +5,7 @@ export interface IMentorPlan extends Document {
   plans: {
     type: "DAILY" | "WEEKLY" | "BIWEEKLY" | "TRIWEEKLY";
     price: number;
+    time: number; 
   }[];
 }
 
@@ -19,10 +20,12 @@ const mentorPlanSchema = new Schema<IMentorPlan>(
           required: true,
         },
         price: { type: Number, required: true },
+        time: { type: Number, required: true }, 
       },
     ],
   },
   { timestamps: true }
 );
+
 
 export default model<IMentorPlan>("MentorPlan", mentorPlanSchema);

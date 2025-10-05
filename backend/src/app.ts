@@ -21,6 +21,7 @@ import { TYPES } from "./types/types";
 import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
 import chatRoutes from "./routes/chat.routes";
 import { initChatSocket } from "./config/chat.socket";
+import dailyTask from "./routes/daily.task.routes"
 
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -58,7 +59,7 @@ app.use(logger);
 app.use(helmet());
 
 // routes
-app.use("/payment", paymentRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/admin", adminRoutes);
@@ -66,6 +67,7 @@ app.use("/api/users/connections", connectionsRoutes);
 app.use("/api/users/session", sessionRoutes);
 app.use("/api/subscription", subscriptionRouter);
 app.use("/api/chat", chatRoutes);
+app.use("/api/daily/task",dailyTask)
 
 const server = createServer(app);
 const io = new Server(server, {

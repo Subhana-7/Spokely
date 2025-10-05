@@ -4,10 +4,10 @@ import { IEmailService } from "./interfaces/IEmailService";
 
 @injectable()
 export class EmailService implements IEmailService {
-  private transporter;
+  private _transporter;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
+    this._transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
@@ -38,7 +38,7 @@ export class EmailService implements IEmailService {
         break;
     }
 
-    await this.transporter.sendMail({
+    await this._transporter.sendMail({
       from: process.env.EMAIL_USER,
       to,
       subject,
@@ -50,7 +50,7 @@ export class EmailService implements IEmailService {
     const subject = "Spokely OTP Verification Code";
     const text = `Hi,\n\nYour OTP code is: ${otp}\nIt is valid for 10 minutes.\n\n- Team Spokely`;
 
-    await this.transporter.sendMail({
+    await this._transporter.sendMail({
       from: process.env.EMAIL_USER,
       to,
       subject,

@@ -1,21 +1,20 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import dotenv from 'dotenv';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import dotenv from "dotenv";
 dotenv.config();
 
-import User from '../models/user.model';
-import  container from './inversify.config';
-import { TYPES } from '../types/types';
-import { IUserService } from '../services/interfaces/IUserService';
+import User from "../models/user.model";
+import container from "./inversify.config";
+import { TYPES } from "../types/types";
+import { IUserService } from "../services/interfaces/IUserService";
 
-const service = container.get<IUserService>(TYPES.IUserService); 
+const service = container.get<IUserService>(TYPES.IUserService);
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      
       callbackURL: process.env.GOOGLE_CALLBACK_URL!,
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -26,10 +25,10 @@ passport.use(
             name: profile.displayName,
             email: profile.emails?.[0].value,
             googleId: profile.id,
-            role: 'user',
+            role: "user",
             isVerified: true,
             profilePicture: profile.photos?.[0].value,
-            uniqueCode: await service.generateUniqueCode(), 
+            uniqueCode: await service.generateUniqueCode(),
             isGoogleUser: true,
           });
         }

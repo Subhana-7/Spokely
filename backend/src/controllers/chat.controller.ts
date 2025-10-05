@@ -2,49 +2,74 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
-import { ChatService } from "../services/chat.service";
 import { IChatService } from "../services/interfaces/IChatService";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class ChatController {
   constructor(
-    @inject(TYPES.IChatService) private readonly chatService: IChatService
+    @inject(TYPES.IChatService) private readonly _chatService: IChatService
   ) {}
 
-  getMessages = async (req: AuthenticatedRequest, res: Response) => {
+  getMessages = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
-
-      const participants = sessionId.split("_");
-
-      const messages = await this.chatService.getMessages(
-        sessionId,
-        participants
-      );
-      res.json({ messages });
+      const messages = await this._chatService.getMessages(sessionId);
+      return res
+        .status(STATUS_CODES.OK)
+        .json({ messages, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
     } catch (err) {
-      res.status(500).json({ message: "Failed to fetch messages" });
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 
-  sendMessage = async (req: AuthenticatedRequest, res: Response) => {
+  sendMessage = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
       const { text } = req.body;
       const sender = req.id!;
 
       if (!sender) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
       }
 
-      const message = await this.chatService.sendMessage(
-        sessionId,
-        sender,
-        text
-      );
-      res.json({ message });
+      const message = await this._chatService.sendMessage(sessionId, sender, text);
+      return res
+        .status(STATUS_CODES.OK)
+        .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });
     } catch (err) {
-      res.status(500).json({ message: "Failed to send message" });
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
+
+
+  getChats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.id!; 
+
+    if (!userId) {
+       res
+        .status(STATUS_CODES.UNAUTHORIZED)
+        .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
+    }
+
+    const chats = await this._chatService.getChats(userId);
+
+     res
+      .status(STATUS_CODES.OK)
+      .json({ chats, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
+  } catch (err) {
+    console.error("Error fetching chats:", err);
+     res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: MESSAGES.ERROR.SERVER_ERROR });
+  }
+};
+
 }

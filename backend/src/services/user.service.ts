@@ -1,269 +1,193 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserRepository } from "../repositories/user.repository";
 import nodemailer from "nodemailer";
-import { IUserService } from "./interfaces/IUserService";
-import { IUser } from "../models/user.model";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
-import { Response } from "express";
+import { IUserService } from "./interfaces/IUserService";
+import { IUser } from "../models/user.model";
+import {
+  SignupDTO,
+  LoginDTO,
+  UserResponseDTO,
+  ForgotPasswordDTO,
+  VerifyForgotPasswordDTO,
+  changePasswordDTO
+} from "../dto/user.dto";
+import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class UserService implements IUserService {
-  constructor(@inject(TYPES.IUserRepository) private repo: IUserRepository) {}
+  constructor(@inject(TYPES.IUserRepository) private _userRepository: IUserRepository) {}
 
-  async generateUniqueCode(): Promise<string | null> {
-    try {
-      const generateRandom = () =>
-        Math.random().toString(36).substring(2, 8).toUpperCase();
-      let code = generateRandom();
-      let exists = await this.repo.findByUniqueCode(code);
-
-      while (exists) {
-        code = generateRandom();
-        exists = await this.repo.findByUniqueCode(code);
-      }
-      return code;
-    } catch (error) {
-      console.log("error", error);
-      return null;
+  private async passwordValidation(password: string) {
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
   }
 
-  private async passwordValidation(password: string): Promise<void> {
-    try {
-      const strongPasswordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-      if (!strongPasswordRegex.test(password)) {
-        throw new Error(
-          "Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character."
-        );
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-  }
-
-  private generateOTP(): string {
+  public generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private async sendOTPEmail(
-    to: string,
-    otp: string,
-    isForgotPassword: boolean = false
-  ): Promise<void | null> {
+  private async sendOTPEmail(to: string, otp: string, isForgotPassword = false) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    });
+
+    const subject = isForgotPassword ? "Password Reset Code" : "Your OTP Code";
+    const text = isForgotPassword
+      ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
+      : `Your verification code is ${otp}. It expires in 10 minutes.`;
+
+    await transporter.sendMail({ from: process.env.EMAIL_USER, to, subject, text });
+  }
+
+  async signup(data: SignupDTO): Promise<UserResponseDTO> {
+    await this.passwordValidation(data.password);
+
+    const existing = await this._userRepository.findByEmail(data.email);
+    if (existing) throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
+
+    const hashed = await bcrypt.hash(data.password, 10);
+    const uniqueCode = await this.generateUniqueCode();
+
+    const user = await this._userRepository.createUser({ ...data, password: hashed, uniqueCode });
+    return toUserResponseDTO(user!);
+  }
+
+  async login(data: LoginDTO): Promise<{ user: UserResponseDTO; accessToken: string; refreshToken: string }> {
+    const user = await this._userRepository.findByEmail(data.email);
+    if (!user) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
+    if (!user.password) throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
+
+    const match = await bcrypt.compare(data.password, user.password);
+    if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
+
+    return {
+      user: toUserResponseDTO(user),
+      accessToken: generateAccessToken({ id: user._id, role: user.role }),
+      refreshToken: generateRefreshToken({ id: user._id, role: user.role }),
+    };
+  }
+
+  async sendOtp(email: string): Promise<void> {
+    const user = await this._userRepository.findByEmail(email);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this._userRepository.updateOTP(email, otp, expiresAt);
+    await this.sendOTPEmail(email, otp);
+  }
+
+  async verifyOtp(email: string, code: string): Promise<{ message: string }> {
+    const isValid = await this._userRepository.verifyOTP(email, code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+    return { message: MESSAGES.SUCCESS.OTP_VERIFIED };
+  }
+
+  async forgotPassword(data: ForgotPasswordDTO): Promise<void> {
+    const user = await this._userRepository.findByEmail(data.email);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+    if (!data.newPassword) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+
+    await this.passwordValidation(data.newPassword);
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this._userRepository.updateForgotPasswordOTP(data.email, otp, expiresAt, hashedPassword);
+    await this.sendOTPEmail(data.email, otp, true);
+  }
+
+  async verifyForgotPassword(data: VerifyForgotPasswordDTO): Promise<{ message: string }> {
+    const isValid = await this._userRepository.verifyForgotPasswordOTP(data.email, data.code);
+    if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+    return { message: MESSAGES.SUCCESS.PASSWORD_RESET };
+  }
+
+  async updateRole(userId: string, role: "user" | "mentor"): Promise<UserResponseDTO> {
+    if (!["user", "mentor"].includes(role)) throw new Error(MESSAGES.ERROR.INVALID_ROLE);
+    const updated = await this._userRepository.updateUserRole(userId, role);
+    if (!updated) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+    return toUserResponseDTO(updated);
+  }
+
+  async getHome(userId: string): Promise<UserResponseDTO> {
+    const user = await this._userRepository.findById(userId);
+    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+    return toUserResponseDTO(user);
+  }
+
+  async getAllUsers(): Promise<UserResponseDTO[]> {
+    const { results } = await this._userRepository.findAll();
+    return results.length ? results.map(toUserResponseDTO) : [];
+  }
+
+  async updateUser(userId: string, data: Partial<IUser>): Promise<UserResponseDTO> {
+    const updatedUser = await this._userRepository.updateUser(userId, data);
+    if (!updatedUser) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+    return toUserResponseDTO(updatedUser);
+  }
+
+  private async generateUniqueCode(): Promise<string> {
+    let code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    while (await this._userRepository.findByUniqueCode(code)) {
+      code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+    return code;
+  }
+
+  async refreshToken(token: string): Promise<{ user: UserResponseDTO; accessToken: string }> {
+    if (!token) throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
+
     try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
+      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as { id: string; role: "user" | "mentor" };
 
-      const subject = isForgotPassword
-        ? "Password Reset Code"
-        : "Your OTP Code";
-      const text = isForgotPassword
-        ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
-        : `Your verification code is ${otp}. It expires in 10 minutes.`;
+      const user = await this.getHome(payload.id);
+      const newAccessToken = generateAccessToken({ id: payload.id, role: payload.role });
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text,
-      });
-    } catch (error) {
-      console.log("error", error);
-      return null;
+      return { user, accessToken: newAccessToken };
+    } catch {
+      throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
     }
   }
 
-  async sendOtp(email: string): Promise<void | null> {
-    try {
-      const user = await this.repo.findByEmail(email);
-      if (!user) throw new Error("User not found");
+ async changePassword(data: changePasswordDTO): Promise<{ message: string }> {
+  const user = await this._userRepository.findById(data.id);
+  if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
-      const otp = this.generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-      await this.repo.updateOTP(email, otp, expiresAt);
-      await this.sendOTPEmail(email, otp);
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
+  if (!data.currentPassword || !data.newPassword) {
+    throw new Error(MESSAGES.ERROR.INVALID_INPUT);
   }
 
-  async verifyOtp(
-    email: string,
-    code: string
-  ): Promise<{ message: string } | null> {
-    const isValid = await this.repo.verifyOTP(email, code);
-    if (!isValid) {
-      throw new Error("Invalid or expired OTP");
-    }
-
-    return { message: "Email verified successfully" };
+  if(!user.password){
+    throw new Error(MESSAGES.ERROR.INVALID_INPUT);
   }
 
-  async forgotPassword(
-    email: string,
-    newPassword: string
-  ): Promise<void | null> {
-    try {
-      const user = await this.repo.findByEmail(email);
-      if (!user) throw new Error("User not found");
+  await this.passwordValidation(data.newPassword);
 
-      await this.passwordValidation(newPassword);
-
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      const otp = this.generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-      await this.repo.updateForgotPasswordOTP(
-        email,
-        otp,
-        expiresAt,
-        hashedPassword
-      );
-      await this.sendOTPEmail(email, otp, true);
-    } catch (error) {
-      console.log("error", error);
-      throw error;
-    }
+  const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
   }
 
-  async verifyForgotPassword(
-    email: string,
-    code: string
-  ): Promise<{ message: string } | null> {
-    try {
-      const isValid = await this.repo.verifyForgotPasswordOTP(email, code);
-      if (!isValid) {
-        throw new Error("Invalid or expired OTP");
-      }
+  const newHashedPassword = await bcrypt.hash(data.newPassword, 10);
 
-      return { message: "Password reset successfully" };
-    } catch (error) {
-      console.log("error", error);
-      throw error;
-    }
+  const updation = await this._userRepository.updatePassword(data.id, newHashedPassword);
+  if (!updation) {
+    throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
   }
 
-  async signup(data: any): Promise<IUser | null> {
-    try {
-      await this.passwordValidation(data.password);
-
-      const existing = await this.repo.findByEmail(data.email);
-      if (existing) throw new Error("Email Already in use");
-      const hashed = await bcrypt.hash(data.password, 10);
-      const uniqueCode = await this.generateUniqueCode();
-
-      return this.repo.createUser({
-        ...data,
-        password: hashed,
-        uniqueCode,
-      });
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
-
-  async login(
-    data: any
-  ): Promise<{
-    user: IUser;
-    accessToken: string;
-    refreshToken: string;
-  } | null> {
-    try {
-      const user = await this.repo.findByEmail(data.email);
-      if (!user) throw new Error("Invalid email or password");
-
-      if (!user.password) {
-        throw new Error(
-          "This user is registered via Google. Use Google sign-in."
-        );
-      }
-
-      if (!data.password) {
-        throw new Error("Password is required");
-      }
-
-      const match = await bcrypt.compare(data.password, user.password);
-      if (!match) throw new Error("Invalid email or password");
-
-      const token = jwt.sign(
-        {
-          id: user._id,
-          role: user.role,
-        },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1d" }
-      );
-
-      return {
-        user,
-        accessToken: generateAccessToken({ id: user._id, role: user.role }),
-        refreshToken: generateRefreshToken({ id: user._id, role: user.role }),
-      };
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
-
-  async updateRole(
-    userId: string,
-    role: "user" | "mentor"
-  ): Promise<IUser | null> {
-    try {
-      if (!["user", "mentor"].includes(role)) {
-        throw new Error("Invalid role");
-      }
-
-      const updated = await this.repo.updateUserRole(userId, role);
-      if (!updated) throw new Error("User not found");
-
-      return updated;
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
-
-  async getAllUsers(): Promise<IUser[] | null> {
-    try {
-      return await this.repo.findAll();
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
-
-  async getHome(id:string):Promise<IUser | null> {
-    try {
-      return await this.repo.findById(id)
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
-  }
-
- async updateUser(id: string, data: any): Promise<IUser | null> {
-  try {
-    return await this.repo.updateUser(id, data);
-  } catch (error) {
-    console.log("error", error);
-    return null;
-  }
+  return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
 }
 
 }

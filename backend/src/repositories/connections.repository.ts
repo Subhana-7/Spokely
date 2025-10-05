@@ -3,9 +3,14 @@ import { Types } from "mongoose";
 import { IConnectionRepository } from "./interfaces/IConnectionsRepository";
 import { injectable } from "inversify";
 import { PopulatedConnection } from "../types/populated";
+import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class ConnectionRepository implements IConnectionRepository {
+export class ConnectionRepository extends BaseRepository<IConnection> implements IConnectionRepository {
+  constructor() {
+    super(ConnectionModel);
+  }
+
   async createConnection(
     userId: Types.ObjectId,
     connectedUserId: Types.ObjectId
@@ -52,6 +57,7 @@ export class ConnectionRepository implements IConnectionRepository {
   async acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null> {
     try {
       const connection = await ConnectionModel.findById(requestId);
+      console.log(connection)
       if (!connection) throw new Error("Connection not found");
       if (!connection.connectedUserId.equals(userId)) throw new Error("Unauthorized action");
 
@@ -79,62 +85,39 @@ export class ConnectionRepository implements IConnectionRepository {
     }
   }
 
-async getAcceptedConnections(
-  userId: Types.ObjectId,
-  search?: string
-): Promise<PopulatedConnection[] | null> {
-  try {
-    const match: any = {
-      status: "accepted",
-      isBlocked: false,
-      isRemoved: false,
-      $or: [{ userId }, { connectedUserId: userId }],
-    };
+  async getAcceptedConnections(
+    userId: Types.ObjectId,
+    search?: string
+  ): Promise<PopulatedConnection[] | null> {
+    try {
+      let query = ConnectionModel.find({
+        $or: [{ userId }, { connectedUserId: userId }],
+        status: "accepted",
+        isBlocked: false,
+        isRemoved: false,
+      })
+        .populate("userId", "name email profilePicture role uniqueCode")
+        .populate("connectedUserId", "name email profilePicture role uniqueCode");
 
-    const pipeline: any[] = [
-      { $match: match },
-      {
-        $addFields: {
-          otherUserId: {
-            $cond: [
-              { $eq: ["$userId", userId] },
-              "$connectedUserId",
-              "$userId",
-            ],
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "otherUserId",
-          foreignField: "_id",
-          as: "connectionWith",
-        },
-      },
-      { $unwind: "$connectionWith" },
-    ];
-
-    if (search) {
-      pipeline.push({
-        $match: {
+      if (search) {
+        const regex = new RegExp(search, "i");
+        query = query.find({
           $or: [
-            { "connectionWith.name": { $regex: search, $options: "i" } },
-            { "connectionWith.email": { $regex: search, $options: "i" } },
+            { "userId.name": { $regex: regex } },
+            { "userId.email": { $regex: regex } },
+            { "connectedUserId.name": { $regex: regex } },
+            { "connectedUserId.email": { $regex: regex } },
           ],
-        },
-      });
+        });
+      }
+
+      const connections = await query.exec();
+      return connections as unknown as PopulatedConnection[];
+    } catch (error) {
+      console.log("getAcceptedConnections error", error);
+      return null;
     }
-
-    const connections = await ConnectionModel.aggregate(pipeline);
-    return connections as PopulatedConnection[];
-  } catch (error) {
-    console.log("getAcceptedConnections error", error);
-    return null;
   }
-}
-
-
 
   async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
     try {
@@ -150,4 +133,3 @@ async getAcceptedConnections(
     }
   }
 }
-

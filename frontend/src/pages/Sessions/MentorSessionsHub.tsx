@@ -6,7 +6,7 @@ import Button from "../../modals/Button";
 import Input from "../../modals/Input";
 import Toggle from "../../modals/Toggle";
 import MentorHeader from "../mentor/DashboardComponents/Header";
-import { getSessions, updateSession } from "../../services/sessionService";
+import { getSessions } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -111,6 +111,66 @@ const SessionsHub: React.FC = () => {
     navigate("/mentor/schedule-session");
   }
 
+  function renderActionButtons(session: Session) {
+    const now = new Date().getTime();
+    const start = session.startTime ? new Date(session.startTime).getTime() : 0;
+    const end = session.endTime
+      ? new Date(session.endTime).getTime()
+      : start + (session.durationMinutes || 60) * 60 * 1000;
+
+    const isOngoing = now >= start && now <= end;
+    const isCompleted = now > end;
+
+    if (session.status === "cancelled") {
+      return <p className="text-sm text-red-400">This session was cancelled</p>;
+    }
+
+    if (isCompleted) {
+      return (
+        <div className="flex flex-col gap-2 mt-3">
+          <Button
+            onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+            variant="secondary"
+          >
+            View Details
+          </Button>
+          <p className="text-sm text-green-400 font-semibold">Completed</p>
+        </div>
+      );
+    }
+
+    if (isOngoing) {
+      return (
+        <div className="flex flex-col gap-2 mt-3">
+          <Button
+            onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+            variant="secondary"
+          >
+            View Details
+          </Button>
+          <Button
+            onClick={() => navigate(`/session/${session._id}/video`)}
+            variant="primary"
+          >
+            Join Session
+          </Button>
+        </div>
+      );
+    }
+
+    // upcoming
+    return (
+      <div className="flex flex-col gap-2 mt-3">
+        <Button
+          onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+          variant="secondary"
+        >
+          View Details
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-700">
       <MentorHeader />
@@ -179,24 +239,27 @@ const SessionsHub: React.FC = () => {
               <SpokelyCard key={session._id} className="bg-slate-800 text-white">
                 <div className="flex justify-between items-center mb-3">
                   <Badge variant={session.status}>
-                    {session.startTime ? new Date(session.startTime).toLocaleString() : "No time set"}
+                    {session.startTime
+                      ? new Date(session.startTime).toLocaleString()
+                      : "No time set"}
                   </Badge>
                   <Badge variant={session.status} size="sm" className="capitalize">
                     {statusLabels[session.status]}
                   </Badge>
                 </div>
-                <h3 className="font-bold text-black ">{session.topic}</h3>
+                <h3 className="font-bold text-black">{session.topic}</h3>
                 <p className="text-sm text-black">{session.type}</p>
                 {session.description && (
                   <p className="text-sm text-gray-400 mt-2">{session.description}</p>
                 )}
+                {renderActionButtons(session)}
               </SpokelyCard>
             ))
           )}
         </div>
       </div>
 
-      {/* Floating Button */}
+      {/* Floating Button (Create) */}
       <button
         onClick={handleScheduleButton}
         className="fixed bottom-8 right-8 bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-full shadow-lg transition hover:scale-110"

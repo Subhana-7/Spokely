@@ -9,7 +9,7 @@ const controller = container.get<IConnectionController>(TYPES.IConnectionControl
 
 router.post('/send', authMiddleware(["user", "mentor"]), controller.sendRequest.bind(controller));
 router.get('/requests', authMiddleware(["user", "mentor"]), controller.getRequests.bind(controller));
-router.patch('/accept/:requestId', authMiddleware(["user", "mentor"]), controller.acceptConnection.bind(controller));
+router.patch('/accept', authMiddleware(["user", "mentor"]), controller.acceptConnection.bind(controller));
 router.get('/list', authMiddleware(["user", "mentor"]), controller.listConnections.bind(controller));
 router.get('/sent-requests', authMiddleware(["user", "mentor"]), controller.getSentRequests.bind(controller));
 

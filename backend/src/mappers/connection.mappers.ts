@@ -1,9 +1,5 @@
-import { IConnection } from "../models/connections.model";
 import { ConnectionDTO } from "../dto/connection.dto";
-import { IUser } from "../models/user.model";
 import { toUserDTO } from "./user.mapper";
-
-import { Document } from "mongoose";
 
 import { PopulatedConnection } from "../types/populated";
 
@@ -21,6 +17,3 @@ export const mapConnectionToDTO = (
     updatedAt: connection.updatedAt,
   };
 };
-
-
-

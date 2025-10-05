@@ -1,35 +1,79 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
-import { ChatRepository } from "../repositories/chat.repository";
-import { IMessage, IChatSession } from "../models/message.model";
+import { IChatRepository } from "../repositories/interfaces/IChatRepository";
+import { IMessage } from "../models/message.model";
 import { Types } from "mongoose";
+import { mapMessageToDto } from "../mappers/chat.mapper";
+import { IChatPreview, MessageDto } from "../dto/chat.dto";
 
 @injectable()
 export class ChatService {
   constructor(
     @inject(TYPES.IChatRepository)
-    private readonly chatRepo: ChatRepository
+    private readonly _chatRepository: IChatRepository
   ) {}
 
   async sendMessage(
     sessionId: string,
-    sender: string,
+    senderId: string,
     text: string
-  ): Promise<IMessage> {
-    return await this.chatRepo.saveMessage({
-      sessionId,
-      sender: new Types.ObjectId(sender),
-      text,
-    });
+  ): Promise<MessageDto | null> {
+    try {
+      console.log(`[ChatService] Sending message to session ${sessionId} from ${senderId}`);
+      
+      const participants = sessionId.split("_");
+      await this._chatRepository.findOrCreateSession(sessionId, participants);
+
+      const message: IMessage | null = await this._chatRepository.saveMessage({
+        sessionId,
+        sender: new Types.ObjectId(senderId),
+        text,
+        createdAt: new Date(),
+      });
+
+      if (!message) {
+        console.error("[ChatService] Failed to save message - repository returned null");
+        return null;
+      }
+
+      console.log(`[ChatService] Message saved with ID: ${message._id}`);
+
+      const dto = mapMessageToDto(message);
+      console.log("[ChatService] Mapped DTO:", JSON.stringify(dto));
+      
+      return dto;
+    } catch (error) {
+      console.error("[ChatService] Error in sendMessage:", error);
+      return null;
+    }
   }
 
-  async getMessages(
-    sessionId: string,
-    participants: string[]
-  ): Promise<IMessage[]> {
-    await this.chatRepo.findOrCreateSession(sessionId, participants);
+  async getMessages(sessionId: string): Promise<MessageDto[] | null> {
+    try {
+      console.log(`[ChatService] Fetching messages for session ${sessionId}`);
+      const messages = await this._chatRepository.getMessages(sessionId);
+      console.log(`[ChatService] Retrieved ${messages?.length || 0} messages`);
+      return messages;
+    } catch (error) {
+      console.error("[ChatService] Error in getMessages:", error);
+      return null;
+    }
+  }
 
-    const messages = await this.chatRepo.getMessages(sessionId);
-    return messages ?? [];
+  async getChats(userId: string): Promise<IChatPreview[] | null> {
+    try {
+      return (await this._chatRepository.getUserChats(userId)) ?? [];
+    } catch (error) {
+      console.error("[ChatService] Error in getChats:", error);
+      return null;
+    }
+  }
+
+  async markMessagesRead(sessionId: string, userId: string): Promise<void> {
+    try {
+      await this._chatRepository.markMessagesRead(sessionId, userId);
+    } catch (error) {
+      console.error("[ChatService] Error in markMessagesRead:", error);
+    }
   }
 }

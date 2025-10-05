@@ -1,111 +1,104 @@
 import bcrypt from "bcrypt";
-import { AdminRepository } from "../repositories/admin.repository";
 import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { IEmailService } from "./interfaces/IEmailService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IAdminService } from "./interfaces/IAdminService";
-import User, { IUser } from "../models/user.model";
 import { IAdmin } from "../models/admin.model";
 import { IMentor } from "../models/mentor.model";
-import nodemailer from "nodemailer";
-import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
+import { AdminResponseDto, UserSummaryDto } from "../dto/admin.dto";
+import { MESSAGES } from "../utilis/constants";
+import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
+import { ISession } from "../models/sessions.model";
 
 @injectable()
 export class AdminService implements IAdminService {
   constructor(
-    @inject(TYPES.IAdminRepository) private repo: IAdminRepository,
-    @inject(TYPES.IEmailService) private emailService: IEmailService
+    @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository,
+    @inject(TYPES.IEmailService) private _emailService: IEmailService,
+    @inject(TYPES.ISessionRepository)
+    private _sessionRepository: ISessionRepository
   ) {}
 
   async login(
     email: string,
     rawPassword: string
   ): Promise<{
-    admin: IAdmin;
+    admin: AdminResponseDto;
     accessToken: string;
     refreshToken: string;
   } | null> {
-    try {
-      const admin = await this.repo.findByEmail(email);
-    if (!admin) throw new Error("Invalid credentials");
+    const admin = await this._adminRepository.findByEmail(email);
+    if (!admin) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
     const match = await bcrypt.compare(rawPassword, admin.password);
-    if (!match) throw new Error("Invalid credentials");
-
-    const token = jwt.sign(
-      {
-        id: admin._id,
-        role: admin.role,
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
+    if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
     return {
-      admin,
-      accessToken:generateAccessToken({id:admin._id, role:admin.role}),
-      refreshToken:generateRefreshToken({id:admin._id,role:admin.role}),
+      admin: mapAdminToDto(admin),
+      accessToken: generateAccessToken({ id: admin._id, role: admin.role }),
+      refreshToken: generateRefreshToken({ id: admin._id, role: admin.role }),
     };
-    } catch (error) {
-      console.log("error", error);
-      return null;
-    }
   }
 
-  async getAllUsers(): Promise<IUser[] | null> {
-    return this.repo.findAllUsers();
+  async updateUserStatus(userId: string, status: string) {
+    const actions: Record<string, () => Promise<any>> = {
+      unBlocked: () => this._adminRepository.unblockUser(userId),
+      blocked: () => this._adminRepository.blockUser(userId),
+    };
+
+    const action = actions[status];
+    if (!action) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+
+    const result = await action();
+    return {
+      message:
+        status === "unBlocked"
+          ? MESSAGES.SUCCESS.USER_UNBLOCKED
+          : MESSAGES.SUCCESS.USER_BLOCKED,
+      user: mapUserToSummaryDto(result),
+    };
   }
 
-  async getAllMentors(): Promise<IMentor[] | null> {
-    return this.repo.findAllMentors();
+  async updateMentorStatus(mentorId: string, status: string) {
+    const actions: Record<string, () => Promise<any>> = {
+      unBlocked: () => this._adminRepository.unblockMentor(mentorId),
+      blocked: () => this._adminRepository.blockMentor(mentorId),
+    };
+
+    const action = actions[status];
+    if (!action) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+
+    const result = await action();
+    return {
+      message:
+        status === "unBlocked"
+          ? MESSAGES.SUCCESS.MENTOR_UNBLOCKED
+          : MESSAGES.SUCCESS.MENTOR_BLOCKED,
+      user: result,
+    };
   }
 
-  async blockUser(id: string): Promise<IUser | null> {
-    return this.repo.blockUser(id);
+  async getMentor(mentorId: string): Promise<IMentor[] | null> {
+    return this._adminRepository.getMentor(mentorId);
   }
 
-  async unblockUser(id: string): Promise<IUser | null> {
-    return this.repo.unblockUser(id);
-  }
-
-  async blockMentor(id: string): Promise<IUser | null> {
-    return this.repo.blockMentor(id);
-  }
-
-  async unblockMentor(id: string): Promise<IUser | null> {
-    return this.repo.unblockMentor(id);
-  }
-
-  // async deleteUser(id: string): Promise<IUser | null> {
-  //   return this.repo.deleteUser(id);
-  // }
-
-  async getMentor(id: string): Promise<IMentor[] | null> {
-    return this.repo.getMentor(id);
-  }
-
-  async approveMentor(id: string): Promise<IMentor | null> {
-    const mentor = await this.repo.getMentor(id);
+  async approveMentor(mentorId: string): Promise<IMentor | null> {
+    const mentor = await this._adminRepository.getMentor(mentorId);
     const email = mentor?.[0]?.email;
-    if (!email) {
-      console.error("Mentor email not found.");
-      return null;
-    }
-    await this.emailService.sendVerificationUpdateEmail(email, "approved");
-    return this.repo.updateMentor(id);
+    if (email)
+      await this._emailService.sendVerificationUpdateEmail(email, "approved");
+    return this._adminRepository.updateMentor(mentorId);
   }
 
-  async rejectMentor(id: string, reason: string): Promise<IMentor | null> {
-    const mentor = await this.repo.getMentor(id);
+  async rejectMentor(mentorId: string, reason: string): Promise<IMentor | null> {
+    const mentor = await this._adminRepository.getMentor(mentorId);
     const email = mentor?.[0]?.email;
-    if (!email) {
-      console.error("Mentor email not found.");
-      return null;
-    }
-    await this.emailService.sendVerificationUpdateEmail(email, "rejected");
-    return this.repo.updateMentorRejection(id, reason);
+    if (email)
+      await this._emailService.sendVerificationUpdateEmail(email, "rejected");
+    return this._adminRepository.updateMentorRejection(mentorId, reason);
   }
 
   async getAllUsersWithQuery(params: {
@@ -117,9 +110,12 @@ export class AdminService implements IAdminService {
     maxSessions?: number;
     minMentors?: number;
     maxMentors?: number;
-    isBlocked: boolean;
-  }) {
-    return this.repo.findAllUsersWithQuery(params);
+    isBlocked?: boolean;
+  }): Promise<{ users: UserSummaryDto[]; total: number }> {
+    const { users, total } = await this._adminRepository.findAllUsersWithQuery(
+      params
+    );
+    return { users: users.map(mapUserToSummaryDto), total };
   }
 
   async getAllMentorsWithQuery(params: {
@@ -129,17 +125,29 @@ export class AdminService implements IAdminService {
     sortBy?: "students" | "sessions";
     verificationStatus?: "pending" | "approved" | "rejected";
     isBlocked?: boolean;
-  }): Promise<{ users: IMentor[]; total: number }> {
-    const { mentors, total } = await this.repo.findAllMentorsWithQuery(params);
-    return { users: mentors, total };
+  }): Promise<{ mentors: IMentor[]; total: number }> {
+    return this._adminRepository.findAllMentorsWithQuery(params);
   }
 
-  async getHome(id: string): Promise<IAdmin | null> {
-    try {
-      return await this.repo.findById(id);
-    } catch (error) {
-      console.log("error", error);
-      return null;
+  async getHome(adminId: string): Promise<AdminResponseDto | null> {
+    const admin = await this._adminRepository.findById(adminId);
+    return admin ? mapAdminToDto(admin) : null;
+  }
+
+  async getAllSessionsAdmin(filters?: {
+    status?: string;
+    type?: string;
+    mentorId?: string;
+  }): Promise<ISession[] | null> {
+    const query: any = {};
+
+    if (filters?.status && filters.status !== "all") {
+      query.status = filters.status;
     }
+
+    if (filters?.type) query.type = filters.type;
+    if (filters?.mentorId) query.mentorId = filters.mentorId;
+
+    return await this._sessionRepository.findSessions(query);
   }
 }

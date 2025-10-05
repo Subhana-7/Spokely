@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardHeader from "../../components/admin/DashboardHeader";
 import DataTable from "../../components/admin/DataTables";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
-import axios from "axios";
-import { adminSessionListing } from "../../services/sessionService";
+import { adminSessionListing } from "../../services/adminService";
 
 interface SessionItem {
   id: string;
@@ -35,7 +34,6 @@ const AdminSessionsPage = () => {
         status: statusFilter,
       });
 
-      console.log("what", data);
       setSessions(
         (data.sessions || []).map((s: any) => ({
           id: s._id,
@@ -50,9 +48,11 @@ const AdminSessionsPage = () => {
           flagsCount: s.flags?.length || 0,
         }))
       );
-      setTotal(data.total || data.sessions.length);
+
+      // Ensure total is taken from backend
+      setTotal(data.total || 0);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch sessions:", err);
     }
   };
 
@@ -67,8 +67,14 @@ const AdminSessionsPage = () => {
 
         <SearchFilterBar
           searchPlaceholder="Search by topic or mentor"
-          onSearch={(val) => setSearchTerm(val)}
-          onStatusFilter={(val) => setStatusFilter(val)}
+          onSearch={(val) => {
+            setPage(1); // Reset to first page when searching
+            setSearchTerm(val);
+          }}
+          onStatusFilter={(val) => {
+            setPage(1); // Reset to first page when changing status
+            setStatusFilter(val);
+          }}
         />
 
         <DataTable

@@ -5,18 +5,23 @@ export interface IUserController {
   login(req: Request, res: Response): Promise<void>;
   sendOtp(req: Request, res: Response): Promise<void>;
   verifyOtp(req: Request, res: Response): Promise<void>;
-  home(req: Request, res: Response): Promise<void>;
-  logout(req: Request, res: Response): Promise<void>;
-  getAllUsers(req: Request, res: Response): Promise<void>;
-  handleGoogleAccounts(req: Request, res: Response, next: Function): Promise<void>;
-  googleCallback(req: Request, res: Response, next: Function): Promise<void>;
-  
   forgotPassword(req: Request, res: Response): Promise<void>;
   verifyForgotPassword(req: Request, res: Response): Promise<void>;
-
-  refreshToken(req: Request, res: Response): Promise<void>;
-
+  updateRole(req: Request, res: Response): Promise<void>;
+  getAllUsers(req: Request, res: Response): Promise<void>;
   profile(req: Request, res: Response): Promise<void>;
-
   editUser(req: Request, res: Response): Promise<void>;
+  logout(req: Request, res: Response): Promise<void>;
+  refreshToken(req: Request, res: Response): Promise<void>;
+  handleGoogleAccounts(
+    req: Request,
+    res: Response,
+    next: Function
+  ): Promise<void>;
+  googleCallback(req: Request, res: Response, next: Function): Promise<void>;
+  home(req: Request, res: Response): Promise<void>;
+  changePassword(
+      req:Request,
+      res:Response
+    ):Promise<void>;
 }

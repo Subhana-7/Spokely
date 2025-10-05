@@ -2,70 +2,66 @@ import { Request, Response } from "express";
 import { ISubscriptionService } from "../services/interfaces/ISubscriptionService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
+import { ISubscriptionController } from "./interfaces/ISubscriptionController";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
-export class SubscriptionController {
+export class SubscriptionController implements ISubscriptionController {
   constructor(
-    @inject(TYPES.ISubscriptionService) private subscriptionService: ISubscriptionService
+    @inject(TYPES.ISubscriptionService)
+    private _subscriptionService: ISubscriptionService
   ) {}
 
-  async subscribe(req: Request, res: Response) {
+  async subscribe(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId, plan, price, userId } = req.body;
-
-      if (!userId || !mentorId || !plan || !price) {
-        return res.status(400).json({ message: "Missing subscription data" });
-      }
-
-      const subscription = await this.subscriptionService.subscribe(userId, mentorId, plan, price);
-      res.json({ success: true, subscription });
-    } catch (err) {
-      res.status(500).json({ success: false, message: "Subscription failed", err });
+      const subscription = await this._subscriptionService.subscribe(req.body);
+      res.status(STATUS_CODES.OK).json({ success: true, subscription });
+    } catch (err: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: err.message || MESSAGES.SUBSCRIPTION.FAILED,
+      });
     }
   }
 
-  async getUserSubscriptions(req: Request, res: Response) {
-    const subs = await this.subscriptionService.getUserSubscriptions(req.params.id);
-    res.json(subs);
+  async getUserSubscriptions(req: Request, res: Response): Promise<void> {
+    const subs = await this._subscriptionService.getUserSubscriptions(req.params.id);
+    res.status(STATUS_CODES.OK).json(subs);
   }
 
-  async getMentorSubscriptions(req: Request, res: Response) {
-    const subs = await this.subscriptionService.getMentorSubscriptions(req.params.id);
-    res.json(subs);
+  async getMentorSubscriptions(req: Request, res: Response): Promise<void> {
+    const subs = await this._subscriptionService.getMentorSubscriptions(req.params.id);
+    res.status(STATUS_CODES.OK).json(subs);
   }
 
-  async cancelSubscription(req: Request, res: Response) {
+  async cancelSubscription(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const sub = await this.subscriptionService.cancelSubscription(id);
-    res.json(sub);
+    const sub = await this._subscriptionService.cancelSubscription(id);
+    res.status(STATUS_CODES.OK).json(sub);
   }
 
-  async getMentorPlans(req: Request, res: Response) {
+  async getMentorPlans(req: Request, res: Response): Promise<void> {
     try {
       const mentorId = req.params.id;
-      const plans = await this.subscriptionService.getMentorPlans(mentorId);
+      const plans = await this._subscriptionService.getMentorPlans(mentorId);
 
-      if (!plans || plans.length === 0) {
-        return res.json({ message: "mentor has no subscription", plans: [] });
-      }
-
-      res.json(plans);
+      res.status(STATUS_CODES.OK).json(plans);
     } catch (err) {
-      res.status(500).json({ success: false, message: "Failed to fetch plans" });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: MESSAGES.SUBSCRIPTION.FETCH_FAILED });
     }
   }
 
-   async setMentorPlans(req: Request, res: Response) {
+  async setMentorPlans(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId, plans } = req.body;
-      if (!mentorId || !plans) {
-        return res.status(400).json({ message: "Missing data" });
-      }
-
-      const result = await this.subscriptionService.saveMentorPlans(mentorId, plans);
-      res.json({ success: true, plans: result });
-    } catch (err) {
-      res.status(500).json({ success: false, message: "Failed to save mentor plans" });
+      const result = await this._subscriptionService.saveMentorPlans(req.body);
+      res.status(STATUS_CODES.OK).json({ success: true, plans: result });
+    } catch (err: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: err.message || MESSAGES.SUBSCRIPTION.SAVE_FAILED,
+      });
     }
   }
 }

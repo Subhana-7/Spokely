@@ -1,96 +1,79 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
-import { ConnectionService } from "../services/connections.service";
 import { IConnectionController } from "./interfaces/IConnectionsController";
-import { inject,injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IConnectionService } from "../services/interfaces/IConnectionsService";
+import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
-export class ConnectionController implements IConnectionController {
+export class ConnectionController implements IConnectionController { 
   constructor(
-    @inject(TYPES.IConnectionService) private service: IConnectionService
+    @inject(TYPES.IConnectionService) private _connectionsService: IConnectionService
   ) {}
-
 
   async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
-      const connection = await this.service.sendConnectionRequest(
-        senderId,
-        uniqueCode
-      );
-      res.status(201).json(connection);
+      const connection = await this._connectionsService.sendConnectionRequest(senderId, uniqueCode);
+      res.status(STATUS_CODES.CREATED).json(connection);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   async getRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      const userId = req.id;
-      const requests = await this.service.getIncomingRequests(userId);
-
-      res.status(200).json(requests);
+      const requests = await this._connectionsService.getIncomingRequests(req.id);
+      res.status(STATUS_CODES.OK).json(requests);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async acceptConnection(
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> {
-  try {
-    if (!req.id) throw new Error("User not authenticated");
+  async acceptConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
+      console.log(req.body.requestId)
+      const { requestId } = req.body;
+      const userId = req.id;
 
-    const { requestId } = req.params;
-    const userId = req.id;
-
-    const accepted = await this.service.acceptRequest(requestId, userId);
-
-    res.status(200).json(accepted);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+      console.log("contro",requestId,userId)
+      const accepted = await this._connectionsService.acceptRequest(requestId, userId);
+      res.status(STATUS_CODES.OK).json(accepted);
+    } catch (err: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    }
   }
-}
-
 
   async listConnections(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    if (!req.id) throw new Error("User not authenticated");
-
-    const userId = req.id;
-    const search = req.query.search as string;
-
-    const connections = await this.service.getAllConnections(userId, search);
-    res.status(200).json(connections);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-}
-
-
-  async getSentRequests(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
     try {
-      if (!req.id) throw new Error("User not authenticated");
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const userId = req.id;
-      const requests = await this.service.getOutgoingRequests(userId);
+      const search = req.query.search as string;
+      const connections = await this._connectionsService.getAllConnections(userId, search);
 
-      console.log(requests)
-      res.status(200).json(requests);
+      res.status(STATUS_CODES.OK).json(connections);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    }
+  }
+
+  async getSentRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
+
+      const requests = await this._connectionsService.getOutgoingRequests(req.id);
+      res.status(STATUS_CODES.OK).json(requests);
+    } catch (err: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 }

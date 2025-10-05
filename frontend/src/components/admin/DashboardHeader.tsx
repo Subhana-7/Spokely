@@ -3,7 +3,7 @@ import { logout } from '../../services/adminService';
 
 const DashboardHeader = () => {
   const navItems = [
-    { label: 'Dashboard', path: '/admin' },
+    { label: 'Dashboard', path: '/admin/home' },
     { label: 'User Management', path: '/admin/users' },
     { label: 'Mentor Management', path: '/admin/mentors' },
     { label: 'Session Management', path: '/admin/sessions' },

@@ -1,6 +1,7 @@
 import { IMentor } from "../../models/mentor.model";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IMentorRepository {
+export interface IMentorRepository extends IBaseRepository<IMentor> {
   findByEmail(email: string): Promise<IMentor | null>;
   createMentor(data: Partial<IMentor>): Promise<IMentor | null>;
   findByUniqueCode(code: string): Promise<IMentor | null>;
@@ -10,25 +11,24 @@ export interface IMentorRepository {
     expiresAt: Date
   ): Promise<IMentor | null>;
   verifyOTP(email: string, code: string): Promise<boolean | null>;
-  findAll(): Promise<IMentor[] | null>;
-  updateMentorDocument(email:string,docMessage:string,docUrl:string):Promise<IMentor | null>;
-
+  findAll(
+  query?: Partial<Record<keyof IMentor, any>>,
+  options?: { page?: number; limit?: number }
+): Promise<{ results: IMentor[]; total: number }>;
+  updateMentorDocument(email: string, docMessage: string, docUrl: string): Promise<IMentor | null>;
   updateForgotPasswordOTP(
     email: string,
     code: string,
     expiresAt: Date,
     newPassword: string
-  ): Promise<IMentor | null>
+  ): Promise<IMentor | null>;
   verifyForgotPasswordOTP(
     email: string,
     code: string
-  ): Promise<boolean | null>
+  ): Promise<boolean | null>;
   updatePassword(
-    email:string,
-    password:string
-  ):Promise<IMentor | null>
-
-  findById(id:string):Promise<IMentor | null>;
-
-  updateMentor(id:string,data:any):Promise<IMentor | null>;
+    id: string,
+    newPassword: string
+  ): Promise<IMentor | null>;
+  updateMentor(id: string, data: any): Promise<IMentor | null>;
 }

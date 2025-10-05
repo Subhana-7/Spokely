@@ -1,18 +1,34 @@
-import { IUser } from "../../models/user.model";
+import {
+  UserResponseDTO,
+  SignupDTO,
+  LoginDTO,
+  ForgotPasswordDTO,
+  VerifyForgotPasswordDTO,
+  changePasswordDTO,
+} from "../../dto/user.dto";
 
 export interface IUserService {
-  generateUniqueCode(): Promise<string | null>;
-  sendOtp(email: string): Promise<void | null>;
-  verifyOtp(email: string, code: string): Promise<{ message: string } | null>;
-  signup(data: any): Promise<IUser | null>;
-  login(data: any): Promise<{ user: IUser; accessToken: string; refreshToken: string } | null>;
-  updateRole(userId: string, role: "user" | "mentor"): Promise<IUser | null>;
-  getAllUsers(): Promise<IUser[] | null>;
-  
-  forgotPassword(email: string, newPassword: string): Promise<void | null>;
-  verifyForgotPassword(email: string, code: string): Promise<{ message: string } | null>;
-
-  getHome(id:string):Promise<IUser | null>;
-
-  updateUser(id: string, data: any): Promise<IUser | null>
+  // generateUniqueCode(): Promise<string>;
+  signup(data: SignupDTO): Promise<UserResponseDTO>;
+  login(
+    data: LoginDTO
+  ): Promise<{
+    user: UserResponseDTO;
+    accessToken: string;
+    refreshToken: string;
+  }>;
+  sendOtp(email: string): Promise<void>;
+  verifyOtp(email: string, code: string): Promise<{ message: string }>;
+  forgotPassword(data: ForgotPasswordDTO): Promise<void>;
+  verifyForgotPassword(
+    data: VerifyForgotPasswordDTO
+  ): Promise<{ message: string }>;
+  updateRole(userId: string, role: "user" | "mentor"): Promise<UserResponseDTO>;
+  getAllUsers(): Promise<UserResponseDTO[]>;
+  getHome(userId: string): Promise<UserResponseDTO>;
+  updateUser(userId: string, data: Partial<any>): Promise<UserResponseDTO>;
+  refreshToken(
+    token: string
+  ): Promise<{ user: UserResponseDTO; accessToken: string }>;
+  changePassword(data: changePasswordDTO): Promise<{ message: string }>;
 }

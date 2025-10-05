@@ -8,7 +8,7 @@ import container from "../config/inversify.config";
 import { TYPES } from "../types/types";
 import { IUserController } from "../controllers/interfaces/IUserController";
 
-const router = Router();
+const router = express.Router();
 const controller = container.get<IUserController>(TYPES.IUserController);
 
 router.post("/signup", controller.signup.bind(controller));
@@ -35,5 +35,7 @@ router.post("/refresh-token", controller.refreshToken.bind(controller));
 router.get("/peer/profile/:id", controller.profile.bind(controller));
 
 router.post("/edit/:id",controller.editUser.bind(controller));
+
+router.post("/change-password",controller.changePassword.bind(controller));
 
 export default router;

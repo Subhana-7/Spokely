@@ -26,5 +26,8 @@ export interface ISessionRepository {
     feedback: { from: string; to: string; comment: string; rating?: number }
   ): Promise<ISession | null>
 
-  findSessions(query: any): Promise<ISession[] | null>
+  findSessions(query: any): Promise<ISession[] | null>;
+
+  addParticipant(sessionId: string, userId: string): Promise<ISession | null>;
+
 }

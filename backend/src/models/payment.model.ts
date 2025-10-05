@@ -5,21 +5,28 @@ export interface IPayment extends Document {
   subscriptionId?: Types.ObjectId;
   userId: Types.ObjectId;
   paypalOrderId: string;
-  status: 'CREATED' | 'COMPLETED' | 'FAILED';
+  status: "CREATED" | "COMPLETED" | "FAILED";
   amount: number;
   currency: string;
-  details?: any; 
+  details?: any;
 }
 
-const paymentSchema = new Schema<IPayment>({
-  sessionId: { type: Schema.Types.ObjectId, ref: "Session" },
-  subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription" },
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  paypalOrderId: { type: String, required: true },
-  status: { type: String, enum: ["CREATED", "COMPLETED", "FAILED"], required: true },
-  amount: { type: Number, required: true },
-  currency: { type: String, default: "USD" },
-  details: { type: Object },
-}, { timestamps: true });
+const paymentSchema = new Schema<IPayment>(
+  {
+    sessionId: { type: Schema.Types.ObjectId, ref: "Session" },
+    subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription" },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    paypalOrderId: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["CREATED", "COMPLETED", "FAILED"],
+      required: true,
+    },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "USD" },
+    details: { type: Object },
+  },
+  { timestamps: true }
+);
 
-export default model<IPayment>('Payment', paymentSchema);
+export default model<IPayment>("Payment", paymentSchema);

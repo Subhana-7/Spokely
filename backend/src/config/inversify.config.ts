@@ -1,6 +1,27 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import {DailyTaskController} from "../controllers/daily.task.controller";
+import { IDailyTaskController } from "../controllers/interfaces/IDailyTaskController";
+
+import { DailyTaskService } from "../services/daily.task.service";
+import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
+
+import { DailyTaskRepository } from "../repositories/daily.task.repository";
+import { IDailyTaskRepository } from "../repositories/interfaces/IDailyTaskRepository";
+
+import { IBaseRepository } from "../repositories/interfaces/IBaseRepository";
+import { BaseRepository } from "../repositories/base.repository";
+
+import { PaymentRepository } from "../repositories/payment.repository";
+import { IPaymentRepository } from "../repositories/interfaces/IPaymentRepository";
+
+import { IPaymentService } from "../services/interfaces/IPaymentService";
+import { PaymentService } from "../services/payment.service";
+
+import { IPaymentController } from "../controllers/interfaces/IPaymentController";
+import { PaymentController } from "../controllers/payment.controller";
+
 import { IChatController } from "../controllers/interfaces/IChatController";
 import { ChatController } from "../controllers/chat.controller";
 
@@ -72,18 +93,35 @@ import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
 
+container.bind<IDailyTaskController>(TYPES.IDailyTaskController).to(DailyTaskController)
+container.bind<IDailyTaskService>(TYPES.IDailyTaskService).to(DailyTaskService)
+container.bind<IDailyTaskRepository>(TYPES.IDailyTaskRepository).to(DailyTaskRepository)
+
+container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository)
+
+container.bind<IPaymentController>(TYPES.IPaymentController).to(PaymentController)
+container.bind<IPaymentService>(TYPES.IPaymentService).to(PaymentService);
+container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+
 container.bind<IChatController>(TYPES.IChatController).to(ChatController);
 container.bind<IChatService>(TYPES.IChatService).to(ChatService);
-container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository)
+container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository);
 
-container.bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository).to(MentorPlanRepository);
+container
+  .bind<IMentorPlanRepository>(TYPES.IMentorPlanRepository)
+  .to(MentorPlanRepository);
 
-container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController);
-container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService);
-container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository);
+container
+  .bind<ISubscriptionController>(TYPES.ISubscriptionController)
+  .to(SubscriptionController);
+container
+  .bind<ISubscriptionService>(TYPES.ISubscriptionService)
+  .to(SubscriptionService);
+container
+  .bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository)
+  .to(SubscriptionRepository);
 
-
-container.bind<IEmailService>(TYPES.IEmailService).to(EmailService)
+container.bind<IEmailService>(TYPES.IEmailService).to(EmailService);
 
 container
   .bind<ISessionController>(TYPES.ISessionController)

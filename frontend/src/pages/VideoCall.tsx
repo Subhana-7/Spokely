@@ -7,29 +7,32 @@ import AgoraRTC, {
   type IAgoraRTCRemoteUser,
 } from "agora-rtc-sdk-ng";
 import { getAgoraToken } from "../services/sessionService";
-
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  PhoneOff,
+} from "lucide-react";
 
 const VideoCall = () => {
   const { id: sessionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const clientRef = useRef<IAgoraRTCClient | null>(null);
-  
   if (!clientRef.current) {
     clientRef.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
   }
-  
   const client = clientRef.current;
-  
+
   const [joined, setJoined] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [remoteUsers, setRemoteUsers] = useState<Set<string>>(new Set());
+  const [remoteUsers, setRemoteUsers] = useState<Map<string, IAgoraRTCRemoteUser>>(new Map());
 
   const localVideoRef = useRef<HTMLDivElement>(null);
-  const remoteVideoRef = useRef<HTMLDivElement>(null);
   const localTracks = useRef<{
     audioTrack: IMicrophoneAudioTrack | null;
     videoTrack: ICameraVideoTrack | null;
@@ -45,63 +48,63 @@ const VideoCall = () => {
         localTracks.current.audioTrack.close();
         localTracks.current.audioTrack = null;
       }
-      
       if (localTracks.current.videoTrack) {
         localTracks.current.videoTrack.stop();
         localTracks.current.videoTrack.close();
         localTracks.current.videoTrack = null;
       }
-
       if (client.connectionState === "CONNECTED" || client.connectionState === "CONNECTING") {
         await client.leave();
       }
-
       client.removeAllListeners();
-      
       setJoined(false);
-      setRemoteUsers(new Set());
-    } catch (error) {
-      console.error("Error during cleanup:", error);
+      setRemoteUsers(new Map());
+    } catch (err) {
+      console.error("Error during cleanup:", err);
     }
   }, [client]);
 
-  const handleUserPublished = useCallback(async (user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
-    try {
-      await client.subscribe(user, mediaType);
-      
-      if (mediaType === "video" && user.videoTrack && remoteVideoRef.current) {
-        user.videoTrack.play(remoteVideoRef.current);
-        setRemoteUsers(prev => new Set(prev).add(user.uid.toString()));
+  const handleUserPublished = useCallback(
+    async (user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
+      try {
+        await client.subscribe(user, mediaType);
+        if (mediaType === "video" && user.videoTrack) {
+          setRemoteUsers((prev) => {
+            const updated = new Map(prev);
+            updated.set(user.uid.toString(), user);
+            return updated;
+          });
+        }
+        if (mediaType === "audio" && user.audioTrack) {
+          user.audioTrack.play();
+        }
+      } catch (err) {
+        console.error("Error handling user published:", err);
       }
-      
-      if (mediaType === "audio" && user.audioTrack) {
-        user.audioTrack.play();
-      }
-    } catch (error) {
-      console.error("Error handling user published:", error);
-    }
-  }, []);
+    },
+    [client]
+  );
 
   const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
     if (mediaType === "video") {
-      setRemoteUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(user.uid.toString());
-        return newSet;
+      setRemoteUsers((prev) => {
+        const updated = new Map(prev);
+        updated.delete(user.uid.toString());
+        return updated;
       });
     }
   }, []);
 
   const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
-    setRemoteUsers(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(user.uid.toString());
-      return newSet;
+    setRemoteUsers((prev) => {
+      const updated = new Map(prev);
+      updated.delete(user.uid.toString());
+      return updated;
     });
   }, []);
 
   useEffect(() => {
-    let isMounted = true; 
+    let isMounted = true;
 
     const initCall = async () => {
       if (!sessionId) {
@@ -118,8 +121,11 @@ const VideoCall = () => {
           setError(null);
         }
 
+        if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") {
+          throw new Error("Camera/Microphone access requires HTTPS or localhost.");
+        }
+
         if (client.connectionState === "CONNECTED" || client.connectionState === "CONNECTING") {
-          console.log("Client already connected/connecting, cleaning up first...");
           await cleanup();
         }
 
@@ -134,54 +140,30 @@ const VideoCall = () => {
         client.on("user-unpublished", handleUserUnpublished);
         client.on("user-left", handleUserLeft);
 
-        client.on("connection-state-change", (curState, revState) => {
-          console.log(`Connection state changed from ${revState} to ${curState}`);
-        });
-
         if (client.connectionState === "DISCONNECTED") {
           await client.join(appId, channelName, token, uid);
-          if (isMounted) {
-            setJoined(true);
-          }
+          if (isMounted) setJoined(true);
         }
 
-        try {
-          const [audioTrack, videoTrack] = await Promise.all([
-            AgoraRTC.createMicrophoneAudioTrack({
-              encoderConfig: "music_standard",
-            }),
-            AgoraRTC.createCameraVideoTrack({
-              optimizationMode: "motion",
-              encoderConfig: "720p_1",
-            })
-          ]);
+        const [audioTrack, videoTrack] = await Promise.all([
+          AgoraRTC.createMicrophoneAudioTrack(),
+          AgoraRTC.createCameraVideoTrack({ encoderConfig: "720p_1", optimizationMode: "motion" }),
+        ]);
 
-          if (!isMounted) return; 
+        if (!isMounted) return;
 
-          localTracks.current = { audioTrack, videoTrack };
-
-          if (localVideoRef.current && videoTrack) {
-            videoTrack.play(localVideoRef.current);
-          }
-
-          await client.publish([audioTrack, videoTrack]);
-
-        } catch (mediaError) {
-          console.error("Error creating media tracks:", mediaError);
-          if (isMounted) {
-            setError("Failed to access camera/microphone. Please check permissions.");
-          }
+        localTracks.current = { audioTrack, videoTrack };
+        if (localVideoRef.current && videoTrack) {
+          videoTrack.play(localVideoRef.current);
         }
-
-      } catch (error) {
-        console.error("Failed to initialize call:", error);
+        await client.publish([audioTrack, videoTrack]);
+      } catch (err: any) {
+        console.error("Failed to initialize call:", err);
         if (isMounted) {
-          setError(error instanceof Error ? error.message : "Failed to join call");
+          setError(err instanceof Error ? err.message : "Failed to join call");
         }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -194,43 +176,31 @@ const VideoCall = () => {
 
   const toggleVideo = useCallback(async () => {
     if (!localTracks.current.videoTrack || !joined) return;
-
-    try {
-      await localTracks.current.videoTrack.setEnabled(!isVideoOn);
-      setIsVideoOn(!isVideoOn);
-    } catch (error) {
-      console.error("Error toggling video:", error);
-      setError("Failed to toggle video");
-    }
+    await localTracks.current.videoTrack.setEnabled(!isVideoOn);
+    setIsVideoOn(!isVideoOn);
   }, [isVideoOn, joined]);
 
   const toggleMic = useCallback(async () => {
     if (!localTracks.current.audioTrack || !joined) return;
-
-    try {
-      await localTracks.current.audioTrack.setEnabled(!isMicOn);
-      setIsMicOn(!isMicOn);
-    } catch (error) {
-      console.error("Error toggling microphone:", error);
-      setError("Failed to toggle microphone");
-    }
+    await localTracks.current.audioTrack.setEnabled(!isMicOn);
+    setIsMicOn(!isMicOn);
   }, [isMicOn, joined]);
 
   const endCall = useCallback(async () => {
     await cleanup();
-    navigate(-1); 
+    navigate(-1);
   }, [cleanup, navigate]);
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="bg-red-600 px-4 py-3 rounded mb-4">
           <strong className="font-bold">Error: </strong>
           <span>{error}</span>
         </div>
         <button
           onClick={() => navigate(-1)}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Go Back
         </button>
@@ -239,87 +209,56 @@ const VideoCall = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 items-center p-4 min-h-screen bg-gray-100">
-      <div className="flex flex-col lg:flex-row gap-4 w-full max-w-6xl">
-        <div className="relative">
-          <div 
-            ref={localVideoRef} 
-            className="w-full lg:w-96 h-64 lg:h-72 bg-black rounded-lg border-2 border-blue-500"
-          />
-          <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      {/* Video Grid */}
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
+        {/* Local video */}
+        <div className="relative bg-black rounded-lg overflow-hidden">
+          <div ref={localVideoRef} className="w-full h-full" />
+          <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs">
             You {!isVideoOn && "(Video Off)"}
           </div>
         </div>
 
- 
-        <div className="relative">
-          <div 
-            ref={remoteVideoRef} 
-            className="w-full lg:w-96 h-64 lg:h-72 bg-gray-800 rounded-lg border-2 border-green-500"
-          />
-          <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-            {remoteUsers.size > 0 ? `Remote User (${remoteUsers.size})` : "Waiting for others..."}
+        {/* Remote users */}
+        {Array.from(remoteUsers.values()).map((user) => (
+          <div
+            key={user.uid}
+            className="relative bg-black rounded-lg overflow-hidden"
+            ref={(el) => {
+              if (el && user.videoTrack) user.videoTrack.play(el);
+            }}
+          >
+            <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs">
+              User {user.uid}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
-
-      <div className="flex flex-wrap gap-4 mt-4">
+      {/* Control Bar */}
+      <div className="flex items-center justify-center gap-6 p-4 bg-gray-800">
         <button
           onClick={toggleVideo}
-          disabled={!joined || isLoading}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-            isVideoOn 
-              ? "bg-red-500 hover:bg-red-600 text-white" 
-              : "bg-green-500 hover:bg-green-600 text-white"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={`p-4 rounded-full ${isVideoOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-500"}`}
+          title={isVideoOn ? "Turn Off Camera" : "Turn On Camera"}
         >
-          {isVideoOn ? "Turn Video Off" : "Turn Video On"}
+          {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </button>
-
         <button
           onClick={toggleMic}
-          disabled={!joined || isLoading}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-            isMicOn 
-              ? "bg-red-500 hover:bg-red-600 text-white" 
-              : "bg-green-500 hover:bg-green-600 text-white"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={`p-4 rounded-full ${isMicOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-500"}`}
+          title={isMicOn ? "Mute Mic" : "Unmute Mic"}
         >
-          {isMicOn ? "Mute Mic" : "Unmute Mic"}
+          {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </button>
-
         <button
           onClick={endCall}
-          disabled={isLoading}
-          className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-4 rounded-full bg-red-700 hover:bg-red-600"
+          title="End Call"
         >
-          End Call
+          <PhoneOff className="w-6 h-6" />
         </button>
-      </div>
-
-      <div className="flex flex-col items-center gap-2 mt-4">
-        {isLoading && (
-          <div className="flex items-center gap-2 text-gray-600">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <span>Connecting to call...</span>
-          </div>
-        )}
-        
-        {joined && !isLoading && (
-          <div className="flex items-center gap-4 text-sm">
-            <span className={`flex items-center gap-1 ${joined ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${joined ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              {joined ? 'Connected' : 'Disconnected'}
-            </span>
-            <span className={`flex items-center gap-1 ${isVideoOn ? 'text-green-600' : 'text-red-600'}`}>
-              📹 {isVideoOn ? 'Video On' : 'Video Off'}
-            </span>
-            <span className={`flex items-center gap-1 ${isMicOn ? 'text-green-600' : 'text-red-600'}`}>
-              🎤 {isMicOn ? 'Mic On' : 'Mic Off'}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

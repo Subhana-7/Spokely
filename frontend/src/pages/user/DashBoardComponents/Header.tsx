@@ -1,4 +1,4 @@
-import { Bell, Moon, User } from "lucide-react";
+import { Bell, ChartPieIcon, MessageCircle, Moon, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store/userAuthStore";
 import { logoutService } from "../../../services/authServices";
@@ -59,8 +59,8 @@ const DashboardHeader = () => {
 
         {/* Icons + Logout */}
         <div className="flex items-center space-x-3">
-          <button className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-            <Moon size={20} />
+          <button onClick={() => navigate("/user/chat")} className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+            <MessageCircle size={20} />
           </button>
           <button className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
             <Bell size={20} />

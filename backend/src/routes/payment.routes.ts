@@ -1,30 +1,34 @@
 import { Router, RequestHandler } from "express";
 import { PaymentController } from "../controllers/payment.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { Container } from "inversify";
+import container from "../config/inversify.config";
+import { IPaymentController } from "../controllers/interfaces/IPaymentController";
+import { TYPES } from "../types/types";
 
 const router = Router();
-const paymentController = new PaymentController();
+const paymentController = container.get<IPaymentController>(TYPES.IPaymentController);
 
 router.post(
   "/create",
   authMiddleware(["user"]),
-  paymentController.createOrder as RequestHandler
+  paymentController.createOrder.bind(paymentController)
 );
 router.post(
   "/capture",
   authMiddleware(["user"]),
-  paymentController.captureOrder as RequestHandler
+  paymentController.captureOrder.bind(paymentController)
 );
 
 router.post(
   "/create-subscription",
   authMiddleware(["user"]),
-  paymentController.createSubscriptionOrder as RequestHandler
+  paymentController.createSubscription.bind(paymentController)
 );
 router.post(
   "/capture-subscription",
   authMiddleware(["user"]),
-  paymentController.captureSubscriptionOrder as RequestHandler
+  paymentController.captureSubscription.bind(paymentController)
 );
 
 export default router;

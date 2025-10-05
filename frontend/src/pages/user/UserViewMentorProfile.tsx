@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import DashboardHeader from "./DashBoardComponents/Header";
-import {
-  Award,
-  Star,
-  User,
-} from "lucide-react";
+import { Award, Star, User } from "lucide-react";
 import Badge from "../../components/common/Badge";
-import { subscriptionStartPayment, subscriptionConfirmPayment } from "../../services/paymentService";
+import {
+  subscriptionStartPayment,
+  subscriptionConfirmPayment,
+} from "../../services/paymentService";
 import { useAuthStore } from "../../store/userAuthStore";
 import { useParams } from "react-router-dom";
 import {
@@ -20,6 +19,7 @@ interface Plan {
   _id: string;
   type: string;
   price: number;
+  time: number;
 }
 
 interface Mentor {
@@ -36,7 +36,11 @@ interface Mentor {
 interface Subscription {
   _id: string;
   userId: string;
-  mentorId: string;
+  mentorId: {
+    _id: string;
+    name?: string;
+    profilePicture?: string;
+  };
   plan: string;
   price: number;
   status: string;
@@ -45,7 +49,9 @@ interface Subscription {
 const UserViewMentorProfile = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [mentor, setMentor] = useState<Mentor | null>(null);
-  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>([]);
+  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>(
+    []
+  );
 
   const [showPayPalModal, setShowPayPalModal] = useState(false);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
@@ -94,6 +100,15 @@ const UserViewMentorProfile = () => {
     fetchUserSubscriptions();
   }, [mentorId, user?.id]);
 
+  console.log(userSubscriptions, "user subs");
+
+  const formatTime = (hour: number) => {
+    if (hour >= 1 && hour <= 8) return `${hour} PM`;
+    if (hour >= 9 && hour <= 11) return `${hour} AM`;
+    if (hour === 12) return `12 PM`;
+    return `${hour} AM`;
+  };
+
   const handleSubscribe = (plan: Plan) => {
     setActivePlan(plan);
     setShowPayPalModal(true);
@@ -102,7 +117,7 @@ const UserViewMentorProfile = () => {
   const isSubscribedToPlan = (plan: Plan) => {
     return userSubscriptions.some(
       (sub) =>
-        sub.mentorId === mentorId.id &&
+        sub.mentorId._id === mentorId.id &&
         sub.plan.toLowerCase() === plan.type.toLowerCase() &&
         sub.status === "ACTIVE"
     );
@@ -116,84 +131,111 @@ const UserViewMentorProfile = () => {
     container.innerHTML = "";
 
     const loadPaypalButtons = async () => {
-      const paypalNamespace = await import("@paypal/paypal-js");
-      const paypal = await paypalNamespace.loadScript({
-        clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
-      });
+      try {
+        const paypalNamespace = await import("@paypal/paypal-js");
+        const paypal = await paypalNamespace.loadScript({
+          clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
+          currency: "USD",
+        });
 
-      if (!paypal?.Buttons) {
-        setPaymentResult({ status: "error", message: "PayPal failed to load" });
-        setShowPayPalModal(false);
-        return;
-      }
-
-      const buttons = paypal.Buttons({
-        createOrder: async () => {
-          try {
-            const resp = await subscriptionStartPayment(activePlan._id, activePlan.price);
-            return resp.orderId;
-          } catch (err: any) {
-            console.error("createOrder error:", err);
-            setShowPayPalModal(false);
-            setPaymentResult({
-              status: "error",
-              message: err?.message || "Failed to create order.",
-            });
-            throw err;
-          }
-        },
-        onApprove: async (data: any) => {
-          try {
-            setIsProcessing(true);
-            const orderId = data.orderID;
-            const verify = await subscriptionConfirmPayment(orderId, activePlan._id);
-            if (verify?.success) {
-              await subscribeMentor({
-                mentorId: mentorId.id,
-                plan: activePlan.type,
-                price: activePlan.price,
-                userId: user?.id,
-              });
-              setPaymentResult({
-                status: "success",
-                message: verify?.message || "Subscription successful! 🎉",
-              });
-
-              // refresh user subscriptions after success
-              const res = await getUserSubscriptions(user!.id);
-              setUserSubscriptions(res.data || []);
-            } else {
-              setPaymentResult({
-                status: "error",
-                message: verify?.message || "Payment verification failed.",
-              });
-            }
-          } catch (err: any) {
-            console.error("onApprove error:", err);
-            setPaymentResult({
-              status: "error",
-              message: err?.message || "Payment failed.",
-            });
-          } finally {
-            setIsProcessing(false);
-            setShowPayPalModal(false);
-          }
-        },
-        onCancel: () => {
-          setShowPayPalModal(false);
-          setPaymentResult({ status: "error", message: "Payment cancelled" });
-        },
-        onError: (err: any) => {
-          console.error("PayPal error:", err);
-          setShowPayPalModal(false);
+        if (!paypal?.Buttons) {
           setPaymentResult({
             status: "error",
-            message: "Payment error. Please try again.",
+            message: "PayPal failed to load",
           });
-        },
-      });
+          setShowPayPalModal(false);
+          return;
+        }
 
-      buttons.render("#paypal-button-container");
+        const buttons = paypal.Buttons({
+          createOrder: async () => {
+            try {
+              const resp = await subscriptionStartPayment(
+                activePlan._id,
+                activePlan.price
+              );
+              return resp.data?.id || resp.orderId;
+            } catch (err: any) {
+              console.error("createOrder error:", err);
+              setShowPayPalModal(false);
+              setPaymentResult({
+                status: "error",
+                message: err?.message || "Failed to create order.",
+              });
+              throw err;
+            }
+          },
+
+          onApprove: async (data: any) => {
+            try {
+              setIsProcessing(true);
+              const orderId = data.orderID;
+              const verify = await subscriptionConfirmPayment(
+                orderId,
+                activePlan._id
+              );
+
+              if (
+                verify.data?.status === "COMPLETED" ||
+                verify.data?.message
+                  ?.toLowerCase()
+                  .includes("captured successfully")
+              ) {
+                await subscribeMentor({
+                  mentorId: mentorId.id,
+                  plan: activePlan.type,
+                  price: activePlan.price,
+                  userId: user?.id,
+                  time: activePlan.time,
+                });
+
+                setPaymentResult({
+                  status: "success",
+                  message:
+                    verify.data?.message || "Subscription successful! 🎉",
+                });
+
+                const res = await getUserSubscriptions(user!.id);
+                setUserSubscriptions(res.data || []);
+              } else {
+                setPaymentResult({
+                  status: "error",
+                  message:
+                    verify.data?.message || "Payment verification failed.",
+                });
+              }
+            } catch (err: any) {
+              console.error("onApprove error:", err);
+              setPaymentResult({
+                status: "error",
+                message: err?.message || "Payment failed.",
+              });
+            } finally {
+              setIsProcessing(false);
+              setShowPayPalModal(false);
+            }
+          },
+
+          onCancel: () => {
+            setShowPayPalModal(false);
+            setPaymentResult({ status: "error", message: "Payment cancelled" });
+          },
+          onError: (err: any) => {
+            console.error("PayPal error:", err);
+            setShowPayPalModal(false);
+            setPaymentResult({
+              status: "error",
+              message: "Payment error. Please try again.",
+            });
+          },
+        });
+
+        buttons.render("#paypal-button-container");
+      } catch (err) {
+        console.error("PayPal script load error:", err);
+        const container = document.getElementById("paypal-button-container");
+        if (container) container.innerText = "PayPal failed to load";
+      }
     };
 
     loadPaypalButtons();
@@ -213,7 +255,6 @@ const UserViewMentorProfile = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
           <div className="lg:col-span-1">
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <div className="text-center mb-6">
@@ -278,9 +319,7 @@ const UserViewMentorProfile = () => {
             </div>
           </div>
 
-          {/* Right Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* About */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold flex items-center mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 <User size={20} className="mr-2 text-green-400" /> About{" "}
@@ -291,7 +330,6 @@ const UserViewMentorProfile = () => {
               </p>
             </div>
 
-            {/* Expertise */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold flex items-center mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 <Award size={20} className="mr-2 text-green-400" /> Expertise &
@@ -310,7 +348,6 @@ const UserViewMentorProfile = () => {
               </div>
             </div>
 
-            {/* Subscription Plans */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 Subscription Plans
@@ -327,7 +364,7 @@ const UserViewMentorProfile = () => {
                         className="p-4 rounded-xl bg-gray-800/40 border border-white/10"
                       >
                         <h4 className="text-lg font-semibold text-green-400">
-                          {plan.type}
+                          {plan.type} ({formatTime(plan.time)})
                         </h4>
                         <p className="text-gray-300">₹{plan.price} / month</p>
                         <div className="mt-4">
@@ -337,11 +374,19 @@ const UserViewMentorProfile = () => {
                             </div>
                           ) : (
                             <button
-                              disabled={isProcessing}
+                              disabled={isProcessing || subscribed}
+                              className={`px-6 py-2 rounded-full font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition disabled:opacity-50 ${
+                                subscribed
+                                  ? "cursor-not-allowed bg-gray-600/40"
+                                  : ""
+                              }`}
                               onClick={() => handleSubscribe(plan)}
-                              className="px-6 py-2 rounded-full font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition disabled:opacity-50"
                             >
-                              {isProcessing ? "Processing..." : "Subscribe"}
+                              {subscribed
+                                ? "Subscribed"
+                                : isProcessing
+                                ? "Processing..."
+                                : "Subscribe"}
                             </button>
                           )}
                         </div>
@@ -355,7 +400,6 @@ const UserViewMentorProfile = () => {
         </div>
       </div>
 
-      {/* PayPal Modal */}
       {showPayPalModal && activePlan && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
@@ -381,7 +425,6 @@ const UserViewMentorProfile = () => {
         </div>
       )}
 
-      {/* Payment Result Modal */}
       {paymentResult && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">

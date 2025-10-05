@@ -17,41 +17,44 @@ const MentorManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortFilter, setSortFilter] = useState("All Mentors");
 
-  useEffect(() => {
-    const fetchMentors = async () => {
-      try {
-        setLoading(true);
+ useEffect(() => {
+  const fetchMentors = async () => {
+    try {
+      setLoading(true);
 
-        const params: any = {
-          page,
-          limit,
-          search,
-        };
+      const params: any = {
+        page,
+        limit,
+        search,
+      };
 
-        if (statusFilter === "active") params.isBlocked = false;
-        else if (statusFilter === "blocked") params.isBlocked = true;
+      if (statusFilter === "active") params.isBlocked = false;
+      else if (statusFilter === "blocked") params.isBlocked = true;
 
-        if (sortFilter === "Most Students") params.sortBy = "students";
-        else if (sortFilter === "Sessions") params.sortBy = "sessions";
-        else if (sortFilter === "Verification Pendings")
-          params.verificationStatus = "pending";
+      if (sortFilter === "Most Students") params.sortBy = "students";
+      else if (sortFilter === "Sessions") params.sortBy = "sessions";
+      else if (sortFilter === "Verification Pendings")
+        params.verificationStatus = "pending";
 
-        const res = await getAllMentors(params);
+      const res = await getAllMentors(params);
 
-        console.log(res);
+      const { mentors, total } = res.data.result;
 
-        setMentors(res?.mentors ?? []);
-        setTotal(res?.total ?? 0);
-      } catch (err) {
-        console.error("Error fetching mentors:", err);
-        toast.error("Failed to fetch mentors.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log(mentors, total);
 
-    fetchMentors();
-  }, [page, search, statusFilter, sortFilter]);
+      setMentors(mentors ?? []);
+      setTotal(total ?? 0);
+    } catch (err) {
+      console.error("Error fetching mentors:", err);
+      toast.error("Failed to fetch mentors.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMentors();
+}, [page, search, statusFilter, sortFilter]);
+
 
   const handleSearch = (val: string) => {
     setSearch(val);

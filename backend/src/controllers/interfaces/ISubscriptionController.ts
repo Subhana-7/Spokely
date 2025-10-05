@@ -1,5 +1,4 @@
-import { Request,Response } from "express";
-
+import { Request, Response } from "express";
 
 export interface ISubscriptionController {
   subscribe(req: Request, res: Response): Promise<void>;
