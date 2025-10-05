@@ -34,12 +34,30 @@ export class DailyTaskController {
   submitAll = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { taskId, responses } = req.body;
-    const task = await this._dailyTaskService.submitAll(taskId, responses, req.id!);
-    res.status(200).json({ task });
+    const result = await this._dailyTaskService.submitAll(taskId, responses, req.id!);
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to submit all tasks" });
   }
 };
+
+getUserLatestTask = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const userId = req.id!;
+    console.log(userId)
+    const task = await this._dailyTaskService.getUserLatestTask(userId);
+
+    if (!task) {
+      return res.status(404).json({ message: "No daily task found for today" });
+    }
+
+    return res.status(200).json({ task });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch user's latest task" });
+  }
+};
+
 
 }
