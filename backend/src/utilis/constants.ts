@@ -41,6 +41,7 @@ export const MESSAGES = {
     MENTOR_UNBLOCKED: "Mentor successfully unblocked",
 
     PAYMENT_CREATED: "Payment order created successfully",
+    WALLET_FETCHED:"Wallet fetched succesfully",
   },
   ERROR: {
     INVALID_CREDENTIALS: "Invalid email or password",

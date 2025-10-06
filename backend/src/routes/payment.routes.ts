@@ -31,4 +31,6 @@ router.post(
   paymentController.captureSubscription.bind(paymentController)
 );
 
+router.get("/wallet",authMiddleware(["user","mentor"]),paymentController.wallet.bind(paymentController));
+
 export default router;
