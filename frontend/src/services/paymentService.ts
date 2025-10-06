@@ -1,4 +1,5 @@
 import API from "../api/axios.instance";
+import { PAYMENT_ROUTES as R } from "../constants/routes";
 
 export interface PaymentResponse {
   orderId: string;
@@ -8,15 +9,15 @@ export interface PaymentResponse {
 }
 
 export const startPayment = (sessionId: string, amount: number) =>
-  API.post("/payment/create", { sessionId, amount });
+  API.post<PaymentResponse>(`${R.base}${R.create}`, { sessionId, amount });
 
 export const confirmPayment = (orderId: string, sessionId: string) =>
-  API.post("/payment/capture", { orderId, sessionId });
+  API.post<PaymentResponse>(`${R.base}${R.capture}`, { orderId, sessionId });
 
 export const subscriptionStartPayment = (sessionId: string, amount: number) => {
   console.log("subscriptionStartPayment payload:", { sessionId, amount });
-  return API.post("/payment/create-subscription", { sessionId, amount }); 
+  return API.post<PaymentResponse>(`${R.base}${R.createSubscription}`, { sessionId, amount });
 };
 
 export const subscriptionConfirmPayment = (orderId: string, sessionId: string) =>
-  API.post("/payment/capture-subscription", { orderId, sessionId });
+  API.post<PaymentResponse>(`${R.base}${R.captureSubscription}`, { orderId, sessionId });
