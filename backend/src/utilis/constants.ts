@@ -1,3 +1,5 @@
+// src/constants/constants.ts
+
 export const ROLES = {
   USER: "user",
   MENTOR: "mentor",
@@ -39,9 +41,8 @@ export const MESSAGES = {
     USER_UNBLOCKED: "User successfully unblocked",
     MENTOR_BLOCKED: "Mentor successfully blocked",
     MENTOR_UNBLOCKED: "Mentor successfully unblocked",
-
     PAYMENT_CREATED: "Payment order created successfully",
-    WALLET_FETCHED:"Wallet fetched succesfully",
+    WALLET_FETCHED: "Wallet fetched successfully",
   },
   ERROR: {
     INVALID_CREDENTIALS: "Invalid email or password",
@@ -81,11 +82,5 @@ export const MESSAGES = {
     FEEDBACK_NOT_ALLOWED: "Can only give feedback on completed sessions",
     FEEDBACK_ALREADY_GIVEN: "Feedback already given to this user",
     FLAG_NOT_ALLOWED: "Can only flag completed sessions",
-  },
-  SUBSCRIPTION: {
-    FAILED: "Subscription failed",
-    NOT_FOUND: "Mentor has no subscription",
-    FETCH_FAILED: "Failed to fetch plans",
-    SAVE_FAILED: "Failed to save mentor plans",
   },
 };

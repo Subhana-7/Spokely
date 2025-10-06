@@ -69,6 +69,7 @@ export const PAYMENT_ROUTES = {
   capture: "/capture",
   createSubscription: "/create-subscription",
   captureSubscription: "/capture-subscription",
+  wallet:"/wallet",
 };
 
 

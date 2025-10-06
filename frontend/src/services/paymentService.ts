@@ -20,7 +20,7 @@ export const subscriptionStartPayment = (sessionId: string, amount: number) => {
 };
 
 export const subscriptionConfirmPayment = (orderId: string, sessionId: string) =>
-  API.post("/payment/capture-subscription", { orderId, sessionId });
+  API.post<PaymentResponse>(`${R.base}${R.captureSubscription}`, { orderId, sessionId });
 
 
-export const wallet = () => API.get("/payment/wallet");
+export const wallet = () => API.get(`${R.base}${R.wallet}`);

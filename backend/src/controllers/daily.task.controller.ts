@@ -3,61 +3,83 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
+import { MESSAGES, STATUS_CODES } from "../utilis/constants"; 
 
 @injectable()
 export class DailyTaskController {
-  constructor(@inject(TYPES.IDailyTaskService) private readonly _dailyTaskService: IDailyTaskService) {}
+  constructor(
+    @inject(TYPES.IDailyTaskService)
+    private readonly _dailyTaskService: IDailyTaskService
+  ) {}
 
   createDailyTask = async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { topic } = req.body;
       const userId = req.id!;
-      const task = await this._dailyTaskService.createDailyTask({ userId, topic });
-      res.status(200).json({ task });
+      const task = await this._dailyTaskService.createDailyTask({
+        userId,
+        topic,
+      });
+      res.status(STATUS_CODES.OK).json({ task });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Failed to create daily task" });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 
   addUserResponse = async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { taskId, type, userResponse } = req.body;
-      const task = await this._dailyTaskService.addUserResponse(taskId, type, userResponse);
-      res.status(200).json({ task });
+      const task = await this._dailyTaskService.addUserResponse(
+        taskId,
+        type,
+        userResponse
+      );
+      res.status(STATUS_CODES.OK).json({ task });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Failed to add user response" });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 
   submitAll = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { taskId, responses } = req.body;
-    const task = await this._dailyTaskService.submitAll(taskId, responses, req.id!);
-    res.status(200).json({ task });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to submit all tasks" });
-  }
-};
-
-getUserLatestTask = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
-  try {
-    const userId = req.id!;
-    console.log(userId)
-    const task = await this._dailyTaskService.getUserLatestTask(userId);
-
-    if (!task) {
-      return res.status(404).json({ message: "No daily task found for today" });
+    try {
+      const { taskId, responses } = req.body;
+      const task = await this._dailyTaskService.submitAll(
+        taskId,
+        responses,
+        req.id!
+      );
+      res.status(STATUS_CODES.OK).json({ task });
+    } catch (err) {
+      console.error(err);
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
+  };
 
-    return res.status(200).json({ task });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch user's latest task" });
-  }
-};
+  getUserLatestTask = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.id!;
+      const task = await this._dailyTaskService.getUserLatestTask(userId);
 
+      if (!task) {
+        return res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: "No daily task found for today" });
+      }
 
+      return res.status(STATUS_CODES.OK).json({ task });
+    } catch (err) {
+      console.error(err);
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
+    }
+  };
 }

@@ -26,10 +26,10 @@ import dailyTask from "./routes/daily.task.routes"
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-import fs from "fs";
-import path from "path";
-import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
+// import fs from "fs";
+// import path from "path";
+// import swaggerUi from "swagger-ui-express";
+// import YAML from "yamljs";
 
 dotenv.config();
 const app = express();
@@ -63,32 +63,32 @@ app.use(passport.session());
 app.use(logger);
 app.use(helmet());
 
-// --- Swagger/OpenAPI setup ---
-const swaggerPath = path.join(__dirname, "docs/openapi.yaml");
+// // --- Swagger/OpenAPI setup ---
+// const swaggerPath = path.join(__dirname, "docs/openapi.yaml");
 
-// Check if file exists
-if (!fs.existsSync(swaggerPath)) {
-  console.error("Swagger YAML file not found at:", swaggerPath);
-  process.exit(1);
-}
+// // Check if file exists
+// if (!fs.existsSync(swaggerPath)) {
+//   console.error("Swagger YAML file not found at:", swaggerPath);
+//   process.exit(1);
+// }
 
-// Load YAML
-let swaggerDocument: Record<string, any>; // TypeScript-safe JSON object
-try {
-  const fileContents = fs.readFileSync(swaggerPath, "utf8");
-  const loaded = YAML.parse(fileContents); // Use parse instead of load for TS safety
-  if (!loaded) {
-    throw new Error("Swagger YAML is empty or invalid!");
-  }
-  swaggerDocument = loaded;
-  console.log("Swagger Document Loaded ✅");
-} catch (err) {
-  console.error("Failed to load Swagger YAML:", err);
-  process.exit(1);
-}
+// // Load YAML
+// let swaggerDocument: Record<string, any>; // TypeScript-safe JSON object
+// try {
+//   const fileContents = fs.readFileSync(swaggerPath, "utf8");
+//   const loaded = YAML.parse(fileContents); // Use parse instead of load for TS safety
+//   if (!loaded) {
+//     throw new Error("Swagger YAML is empty or invalid!");
+//   }
+//   swaggerDocument = loaded;
+//   console.log("Swagger Document Loaded ✅");
+// } catch (err) {
+//   console.error("Failed to load Swagger YAML:", err);
+//   process.exit(1);
+// }
 
-// Use Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// // Use Swagger UI
+// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // routes
 app.use("/api/payment", paymentRoutes);
