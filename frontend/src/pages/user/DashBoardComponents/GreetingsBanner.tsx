@@ -3,20 +3,6 @@ import { useAuthStore } from '../../../store/userAuthStore';
 const GreetingBanner = () => {
   const user = useAuthStore((state) => state.user);
 
-//   useEffect(() => {
-//   const fetchUser = async () => {
-//     try {
-//       const res = await refreshToken(); // or your own call
-//       useAuthStore.getState().setUser(res.user);
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   };
-
-//   fetchUser();
-// }, []);
-
-
   return (
     <div className="bg-lime-400 rounded-2xl p-6 text-white">
       <h1 className="text-2xl font-bold mb-2">
