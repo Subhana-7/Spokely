@@ -1,120 +1,106 @@
 import API from "../api/axios.instance";
 import Cookies from "js-cookie";
+import { USER_ROUTES as U, MENTOR_ROUTES as M, ADMIN_ROUTES as A } from "../constants/routes";
+
+// --------------------- TYPES ---------------------
+export type Role = "user" | "mentor" | "admin";
+
+interface SignupData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: Role;
+  documentUrl?: string;
+  textMessage?: string;
+}
+
+interface LoginData {
+  email: string;
+  password: string;
+}
 
 // --------------------- AUTHENTICATION ---------------------
-
-export const signup = (data: any) => {
-  const { name, email, phone, password, role, documentUrl, textMessage } = data;
-  const payload =
-    role === "mentor"
-      ? { name, email, phone, password, documentUrl, textMessage }
-      : { name, email, phone, password };
-
-  const endpoint = role === "mentor" ? "/mentors/signup" : "/users/signup";
+export const signup = (data: SignupData) => {
+  const { role, ...payload } = data;
+  const endpoint = role === "mentor" ? `${M.base}${M.signup}` : `${U.base}${U.signup}`;
   return API.post(endpoint, payload);
 };
 
-export const login = (
-  data: { email: string; password: string },
-  role: "user" | "mentor" | "admin"
-) => {
+export const login = (data: LoginData, role: Role) => {
   const endpoint =
     role === "mentor"
-      ? "/mentors/login"
+      ? `${M.base}${M.login}`
       : role === "user"
-      ? "/users/login"
-      : "/admin/login";
-
+      ? `${U.base}${U.login}`
+      : `${A.base}${A.login}`;
   return API.post(endpoint, data);
 };
 
-export const logoutService = (role: "user" | "mentor") => {
-  const endpoint = role === "mentor" ? "/mentors/logout" : "/users/logout";
+export const logoutService = (role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.logout}` : `${U.base}${U.logout}`;
   return API.post(endpoint);
 };
 
 export const refreshToken = async () => {
-  const role = Cookies.get("role");
-
+  const role = Cookies.get("role") as Role | undefined;
   const endpoint =
     role === "mentor"
-      ? "/mentors/refresh-token"
+      ? `${M.base}${M.refreshToken}`
       : role === "user"
-      ? "/users/refresh-token"
-      : "/admin/refresh-token";
+      ? `${U.base}${U.refreshToken}`
+      : `${A.base}${A.refreshToken}`;
 
   try {
     const res = await API.post(endpoint, null, { withCredentials: true });
     return res.data;
-  } catch (err) {
+  } catch {
     return null;
   }
 };
 
 // --------------------- OTP & PASSWORD ---------------------
-
-export const sendOTP = (data: { email: string }, role: "user" | "mentor") => {
-  const endpoint = role === "mentor" ? "/mentors/send-otp" : "/users/send-otp";
+export const sendOTP = (data: { email: string }, role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.sendOTP}` : `${U.base}${U.sendOTP}`;
   return API.post(endpoint, data);
 };
 
-export const verifyOTP = (data: { email: string; code: string }, role: "user" | "mentor") => {
-  const endpoint = role === "mentor" ? "/mentors/verify-otp" : "/users/verify-otp";
+export const verifyOTP = (data: { email: string; code: string }, role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.verifyOTP}` : `${U.base}${U.verifyOTP}`;
   return API.post(endpoint, data);
 };
 
-export const sendForgotPasswordOTP = (
-  data: { email: string; newPassword?: string },
-  role: "user" | "mentor"
-) => {
-  const endpoint = role === "mentor" ? "/mentors/forgot-password" : "/users/forgot-password";
+export const sendForgotPasswordOTP = (data: { email: string; newPassword?: string }, role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.forgotPassword}` : `${U.base}${U.forgotPassword}`;
   return API.post(endpoint, data);
 };
 
-export const verifyForgotPasswordOTP = (
-  data: { email: string; code: string },
-  role: "user" | "mentor"
-) => {
-  const endpoint =
-    role === "mentor" ? "/mentors/verify-forgot-password" : "/users/verify-forgot-password";
+export const verifyForgotPasswordOTP = (data: { email: string; code: string }, role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.verifyForgotPassword}` : `${U.base}${U.verifyForgotPassword}`;
   return API.post(endpoint, data);
 };
 
 // --------------------- MENTOR DOCUMENT ---------------------
-
-export const resubmitDocument = (email: string, documentUrl: string, textMessage: string) => {
-  return API.patch("/mentors/re-submit", { email, documentUrl, textMessage });
-};
+export const resubmitDocument = (email: string, documentUrl: string, textMessage: string) =>
+  API.patch(`${M.base}${M.resubmitDocument}`, { email, documentUrl, textMessage });
 
 // --------------------- HOME & PROFILE ---------------------
-
 export const home = async () => {
-  const role = Cookies.get("role");
-  const endpoint = role === "mentor" ? "/mentors/home" : "/users/home";
+  const role = Cookies.get("role") as Exclude<Role, "admin"> | undefined;
+  const endpoint = role === "mentor" ? `${M.base}${M.home}` : `${U.base}${U.home}`;
   const res = await API.post(endpoint);
   return res.data;
 };
 
-export const userProfiles = async (id: string) => {
-  const endpoint = `/users/peer/profile/${id}`;
-  const res = await API.get(endpoint);
-  return res.data;
+export const userProfiles = (id: string) => API.get(`${U.base}${U.peerProfile}/${id}`);
+export const mentorProfile = (id: string) => API.get(`${M.base}${M.mentorProfile}/${id}`);
+
+export const editUserDetails = (id: string, role: Exclude<Role, "admin">, data: Record<string, any>) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.edit}/${id}` : `${U.base}${U.edit}/${id}`;
+  return API.post(endpoint, data);
 };
 
-export const mentorProfile = async (id: string) => {
-  const endpoint = `/mentors/mentor-profile/${id}`;
-  const res = await API.get(endpoint);
-  return res.data;
+export const changePassword = (role: Exclude<Role, "admin">, data: any) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.changePassword}` : `${U.base}${U.changePassword}`;
+  return API.post(endpoint, data);
 };
-
-export const editUserDetails = async (id: string, role: string, data: Record<string, any>) => {
-  const endpoint = role === "mentor" ? `/mentors/edit/${id}` : `/users/edit/${id}`;
-  const res = await API.post(endpoint, data);
-  return res.data;
-};
-
-export const changePassword = async(role:string,data:any) => {
-  const endpoint = role === "mentor" ? `/mentors/change-password` : `/users/change-password`;
-  const res = await API.post(endpoint,data);
-  return res.data;
-}
