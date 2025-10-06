@@ -42,4 +42,22 @@ export class DailyTaskController {
   }
 };
 
+getUserLatestTask = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const userId = req.id!;
+    console.log(userId)
+    const task = await this._dailyTaskService.getUserLatestTask(userId);
+
+    if (!task) {
+      return res.status(404).json({ message: "No daily task found for today" });
+    }
+
+    return res.status(200).json({ task });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch user's latest task" });
+  }
+};
+
+
 }

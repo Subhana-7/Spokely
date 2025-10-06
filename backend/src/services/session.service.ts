@@ -9,15 +9,18 @@ import {
 } from "../mappers/session.mappers";
 import { generateAgoraToken } from "../config/agora";
 import { MESSAGES } from "../utilis/constants";
+import { IWalletService } from "./interfaces/IWalletService";
 
 @injectable()
 export class SessionService {
   constructor(
     @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository
+    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
   ) {}
 
   async createSession(body: any, userId: string): Promise<ISession | null> {
+    console.log('create session')
     const dto = mapToCreateSessionDTO(body, userId);
 
     let maxParticipants = 2;
@@ -30,6 +33,7 @@ export class SessionService {
 
     if (dto.type === "private" || dto.mentorId) dto.status = "pending";
     else dto.status = "upcoming";
+
 
     return await this._sessionRepository.createSession(dto);
   }
@@ -69,7 +73,9 @@ export class SessionService {
   }
 
   async updateSession(sessionId: string, body: any): Promise<ISession | null> {
+    console.log('update session',body)
     const dto: UpdateSessionDTO = mapToUpdateSessionDTO(body);
+    console.log(dto)
     return await this._sessionRepository.updateSession(sessionId, dto);
   }
 
@@ -113,6 +119,17 @@ export class SessionService {
   ): Promise<ISession | null> {
     const session = await this._sessionRepository.getSessionById(sessionId);
     if (!session) return null;
+
+    console.log(session)
+
+    if (session.type === "public") {
+      await this._walletService.credit(
+        userId,
+        session.sessionFee ?? 0,
+        "Refund for cancelled public session",
+        sessionId
+      );
+    }
 
     return await this._sessionRepository.updateSession(sessionId, {
       status: "cancelled",

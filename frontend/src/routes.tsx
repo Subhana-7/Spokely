@@ -29,6 +29,7 @@ import MentorCard from "./pages/user/mentorListing";
 import StudentsPage from "./pages/Sessions/StudentsListing";
 import ChatPage from "./pages/chat/ChatPage";
 import DailyTaskPage from "./pages/user/dailyTask/DailyTask";
+import WalletPage from "./pages/Wallet";
 
 const appRoutes: RouteObject[] = [
   { path: "/", element: <LandingPage /> },
@@ -205,6 +206,10 @@ const appRoutes: RouteObject[] = [
   {
     path: "/session/:id/video",
     element: <VideoCall />,
+  },
+  {
+    path:"/wallet",
+    element:<WalletPage/>,
   },
 
   { path: "/admin/login", element: <AdminLogin /> },

@@ -7,6 +7,7 @@ import { PaymentMapper } from "../mappers/payment.mapper";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import paypalAPI, { getPaypalAuth } from "../config/paypal.axios";
+import { IWalletService } from "./interfaces/IWalletService";
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL!;
 
@@ -16,7 +17,8 @@ export class PaymentService implements IPaymentService {
     @inject(TYPES.IPaymentRepository)
     private _paymentRepository: IPaymentRepository,
     @inject(TYPES.ISessionRepository)
-    private _sessionRepository: ISessionRepository
+    private _sessionRepository: ISessionRepository,
+    @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
   ) {}
 
   private async getAccessToken(): Promise<string> {
@@ -57,7 +59,7 @@ export class PaymentService implements IPaymentService {
     return { id: order.data.id };
   }
 
-  async captureOrder(userId: string, dto: PaymentRequestDTO): Promise<PaymentResponseDTO> {
+ async captureOrder(userId: string, dto: PaymentRequestDTO): Promise<PaymentResponseDTO> {
   const accessToken = await this.getAccessToken();
 
   const capture = await axios.post(
@@ -66,6 +68,7 @@ export class PaymentService implements IPaymentService {
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
+  // Update payment status in DB
   const paymentEntity = await this._paymentRepository.updateByPaypalId(dto.orderId!, {
     status: "COMPLETED",
     details: capture.data,
@@ -75,12 +78,23 @@ export class PaymentService implements IPaymentService {
     const sessionIdStr = paymentEntity.sessionId.toString();
     const userIdStr = paymentEntity.userId.toString();
 
-    await this._sessionRepository.addParticipant(sessionIdStr, userIdStr);
+    const session = await this._sessionRepository.addParticipant(sessionIdStr, userIdStr);
+
+    if (session?.type === "public" && session.sessionFee && session.mentorId) {
+      await this._walletService.credit(
+        session.mentorId.toString(),    
+        session.sessionFee,               
+        `Payment received from ${userIdStr} for session: ${session.topic}`, 
+        undefined,
+        session._id?.toString()
+      );
+    }
   }
 
   const entityDTO = PaymentMapper.toEntity(paymentEntity!);
   return PaymentMapper.toResponse(entityDTO);
 }
+
 
 
   async createSubscription(userId: string, dto: PaymentRequestDTO): Promise<{ id: string }> {

@@ -1,6 +1,12 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
 
+import { IWalletService } from "../services/interfaces/IWalletService";
+import { WalletService } from "../services/wallet.service";
+
+import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
+import { WalletRepository } from "../repositories/wallet.repository";
+
 import {DailyTaskController} from "../controllers/daily.task.controller";
 import { IDailyTaskController } from "../controllers/interfaces/IDailyTaskController";
 
@@ -92,6 +98,9 @@ import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
+
+container.bind<IWalletService>(TYPES.IWalletService).to(WalletService)
+container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository)
 
 container.bind<IDailyTaskController>(TYPES.IDailyTaskController).to(DailyTaskController)
 container.bind<IDailyTaskService>(TYPES.IDailyTaskService).to(DailyTaskService)
