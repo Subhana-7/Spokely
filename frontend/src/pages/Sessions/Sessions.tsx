@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
@@ -12,55 +12,42 @@ import { useAuthStore } from "../../store/userAuthStore";
 
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [cancelModal, setCancelModal] = useState<{
     open: boolean;
     id?: string;
   }>({ open: false });
-  const [cancelReason, setCancelReason] = useState<string>("");
-
+  const [cancelReason, setCancelReason] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "upcoming" | "on-going" | "completed" | "cancelled"
-  >("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "public" | "private">(
-    "all"
-  );
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   const userId = useAuthStore((state) => state.user?.id!);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userId) {
-      setCurrentUserId(userId);
-    }
-    fetchSessions();
+    if (userId) fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  function handleScheduleButton() {
-    navigate("/user/schedule-session");
-  }
 
   const fetchSessions = async () => {
     try {
       const res = await getSessions();
-      const data = res.data?.sessions || res.data;
+      const data = res?.data?.sessions ?? res?.data ?? [];
       setSessions(Array.isArray(data) ? data : []);
     } catch (err: any) {
       const message = err?.response?.data?.message || "Failed to load sessions";
-
-      if (err?.response?.status === 404 && message === "Session not found") {
-        setSessions([]);
-        return;
-      }
-
       toast.error(message);
+      setSessions([]); 
     }
   };
 
   const handleCancelConfirm = async () => {
     if (!cancelReason.trim() || !userId) {
       toast.error("Please enter a reason");
+      return;
+    }
+    if (!cancelModal.id) {
+      toast.error("Invalid session id");
       return;
     }
     try {
@@ -75,92 +62,23 @@ const Sessions = () => {
   };
 
   const renderStatus = (session: any) => {
-    const now = new Date().getTime();
-    const start = new Date(session.startTime).getTime();
+    if (!session) return "unknown";
+    const now = Date.now();
+    const start = session.startTime ? new Date(session.startTime).getTime() : 0;
     const end = session.endTime
       ? new Date(session.endTime).getTime()
       : start + (session.durationMinutes || 60) * 60 * 1000;
 
     if (session.status === "cancelled") return "cancelled";
-    if (now > end) return "completed";
+    if (now > end && end > 0) return "completed";
     if (now >= start && now <= end) return "on-going";
     return "upcoming";
   };
 
-  const renderActionButtons = (session: any) => {
-    const status = renderStatus(session);
-
-    if (status === "cancelled") {
-      return <p className="text-sm text-red-400">This session was cancelled</p>;
-    }
-
-    if (status === "completed") {
-      return (
-        <div className="flex flex-col gap-2">
-          <Button
-            onClick={() => navigate(`/user/session/details/${session._id}`)}
-            variant="secondary"
-          >
-            View Details
-          </Button>
-          <p className="text-sm text-green-400 font-semibold">Completed</p>
-        </div>
-      );
-    }
-
-    if (status === "on-going") {
-      return (
-        <div className="flex flex-col gap-2">
-          <Button
-            onClick={() => navigate(`/user/session/details/${session._id}`)}
-            variant="secondary"
-          >
-            View Details
-          </Button>
-          <Button
-            onClick={() => navigate(`/session/${session._id}/video`)}
-            variant="primary"
-          >
-            Join Session
-          </Button>
-        </div>
-      );
-    }
-
-    // upcoming
-    return (
-      <div className="flex flex-col gap-2">
-        <Button
-          onClick={() => navigate(`/user/session/details/${session._id}`)}
-          variant="secondary"
-        >
-          View Details
-        </Button>
-        <Button
-          variant="danger"
-          onClick={() => setCancelModal({ open: true, id: session._id })}
-        >
-          Cancel Session
-        </Button>
-      </div>
-    );
-  };
-
-  // helper: check if session date is today
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return (
-      today.getFullYear() === date.getFullYear() &&
-      today.getMonth() === date.getMonth() &&
-      today.getDate() === date.getDate()
-    );
-  };
-
-  // 🔎 Apply search & filter
   const filteredSessions = sessions.filter((s) => {
-    const matchesSearch = s.topic
-      ?.toLowerCase()
+    if (!s) return false;
+    const matchesSearch = String(s.topic ?? "")
+      .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || renderStatus(s) === statusFilter;
@@ -168,211 +86,199 @@ const Sessions = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  // split and sort sessions
-  const todaySessions = filteredSessions
-    .filter((s) => isToday(s.startTime))
-    .sort(
-      (a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
-
-  const otherSessions = filteredSessions
-    .filter((s) => !isToday(s.startTime))
-    .sort(
-      (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    );
-
   return (
-    <div
-      className="min-h-screen text-white relative bg-cover bg-center"
-      style={{ backgroundImage: `url('/gradient-bg.jpg')` }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
       <DashboardHeader />
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-6">Sessions</h1>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-              <Input
-                type="text"
-                placeholder="Search by topic..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-                className="pl-10 h-12 bg-gray border-gray-300 text-white"
-              />
-            </div>
-            <div className="flex gap-3">
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option
-                  value="all"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  All Status
-                </option>
-                <option
-                  value="upcoming"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Upcoming
-                </option>
-                <option
-                  value="on-going"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  On-going
-                </option>
-                <option
-                  value="completed"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Completed
-                </option>
-                <option
-                  value="cancelled"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Cancelled
-                </option>
-              </select>
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+            Your Sessions
+          </h2>
+          <Button
+            variant="primary"
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg"
+            onClick={() => navigate("/user/schedule-session")}
+          >
+            <Plus size={18} className="mr-2" />
+            Schedule Session
+          </Button>
+        </div>
 
-              {/* Type Filter */}
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option
-                  value="all"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  All Types
-                </option>
-                <option
-                  value="public"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Public
-                </option>
-                <option
-                  value="private"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Private
-                </option>
-                <option
-                  value="peer-to-peer"
-                  className="border-gray-300 text-black bg-gray"
-                >
-                  Peer-to-peer
-                </option>
-              </select>
+        <div className="flex flex-col md:flex-row gap-4 mb-10">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+              size={20}
+            />
+            <Input
+              type="text"
+              placeholder="Search by topic..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full bg-gray-800 text-white placeholder-gray-400 shadow-md"
+            />
+          </div>
 
-              <Button
-                onClick={() => navigate("/user/sessions/public")}
-                variant="success"
-              >
-                Public Sessions
-              </Button>
-            </div>
+          <div className="flex gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500"
+            >
+              <option value="all">All Status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="on-going">On-going</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500"
+            >
+              <option value="all">All Types</option>
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+              <option value="peer-to-peer">Peer-to-peer</option>
+            </select>
           </div>
         </div>
 
-        {todaySessions.length === 0 && otherSessions.length === 0 && (
-          <div className="text-center text-gray-300 py-12">
-            <p className="text-lg">No sessions found.</p>
+        {filteredSessions.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-400 mb-4">No sessions found</p>
             <Button
-              onClick={handleScheduleButton}
-              variant="primary"
-              className="mt-4"
+              variant="success"
+              className="px-6 py-3 rounded-full"
+              onClick={() => navigate("/user/schedule-session")}
             >
-              Schedule Your First Session
+              Schedule a Session
             </Button>
           </div>
-        )}
-
-        {/* Today’s Upcoming Sessions */}
-        {todaySessions.length > 0 && (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">Upcoming (Today)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              {todaySessions.map((session) => (
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSessions.map((session, idx) => {
+              const id = session?._id ?? session?.id ?? `missing-${idx}`;
+              const status = renderStatus(session);
+              return (
                 <Card
-                  key={session._id}
-                  className="bg-white/10 border shadow-lg relative"
+                  key={id}
+                  className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg p-6 hover:shadow-green-500/20 transition-all duration-300"
                 >
-                  <div className="absolute top-4 right-4">
-                    <Badge variant={renderStatus(session)}>
-                      {renderStatus(session)}
-                    </Badge>
+                  <div className="mb-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold text-lg truncate text-white">
+                        {session?.topic ?? "Untitled session"}
+                      </h3>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={
+                            session?.type === "public"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : session?.type === "private"
+                              ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                              : "bg-blue-500/20 text-white border border-blue-500/30"
+                          }
+                        >
+                          {session?.type ?? "—"}
+                        </Badge>
+
+                        <Badge
+                          className={
+                            status === "completed"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : status === "on-going"
+                              ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                              : status === "cancelled"
+                              ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                              : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+                          }
+                        >
+                          {status}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-bold">{session.topic}</h3>
-                  <p className="text-sm">{session.type}</p>
-                  <p className="text-xs text-gray-300">
-                    {new Date(session.startTime).toLocaleString()}
-                  </p>
-                  {renderActionButtons(session)}
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
 
-        {/* Other Sessions */}
-        {otherSessions.length > 0 && (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">Other Sessions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {otherSessions.map((session) => (
-                <Card
-                  key={session._id}
-                  className="bg-white/10 border shadow-lg relative"
-                >
-                  <div className="absolute top-4 right-4">
-                    <Badge variant={renderStatus(session)}>
-                      {renderStatus(session)}
-                    </Badge>
+                  <p className="text-sm text-gray-300 mb-1">
+                    {session?.startTime
+                      ? new Date(session.startTime).toLocaleString()
+                      : "—"}
+                  </p>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Created By:{" "}
+                    {session?.createdBy?._id === userId
+                      ? "You"
+                      : session?.createdBy?.name || "Unknown"}
+                  </p>
+
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => {
+                        console.log(id);
+                        if (!id || String(id).startsWith("missing-")) {
+                          toast.error(
+                            "Cannot open details (missing session id)"
+                          );
+                          return;
+                        }
+                        navigate(`/session/details/${id}`);
+                      }}
+                      variant="secondary"
+                    >
+                      View Details
+                    </Button>
+
+                    {status === "on-going" ? (
+                      <Button
+                        onClick={() => {
+                          if (!id || String(id).startsWith("missing-")) {
+                            toast.error("Cannot join (missing session id)");
+                            return;
+                          }
+                          navigate(`/session/${id}/video`);
+                        }}
+                        variant="success"
+                      >
+                        Join Session
+                      </Button>
+                    ) : status === "upcoming" ? (
+                      <Button
+                        variant="danger"
+                        onClick={() => {
+                          if (!id || String(id).startsWith("missing-")) {
+                            toast.error("Cannot cancel (missing session id)");
+                            return;
+                          }
+                          setCancelModal({ open: true, id });
+                        }}
+                      >
+                        Cancel Session
+                      </Button>
+                    ) : null}
                   </div>
-                  <h3 className="font-bold">{session.topic}</h3>
-                  <p className="text-sm">{session.type}</p>
-                  <p className="text-xs text-gray-300">
-                    {new Date(session.startTime).toLocaleString()}
-                  </p>
-                  {renderActionButtons(session)}
                 </Card>
-              ))}
-            </div>
-          </>
+              );
+            })}
+          </div>
         )}
-      </main>
+      </div>
 
-      <button
-        onClick={handleScheduleButton}
-        className="fixed bottom-8 right-8 bg-green-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition"
-      >
-        <Plus size={24} />
-      </button>
-
-      {/* Cancel Modal */}
+      {/* Cancel modal */}
       {cancelModal.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Cancel Session</h2>
+          <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl p-6 w-96 shadow-2xl backdrop-blur-xl">
+            <h2 className="text-lg font-semibold mb-4 text-emerald-400">
+              Cancel Session
+            </h2>
             <Input
               type="text"
               placeholder="Enter reason..."
               value={cancelReason}
               onChange={setCancelReason}
-              className="w-full mb-4"
+              className="w-full mb-4 bg-gray-800 text-white border-gray-700"
             />
             <div className="flex justify-end gap-3">
               <Button

@@ -10,22 +10,31 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../../../store/userAuthStore";
 
 interface Connection {
+  id: string; // connection id
   connectedUser: {
     id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
+    isBlocked: boolean;
   };
   user: {
     id: string;
     name: string;
     email: string;
     role: "user" | "mentor";
+    isBlocked: boolean;
   };
   sessionCount: number;
   status: string;
+  isBlocked: boolean;
+  blockedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
 }
-
 
 const Connections = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,70 +45,64 @@ const Connections = () => {
 
   const currentUserId = useAuthStore((state) => state.user?.id);
 
-  useEffect(() => {
-    const fetchConnections = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllConnections();
-        console.log(res.data);
-        setConnections(res.data);
-      } catch (err) {
-        toast.error("Failed to fetch connections");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch all connections
+  const fetchConnections = async (term?: string) => {
+    try {
+      setLoading(true);
+      const res = await getAllConnections(term);
+      console.log("Fetched connections:", res.data);
+      setConnections(res.data);
+    } catch (err) {
+      toast.error("Failed to fetch connections");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchConnections();
   }, []);
 
   useEffect(() => {
-    const fetchConnections = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllConnections(searchTerm);
-        setConnections(res.data);
-      } catch (err) {
-        toast.error("Failed to fetch connections");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConnections();
+    fetchConnections(searchTerm);
   }, [searchTerm]);
 
-  console.log('con',connections)
-
+  // ✅ Corrected filteredConnections logic
   const filteredConnections = connections
-  .map((c) => {
-    // Pick the other user in the connection
-    if (c.user.id === currentUserId) return c.connectedUser;
-    if (c.connectedUser.id === currentUserId) return c.user;
-    return null; // skip invalid
-  })
-  // Type guard to remove null and tell TS this is a Connection user
-  .filter((user): user is NonNullable<typeof user> => user !== null)
-  .filter((user) => {
-    const name = user.name?.toLowerCase() || "";
-    const email = user.email?.toLowerCase() || "";
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      email.includes(searchTerm.toLowerCase())
-    );
-  })
-  .map((user) => ({
-    id: user.id,
-    username: user.name,
-    email: user.email,
-    role: user.role,
-    sessions:
-      connections.find(
-        (c) => c.user.id === user.id || c.connectedUser.id === user.id
-      )?.sessionCount || 0,
-  }));
+    .map((c) => {
+      const isCurrentUserUser = c.user.id === currentUserId;
+      const isCurrentUserConnectedUser = c.connectedUser.id === currentUserId;
 
+      // Determine which side to display
+      let displayUser;
+      if (isCurrentUserUser) displayUser = c.connectedUser;
+      else if (isCurrentUserConnectedUser) displayUser = c.user;
+      else return null;
 
+      // Correctly determine who initiated the block
+      const blockedByCurrentUser =
+        c.isBlocked && c.blockedBy?.id === currentUserId;
+
+      return {
+        id: displayUser.id,
+        connectionId: c.id,
+        username: displayUser.name,
+        email: displayUser.email,
+        role: displayUser.role,
+        sessions: c.sessionCount,
+        isBlocked: c.isBlocked,
+        blockedByCurrentUser,
+      };
+    })
+    .filter((u): u is NonNullable<typeof u> => u !== null)
+    .filter((user) => {
+      const name = user.username?.toLowerCase() || "";
+      const email = user.email?.toLowerCase() || "";
+      return (
+        name.includes(searchTerm.toLowerCase()) ||
+        email.includes(searchTerm.toLowerCase())
+      );
+    });
 
   return (
     <>
@@ -108,10 +111,9 @@ const Connections = () => {
           isAddModalOpen ? "blur-sm pointer-events-none select-none" : ""
         }`}
       >
-        {/* Header */}
         <DashboardHeader />
 
-        {/* Title + Add Button */}
+        {/* Header */}
         <div className="max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
             Your Connections
@@ -136,7 +138,7 @@ const Connections = () => {
           <div className="mb-8">
             <div className="relative max-w-md">
               <Search
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
                 size={20}
               />
               <Input
@@ -149,7 +151,7 @@ const Connections = () => {
             </div>
           </div>
 
-          {/* Table / Loader */}
+          {/* Table */}
           {loading ? (
             <div className="text-center py-20">
               <div className="w-14 h-14 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4"></div>

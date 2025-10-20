@@ -60,9 +60,6 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
     }
   };
 
-  console.log("incom", incomingRequests);
-  console.log("send req", sentRequests);
-
   const handleAddConnection = async () => {
     if (!uniqueCode.trim()) return;
     setLoading(true);
@@ -134,15 +131,15 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
               <Button
                 onClick={onClose}
                 variant="secondary"
-                className="px-8 py-3"
+                className="px-8 py-3bg-gray-600 text-white hover:bg-gray-700 bg-gray-600  rounded-xl "
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAddConnection}
                 disabled={loading || !uniqueCode.trim()}
-                variant="primary"
-                className="px-8 py-3"
+                variant="danger"
+                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white focus:ring-green-500 shadow-lg hover:shadow-xl  rounded-xl"
               >
                 {loading ? (
                   <>

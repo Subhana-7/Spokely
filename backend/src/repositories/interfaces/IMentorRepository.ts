@@ -31,4 +31,5 @@ export interface IMentorRepository extends IBaseRepository<IMentor> {
     newPassword: string
   ): Promise<IMentor | null>;
   updateMentor(id: string, data: any): Promise<IMentor | null>;
+  getDashboardData(mentorId: string): Promise<any>;
 }

@@ -11,6 +11,7 @@ import ChangePasswordModal from "./ChangePasswordModal";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
 import Toggle from "./Toggle";
+import PasswordResetSuccessModal from "./PasswordResetSuccessModal";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -57,29 +58,24 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleLogin = async () => {
     if (!validate()) return;
-
     if (role !== "user" && role !== "mentor") {
       setErrors({ email: "Please select a role (User or Mentor)" });
       return;
     }
-
     setLoading(true);
     setErrors({});
-
     try {
       const selectedRole: "user" | "mentor" = role;
       const res = await login(formData, selectedRole);
       const user = res.data[selectedRole];
-
       useAuthStore.getState().setUser({
         id: user._id,
         name: user.name,
         email: user.email,
         role: selectedRole,
-        profilePicture:user.profilePicture,
-        uniqueCode:user.uniqueCode,
+        profilePicture: user.profilePicture,
+        uniqueCode: user.uniqueCode,
       });
-
       if (user.isBlocked) {
         const roleText = selectedRole === "user" ? "user" : "mentor";
         setBlockedMessage(
@@ -87,7 +83,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         );
         return;
       }
-
       if (!user.isVerified) {
         setRole(user.role);
         setEmail(user.email);
@@ -105,15 +100,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
           "Your mentor application is under review, Kindly monitor emails for updation"
         );
       } else {
-        // setGlobalRole(user.role);
-
-        console.log(selectedRole)
-
-        if (selectedRole === "user") {
-          navigate("/user/home");
-        } else {
-          navigate("/mentor/home");
-        }
+        if (selectedRole === "user") navigate("/user/home");
+        else navigate("/mentor/home");
       }
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;
@@ -143,15 +131,17 @@ const LoginModal: React.FC<LoginModalProps> = ({
     setEmail(email);
     setRole("user");
   };
+  
+const handlePasswordResetOTPSuccess = () => {
+  setShowOtpModal(false); // close OTP modal first
+  setIsPasswordResetMode(false);
+  
+  // Slight delay to ensure OTP modal unmounts
+  setTimeout(() => {
+    setPasswordResetSuccess(true); // now show success modal
+  }, 0);
+};
 
-  const handlePasswordResetOTPSuccess = () => {
-    setPasswordResetSuccess(true);
-    setShowOtpModal(false);
-    setIsPasswordResetMode(false);
-    setTimeout(() => {
-      setPasswordResetSuccess(false);
-    }, 2000);
-  };
 
   const handleCloseModal = () => {
     setShowOtpModal(false);
@@ -185,130 +175,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
     { value: "mentor", label: "Mentor" },
   ];
 
-  if (passwordResetSuccess) {
-    return (
-      <Modal
-        isOpen={isOpen}
-        onClose={handleCloseModal}
-        title="Password Reset Successful"
-        icon={<LogIn className="h-6 w-6 text-green-600" />}
-      >
-        <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-green-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
-                  Password Successfully Updated
-                </h3>
-                <div className="mt-2 text-sm text-green-700">
-                  <p>
-                    Your password has been successfully changed. You can now
-                    login with your new password.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <Button
-            variant="primary"
-            onClick={handleCloseModal}
-            className="w-full"
-          >
-            Continue to Login
-          </Button>
-        </div>
-      </Modal>
-    );
-  }
-
-  if (blockedMessage) {
-    return (
-      <Modal
-        isOpen={isOpen}
-        onClose={handleBlockedMessageClose}
-        title="Account Blocked"
-        icon={<LogIn className="h-6 w-6 text-red-600" />}
-      >
-        <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Account Access Restricted
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{blockedMessage}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <Button
-            variant="primary"
-            onClick={handleBlockedMessageClose}
-            className="w-full"
-          >
-            Understood
-          </Button>
-        </div>
-      </Modal>
-    );
-  }
-
-  if (verificationPendingMessage) {
-    return (
-      <VerificationPendingModal
-        isOpen={isOpen}
-        onClose={handleVerificationPendingClose}
-        message={verificationPendingMessage}
-      />
-    );
-  }
-
-  if (showDocumentResubmission) {
-    return (
-      <DocumentResubmissionModal
-        isOpen={isOpen}
-        onClose={handleDocumentResubmissionClose}
-        email={formData.email}
-      />
-    );
-  }
-
   return (
     <>
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
-        title="Login"
-        icon={<LogIn className="h-6 w-6 text-gray-800" />}
+        title="Login to Spokely"
+        icon={<LogIn className="h-6 w-6 text-yellow-400" />}
       >
-        <div className="space-y-4">
+        <div className="space-y-5 bg-slate-900 text-gray-200 p-6 rounded-2xl">
           <Input
             type="email"
             placeholder="Email"
@@ -318,7 +193,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
               if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
             }}
             error={errors.email}
+            className="bg-slate-800 text-gray-100 placeholder-gray-400 border border-yellow-500 focus:ring-yellow-400"
           />
+
           <Input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
@@ -331,10 +208,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
             error={errors.password}
             rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             onRightIconClick={() => setShowPassword((prev) => !prev)}
+            className="bg-slate-800 text-gray-100 placeholder-gray-400 border border-yellow-500 focus:ring-yellow-400"
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-2">
+            <label className="block text-sm font-medium text-yellow-400 mb-2">
               You are a
             </label>
             <Toggle
@@ -347,30 +225,46 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <div>
             <button
               onClick={handleForgotPasswordClick}
-              className="block text-sm font-medium text-red-800 mb-2 hover:text-red-900 transition-colors cursor-pointer"
+              className="block text-sm font-medium text-yellow-400 hover:text-yellow-300 mb-2 transition-colors cursor-pointer"
             >
               Forgot Password? Click here to reset password!
             </button>
           </div>
 
+          {/* Login Button - PRIMARY submit */}
+          <Button
+            variant="primary"
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full bg-yellow-500 text-black font-semibold hover:bg-yellow-400 py-2 rounded-xl transition-all"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </Button>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center">
+            <div className="h-px bg-slate-700 w-full" />
+            <span className="absolute px-3 bg-slate-900 text-sm text-gray-400">
+              or
+            </span>
+          </div>
+
+          {/* Google Login */}
           <Button
             variant="google"
             onClick={handleGoogleSignup}
             disabled={loading}
+            className="w-full bg-transparent border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black transition-all font-medium py-2 rounded-xl"
           >
-            Login using Google
+            <LogIn className="mr-2 h-4 w-4" /> Login using Google
           </Button>
 
-          <Button variant="primary" onClick={handleLogin} disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-
-          <div className="text-center pt-2">
+          <div className="text-center pt-3">
             <button
               onClick={onSwitchToSignup}
-              className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
+              className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors"
             >
-              Don't have an account? Signup
+              Don’t have an account? <span className="underline">Signup</span>
             </button>
           </div>
         </div>
@@ -388,7 +282,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
         email={email}
         role={role}
         isForgotPassword={isPasswordResetMode}
+        onSuccess={handlePasswordResetOTPSuccess}
       />
+
+      {passwordResetSuccess && (
+        <PasswordResetSuccessModal
+          isOpen={passwordResetSuccess}
+          onClose={() => setPasswordResetSuccess(false)}
+        />
+      )}
     </>
   );
 };

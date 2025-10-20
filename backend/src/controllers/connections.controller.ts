@@ -60,6 +60,8 @@ export class ConnectionController implements IConnectionController {
       const search = req.query.search as string;
       const connections = await this._connectionsService.getAllConnections(userId, search);
 
+      console.log(connections)
+
       res.status(STATUS_CODES.OK).json(connections);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
@@ -76,4 +78,41 @@ export class ConnectionController implements IConnectionController {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
+
+
+  // controller
+async blockConnection(req: AuthenticatedRequest, res: Response) {
+  try {
+    console.log('hiting')
+    const userId = req.id!;
+    const connectionId = req.params.id;
+    console.log(connectionId)
+    const updated = await this._connectionsService.blockConnection(connectionId, userId);
+    res.status(200).json(updated);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+}
+
+async unblockConnection(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.id!;
+    const connectionId = req.params.id;
+    const updated = await this._connectionsService.unblockConnection(connectionId, userId);
+    res.status(200).json(updated);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+}
+
+async removeConnection(req:AuthenticatedRequest,res:Response) {
+  try {
+    const connectionId = req.params.id;
+    const result = await this._connectionsService.removeConnection(connectionId);
+    res.status(200).json(result)
+  } catch (error:any) {
+    res.status(400).json({ message: error.message });
+  }
+}
+
 }

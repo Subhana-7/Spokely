@@ -21,7 +21,7 @@ router.post("/refresh-token", controller.refreshToken.bind(controller));
 router.post("/forgot-password",controller.forgotPassword.bind(controller));
 router.post("/verify-forgot-password",controller.verifyForgotPassword.bind(controller));
 
-router.get("/home", authMiddleware(["mentor"]), controller.home.bind(controller));
+router.post("/home", authMiddleware(["mentor"]), controller.home.bind(controller));
 
 router.get("/mentor-profile/:id",controller.profile.bind(controller));
 

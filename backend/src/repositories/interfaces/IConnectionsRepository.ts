@@ -22,4 +22,12 @@ export interface IConnectionRepository {
   acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null>;
 
   rejectRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null>;
+
+  findById(id: string): Promise<IConnection | null>;
+
+  blockConnection(connectionId: string,userId:string): Promise<IConnection | null>;
+
+  unblockConnection(connectionId: string): Promise<IConnection | null>;
+
+  deleteConnection(connectionId:string):Promise<IConnection | null>;
 }

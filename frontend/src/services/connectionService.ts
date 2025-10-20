@@ -16,3 +16,14 @@ export const getAllConnections = (search?: string) =>
   API.get(`${R.base}${R.list}${search ? `?search=${encodeURIComponent(search)}` : ""}`);
 
 export const getSentConnectionRequests = () => API.get(`${R.base}${R.sentRequests}`);
+
+export const blockUnblockUser = (connectionId: string, isBlocked: boolean) => {
+  console.log('frontend service hiting?')
+  const endpoint = isBlocked
+    ? `/users/connections/${connectionId}/unblock`
+    : `/users/connections/${connectionId}/block`;
+
+  return API.patch(endpoint);
+};
+
+export const removeConnection = (connectionId:string) => API.delete(`/users/connections/remove/${connectionId}`);

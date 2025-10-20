@@ -15,5 +15,7 @@ export const mapConnectionToDTO = (
     levelsUnlocked: connection.levelsUnlocked,
     createdAt: connection.createdAt,
     updatedAt: connection.updatedAt,
+    isBlocked:connection.isBlocked,
+    blockedBy:toUserDTO(connection.userId),
   };
 };

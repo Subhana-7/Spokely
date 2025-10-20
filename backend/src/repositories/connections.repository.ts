@@ -6,7 +6,10 @@ import { PopulatedConnection } from "../types/populated";
 import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class ConnectionRepository extends BaseRepository<IConnection> implements IConnectionRepository {
+export class ConnectionRepository
+  extends BaseRepository<IConnection>
+  implements IConnectionRepository
+{
   constructor() {
     super(ConnectionModel);
   }
@@ -40,26 +43,35 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
     }
   }
 
-  async getReceivedRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
+  async getReceivedRequests(
+    userId: Types.ObjectId
+  ): Promise<PopulatedConnection[] | null> {
     try {
       return (await ConnectionModel.find({
         connectedUserId: userId,
         status: "pending",
         isBlocked: false,
         isRemoved: false,
-      }).populate("userId", "name email profilePicture")) as unknown as PopulatedConnection[];
+      }).populate(
+        "userId",
+        "name email profilePicture"
+      )) as unknown as PopulatedConnection[];
     } catch (error) {
       console.log("getReceivedRequests error", error);
       return null;
     }
   }
 
-  async acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null> {
+  async acceptRequest(
+    requestId: string,
+    userId: Types.ObjectId
+  ): Promise<IConnection | null> {
     try {
       const connection = await ConnectionModel.findById(requestId);
-      console.log(connection)
+      console.log(connection);
       if (!connection) throw new Error("Connection not found");
-      if (!connection.connectedUserId.equals(userId)) throw new Error("Unauthorized action");
+      if (!connection.connectedUserId.equals(userId))
+        throw new Error("Unauthorized action");
 
       connection.status = "accepted";
       await connection.save();
@@ -70,11 +82,15 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
     }
   }
 
-  async rejectRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null> {
+  async rejectRequest(
+    requestId: string,
+    userId: Types.ObjectId
+  ): Promise<IConnection | null> {
     try {
       const connection = await ConnectionModel.findById(requestId);
       if (!connection) throw new Error("Connection not found");
-      if (!connection.connectedUserId.equals(userId)) throw new Error("Unauthorized action");
+      if (!connection.connectedUserId.equals(userId))
+        throw new Error("Unauthorized action");
 
       connection.status = "rejected";
       await connection.save();
@@ -93,11 +109,13 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
       let query = ConnectionModel.find({
         $or: [{ userId }, { connectedUserId: userId }],
         status: "accepted",
-        isBlocked: false,
         isRemoved: false,
       })
         .populate("userId", "name email profilePicture role uniqueCode")
-        .populate("connectedUserId", "name email profilePicture role uniqueCode");
+        .populate(
+          "connectedUserId",
+          "name email profilePicture role uniqueCode"
+        );
 
       if (search) {
         const regex = new RegExp(search, "i");
@@ -112,6 +130,7 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
       }
 
       const connections = await query.exec();
+      console.log("repo", connections);
       return connections as unknown as PopulatedConnection[];
     } catch (error) {
       console.log("getAcceptedConnections error", error);
@@ -119,17 +138,68 @@ export class ConnectionRepository extends BaseRepository<IConnection> implements
     }
   }
 
-  async getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null> {
+  async getSentRequests(
+    userId: Types.ObjectId
+  ): Promise<PopulatedConnection[] | null> {
     try {
       return (await ConnectionModel.find({
         userId,
         status: "pending",
         isBlocked: false,
         isRemoved: false,
-      }).populate("connectedUserId", "name email profilePicture")) as unknown as PopulatedConnection[];
+      }).populate(
+        "connectedUserId",
+        "name email profilePicture"
+      )) as unknown as PopulatedConnection[];
     } catch (error) {
       console.log("getSentRequests error", error);
       return null;
     }
+  }
+
+  // inside ConnectionRepository
+
+  async blockConnection(
+    connectionId: string,
+    userId: string
+  ): Promise<IConnection | null> {
+    try {
+      const connection = await ConnectionModel.findByIdAndUpdate(
+        connectionId,
+        { isBlocked: true, blockedBy: userId },
+        { new: true }
+      );
+      return connection;
+    } catch (error) {
+      console.log("blockConnection error", error);
+      return null;
+    }
+  }
+
+  async unblockConnection(connectionId: string): Promise<IConnection | null> {
+    try {
+      const connection = await ConnectionModel.findByIdAndUpdate(
+        connectionId,
+        {
+          $set: { isBlocked: false },
+          $unset: { blockedBy: "" },
+        },
+        { new: true }
+      );
+      return connection;
+    } catch (error) {
+      console.log("unblockConnection error", error);
+      return null;
+    }
+  }
+
+  async deleteConnection(connectionId: string): Promise<IConnection | null> {
+      try {
+        const connection = await ConnectionModel.findByIdAndDelete(connectionId);
+        return connection;
+      } catch (error) {
+        console.log("connection deletion error", error);
+      return null;
+      }
   }
 }

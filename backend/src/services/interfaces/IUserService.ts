@@ -31,4 +31,6 @@ export interface IUserService {
     token: string
   ): Promise<{ user: UserResponseDTO; accessToken: string }>;
   changePassword(data: changePasswordDTO): Promise<{ message: string }>;
+   generateUniqueCode(): Promise<string>;
+   processGoogleAuth(profile: any): Promise<{ user: any; accessToken: string; refreshToken: string }>
 }

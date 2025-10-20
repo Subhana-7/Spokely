@@ -9,4 +9,6 @@ export interface ConnectionDTO {
   levelsUnlocked: number;
   createdAt: Date;
   updatedAt: Date;
+  isBlocked:Boolean;
+  blockedBy:UserDTO;
 }

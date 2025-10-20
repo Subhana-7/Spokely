@@ -16,7 +16,7 @@ interface Student {
   avatar: string;
   sessionsAttended: number;
   averageScore: string ;
-  level: "Beginner" | "Intermediate" | "Advance"; // You can adjust logic later
+  level: "Beginner" | "Intermediate" | "Advance";
 }
 
 const MyStudents: React.FC = () => {
@@ -33,7 +33,6 @@ const MyStudents: React.FC = () => {
       try {
         const { data } = await getMentorStudents(mentorId)
 
-        // 🔹 Transform API response into UI-friendly format
         const transformed: Student[] = data.map((item: any) => {
           return {
             id: item.user?._id,
@@ -62,14 +61,12 @@ const MyStudents: React.FC = () => {
     fetchStudents();
   }, []);
 
-  // 🔎 Filtered students (for search)
   const filteredStudents = students.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🔹 Stats Calculation
   const totalStudents = students.length;
   const avgScore =
     students.length > 0

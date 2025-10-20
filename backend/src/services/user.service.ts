@@ -138,7 +138,7 @@ export class UserService implements IUserService {
     return toUserResponseDTO(updatedUser);
   }
 
-  private async generateUniqueCode(): Promise<string> {
+  async generateUniqueCode(): Promise<string> {
     let code = Math.random().toString(36).substring(2, 8).toUpperCase();
     while (await this._userRepository.findByUniqueCode(code)) {
       code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -188,6 +188,64 @@ export class UserService implements IUserService {
   }
 
   return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
+}
+
+
+
+
+// inside services/user.service.ts (add this method inside the UserService class)
+
+async processGoogleAuth(profile: any): Promise<{ user: any; accessToken: string; refreshToken: string }> {
+  try {
+    const email = profile?.emails?.[0]?.value;
+    if (!email) throw new Error("Google profile missing email");
+
+    // check existing user
+    let user = await this._userRepository.findByEmail(email);
+
+    // If user exists but not marked as google user, you may update
+    if (!user) {
+      const newUserData: Partial<any> = {
+        name: profile.displayName || "Google User",
+        email,
+        googleId: profile.id,
+        role: "user",
+        isVerified: true,
+        profilePicture: profile.photos?.[0]?.value || "",
+        uniqueCode: await this.generateUniqueCode(),
+        isGoogleUser: true,
+      };
+
+      user = await this._userRepository.createUser(newUserData);
+    } else {
+      // Ensure the user record marks google id / isGoogleUser (optional)
+      if (!user.isGoogleUser || !user.googleId) {
+        // update user document to mark google user
+        const updated = await this._userRepository.updateUser(user._id.toString(), {
+          googleId: profile.id,
+          isGoogleUser: true,
+          isVerified: true,
+        });
+        if (updated) user = updated;
+      }
+    }
+
+    // map to DTO for returning user info
+    const userDto = toUserResponseDTO(user as any);
+
+    // generate access and refresh tokens
+    const accessToken = generateAccessToken({ id: (user as any)._id, role: (user as any).role });
+    const refreshToken = generateRefreshToken({ id: (user as any)._id, role: (user as any).role });
+
+    return {
+      user: userDto,
+      accessToken,
+      refreshToken,
+    };
+  } catch (err) {
+    console.error("processGoogleAuth error:", err);
+    throw err;
+  }
 }
 
 }

@@ -19,7 +19,7 @@ export interface IDailyTask extends Document {
   reading: TaskDetail;
   speaking: TaskDetail;
   listening: TaskDetail;
-  userResponses: Record<string, any>; // NEW
+  userResponses: Record<string, any>; 
 }
 
 const TaskDetailSchema = new Schema<TaskDetail>(

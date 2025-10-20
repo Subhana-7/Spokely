@@ -7,6 +7,7 @@ export interface IConnection extends Document {
   sessionCount: number;
   levelsUnlocked: number;
   isBlocked: boolean;
+  blockedBy?:Types.ObjectId;
   isRemoved: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -28,6 +29,7 @@ const connectionSchema = new Schema<IConnection>(
     sessionCount: { type: Number, default: 0 },
     levelsUnlocked: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
+    blockedBy:{type: Schema.Types.ObjectId,ref:"User"},
     isRemoved: { type: Boolean, default: false },
   },
   { timestamps: true }

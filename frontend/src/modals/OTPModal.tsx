@@ -20,6 +20,7 @@ interface OTPModalProps {
   role: string;
   isForgotPassword?: boolean;
   onVerified?: () => void;
+  onSuccess?:() => void;
 }
 
 const OTPModal: React.FC<OTPModalProps> = ({
@@ -29,12 +30,13 @@ const OTPModal: React.FC<OTPModalProps> = ({
   role,
   isForgotPassword = false,
   onVerified,
+  onSuccess,
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(120);
   const [canInteract, setCanInteract] = useState(false);
-  const [showResetSuccess, setShowResetSuccess] = useState(false);
+  // const [showResetSuccess, setShowResetSuccess] = useState(false);
 
   const navigate = useNavigate();
 
@@ -70,43 +72,32 @@ const OTPModal: React.FC<OTPModalProps> = ({
   };
 
   const handleVerify = async () => {
-    setError("");
-    try {
-      if (isForgotPassword) {
-        await verifyForgotPasswordOTP(
-          { email, code: otp },
-          role as "user" | "mentor"
-        );
-        setIsVerified(true);
-        setShowResetSuccess(true); // <-- show success modal
-        setCanInteract(false);
-        setSecondsLeft(0);
+  setError("");
+  try {
+    if (isForgotPassword) {
+      await verifyForgotPasswordOTP({ email, code: otp }, role as "user" | "mentor");
+      setIsVerified(true);
+      if (onSuccess) onSuccess();
+  onClose();
+    } else {
+      await verifyOTP({ email, code: otp }, role as "user" | "mentor");
+      setIsVerified(true);
 
-        if (onVerified) {
-          onVerified();
-        }
+      if (role === "user") {
+        navigate("/user/home");
       } else {
-        await verifyOTP({ email, code: otp }, role as "user" | "mentor");
-        setIsVerified(true);
-
-        setCanInteract(false);
-        setSecondsLeft(0);
-
-        if (role === "user") {
-          navigate("/user/home");
-        } else {
-          setMentorMessage(
-            "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
-          );
-          setShowMentorSuccess(true);
-        }
+        setMentorMessage(
+          "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
+        );
+        setShowMentorSuccess(true);
       }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message || err.message || "Verification failed";
-      setError(msg);
     }
-  };
+  } catch (err: any) {
+    const msg = err.response?.data?.message || err.message || "Verification failed";
+    setError(msg);
+  }
+};
+
 
   const handleResend = async () => {
     try {
@@ -155,19 +146,21 @@ const OTPModal: React.FC<OTPModalProps> = ({
     );
   }
 
-  const handleResetSuccessClose = () => {
-    setShowResetSuccess(false);
-    onClose(); 
-  };
+  // const handleResetSuccessClose = () => {
+  //   setShowResetSuccess(false);
+  //   onClose(); 
+  // };
 
-if (showResetSuccess) {
-  return (
-    <PasswordResetSuccessModal
-      isOpen={true} // ← always open
-      onClose={handleResetSuccessClose}
-    />
-  );
-}
+  // console.log(showResetSuccess)
+
+// if (showResetSuccess) {
+//   return (
+//     <PasswordResetSuccessModal
+//       isOpen={true} 
+//       onClose={handleResetSuccessClose}
+//     />
+//   );
+// }
 
 
   return (

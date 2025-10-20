@@ -1,5 +1,5 @@
 import { useRoutes, type RouteObject } from "react-router-dom";
-import LandingPage from "./components/LandingPage";
+import LandingPage from "./pages/LandingPage";
 import GoogleRedirectHandler from "./modals/GoogleRedirectHandler";
 import UserHome from "./pages/user/UserDashboard";
 import Connections from "./pages/user/connections/Connections";
@@ -14,7 +14,7 @@ import SessionSchedule from "./pages/Sessions/ScheduleSessions";
 import SessionDetail from "./pages/Sessions/SessionDetails";
 import VideoCall from "./pages/VideoCall";
 import MentorVerification from "./pages/admin/MentorVerification";
-import RoleProtectedRoute from "./components/contexts/RoleProtectedRoute";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import UserProfile from "./pages/user/UserSelfViewProfilePage";
 import MentorProfile from "./pages/mentor/MentorSelfViewProfilePage";
 import UserViewMentorProfile from "./pages/user/UserViewMentorProfile";
@@ -36,7 +36,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/google-redirect",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <GoogleRedirectHandler />
       </RoleProtectedRoute>
     ),
@@ -45,7 +45,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/home",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <UserHome />
       </RoleProtectedRoute>
     ),
@@ -53,7 +53,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/connections",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <Connections />
       </RoleProtectedRoute>
     ),
@@ -61,7 +61,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/session",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <Sessions />
       </RoleProtectedRoute>
     ),
@@ -69,15 +69,15 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/schedule-session",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <SessionSchedule />
       </RoleProtectedRoute>
     ),
   },
   {
-    path: "/user/session/details/:id",
+    path: "/session/details/:id",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user","mentor"]}>
         <SessionDetail />
       </RoleProtectedRoute>
     ),
@@ -85,24 +85,15 @@ const appRoutes: RouteObject[] = [
   {
     path:"/user/daily/task",
     element:(
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <DailyTaskPage/>
       </RoleProtectedRoute>
     )
   },
-
-  {
-    path: "/mentor/session/details/:id",
-    element: (
-      <RoleProtectedRoute role="mentor">
-        <SessionDetail />
-      </RoleProtectedRoute>
-    ),
-  },
   {
     path: "/user/profile",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <UserProfile />
       </RoleProtectedRoute>
     ),
@@ -110,7 +101,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/mentor-profile/:id",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <UserViewMentorProfile />
       </RoleProtectedRoute>
     ),
@@ -118,7 +109,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user/sessions/public",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <MentorPublicSessions />
       </RoleProtectedRoute>
     ),
@@ -126,7 +117,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/mentor/home",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <MentorHome />
       </RoleProtectedRoute>
     ),
@@ -134,7 +125,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/mentor/profile",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <MentorProfile />
       </RoleProtectedRoute>
     ),
@@ -142,7 +133,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user-profile/:id",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <MentorViewUserProfile />
       </RoleProtectedRoute>
     ),
@@ -150,7 +141,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/user-profile/:id",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <MentorViewUserProfile />
       </RoleProtectedRoute>
     ),
@@ -158,7 +149,7 @@ const appRoutes: RouteObject[] = [
     {
     path: "/user/mentors",
     element: (
-      <RoleProtectedRoute role="user">
+      <RoleProtectedRoute roles={["user"]}>
         <MentorCard />
       </RoleProtectedRoute>
     ),
@@ -166,7 +157,7 @@ const appRoutes: RouteObject[] = [
 {
   path: "/user/chat",
   element: (
-    <RoleProtectedRoute role="user">
+    <RoleProtectedRoute roles={["user","mentor"]}>
       <ChatPage />
     </RoleProtectedRoute>
   ),
@@ -174,7 +165,7 @@ const appRoutes: RouteObject[] = [
 {
   path: "/mentor/chat",
   element: (
-    <RoleProtectedRoute role="mentor">
+    <RoleProtectedRoute roles={["mentor"]}>
       <ChatPage />
     </RoleProtectedRoute>
   ),
@@ -182,7 +173,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/mentor/sessions",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <SessionsHub />
       </RoleProtectedRoute>
     ),
@@ -190,7 +181,7 @@ const appRoutes: RouteObject[] = [
   {
     path: "/mentor/schedule-session",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <MentorScheduleSession />
       </RoleProtectedRoute>
     ),
@@ -198,32 +189,40 @@ const appRoutes: RouteObject[] = [
   {
     path: "/mentor/my-students",
     element: (
-      <RoleProtectedRoute role="mentor">
+      <RoleProtectedRoute roles={["mentor"]}>
         <StudentsPage />
       </RoleProtectedRoute>
     ),
   },
   {
     path: "/session/:id/video",
-    element: <VideoCall />,
+    element:(
+    <RoleProtectedRoute roles={["user","mentor"]}>
+     <VideoCall />
+    </RoleProtectedRoute>
+    )
   },
   {
     path:"/wallet",
-    element:<WalletPage/>,
+    element:(
+      <RoleProtectedRoute roles={["user","mentor"]}>
+     <WalletPage/>
+    </RoleProtectedRoute>
+    )
   },
 
   { path: "/admin/login", element: <AdminLogin /> },
   {
     path: "/admin",
     element: (
-      <RoleProtectedRoute role="admin">
+      <RoleProtectedRoute roles={["admin"]}>
         <AdminDashboard />
       </RoleProtectedRoute>
     ),
     children: [
       { path: "home", element: <Dashboard /> },
       { path: "users", element: <UserManagement /> },
-      { path: "mentors", element: <MentorManagement /> },
+      { path: "mentors", element: <MentorManagement /> }, 
       {
         path: "mentors/verification/:id",
         element: <MentorVerification />,

@@ -12,4 +12,10 @@ export interface IConnectionService {
   getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null>;
 
   getAllConnections(userId: string, search?: string): Promise<ConnectionDTO[] | null>;
+
+ blockConnection(connectionId: string, userId: string): Promise<unknown>;
+
+ unblockConnection(connectionId: string, userId: string): Promise<unknown>;
+
+ removeConnection(cconnectionId: string): Promise<unknown>;
 }

@@ -136,4 +136,42 @@ export class ConnectionService implements IConnectionService {
       return null;
     }
   }
+
+
+async blockConnection(connectionId: string, userId: string) {
+  const connection = await this._connectionRepository.findById(connectionId);
+  if (!connection) throw new Error("Connection not found");
+  if (
+    connection.userId.toString() !== userId &&
+    connection.connectedUserId.toString() !== userId
+  )
+    throw new Error("Unauthorized");
+
+  const updated = await this._connectionRepository.blockConnection(connectionId,userId);
+  return updated ? mapConnectionToDTO(updated as unknown as PopulatedConnection) : null;
+}
+
+async unblockConnection(connectionId: string, userId: string) {
+  const connection = await this._connectionRepository.findById(connectionId);
+  if (!connection) throw new Error("Connection not found");
+  if (
+    connection.userId.toString() !== userId &&
+    connection.connectedUserId.toString() !== userId
+  )
+    throw new Error("Unauthorized");
+
+  const updated = await this._connectionRepository.unblockConnection(connectionId);
+  return updated ? mapConnectionToDTO(updated as unknown as PopulatedConnection) : null;
+}
+
+async removeConnection(connectionId:string) {
+   const connection = await this._connectionRepository.findById(connectionId);
+  if (!connection) throw new Error("Connection not found");
+
+  const result = await this._connectionRepository.deleteConnection(connectionId);
+
+  return result;
+}
+
+
 }

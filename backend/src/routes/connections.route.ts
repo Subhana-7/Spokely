@@ -13,4 +13,11 @@ router.patch('/accept', authMiddleware(["user", "mentor"]), controller.acceptCon
 router.get('/list', authMiddleware(["user", "mentor"]), controller.listConnections.bind(controller));
 router.get('/sent-requests', authMiddleware(["user", "mentor"]), controller.getSentRequests.bind(controller));
 
+
+// routes
+router.patch('/:id/block', authMiddleware(["user", "mentor"]), controller.blockConnection.bind(controller));
+router.patch('/:id/unblock', authMiddleware(["user", "mentor"]), controller.unblockConnection.bind(controller));
+
+router.delete('/remove/:id',authMiddleware(["user"]),controller.removeConnection.bind(controller));
+
 export default router;

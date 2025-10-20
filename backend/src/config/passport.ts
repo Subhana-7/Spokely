@@ -18,20 +18,25 @@ passport.use(
       callbackURL: process.env.GOOGLE_CALLBACK_URL!,
     },
     async (accessToken, refreshToken, profile, done) => {
+      console.log("Google profile received:", profile);
       try {
-        let user = await User.findOne({ email: profile.emails?.[0].value });
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(new Error("Google account missing email"));
+
+        let user = await User.findOne({ email });
         if (!user) {
           user = await User.create({
             name: profile.displayName,
-            email: profile.emails?.[0].value,
+            email,
             googleId: profile.id,
             role: "user",
             isVerified: true,
-            profilePicture: profile.photos?.[0].value,
+            profilePicture: profile.photos?.[0]?.value,
             uniqueCode: await service.generateUniqueCode(),
             isGoogleUser: true,
           });
         }
+
         done(null, user);
       } catch (err) {
         done(err as Error);
@@ -40,11 +45,10 @@ passport.use(
   )
 );
 
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
-});
-
+passport.serializeUser((user: any, done) => done(null, user.id));
 passport.deserializeUser(async (id: string, done) => {
   const user = await User.findById(id);
   done(null, user);
 });
+
+export default passport;

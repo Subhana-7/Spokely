@@ -21,8 +21,18 @@ router.post("/verify-forgot-password", controller.verifyForgotPassword.bind(cont
 
 router.get("/home", authMiddleware(["user"]), controller.home.bind(controller));
 
-router.get("/google", controller.handleGoogleAccounts.bind(controller));
-router.get("/google/callback", controller.googleCallback.bind(controller));
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect: "/", session: false }),
+  controller.googleCallback.bind(controller)
+);
+
+
 router.post("/logout", controller.logout.bind(controller));
 router.get(
   "/all",

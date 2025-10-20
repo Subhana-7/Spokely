@@ -171,14 +171,21 @@ export class MentorController implements IMentorController {
     }
   };
 
-  home = async (req: Request, res: Response): Promise<void> => {
+   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentor = await this._mentorService.getHome(req.params.id);
-      if (!mentor) {
+      const mentorId = (req as any).id || req.body?.id || req.params?.id;
+      if (!mentorId) {
+        res.status(STATUS_CODES.BAD_REQUEST).json({ message: MESSAGES.ERROR.INVALID_INPUT });
+        return;
+      }
+
+      const dashboard = await this._mentorService.getHome(mentorId);
+      if (!dashboard) {
         res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
-      res.status(STATUS_CODES.OK).json(mentor);
+
+      res.status(STATUS_CODES.OK).json(dashboard);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }

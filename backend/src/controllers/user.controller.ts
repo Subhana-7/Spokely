@@ -14,6 +14,7 @@ import {
 } from "../dto/user.dto";
 import { IUserController } from "./interfaces/IUserController";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class UserController implements IUserController { 
@@ -59,16 +60,31 @@ export class UserController implements IUserController {
     }
   };
 
-  handleGoogleAccounts = async (
-    req: Request,
-    res: Response,
-    next: Function
-  ) => {
-    next();
-  };
+  handleGoogleAccounts = async (req: Request, res: Response, next: Function) => {
+  console.log("Initiating Google OAuth...");
+  next();
+};
 
-  googleCallback = async (req: Request, res: Response, next: Function) => {
-    next();
+  googleCallback = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = req.user as any;
+      if (!user) {
+        console.error("No user found in req.user after Google auth");
+        return res.redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/?error=google_auth_failed`);
+      }
+
+      const accessToken = generateAccessToken({ id: user._id, role: user.role });
+      const refreshToken = generateRefreshToken({ id: user._id, role: user.role });
+
+      res
+        .cookie("auth-token", accessToken, { httpOnly: true })
+        .cookie("refresh-token", refreshToken, { httpOnly: true })
+        .cookie("role", user.role, { httpOnly: false })
+        .redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/user/home`);
+    } catch (error: any) {
+      console.error("Google callback error:", error);
+      return res.redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/?error=google_auth_failed`);
+    }
   };
 
   home = async (req: Request, res: Response) => {

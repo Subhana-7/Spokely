@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, Plus, MessageCircle } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import SpokelyCard from "../../components/common/Cards";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
@@ -40,7 +40,6 @@ const SpokelyMentors = () => {
 
   const status = ["ACTIVE", "CANCELLED", "EXPIRED"];
   const userId = useAuthStore((state) => state.user?.id!);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,7 +47,6 @@ const SpokelyMentors = () => {
       try {
         setLoading(true);
         const res = await getUserSubscriptions(userId as string);
-        // Axios response → res.data
         setSubscriptions(res.data || []);
       } catch (error) {
         console.error("Error fetching subscriptions:", error);
@@ -73,41 +71,41 @@ const SpokelyMentors = () => {
     return matchesSearch && matchesStatus;
   });
 
-  console.log(subscriptions);
-
   const MentorCard = ({ sub }: { sub: Subscription }) => {
     const mentor = sub.mentor;
     return (
-      <SpokelyCard className="bg-gray-900 border border-gray-700 text-gray-200 hover:border-emerald-400">
+      <div className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl p-6 text-white shadow-lg transition hover:scale-[1.02] hover:border-emerald-500">
         <div className="flex items-center mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-black font-bold text-sm mr-3 overflow-hidden">
+          <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center overflow-hidden mr-3">
             {mentor?.profilePicture ? (
               <img
                 src={mentor.profilePicture}
                 alt={mentor.name}
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-white">{mentor.name[0]}</span> // fallback initial
+              <span className="text-white font-semibold text-lg">
+                {mentor.name[0]}
+              </span>
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-black">{mentor?.name}</h3>
+            <h3 className="font-semibold text-lg">{mentor?.name}</h3>
             <Badge variant="peer" size="sm">
               {sub.status}
             </Badge>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="text-center">
-            <div className="text-emerald-400 text-xl font-bold">
+        <div className="grid grid-cols-2 gap-4 mb-6 text-center">
+          <div>
+            <div className="text-green-400 text-xl font-bold">
               {sub.sessionsCount}
             </div>
             <div className="text-gray-400 text-xs">Sessions</div>
           </div>
-          <div className="text-center">
-            <div className="text-emerald-400 text-xl font-bold">
+          <div>
+            <div className="text-green-400 text-xl font-bold">
               {sub.avgRating ? sub.avgRating.toFixed(1) : "—"}
             </div>
             <div className="text-gray-400 text-xs">Avg Rating</div>
@@ -117,134 +115,95 @@ const SpokelyMentors = () => {
         <Button
           variant="primary"
           onClick={() => navigate(`/user/mentor-profile/${mentor._id}`)}
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:shadow-lg transition-all"
         >
           View Details
         </Button>
-      </SpokelyCard>
+      </div>
     );
   };
 
   return (
-    <div
-      className="min-h-screen text-white relative bg-cover bg-center"
-      style={{ backgroundImage: `url('/gradient-bg.jpg')` }}
-    >
-      <DashboardHeader />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24 transition-all duration-300">
+        <DashboardHeader />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
-        {/* Section Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">My Mentors</h1>
-          <p className="text-gray-600">
-            Connect with and learn from experienced mentors
-          </p>
+        <div className="max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+            Your Mentors
+          </h2>
+
+          <Button
+            variant="primary"
+            className="px-6 py-3 text-base bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all"
+            onClick={() => navigate("/user/schedule-session")}
+          >
+            <Plus size={18} className="mr-2" />
+            Add Mentor
+          </Button>
         </div>
 
-        {/* Stats */}
-        <div className="flex flex-wrap gap-4 mb-10">
-          <SpokelyCard className="bg-white/10 border shadow-lg text-center min-w-[120px]">
-            <div className="text-2xl font-bold text-green-500 mb-1">
-              {subscriptions.length}
+        {/* Search + Filters */}
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="mb-8 flex flex-wrap gap-4 items-center justify-between">
+            <div className="relative max-w-md flex-1">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+                size={20}
+              />
+              <Input
+                type="text"
+                placeholder="Search mentors by ID or name..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+                className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white placeholder-gray-400 shadow-md"
+              />
             </div>
-            <div className="text-xs text-gray-300 uppercase tracking-wide">
-              Total Mentors
-            </div>
-          </SpokelyCard>
-          <SpokelyCard className="bg-white/10 border shadow-lg text-center min-w-[120px]">
-            <div className="text-2xl font-bold text-green-500 mb-1">
-              {subscriptions.length > 0
-                ? (
-                    subscriptions.reduce(
-                      (acc, s) => acc + (s.avgRating || 0),
-                      0
-                    ) / subscriptions.filter((s) => s.avgRating).length
-                  ).toFixed(1)
-                : "—"}
-            </div>
-            <div className="text-xs text-gray-300 uppercase tracking-wide">
-              Average Score
-            </div>
-          </SpokelyCard>
-          <SpokelyCard className="bg-white/10 border shadow-lg text-center min-w-[120px]">
-            <div className="text-2xl font-bold text-green-500 mb-1">
-              {subscriptions.reduce(
-                (acc, s) => acc + (s.sessionsCount || 0),
-                0
-              )}
-            </div>
-            <div className="text-xs text-gray-300 uppercase tracking-wide">
-              Total Sessions
-            </div>
-          </SpokelyCard>
-        </div>
 
-        {/* Controls */}
-        <div className="flex flex-wrap gap-4 items-center mb-10">
-          <div className="flex-1 min-w-[300px] relative">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white"
-              size={20}
-            />
-            <Input
-              type="text"
-              placeholder="Search mentors by ID or name..."
-              value={searchTerm}
-              onChange={setSearchTerm}
-              className="pl-10 h-12 bg-gray border-gray-300 text-white"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              key="All"
-              variant={selectedStatus === "All" ? "success" : "secondary"}
-              onClick={() => setSelectedStatus("All")}
-              className="px-4 py-2"
-            >
-              All
-            </Button>
-            {status.map((level) => (
+            <div className="flex gap-2">
               <Button
-                key={level}
-                variant={selectedStatus === level ? "success" : "secondary"}
-                onClick={() => setSelectedStatus(level)}
-                className="px-4 py-2"
+                key="All"
+                variant={selectedStatus === "All" ? "success" : "secondary"}
+                onClick={() => setSelectedStatus("All")}
+                className="px-4 py-2 border border-gray-700 rounded-full focus:outline-none text-sm"
               >
-                {level}
+                All
               </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mentors Grid */}
-        {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {filteredMentors.map((sub) => (
-              <MentorCard key={sub._id} sub={sub} />
-            ))}
-          </div>
-        )}
-
-        {!loading && filteredMentors.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-lg mb-2">No mentors found</div>
-            <div className="text-gray-500 text-sm">
-              Try adjusting your search or filters
+              {status.map((level) => (
+                <Button
+                  key={level}
+                  variant={selectedStatus === level ? "success" : "secondary"}
+                  onClick={() => setSelectedStatus(level)}
+                  className="px-4 py-2 border border-gray-700 rounded-full focus:outline-none text-sm"
+                >
+                  {level}
+                </Button>
+              ))}
             </div>
           </div>
-        )}
-      </main>
 
-      {/* Floating Action Button */}
-      <button
-        onClick={() => navigate("/user/schedule-session")}
-        className="fixed bottom-8 right-8 bg-green-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition"
-      >
-        <Plus size={24} />
-      </button>
-    </div>
+          {/* Mentor Grid */}
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="w-14 h-14 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="text-gray-400 font-medium text-lg">
+                Loading mentors...
+              </div>
+            </div>
+          ) : filteredMentors.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredMentors.map((sub) => (
+                <MentorCard key={sub._id} sub={sub} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-gray-400">
+              No mentors found — try changing filters or search terms.
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -32,11 +32,10 @@ const ScheduleSession = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { user } = useAuthStore();
-
   const userRole = user?.role;
 
   const [formData, setFormData] = useState<FormData>({
-    type: "peer-to-peer", // Fixed to peer-to-peer
+    type: "peer-to-peer",
     topic: "",
     description: "",
     date: "",
@@ -68,8 +67,18 @@ const ScheduleSession = () => {
   }
 
   useEffect(() => {
-    // Always load connected users since type is always peer-to-peer
-    connectedUsers().then((res) => setUsers(res.data));
+    connectedUsers().then((res) => {
+      const formatted = res.data.map((conn: any) => {
+        if (conn.user.id === user.id) {
+          return { ...conn, otherUser: conn.connectedUser };
+        } else if (conn.connectedUser.id === user.id) {
+          return { ...conn, otherUser: conn.user };
+        } else {
+          return conn;
+        }
+      });
+      setUsers(formatted);
+    });
   }, []);
 
   const calculateEndTime = (startTime: string) => {
@@ -154,7 +163,7 @@ const ScheduleSession = () => {
   const validateForm = (formData: FormData, participants: any[]) => {
     const fieldErrors: Partial<FormErrors> = {};
     Object.keys(formData).forEach((field) => {
-      if (field !== "type") { // Skip type validation since it's fixed
+      if (field !== "type") {
         const error = validateField(
           field,
           formData[field as keyof FormData] || "",
@@ -170,10 +179,9 @@ const ScheduleSession = () => {
 
   useEffect(() => {
     const formErrors = validateForm(formData, selectedMembers);
-    // Only show errors for fields that have been touched
     const filteredErrors: Partial<FormErrors> = {};
     Object.keys(formErrors).forEach((key) => {
-      if (touched[key] || key === 'form') {
+      if (touched[key] || key === "form") {
         filteredErrors[key as keyof FormErrors] = formErrors[key as keyof FormErrors];
       }
     });
@@ -188,25 +196,21 @@ const ScheduleSession = () => {
       }
       return newFormData;
     });
-    
-    // Mark field as touched when user changes it
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const addMember = (member: any) => {
-    if (!selectedMembers.find((m) => m.connectedUser?.id === member.connectedUser?.id)) {
+    if (!selectedMembers.find((m) => m.otherUser?.id === member.otherUser?.id)) {
       setSelectedMembers((prev) => [...prev, member]);
     }
     setSearchTerm("");
-    // Mark participants as touched when user adds a member
     setTouched((prev) => ({ ...prev, participants: true }));
   };
 
   const removeMember = (userId: string) => {
     setSelectedMembers((prev) =>
-      prev.filter((m) => m.connectedUser?.id !== userId)
+      prev.filter((m) => m.otherUser?.id !== userId)
     );
-    // Mark participants as touched when user removes a member
     setTouched((prev) => ({ ...prev, participants: true }));
   };
 
@@ -214,7 +218,11 @@ const ScheduleSession = () => {
     try {
       const formErrors = validateForm(formData, selectedMembers);
       if (Object.keys(formErrors).length > 0) {
-        setErrors((prev) => ({ ...prev, ...formErrors, form: "Fix highlighted errors" }));
+        setErrors((prev) => ({
+          ...prev,
+          ...formErrors,
+          form: "Fix highlighted errors",
+        }));
         toast.error("Please fix all validation errors before scheduling");
         return;
       }
@@ -233,7 +241,7 @@ const ScheduleSession = () => {
         startTime: start,
         endTime: end,
         participants: selectedMembers.map((m) => ({
-          user: m.connectedUser?.id,
+          user: m.otherUser?.id,
           status: "pending",
         })),
         role: capitalizeFirstLetter(userRole as string),
@@ -248,12 +256,12 @@ const ScheduleSession = () => {
   };
 
   const filteredResults = users.filter((member) =>
-    member.connectedUser?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    member.otherUser?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const isFormValid = () => {
     const hasRequiredFields = Object.entries(formData).every(([key, value]) => {
-      if (key === "type") return true; // Skip type check since it's fixed
+      if (key === "type") return true;
       return value.trim() !== "";
     });
     const noFieldErrors = Object.values(validateForm(formData, selectedMembers)).every(
@@ -284,7 +292,6 @@ const ScheduleSession = () => {
       {/* Form */}
       <div className="max-w-5xl mx-auto px-6">
         <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-xl border border-white/10 p-8">
-          {/* Form error */}
           {errors.form && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-lg text-sm text-red-300">
               {errors.form}
@@ -294,7 +301,6 @@ const ScheduleSession = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Left Column */}
             <div className="space-y-6">
-              {/* Date */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Date <span className="text-red-400">*</span>
@@ -311,7 +317,6 @@ const ScheduleSession = () => {
                 )}
               </div>
 
-              {/* Times */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -345,7 +350,6 @@ const ScheduleSession = () => {
                 </div>
               </div>
 
-              {/* Topic */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Topic <span className="text-red-400">*</span>
@@ -363,7 +367,6 @@ const ScheduleSession = () => {
                 )}
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Description <span className="text-red-400">*</span>
@@ -389,7 +392,6 @@ const ScheduleSession = () => {
                   Add Participants <span className="text-red-400">*</span>
                 </label>
 
-                {/* Search Input */}
                 <div className="relative mb-4">
                   <Search
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -404,7 +406,6 @@ const ScheduleSession = () => {
                   />
                 </div>
 
-                {/* Search Results */}
                 {searchTerm && filteredResults.length > 0 && (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl max-h-40 overflow-y-auto mb-4">
                     {filteredResults.map((member) => (
@@ -413,14 +414,13 @@ const ScheduleSession = () => {
                         onClick={() => addMember(member)}
                         className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
                       >
-                        <span className="text-sm">{member.connectedUser?.name}</span>
+                        <span className="text-sm">{member.otherUser?.name}</span>
                         <span className="text-xs text-gray-400">Click to add</span>
                       </button>
                     ))}
                   </div>
                 )}
 
-                {/* Selected Members */}
                 {selectedMembers.length > 0 && (
                   <div>
                     <h4 className="text-sm font-medium mb-2">
@@ -432,9 +432,9 @@ const ScheduleSession = () => {
                           key={member.id}
                           className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
                         >
-                          <span className="text-sm">{member.connectedUser?.name}</span>
+                          <span className="text-sm">{member.otherUser?.name}</span>
                           <button
-                            onClick={() => removeMember(member.connectedUser?.id)}
+                            onClick={() => removeMember(member.otherUser?.id)}
                             className="text-red-400 hover:text-red-600 p-1"
                           >
                             <X size={16} />
@@ -452,7 +452,6 @@ const ScheduleSession = () => {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-4 mt-10 border-t border-gray-800 pt-6">
             <button
               onClick={() => navigate(-1)}

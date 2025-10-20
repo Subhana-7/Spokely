@@ -129,7 +129,7 @@ const SessionsHub: React.FC = () => {
       return (
         <div className="flex flex-col gap-2 mt-3">
           <Button
-            onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+            onClick={() => navigate(`/session/details/${session._id}`)}
             variant="secondary"
           >
             View Details
@@ -143,7 +143,7 @@ const SessionsHub: React.FC = () => {
       return (
         <div className="flex flex-col gap-2 mt-3">
           <Button
-            onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+            onClick={() => navigate(`/session/details/${session._id}`)}
             variant="secondary"
           >
             View Details
@@ -162,7 +162,7 @@ const SessionsHub: React.FC = () => {
     return (
       <div className="flex flex-col gap-2 mt-3">
         <Button
-          onClick={() => navigate(`/mentor/session/details/${session._id}`)}
+          onClick={() => navigate(`/session/details/${session._id}`)}
           variant="secondary"
         >
           View Details

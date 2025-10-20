@@ -402,7 +402,7 @@ const MentorPublicSessions = () => {
                         <Button
                           variant="secondary"
                           onClick={() =>
-                            navigate(`/user/session/details/${session._id}`)
+                            navigate(`/session/details/${session._id}`)
                           }
                         >
                           View Details
@@ -477,7 +477,7 @@ const MentorPublicSessions = () => {
                         <Button
                           variant="secondary"
                           onClick={() =>
-                            navigate(`/user/session/details/${session._id}`)
+                            navigate(`/session/details/${session._id}`)
                           }
                         >
                           View Details

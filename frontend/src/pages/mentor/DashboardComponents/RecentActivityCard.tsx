@@ -1,32 +1,15 @@
+import React from "react";
 import { CheckCircle } from 'lucide-react';
 
-const RecentActivityCard = () => {
-  const activities = [
-    {
-      type: 'Session Completed',
-      feedback: 'Feedback: Good',
-      student: 'Alice',
-      time: '12:00 PM'
-    },
-    {
-      type: 'Session Completed',
-      feedback: 'Feedback: Excellent',
-      student: 'Bob',
-      time: '10:30 AM'
-    },
-    {
-      type: 'Session Completed',
-      feedback: 'Feedback: Good',
-      student: 'Clara',
-      time: '9:15 AM'
-    },
-    {
-      type: 'Evaluation Submitted',
-      feedback: 'Progress: Improved',
-      student: 'David',
-      time: '8:45 AM'
-    }
-  ];
+const RecentActivityCard = ({ activities }: { activities: any[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-yellow-400">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+        <div className="text-sm text-gray-500">No recent activity.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-yellow-400">
@@ -37,9 +20,10 @@ const RecentActivityCard = () => {
             <CheckCircle size={20} className="text-green-500 mt-0.5" />
             <div className="flex-1">
               <div className="font-medium text-gray-800">{activity.type}</div>
-              <div className="text-sm text-gray-600">{activity.feedback}</div>
+              <div className="text-sm text-gray-600">{activity.feedback || activity.comment || "—"}</div>
               <div className="text-sm text-gray-500 mt-1">
-                {activity.student} – {activity.time}
+                {activity.studentName ? `${activity.studentName} – ` : ""}
+                {activity.time ? new Date(activity.time).toLocaleString() : ""}
               </div>
             </div>
           </div>

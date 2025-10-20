@@ -43,6 +43,8 @@ export interface ISession extends Document {
   flags?: IFlag[];
   sessionFee?: number;
   cancelReason?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const participantSchema = new Schema<IParticipant>(
