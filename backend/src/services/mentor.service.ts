@@ -14,7 +14,8 @@ import { MESSAGES } from "../utilis/constants";
 @injectable()
 export class MentorService implements IMentorService {
   constructor(
-    @inject(TYPES.IMentorRepository) private _mentorRepository: IMentorRepository,
+    @inject(TYPES.IMentorRepository)
+    private _mentorRepository: IMentorRepository,
     @inject(TYPES.IEmailService) private _emailService: IEmailService
   ) {}
 
@@ -112,7 +113,11 @@ export class MentorService implements IMentorService {
     docUrl: string,
     docMessage: string
   ): Promise<MentorResponseDTO | null> {
-    const mentor = await this._mentorRepository.updateMentorDocument(email, docUrl, docMessage);
+    const mentor = await this._mentorRepository.updateMentorDocument(
+      email,
+      docUrl,
+      docMessage
+    );
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
@@ -126,7 +131,12 @@ export class MentorService implements IMentorService {
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this._mentorRepository.updateForgotPasswordOTP(email, otp, expiresAt, hashedPassword);
+    await this._mentorRepository.updateForgotPasswordOTP(
+      email,
+      otp,
+      expiresAt,
+      hashedPassword
+    );
     await this._emailService.sendOTPEmail(email, otp, true);
   }
 
@@ -134,36 +144,38 @@ export class MentorService implements IMentorService {
     email: string,
     code: string
   ): Promise<{ message: string }> {
-    const isValid = await this._mentorRepository.verifyForgotPasswordOTP(email, code);
+    const isValid = await this._mentorRepository.verifyForgotPasswordOTP(
+      email,
+      code
+    );
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
     return { message: MESSAGES.SUCCESS.PASSWORD_RESET };
   }
 
   async getHome(id: string): Promise<any | null> {
-  const mentor = await this._mentorRepository.findById(id);
-  if (!mentor) return null;
+    const mentor = await this._mentorRepository.findById(id);
+    if (!mentor) return null;
 
-  const dashboardData = await this._mentorRepository.getDashboardData(id);
-  if (!dashboardData) return null;
+    const dashboardData = await this._mentorRepository.getDashboardData(id);
+    if (!dashboardData) return null;
 
-  return {
-    mentor: toMentorResponseDTO(mentor),
-    stats: {
-      totalStudents: dashboardData.totalStudents,
-      todaysSessionsCount: dashboardData.todaysSessionsCount,
-      avgProgress: dashboardData.avgProgress,
-      avgFeedback: dashboardData.avgFeedback,
-      avgFeedbackValue: dashboardData.avgFeedbackValue,
-    },
-    sessionsToday: dashboardData.sessionsToday,
-    recentActivities: dashboardData.recentActivities,
-  };
-}
-
+    return {
+      mentor: toMentorResponseDTO(mentor),
+      stats: {
+        totalStudents: dashboardData.totalStudents,
+        todaysSessionsCount: dashboardData.todaysSessionsCount,
+        avgProgress: dashboardData.avgProgress,
+        avgFeedback: dashboardData.avgFeedback,
+        avgFeedbackValue: dashboardData.avgFeedbackValue,
+      },
+      sessionsToday: dashboardData.sessionsToday,
+      recentActivities: dashboardData.recentActivities,
+    };
+  }
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
-    console.log(data)
+    console.log(data);
     const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
@@ -171,29 +183,32 @@ export class MentorService implements IMentorService {
   async changePassword(data: ChangePasswordDTO): Promise<{ message: string }> {
     const mentor = await this._mentorRepository.findById(data.id);
     if (!mentor) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
-  
+
     if (!data.currentPassword || !data.newPassword) {
       throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
-  
-    if(!mentor.password){
+
+    if (!mentor.password) {
       throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
-  
+
     await this.passwordValidation(data.newPassword);
-  
+
     const isMatch = await bcrypt.compare(data.currentPassword, mentor.password);
     if (!isMatch) {
       throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
     }
-  
+
     const newHashedPassword = await bcrypt.hash(data.newPassword, 10);
-  
-    const updation = await this._mentorRepository.updatePassword(data.id, newHashedPassword);
+
+    const updation = await this._mentorRepository.updatePassword(
+      data.id,
+      newHashedPassword
+    );
     if (!updation) {
       throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
     }
-  
+
     return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
   }
 }

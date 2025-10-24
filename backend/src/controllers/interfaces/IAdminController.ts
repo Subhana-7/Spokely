@@ -13,5 +13,12 @@ export interface IAdminController {
   refreshToken(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
 
-  getAllSessionsAdmin(req: Request, res: Response): Promise<void>
+  getAllSessionsAdmin(req: Request, res: Response): Promise<void>;
+
+  getAllPayments(req: any, res: Response): Promise<void>;
+  getPaymentById(req: any, res: Response): Promise<void>;
+
+  listAllDailyTasks(req: Request, res: Response): Promise<void>;
+
+  getReports(req: Request, res: Response): Promise<void>;
 }

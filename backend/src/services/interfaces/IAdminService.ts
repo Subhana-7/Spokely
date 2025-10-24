@@ -6,7 +6,11 @@ export interface IAdminService {
   login(
     email: string,
     rawPassword: string
-  ): Promise<{ admin: AdminResponseDto; accessToken: string; refreshToken: string } | null>;
+  ): Promise<{
+    admin: AdminResponseDto;
+    accessToken: string;
+    refreshToken: string;
+  } | null>;
 
   updateUserStatus(
     userId: string,
@@ -33,7 +37,7 @@ export interface IAdminService {
     maxSessions?: number;
     minMentors?: number;
     maxMentors?: number;
-    isBlocked?: boolean; 
+    isBlocked?: boolean;
   }): Promise<{ users: UserSummaryDto[]; total: number }>;
 
   getAllMentorsWithQuery(params: {
@@ -47,5 +51,9 @@ export interface IAdminService {
 
   getHome(adminId: string): Promise<AdminResponseDto | null>;
 
-  getAllSessionsAdmin(filters?: { status?: string; type?: string; mentorId?: string }): Promise<ISession[] | null>;
+  getAllSessionsAdmin(filters?: {
+    status?: string;
+    type?: string;
+    mentorId?: string;
+  }): Promise<ISession[] | null>;
 }

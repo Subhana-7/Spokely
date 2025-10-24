@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const paypalAPI = axios.create({
-  baseURL: process.env.PAYPAL_BASE_URL, 
+  baseURL: process.env.PAYPAL_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

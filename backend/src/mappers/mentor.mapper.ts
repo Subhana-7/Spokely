@@ -34,3 +34,15 @@ export const toMentorDTO = (mentor: IMentor): MentorDTO => ({
   role: mentor.role ?? "mentor",
   uniqueCode: mentor.uniqueCode,
 });
+
+export const toPublicMentorResponseDTO = (mentor: IMentor): MentorDTO => ({
+  id: mentor._id.toString(),
+  name: mentor.name,
+  email: mentor.email,
+  profilePicture: mentor.profilePicture,
+  uniqueCode: mentor.uniqueCode,
+  createdAt: mentor.createdAt,
+  bio: mentor.bio,
+  role: "mentor",
+  sessionsDone: mentor.sessionsDone,
+});

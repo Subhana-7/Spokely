@@ -6,10 +6,21 @@ import { inject } from "inversify";
 import { TYPES } from "../types/types";
 import { generateAccessToken } from "../utilis/token";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { IPaymentService } from "../services/interfaces/IPaymentService";
+import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
+import { ISessionService } from "../services/interfaces/ISessionService";
+import { IMentorService } from "../services/interfaces/IMentorService";
+import { IUserService } from "../services/interfaces/IUserService";
 
 export class AdminController implements IAdminController {
   constructor(
-    @inject(TYPES.IAdminService) private _adminService: IAdminService
+    @inject(TYPES.IAdminService) private _adminService: IAdminService,
+    @inject(TYPES.IPaymentService) private _paymentService: IPaymentService,
+    @inject(TYPES.IDailyTaskService)
+    private _dailyTaskService: IDailyTaskService,
+    @inject(TYPES.ISessionService) private _sessionService: ISessionService,
+    @inject(TYPES.IMentorService) private _mentorService: IMentorService,
+    @inject(TYPES.IUserService) private _userService: IUserService
   ) {}
 
   async adminLogin(req: Request, res: Response): Promise<void> {
@@ -272,33 +283,143 @@ export class AdminController implements IAdminController {
       secure: process.env.NODE_ENV === "production",
     });
 
-    res
-      .status(STATUS_CODES.OK)
-      .json({ message: MESSAGES.SUCCESS.LOGOUT });
+    res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.LOGOUT });
   }
 
   getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const filters = {
-      status: req.query.status as string,
-      type: req.query.type as string,
-      mentorId: req.query.mentorId as string,
-    };
+    try {
+      const filters = {
+        status: req.query.status as string,
+        type: req.query.type as string,
+        mentorId: req.query.mentorId as string,
+      };
 
-    const sessions = await this._adminService.getAllSessionsAdmin(filters);
+      const sessions = await this._adminService.getAllSessionsAdmin(filters);
 
-    if (!sessions || sessions.length === 0) {
-      res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.SESSION.NOT_FOUND });
-      return;
+      if (!sessions || sessions.length === 0) {
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.SESSION.NOT_FOUND });
+        return;
+      }
+
+      res.status(STATUS_CODES.OK).json({
+        sessions,
+        total: sessions.length,
+      });
+    } catch (err: any) {
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: err.message });
     }
+  };
 
-    res.status(STATUS_CODES.OK).json({
-      sessions,
-      total: sessions.length,
-    });
-  } catch (err: any) {
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+  getAllPayments = async (req: any, res: Response) => {
+    try {
+      const payments = await this._paymentService.getAllPayments();
+      res.status(STATUS_CODES.OK).json({ data: payments });
+    } catch (error: any) {
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: error.message });
+    }
+  };
+
+  getPaymentById = async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const payment = await this._paymentService.getPaymentById(id);
+      if (!payment) {
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.ERROR.NOT_FOUND });
+      }
+      res.status(STATUS_CODES.OK).json({ data: payment });
+    } catch (error: any) {
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: error.message });
+    }
+  };
+
+  async listAllDailyTasks(req: Request, res: Response) {
+    try {
+      const tasks = await this._dailyTaskService.getAllUsersLatestTasks();
+      res.status(200).json({ tasks });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
+  async getReports(req: Request, res: Response): Promise<void> {
+    try {
+      const { type, startDate, endDate, status, mentorId } = req.query;
+
+      const validTypes = ["session", "mentor", "user", "dailyTask", "payment"];
+      if (!type || !validTypes.includes(type as string)) {
+        res.status(400).json({
+          message:
+            "Invalid type. Must be one of: session, mentor, user, dailyTask, payment",
+        });
+        return;
+      }
+
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+
+      let data: any[] = [];
+
+      switch (type) {
+        case "session":
+          data =
+            (await this._sessionService.getAllSessionsAdmin({
+              status: status as string,
+              mentorId: mentorId as string,
+            })) || [];
+          break;
+
+        case "mentor":
+          data = (await this._mentorService.getAllMentors()) || [];
+          break;
+
+        case "user":
+          data = (await this._userService.getAllUsers()) || [];
+          break;
+
+        case "dailyTask":
+          data = (await this._dailyTaskService.getAllUsersLatestTasks()) || [];
+          break;
+
+        case "payment":
+          data = (await this._paymentService.getAllPayments()) || [];
+          break;
+      }
+
+      if (start || end) {
+        data = data.filter((item: any) => {
+          const dateField =
+            item.createdAt || item.updatedAt || item.date || item.timestamp;
+          if (!dateField) return true;
+          const d = new Date(dateField);
+          if (start && d < start) return false;
+          if (end && d > end) return false;
+          return true;
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        type,
+        count: data.length,
+        data,
+      });
+    } catch (error: any) {
+      console.error("Error in getReports:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to generate report",
+        error: error.message,
+      });
+    }
+  }
 }

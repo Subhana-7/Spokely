@@ -37,7 +37,7 @@ export interface ForgotPasswordDTO {
 
 export interface ChangePasswordDTO {
   id: string;
-  currentPassword:string;
+  currentPassword: string;
   newPassword?: string;
 }
 
@@ -76,4 +76,8 @@ export interface MentorDTO {
   profilePicture?: string;
   role: "user" | "mentor";
   uniqueCode: string;
+  createdAt?: Date;
+  bio?: string;
+  tags?: string;
+  sessionsDone?: number;
 }

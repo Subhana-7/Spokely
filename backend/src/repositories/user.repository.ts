@@ -76,13 +76,12 @@ export class UserRepository
   async updateForgotPasswordOTP(
     email: string,
     code: string,
-    expiresAt: Date,
-    newPassword: string
+    expiresAt: Date
   ): Promise<IUser | null> {
     try {
       return User.findOneAndUpdate(
         { email },
-        { forgotPasswordOtp: { code, expiresAt, newPassword } },
+        { forgotPasswordOtp: { code, expiresAt, verified: false } },
         { new: true }
       );
     } catch (error) {
@@ -110,8 +109,7 @@ export class UserRepository
         return false;
       }
 
-      user.password = user.forgotPasswordOtp.newPassword;
-      user.forgotPasswordOtp = undefined;
+      user.forgotPasswordOtp.verified = true;
       await user.save();
       return true;
     } catch (error) {
@@ -120,21 +118,39 @@ export class UserRepository
     }
   }
 
-  async updatePassword(id: string, newPassword: string): Promise<IUser | null> {
-  try {
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { password: newPassword },
-      { new: true }
-    );
-
-    return updatedUser;
-  } catch (error) {
-    console.log("error", error);
-    return null;
+  async updatePasswordAndClearOTP(
+    email: string,
+    newPassword: string
+  ): Promise<IUser | null> {
+    try {
+      return User.findOneAndUpdate(
+        { email },
+        {
+          password: newPassword,
+          forgotPasswordOtp: undefined,
+        },
+        { new: true }
+      );
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
   }
-}
 
+  async updatePassword(id: string, newPassword: string): Promise<IUser | null> {
+    try {
+      const updatedUser = await User.findByIdAndUpdate(
+        id,
+        { password: newPassword },
+        { new: true }
+      );
+
+      return updatedUser;
+    } catch (error) {
+      console.log("error", error);
+      return null;
+    }
+  }
 
   async updateUserRole(
     userId: string,

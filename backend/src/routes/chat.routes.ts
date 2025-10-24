@@ -19,7 +19,10 @@ router.post(
   controller.sendMessage.bind(controller)
 );
 
-
-router.get("/all", authMiddleware(["user","mentor"]),controller.getChats.bind(controller));
+router.get(
+  "/all",
+  authMiddleware(["user", "mentor"]),
+  controller.getChats.bind(controller)
+);
 
 export default router;

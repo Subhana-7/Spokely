@@ -19,8 +19,10 @@ export class ChatService {
     text: string
   ): Promise<MessageDto | null> {
     try {
-      console.log(`[ChatService] Sending message to session ${sessionId} from ${senderId}`);
-      
+      console.log(
+        `[ChatService] Sending message to session ${sessionId} from ${senderId}`
+      );
+
       const participants = sessionId.split("_");
       await this._chatRepository.findOrCreateSession(sessionId, participants);
 
@@ -32,7 +34,9 @@ export class ChatService {
       });
 
       if (!message) {
-        console.error("[ChatService] Failed to save message - repository returned null");
+        console.error(
+          "[ChatService] Failed to save message - repository returned null"
+        );
         return null;
       }
 
@@ -40,7 +44,7 @@ export class ChatService {
 
       const dto = mapMessageToDto(message);
       console.log("[ChatService] Mapped DTO:", JSON.stringify(dto));
-      
+
       return dto;
     } catch (error) {
       console.error("[ChatService] Error in sendMessage:", error);

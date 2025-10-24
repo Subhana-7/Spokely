@@ -3,5 +3,12 @@ import { IPayment } from "../../models/payment.model";
 import { IBaseRepository } from "./IBaseRepository";
 
 export interface IPaymentRepository extends IBaseRepository<IPayment> {
-  updateByPaypalId(orderId: string, update: Partial<IPayment>): Promise<IPayment | null>;
+  updateByPaypalId(
+    orderId: string,
+    update: Partial<IPayment>
+  ): Promise<IPayment | null>;
+
+  findAllPayment(): Promise<IPayment[]>;
+
+  findById(id: string): Promise<IPayment | null>;
 }

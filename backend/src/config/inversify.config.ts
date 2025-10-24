@@ -1,5 +1,15 @@
 import { Container } from "inversify";
 import { TYPES } from "../types/types";
+import { Server } from "socket.io";
+
+import { NotificationController } from "../controllers/notification.controller";
+import { INotificationController } from "../controllers/interfaces/INotificationController";
+
+import { NotificationService } from "../services/notification.service";
+import { INotificationService } from "../services/interfaces/INotificationService";
+
+import { NotificationRepository } from "../repositories/notification.repository";
+import { INotificationRepository } from "../repositories/interfaces/INotificationRepository";
 
 import { IWalletService } from "../services/interfaces/IWalletService";
 import { WalletService } from "../services/wallet.service";
@@ -7,7 +17,7 @@ import { WalletService } from "../services/wallet.service";
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 import { WalletRepository } from "../repositories/wallet.repository";
 
-import {DailyTaskController} from "../controllers/daily.task.controller";
+import { DailyTaskController } from "../controllers/daily.task.controller";
 import { IDailyTaskController } from "../controllers/interfaces/IDailyTaskController";
 
 import { DailyTaskService } from "../services/daily.task.service";
@@ -99,18 +109,38 @@ import { AdminRepository } from "../repositories/admin.repository";
 
 const container = new Container();
 
-container.bind<IWalletService>(TYPES.IWalletService).to(WalletService)
-container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository)
+container.bind<Server>(TYPES.SocketIO).toConstantValue({} as Server);
 
-container.bind<IDailyTaskController>(TYPES.IDailyTaskController).to(DailyTaskController)
-container.bind<IDailyTaskService>(TYPES.IDailyTaskService).to(DailyTaskService)
-container.bind<IDailyTaskRepository>(TYPES.IDailyTaskRepository).to(DailyTaskRepository)
+container
+  .bind<INotificationController>(TYPES.INotificationController)
+  .to(NotificationController);
+container
+  .bind<INotificationService>(TYPES.INotificationService)
+  .to(NotificationService);
+container
+  .bind<INotificationRepository>(TYPES.INotificationRepository)
+  .to(NotificationRepository);
 
-container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository)
+container.bind<IWalletService>(TYPES.IWalletService).to(WalletService);
+container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 
-container.bind<IPaymentController>(TYPES.IPaymentController).to(PaymentController)
+container
+  .bind<IDailyTaskController>(TYPES.IDailyTaskController)
+  .to(DailyTaskController);
+container.bind<IDailyTaskService>(TYPES.IDailyTaskService).to(DailyTaskService);
+container
+  .bind<IDailyTaskRepository>(TYPES.IDailyTaskRepository)
+  .to(DailyTaskRepository);
+
+container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository);
+
+container
+  .bind<IPaymentController>(TYPES.IPaymentController)
+  .to(PaymentController);
 container.bind<IPaymentService>(TYPES.IPaymentService).to(PaymentService);
-container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+container
+  .bind<IPaymentRepository>(TYPES.IPaymentRepository)
+  .to(PaymentRepository);
 
 container.bind<IChatController>(TYPES.IChatController).to(ChatController);
 container.bind<IChatService>(TYPES.IChatService).to(ChatService);

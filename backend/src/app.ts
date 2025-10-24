@@ -20,11 +20,12 @@ import container from "./config/inversify.config";
 import { TYPES } from "./types/types";
 import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
 import chatRoutes from "./routes/chat.routes";
-import { initChatSocket } from "./config/chat.socket";
-import dailyTask from "./routes/daily.task.routes"
+import dailyTask from "./routes/daily.task.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initSocket } from "./config/socket";
 
 // import fs from "fs";
 // import path from "path";
@@ -90,7 +91,6 @@ app.use(helmet());
 // // Use Swagger UI
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// routes
 app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
@@ -99,15 +99,19 @@ app.use("/api/users/connections", connectionsRoutes);
 app.use("/api/users/session", sessionRoutes);
 app.use("/api/subscription", subscriptionRouter);
 app.use("/api/chat", chatRoutes);
-app.use("/api/daily/task",dailyTask);
-
+app.use("/api/daily/task", dailyTask);
+app.use("/api/notifications", notificationRoutes);
 
 const server = createServer(app);
 const io = new Server(server, {
   cors: { origin: process.env.CLIENT_SIDE_URL },
 });
 
-initChatSocket(io);
+if (!container.isBound(TYPES.SocketIO)) {
+  container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
+}
+
+initSocket(io);
 
 connectDB()
   .then(async () => {

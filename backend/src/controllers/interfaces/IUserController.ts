@@ -5,8 +5,16 @@ export interface IUserController {
   login(req: Request, res: Response): Promise<void>;
   sendOtp(req: Request, res: Response): Promise<void>;
   verifyOtp(req: Request, res: Response): Promise<void>;
-  forgotPassword(req: Request, res: Response): Promise<void>;
-  verifyForgotPassword(req: Request, res: Response): Promise<void>;
+
+  // forgotPassword(req: Request, res: Response): Promise<void>;
+  // verifyForgotPassword(req: Request, res: Response): Promise<void>;
+
+  sendForgotPasswordOtp(req: Request, res: Response): Promise<void>;
+
+  verifyForgotPasswordOtp(req: Request, res: Response): Promise<void>;
+
+  resetPassword(req: Request, res: Response): Promise<void>;
+
   updateRole(req: Request, res: Response): Promise<void>;
   getAllUsers(req: Request, res: Response): Promise<void>;
   profile(req: Request, res: Response): Promise<void>;
@@ -20,8 +28,7 @@ export interface IUserController {
   ): Promise<void>;
   googleCallback(req: Request, res: Response, next: Function): Promise<void>;
   home(req: Request, res: Response): Promise<void>;
-  changePassword(
-      req:Request,
-      res:Response
-    ):Promise<void>;
+  changePassword(req: Request, res: Response): Promise<void>;
+
+  mentorListing(req: Request, res: Response): Promise<void>;
 }

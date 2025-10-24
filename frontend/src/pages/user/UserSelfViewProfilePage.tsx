@@ -148,7 +148,7 @@ const UserProfile = () => {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Left Column */}
           <div className="xl:col-span-1">
-            <SpokelyCard className="p-8 bg-white/10 border shadow-lg">
+            <SpokelyCard className="p-8 bg-white/10 border shadow-lg text-white">
               <div className="text-center">
                 {/* Profile Image */}
                 <div className="relative mb-6">
@@ -216,9 +216,9 @@ const UserProfile = () => {
           </div>
 
           {/* Middle Column */}
-          <div className="xl:col-span-2">
+          {/* <div className="xl:col-span-2"> */}
             {/* Progress */}
-            <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg">
+            {/* <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center">
                   <TrendingUp size={24} className="mr-3 text-indigo-300" />
@@ -269,10 +269,10 @@ const UserProfile = () => {
                   </div>
                 </div>
               </div>
-            </SpokelyCard>
+            </SpokelyCard> */}
 
             {/* Achievements */}
-            <SpokelyCard className="p-8 bg-white/10 border shadow-lg">
+            {/* <SpokelyCard className="p-8 bg-white/10 border shadow-lg">
               <h3 className="text-xl font-bold flex items-center mb-6">
                 <Award size={24} className="mr-3 text-indigo-300" />
                 Recent Achievements
@@ -301,12 +301,12 @@ const UserProfile = () => {
                   </div>
                 </div>
               </div>
-            </SpokelyCard>
-          </div>
+            </SpokelyCard> */}
+          {/* </div> */}
 
           {/* Right Column - Account Settings */}
           <div className="xl:col-span-1">
-            <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg">
+            <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg text-white">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold">Account Settings</h3>
                 {!isEditing ? (

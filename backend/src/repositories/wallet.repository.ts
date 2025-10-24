@@ -27,7 +27,8 @@ export class WalletRepository extends BaseRepository<IWallet> {
     const wallet = await this.getWallet(userId);
     if (!wallet) return null;
 
-    const newBalance = type === "CREDIT" ? wallet.balance + amount : wallet.balance - amount;
+    const newBalance =
+      type === "CREDIT" ? wallet.balance + amount : wallet.balance - amount;
     if (newBalance < 0) throw new Error("Insufficient balance");
 
     wallet.balance = newBalance;
@@ -35,8 +36,8 @@ export class WalletRepository extends BaseRepository<IWallet> {
       type,
       amount,
       reason,
-      sessionId: sessionId ? sessionId as any : undefined,
-      subscriptionId: subscriptionId ? subscriptionId as any : undefined,
+      sessionId: sessionId ? (sessionId as any) : undefined,
+      subscriptionId: subscriptionId ? (subscriptionId as any) : undefined,
     });
 
     await wallet.save();

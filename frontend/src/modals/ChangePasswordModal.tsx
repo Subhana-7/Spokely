@@ -1,42 +1,36 @@
 import React, { useState } from "react";
-import { Key, Shield } from "lucide-react";
+import { Key } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
 import OTPModal from "./OTPModal";
-import { sendForgotPasswordOTP } from "../services/authServices";
-import { useNavigate } from "react-router-dom";
+import PasswordResetSuccessModal from "./PasswordResetSuccessModal";
+import { sendForgotPasswordOTP, resetPassword } from "../services/authServices";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onChangePassword: (email: string, newPassword: string) => void;
 }
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   isOpen,
   onClose,
-  onChangePassword,
 }) => {
   const [formData, setFormData] = useState({
     email: "",
-    newPassword: "",
     role: "user" as "user" | "mentor",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
-
-  const navigate = useNavigate()
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.newPassword) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    if (formData.newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (!formData.email) {
+      setError("Please enter your email");
       return;
     }
 
@@ -44,13 +38,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     setError("");
 
     try {
-      await sendForgotPasswordOTP(
-        {
-          email: formData.email,
-          newPassword: formData.newPassword,
-        },
-        formData.role
-      );
+      await sendForgotPasswordOTP({ email: formData.email }, formData.role);
       setShowOTPModal(true);
     } catch (err: any) {
       const msg =
@@ -62,19 +50,52 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   };
 
   const handleOTPVerified = () => {
-  setShowOTPModal(false);
-  onChangePassword(formData.email, formData.newPassword);
-  handleClose();
-};
+    setShowOTPModal(false);
+    setShowPasswordModal(true);
+  };
 
+  const handlePasswordSubmit = async () => {
+    if (!newPassword || newPassword.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await resetPassword(
+        { email: formData.email, newPassword },
+        formData.role
+      );
+      setShowPasswordModal(false);
+      setShowSuccessModal(true);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message || err.message || "Failed to change password";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleClose = () => {
-    setFormData({ email: "", newPassword: "", role: "user" });
+    setFormData({ email: "", role: "user" });
     setError("");
     setShowOTPModal(false);
+    setShowPasswordModal(false);
+    setShowSuccessModal(false);
+    setNewPassword("");
+    setConfirmPassword("");
     onClose();
   };
 
+  // Step 1 – OTP Modal
   if (showOTPModal) {
     return (
       <OTPModal
@@ -88,22 +109,88 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     );
   }
 
+  // Step 2 – Password Modal (after OTP verified)
+  if (showPasswordModal) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Set New Password"
+        icon={<Key className="h-6 w-6 text-gray-800" />}
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700 text-center">
+            OTP verified successfully. Enter your new password.
+          </p>
+
+          <Input
+            type="password"
+            placeholder="Enter New Password"
+            value={newPassword}
+            onChange={(val) => setNewPassword(val)}
+          />
+
+          <Input
+            type="password"
+            placeholder="Confirm New Password"
+            value={confirmPassword}
+            onChange={(val) => setConfirmPassword(val)}
+          />
+
+          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
+          <div className="pt-2">
+            <Button
+              variant="primary"
+              onClick={handlePasswordSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? "Changing..." : "Change Password"}
+            </Button>
+          </div>
+
+          <div className="text-center pt-2">
+            <button
+              onClick={handleClose}
+              className="text-gray-800 hover:text-gray-900 font-medium transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Step 3 – Success Modal (after password reset)
+  if (showSuccessModal) {
+    return (
+      <PasswordResetSuccessModal
+        isOpen={isOpen}
+        onClose={() => {
+          setShowSuccessModal(false);
+          handleClose();
+        }}
+      />
+    );
+  }
+
+  // Step 0 – Email Entry
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Reset Password"
+      title="Forgot Password"
       icon={<Key className="h-6 w-6 text-gray-800" />}
     >
       <div className="space-y-4">
         <div className="text-center">
           <p className="text-gray-800 mb-4">
-            Enter your email and new password. We'll send you a verification
-            code.
+            Enter your registered email. We'll send an OTP to verify your
+            identity.
           </p>
         </div>
 
-        {/* Role Toggle */}
         <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg">
           <label className="text-sm font-medium text-gray-700">
             Account Type:
@@ -139,30 +226,13 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           placeholder="Email Address"
           value={formData.email}
           onChange={(value) => setFormData({ ...formData, email: value })}
-          error={error && !formData.email ? "Email is required" : ""}
         />
 
-        <Input
-          type="password"
-          placeholder="New Password"
-          value={formData.newPassword}
-          onChange={(value) => setFormData({ ...formData, newPassword: value })}
-          error={
-            error && !formData.newPassword ? "New password is required" : ""
-          }
-        />
-
-        {error && (
-          <div className="text-red-600 text-sm text-center">{error}</div>
-        )}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
         <div className="pt-2">
-          <Button
-            variant="primary"
-            onClick={handleSendOTP}
-            disabled={isLoading}
-          >
-            {isLoading ? "Sending..." : "Send Verification Code"}
+          <Button variant="primary" onClick={handleSendOTP} disabled={isLoading}>
+            {isLoading ? "Sending..." : "Send OTP"}
           </Button>
         </div>
 
@@ -180,7 +250,3 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 };
 
 export default ChangePasswordModal;
-function onOpenLoginModal() {
-  throw new Error("Function not implemented.");
-}
-

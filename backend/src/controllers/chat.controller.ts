@@ -11,7 +11,10 @@ export class ChatController {
     @inject(TYPES.IChatService) private readonly _chatService: IChatService
   ) {}
 
-  getMessages = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+  getMessages = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
       const messages = await this._chatService.getMessages(sessionId);
@@ -25,7 +28,10 @@ export class ChatController {
     }
   };
 
-  sendMessage = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+  sendMessage = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<Response | void> => {
     try {
       const { sessionId } = req.params;
       const { text } = req.body;
@@ -37,7 +43,11 @@ export class ChatController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
       }
 
-      const message = await this._chatService.sendMessage(sessionId, sender, text);
+      const message = await this._chatService.sendMessage(
+        sessionId,
+        sender,
+        text
+      );
       return res
         .status(STATUS_CODES.OK)
         .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });
@@ -48,28 +58,29 @@ export class ChatController {
     }
   };
 
+  getChats = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const userId = req.id!;
 
-  getChats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.id!; 
+      if (!userId) {
+        res
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
+      }
 
-    if (!userId) {
-       res
-        .status(STATUS_CODES.UNAUTHORIZED)
-        .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
+      const chats = await this._chatService.getChats(userId);
+
+      res
+        .status(STATUS_CODES.OK)
+        .json({ chats, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
+    } catch (err) {
+      console.error("Error fetching chats:", err);
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
-
-    const chats = await this._chatService.getChats(userId);
-
-     res
-      .status(STATUS_CODES.OK)
-      .json({ chats, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
-  } catch (err) {
-    console.error("Error fetching chats:", err);
-     res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ message: MESSAGES.ERROR.SERVER_ERROR });
-  }
-};
-
+  };
 }

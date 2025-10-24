@@ -136,7 +136,7 @@ const SpokelyMentors = () => {
           <Button
             variant="primary"
             className="px-6 py-3 text-base bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all"
-            onClick={() => navigate("/user/schedule-session")}
+            onClick={() => navigate("/user/public/mentors")}
           >
             <Plus size={18} className="mr-2" />
             Add Mentor

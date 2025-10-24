@@ -6,12 +6,17 @@ import MentorModel from "../models/mentor.model";
 import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class SubscriptionRepository extends BaseRepository<ISubscription> implements ISubscriptionRepository {
+export class SubscriptionRepository
+  extends BaseRepository<ISubscription>
+  implements ISubscriptionRepository
+{
   constructor() {
     super(SubscriptionModel);
   }
 
-  async createSubscription(data: Partial<ISubscription>): Promise<ISubscription | null> {
+  async createSubscription(
+    data: Partial<ISubscription>
+  ): Promise<ISubscription | null> {
     return await SubscriptionModel.create(data);
   }
 
@@ -28,7 +33,14 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
       subscriptions.map(async (sub: any) => {
         const mentor = sub.mentorId;
         if (!mentor || !mentor._id) {
-          return { ...sub, mentor: null, sessionsCount: 0, sessionsByUser: 0, feedbackByUser: [], avgRating: null };
+          return {
+            ...sub,
+            mentor: null,
+            sessionsCount: 0,
+            sessionsByUser: 0,
+            feedbackByUser: [],
+            avgRating: null,
+          };
         }
 
         const mentorId = mentor._id;
@@ -49,7 +61,8 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
           .flatMap((s) => s.feedback || [])
           .filter(
             (fb) =>
-              fb.from && fb.to &&
+              fb.from &&
+              fb.to &&
               fb.from.toString() === userId.toString() &&
               fb.to.toString() === mentorId.toString()
           );
@@ -141,18 +154,20 @@ export class SubscriptionRepository extends BaseRepository<ISubscription> implem
   }
 
   async cancelSubscription(subscriptionId: string) {
-    return await SubscriptionModel.findByIdAndUpdate(subscriptionId, { status: "CANCELLED" }, { new: true });
+    return await SubscriptionModel.findByIdAndUpdate(
+      subscriptionId,
+      { status: "CANCELLED" },
+      { new: true }
+    );
   }
 
   async getMentorSelectedPlans(mentorId: string) {
     const mentorPlanMapping: Record<string, ISubscription[]> = {
-      "mentor1": [
+      mentor1: [
         { plan: "DAILY", price: 500 } as any,
         { plan: "WEEKLY", price: 1500 } as any,
       ],
-      "mentor2": [
-        { plan: "BIWEEKLY", price: 2800 } as any,
-      ],
+      mentor2: [{ plan: "BIWEEKLY", price: 2800 } as any],
     };
 
     return mentorPlanMapping[mentorId] || [];

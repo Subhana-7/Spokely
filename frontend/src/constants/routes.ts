@@ -8,7 +8,6 @@ export const CONNECTION_ROUTES = {
   sentRequests: "/sent-requests",
 };
 
-
 export const ADMIN_ROUTES = {
   base: "/admin",
   login: "/login",
@@ -31,12 +30,14 @@ export const USER_ROUTES = {
   refreshToken: "/refresh-token",
   sendOTP: "/send-otp",
   verifyOTP: "/verify-otp",
-  forgotPassword: "/forgot-password",
-  verifyForgotPassword: "/verify-forgot-password",
+  sendForgotPasswordOTP: "/send-forgot-password-otp",
+  verifyForgotPasswordOTP: "/verify-forgot-password-otp",
+  resetPassword: "/reset-password",
   home: "/home",
   edit: "/edit",
   changePassword: "/change-password",
   peerProfile: "/peer/profile",
+  mentorLising:"/mentor/listing"
 };
 
 export const MENTOR_ROUTES = {
@@ -47,8 +48,9 @@ export const MENTOR_ROUTES = {
   refreshToken: "/refresh-token",
   sendOTP: "/send-otp",
   verifyOTP: "/verify-otp",
-  forgotPassword: "/forgot-password",
-  verifyForgotPassword: "/verify-forgot-password",
+  sendForgotPasswordOTP: "/send-forgot-password-otp",
+  verifyForgotPasswordOTP: "/verify-forgot-password-otp",
+  resetPassword: "/reset-password",
   home: "/home",
   edit: "/edit",
   changePassword: "/change-password",
@@ -62,7 +64,6 @@ export const CHAT_ROUTES = {
   all: "/all",
 };
 
-
 export const PAYMENT_ROUTES = {
   base: "/payment",
   create: "/create",
@@ -72,13 +73,12 @@ export const PAYMENT_ROUTES = {
   wallet:"/wallet",
 };
 
-
 export const SESSION_ROUTES = {
   base: "/users/session",
   schedule: "/schedule",
   list: "/list",
   details: "/details",
-  update: "", // used with /:id
+  update: "",
   respond: "/respond",
   cancelParticipation: "/cancel-participation",
   cancelSession: "/cancel-session",
@@ -90,7 +90,6 @@ export const SESSION_ROUTES = {
   adminDetails: "/admin",
 };
 
-
 export const SUBSCRIPTION_ROUTES = {
   base: "/subscription",
   mentorPlans: "/mentor",
@@ -100,3 +99,7 @@ export const SUBSCRIPTION_ROUTES = {
   mentorStudents: "/mentor-students",
 };
 
+export const NOTIFICATION_ROUTES = {
+  base:"/notifications",
+  read:"/read",
+}

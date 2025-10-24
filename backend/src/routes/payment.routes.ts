@@ -7,7 +7,9 @@ import { IPaymentController } from "../controllers/interfaces/IPaymentController
 import { TYPES } from "../types/types";
 
 const router = Router();
-const paymentController = container.get<IPaymentController>(TYPES.IPaymentController);
+const paymentController = container.get<IPaymentController>(
+  TYPES.IPaymentController
+);
 
 router.post(
   "/create",
@@ -31,6 +33,10 @@ router.post(
   paymentController.captureSubscription.bind(paymentController)
 );
 
-router.get("/wallet",authMiddleware(["user","mentor"]),paymentController.wallet.bind(paymentController));
+router.get(
+  "/wallet",
+  authMiddleware(["user", "mentor"]),
+  paymentController.wallet.bind(paymentController)
+);
 
 export default router;

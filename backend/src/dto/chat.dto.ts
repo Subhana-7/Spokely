@@ -12,7 +12,6 @@ export interface MessageDto {
   };
 }
 
-
 export interface ChatSessionDto {
   id: string;
   participants: string[];

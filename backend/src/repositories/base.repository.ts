@@ -3,7 +3,9 @@ import { IBaseRepository } from "./interfaces/IBaseRepository";
 import { injectable } from "inversify";
 
 @injectable()
-export abstract class BaseRepository<T extends Document> implements IBaseRepository<T> {
+export abstract class BaseRepository<T extends Document>
+  implements IBaseRepository<T>
+{
   protected model: Model<T>;
 
   constructor(model: Model<T>) {
@@ -21,7 +23,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
 
   async findOne(query: Partial<Record<keyof T, any>>): Promise<T | null> {
     try {
-      console.log(query)
+      console.log(query);
       return this.model.findOne(query);
     } catch (error) {
       console.error("findOne error:", error);
@@ -35,7 +37,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   ): Promise<{ results: T[]; total: number }> {
     try {
       const page = options?.page || 1;
-      const limit = options?.limit || 0; 
+      const limit = options?.limit || 0;
       const skip = (page - 1) * limit;
 
       const results = await this.model.find(query).skip(skip).limit(limit);

@@ -29,7 +29,12 @@ const walletTransactionSchema = new Schema<IWalletTransaction>(
 
 const walletSchema = new Schema<IWallet>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
     balance: { type: Number, default: 0 },
     transactions: [walletTransactionSchema],
   },

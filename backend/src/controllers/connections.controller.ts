@@ -7,9 +7,10 @@ import { IConnectionService } from "../services/interfaces/IConnectionsService";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 
 @injectable()
-export class ConnectionController implements IConnectionController { 
+export class ConnectionController implements IConnectionController {
   constructor(
-    @inject(TYPES.IConnectionService) private _connectionsService: IConnectionService
+    @inject(TYPES.IConnectionService)
+    private _connectionsService: IConnectionService
   ) {}
 
   async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -19,7 +20,10 @@ export class ConnectionController implements IConnectionController {
       const senderId = req.id;
       const { uniqueCode } = req.body;
 
-      const connection = await this._connectionsService.sendConnectionRequest(senderId, uniqueCode);
+      const connection = await this._connectionsService.sendConnectionRequest(
+        senderId,
+        uniqueCode
+      );
       res.status(STATUS_CODES.CREATED).json(connection);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
@@ -30,37 +34,51 @@ export class ConnectionController implements IConnectionController {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      const requests = await this._connectionsService.getIncomingRequests(req.id);
+      const requests = await this._connectionsService.getIncomingRequests(
+        req.id
+      );
       res.status(STATUS_CODES.OK).json(requests);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async acceptConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async acceptConnection(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
-      console.log(req.body.requestId)
+      console.log(req.body.requestId);
       const { requestId } = req.body;
       const userId = req.id;
 
-      console.log("contro",requestId,userId)
-      const accepted = await this._connectionsService.acceptRequest(requestId, userId);
+      console.log("contro", requestId, userId);
+      const accepted = await this._connectionsService.acceptRequest(
+        requestId,
+        userId
+      );
       res.status(STATUS_CODES.OK).json(accepted);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-  async listConnections(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async listConnections(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const userId = req.id;
       const search = req.query.search as string;
-      const connections = await this._connectionsService.getAllConnections(userId, search);
+      const connections = await this._connectionsService.getAllConnections(
+        userId,
+        search
+      );
 
-      console.log(connections)
+      console.log(connections);
 
       res.status(STATUS_CODES.OK).json(connections);
     } catch (err: any) {
@@ -68,51 +86,61 @@ export class ConnectionController implements IConnectionController {
     }
   }
 
-  async getSentRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getSentRequests(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      const requests = await this._connectionsService.getOutgoingRequests(req.id);
+      const requests = await this._connectionsService.getOutgoingRequests(
+        req.id
+      );
       res.status(STATUS_CODES.OK).json(requests);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-
-  // controller
-async blockConnection(req: AuthenticatedRequest, res: Response) {
-  try {
-    console.log('hiting')
-    const userId = req.id!;
-    const connectionId = req.params.id;
-    console.log(connectionId)
-    const updated = await this._connectionsService.blockConnection(connectionId, userId);
-    res.status(200).json(updated);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  async blockConnection(req: AuthenticatedRequest, res: Response) {
+    try {
+      console.log("hiting");
+      const userId = req.id!;
+      const connectionId = req.params.id;
+      console.log(connectionId);
+      const updated = await this._connectionsService.blockConnection(
+        connectionId,
+        userId
+      );
+      res.status(200).json(updated);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
   }
-}
 
-async unblockConnection(req: AuthenticatedRequest, res: Response) {
-  try {
-    const userId = req.id!;
-    const connectionId = req.params.id;
-    const updated = await this._connectionsService.unblockConnection(connectionId, userId);
-    res.status(200).json(updated);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  async unblockConnection(req: AuthenticatedRequest, res: Response) {
+    try {
+      const userId = req.id!;
+      const connectionId = req.params.id;
+      const updated = await this._connectionsService.unblockConnection(
+        connectionId,
+        userId
+      );
+      res.status(200).json(updated);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
   }
-}
 
-async removeConnection(req:AuthenticatedRequest,res:Response) {
-  try {
-    const connectionId = req.params.id;
-    const result = await this._connectionsService.removeConnection(connectionId);
-    res.status(200).json(result)
-  } catch (error:any) {
-    res.status(400).json({ message: error.message });
+  async removeConnection(req: AuthenticatedRequest, res: Response) {
+    try {
+      const connectionId = req.params.id;
+      const result = await this._connectionsService.removeConnection(
+        connectionId
+      );
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   }
-}
-
 }

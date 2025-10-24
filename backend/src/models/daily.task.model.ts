@@ -2,7 +2,6 @@ import mongoose, { Document, model, Schema } from "mongoose";
 
 type UserResponse = string | string[] | Record<number, string>;
 
-
 interface TaskDetail {
   prompt: string;
   paragraph?: string;
@@ -19,7 +18,7 @@ export interface IDailyTask extends Document {
   reading: TaskDetail;
   speaking: TaskDetail;
   listening: TaskDetail;
-  userResponses: Record<string, any>; 
+  userResponses: Record<string, any>;
 }
 
 const TaskDetailSchema = new Schema<TaskDetail>(
@@ -29,11 +28,10 @@ const TaskDetailSchema = new Schema<TaskDetail>(
     questions: [{ type: String }],
     userResponse: { type: Schema.Types.Mixed },
     feedback: {
-  strengths: { type: String },
-  weaknesses: { type: String },
-  feedback: { type: String },
-}
-
+      strengths: { type: String },
+      weaknesses: { type: String },
+      feedback: { type: String },
+    },
   },
   { _id: false }
 );

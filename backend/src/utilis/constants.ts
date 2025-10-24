@@ -1,5 +1,3 @@
-// src/constants/constants.ts
-
 export const ROLES = {
   USER: "user",
   MENTOR: "mentor",
@@ -43,6 +41,7 @@ export const MESSAGES = {
     MENTOR_UNBLOCKED: "Mentor successfully unblocked",
     PAYMENT_CREATED: "Payment order created successfully",
     WALLET_FETCHED: "Wallet fetched successfully",
+    MENTOR_LISTING: "Mentors fetched successfully",
   },
   ERROR: {
     INVALID_CREDENTIALS: "Invalid email or password",
@@ -62,6 +61,8 @@ export const MESSAGES = {
     SELF_CONNECTION: "You can't connect with yourself",
     CONNECTION_EXISTS: "Connection already exists",
     PASSWORD_NOT_CHANGED: "Password is not changed",
+    NOT_FOUND: "Data not found",
+    SUBSCRIPTION_FAILED: "Subscription failed",
   },
   SESSION: {
     CREATED: "Session created",

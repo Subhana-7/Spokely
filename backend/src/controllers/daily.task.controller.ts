@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
-import { MESSAGES, STATUS_CODES } from "../utilis/constants"; 
+import { MESSAGES, STATUS_CODES } from "../utilis/constants";
 
 @injectable()
 export class DailyTaskController {

@@ -7,6 +7,7 @@ const DashboardHeader = () => {
     { label: 'User Management', path: '/admin/users' },
     { label: 'Mentor Management', path: '/admin/mentors' },
     { label: 'Session Management', path: '/admin/sessions' },
+    { label: 'Payment Management', path: '/admin/payment-management' },
     { label: 'Tasks', path: '/admin/tasks' },
     { label: 'Reports', path: '/admin/reports' },
     // { label: 'Session Details', path: '/admin/session-details' },

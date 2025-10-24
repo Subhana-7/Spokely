@@ -10,17 +10,21 @@ import {
 import { generateAgoraToken } from "../config/agora";
 import { MESSAGES } from "../utilis/constants";
 import { IWalletService } from "./interfaces/IWalletService";
+import { INotificationService } from "./interfaces/INotificationService";
 
 @injectable()
 export class SessionService {
   constructor(
     @inject(TYPES.ISessionRepository)
     private readonly _sessionRepository: ISessionRepository,
-    @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
+    @inject(TYPES.IWalletService)
+    private readonly _walletService: IWalletService,
+    @inject(TYPES.INotificationService)
+    private readonly _notificationService: INotificationService
   ) {}
 
   async createSession(body: any, userId: string): Promise<ISession | null> {
-    console.log('create session')
+    console.log("create session");
     const dto = mapToCreateSessionDTO(body, userId);
 
     let maxParticipants = 2;
@@ -34,8 +38,49 @@ export class SessionService {
     if (dto.type === "private" || dto.mentorId) dto.status = "pending";
     else dto.status = "upcoming";
 
+    const session = await this._sessionRepository.createSession(dto);
+    console.log("session", session);
 
-    return await this._sessionRepository.createSession(dto);
+    if (!session) {
+      throw new Error(MESSAGES.SESSION.NOT_FOUND);
+    }
+
+    switch (session.type) {
+      case "private":
+        for (const participant of session.participants || []) {
+          await this._notificationService.send({
+            userId: participant.user.toString(),
+            title: "New Private Session Invitation",
+            message: `You've been invited to a private session: "${session.topic}" by your mentor.`,
+            type: "info",
+          });
+        }
+        break;
+
+      case "peer-to-peer":
+        for (const participant of session.participants || []) {
+          await this._notificationService.send({
+            userId: participant.user.toString(),
+            title: "Peer-to-Peer Session Invite",
+            message: `You’ve been invited to join a session: "${session.topic}".`,
+            type: "info",
+          });
+        }
+        break;
+
+      case "public":
+        // no notifications on create — users discover it
+        break;
+    }
+
+    await this._notificationService.send({
+      userId: session.createdBy.toString(),
+      title: "Session Created Successfully",
+      message: `Your session "${session.topic}" has been created.`,
+      type: "success",
+    });
+
+    return session;
   }
 
   async getSessions(userId: string): Promise<ISession[] | null> {
@@ -73,9 +118,9 @@ export class SessionService {
   }
 
   async updateSession(sessionId: string, body: any): Promise<ISession | null> {
-    console.log('update session',body)
+    console.log("update session", body);
     const dto: UpdateSessionDTO = mapToUpdateSessionDTO(body);
-    console.log(dto)
+    console.log(dto);
     return await this._sessionRepository.updateSession(sessionId, dto);
   }
 
@@ -120,7 +165,7 @@ export class SessionService {
     const session = await this._sessionRepository.getSessionById(sessionId);
     if (!session) return null;
 
-    console.log(session)
+    console.log(session);
 
     if (session.type === "public") {
       await this._walletService.credit(

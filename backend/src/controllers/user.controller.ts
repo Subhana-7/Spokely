@@ -7,17 +7,18 @@ import {
   LoginDTO,
   SendOtpDTO,
   VerifyOtpDTO,
-  ForgotPasswordDTO,
-  VerifyForgotPasswordDTO,
+  SendForgotPasswordOtpDTO,
+  VerifyForgotPasswordOtpDTO,
+  ResetPasswordDTO,
   UpdateRoleDTO,
-  changePasswordDTO
+  changePasswordDTO,
 } from "../dto/user.dto";
 import { IUserController } from "./interfaces/IUserController";
 import { STATUS_CODES, MESSAGES } from "../utilis/constants";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
-export class UserController implements IUserController { 
+export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private _userService: IUserService) {}
 
   signup = async (req: Request<{}, {}, SignupDTO>, res: Response) => {
@@ -60,30 +61,50 @@ export class UserController implements IUserController {
     }
   };
 
-  handleGoogleAccounts = async (req: Request, res: Response, next: Function) => {
-  console.log("Initiating Google OAuth...");
-  next();
-};
+  handleGoogleAccounts = async (
+    req: Request,
+    res: Response,
+    next: Function
+  ) => {
+    console.log("Initiating Google OAuth...");
+    next();
+  };
 
   googleCallback = async (req: Request, res: Response): Promise<void> => {
     try {
       const user = req.user as any;
       if (!user) {
         console.error("No user found in req.user after Google auth");
-        return res.redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/?error=google_auth_failed`);
+        return res.redirect(
+          `${
+            process.env.CLIENT_SIDE_URL || "http://localhost:5173"
+          }/?error=google_auth_failed`
+        );
       }
 
-      const accessToken = generateAccessToken({ id: user._id, role: user.role });
-      const refreshToken = generateRefreshToken({ id: user._id, role: user.role });
+      const accessToken = generateAccessToken({
+        id: user._id,
+        role: user.role,
+      });
+      const refreshToken = generateRefreshToken({
+        id: user._id,
+        role: user.role,
+      });
 
       res
         .cookie("auth-token", accessToken, { httpOnly: true })
         .cookie("refresh-token", refreshToken, { httpOnly: true })
         .cookie("role", user.role, { httpOnly: false })
-        .redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/user/home`);
+        .redirect(
+          `${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/user/home`
+        );
     } catch (error: any) {
       console.error("Google callback error:", error);
-      return res.redirect(`${process.env.CLIENT_SIDE_URL || "http://localhost:5173"}/?error=google_auth_failed`);
+      return res.redirect(
+        `${
+          process.env.CLIENT_SIDE_URL || "http://localhost:5173"
+        }/?error=google_auth_failed`
+      );
     }
   };
 
@@ -117,27 +138,45 @@ export class UserController implements IUserController {
     }
   };
 
-  forgotPassword = async (
-    req: Request<{}, {}, ForgotPasswordDTO>,
+  sendForgotPasswordOtp = async (
+    req: Request<{}, {}, SendForgotPasswordOtpDTO>,
     res: Response
   ) => {
     try {
-      await this._userService.forgotPassword(req.body);
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SUCCESS.OTP_SENT });
+      await this._userService.sendForgotPasswordOtp(req.body.email);
+      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.OTP_SENT });
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
-  verifyForgotPassword = async (
-    req: Request<{}, {}, VerifyForgotPasswordDTO>,
+  verifyForgotPasswordOtp = async (
+    req: Request<{}, {}, VerifyForgotPasswordOtpDTO>,
     res: Response
   ) => {
     try {
-      const result = await this._userService.verifyForgotPassword(req.body);
+      const result = await this._userService.verifyForgotPasswordOtp(
+        req.body.email,
+        req.body.code
+      );
       res.status(STATUS_CODES.OK).json(result);
+    } catch (err: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    }
+  };
+
+  resetPassword = async (
+    req: Request<{}, {}, ResetPasswordDTO>,
+    res: Response
+  ) => {
+    try {
+      await this._userService.resetPassword(
+        req.body.email,
+        req.body.newPassword
+      );
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
@@ -162,7 +201,9 @@ export class UserController implements IUserController {
       const users = await this._userService.getAllUsers();
       res.status(STATUS_CODES.OK).json(users);
     } catch (err: any) {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: err.message });
     }
   };
 
@@ -180,21 +221,34 @@ export class UserController implements IUserController {
       const user = await this._userService.updateUser(req.params.id, req.body);
       res.status(STATUS_CODES.OK).json(user);
     } catch (err: any) {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: err.message });
     }
   };
 
-  changePassword = async(
-    req:Request<{},{},changePasswordDTO>,
-    res:Response
+  changePassword = async (
+    req: Request<{}, {}, changePasswordDTO>,
+    res: Response
   ) => {
     try {
       await this._userService.changePassword(req.body);
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
-    } catch (error:any) {
+    } catch (error: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
-  }
+  };
+
+  mentorListing = async (req: Request, res: Response) => {
+    try {
+      let result = await this._userService.listMentors();
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.MENTOR_LISTING, result });
+    } catch (error: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
+    }
+  };
 }

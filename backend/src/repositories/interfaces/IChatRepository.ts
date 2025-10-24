@@ -8,6 +8,6 @@ export interface IChatRepository {
     sessionId: string,
     participants: string[]
   ): Promise<IChatSession | null>;
-  getUserChats(userId: string):Promise<IChatPreview[] | null>;
-  markMessagesRead(sessionId: string, userId: string): Promise<void>
+  getUserChats(userId: string): Promise<IChatPreview[] | null>;
+  markMessagesRead(sessionId: string, userId: string): Promise<void>;
 }

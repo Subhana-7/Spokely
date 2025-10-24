@@ -19,18 +19,22 @@ export class SubscriptionController implements ISubscriptionController {
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: err.message || MESSAGES.SUBSCRIPTION.FAILED,
+        message: err.message || MESSAGES.ERROR.SUBSCRIPTION_FAILED,
       });
     }
   }
 
   async getUserSubscriptions(req: Request, res: Response): Promise<void> {
-    const subs = await this._subscriptionService.getUserSubscriptions(req.params.id);
+    const subs = await this._subscriptionService.getUserSubscriptions(
+      req.params.id
+    );
     res.status(STATUS_CODES.OK).json(subs);
   }
 
   async getMentorSubscriptions(req: Request, res: Response): Promise<void> {
-    const subs = await this._subscriptionService.getMentorSubscriptions(req.params.id);
+    const subs = await this._subscriptionService.getMentorSubscriptions(
+      req.params.id
+    );
     res.status(STATUS_CODES.OK).json(subs);
   }
 
@@ -49,7 +53,7 @@ export class SubscriptionController implements ISubscriptionController {
     } catch (err) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: MESSAGES.SUBSCRIPTION.FETCH_FAILED });
+        .json({ success: false, message: MESSAGES.ERROR.SUBSCRIPTION_FAILED });
     }
   }
 
@@ -60,7 +64,7 @@ export class SubscriptionController implements ISubscriptionController {
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: err.message || MESSAGES.SUBSCRIPTION.SAVE_FAILED,
+        message: err.message || MESSAGES.ERROR.SUBSCRIPTION_FAILED,
       });
     }
   }

@@ -100,7 +100,7 @@ export class DailyTaskService {
       task.reading = reading;
       task.speaking = speaking;
       task.listening = listening;
-      task.userResponses = {}; 
+      task.userResponses = {};
       await task.save();
     } else {
       task = await this._dailyTaskRepository.create({
@@ -119,17 +119,17 @@ export class DailyTaskService {
   }
 
   async submitAll(taskId: string, responses: any, userId: string) {
-  const task = await this._dailyTaskRepository.findById(taskId);
-  if (!task) return null;
+    const task = await this._dailyTaskRepository.findById(taskId);
+    if (!task) return null;
 
-  if (responses.writing) task.writing.userResponse = responses.writing;
-  if (responses.speaking) task.speaking.userResponse = responses.speaking;
-  if (responses.reading) task.reading.userResponse = responses.reading;
-  if (responses.listening) task.listening.userResponse = responses.listening;
+    if (responses.writing) task.writing.userResponse = responses.writing;
+    if (responses.speaking) task.speaking.userResponse = responses.speaking;
+    if (responses.reading) task.reading.userResponse = responses.reading;
+    if (responses.listening) task.listening.userResponse = responses.listening;
 
-  await task.save();
+    await task.save();
 
-  const evalPrompt = `
+    const evalPrompt = `
   You are an Communication Trainer. Evaluate the following student task responses.
   Provide strengths, weaknesses, and specific improvement tips.
   
@@ -149,7 +149,9 @@ export class DailyTaskService {
 
   Speaking:
   Prompt: ${task.speaking.prompt}
-  Student Audio: ${task.speaking.userResponse ? "[Audio Submitted]" : "Not submitted"}
+  Student Audio: ${
+    task.speaking.userResponse ? "[Audio Submitted]" : "Not submitted"
+  }
 
   Return JSON only, structure:
   {
@@ -160,28 +162,32 @@ export class DailyTaskService {
   }
   `;
 
-  const feedbackStr = await chatWithGroq(evalPrompt);
+    const feedbackStr = await chatWithGroq(evalPrompt);
 
-  if(!feedbackStr){
-    return null
+    if (!feedbackStr) {
+      return null;
+    }
+
+    let feedback;
+    try {
+      feedback = JSON.parse(
+        feedbackStr
+          .replace(/```(json)?/g, "")
+          .replace(/```/g, "")
+          .trim()
+      );
+    } catch (e) {
+      feedback = { error: "Failed to parse AI feedback", raw: feedbackStr };
+    }
+
+    task.writing.feedback = feedback.writing || "";
+    task.reading.feedback = feedback.reading || "";
+    task.listening.feedback = feedback.listening || "";
+    task.speaking.feedback = feedback.speaking || "";
+    await task.save();
+
+    return { task, feedback };
   }
-
-  let feedback;
-  try {
-    feedback = JSON.parse(feedbackStr.replace(/```(json)?/g, "").replace(/```/g, "").trim());
-  } catch (e) {
-    feedback = { error: "Failed to parse AI feedback", raw: feedbackStr };
-  }
-
-  task.writing.feedback = feedback.writing || "";
-  task.reading.feedback = feedback.reading || "";
-  task.listening.feedback = feedback.listening || "";
-  task.speaking.feedback = feedback.speaking || "";
-  await task.save();
-
-  return { task, feedback };
-}
-
 
   async addUserResponse(taskId: string, type: string, userResponse: any) {
     const task = await this._dailyTaskRepository.findById(taskId);
@@ -198,18 +204,26 @@ export class DailyTaskService {
     return mapDailyTaskToDto(task);
   }
 
-
   async getUserLatestTask(userId: string): Promise<DailyTaskDto | null> {
-  const today = new Date();
-  const dayStart = new Date(today.setHours(0, 0, 0, 0));
+    const today = new Date();
+    const dayStart = new Date(today.setHours(0, 0, 0, 0));
 
-  let task = await this._dailyTaskRepository.findByUserAndDate(userId, dayStart);
+    let task = await this._dailyTaskRepository.findByUserAndDate(
+      userId,
+      dayStart
+    );
 
-  if (!task) {
-    return null; 
+    if (!task) {
+      return null;
+    }
+
+    return mapDailyTaskToDto(task);
   }
 
-  return mapDailyTaskToDto(task);
-}
-
+  async getAllUsersLatestTasks(): Promise<DailyTaskDto[]> {
+    const today = new Date();
+    const dayStart = new Date(today.setHours(0, 0, 0, 0));
+    const tasks = await this._dailyTaskRepository.findAllByDate(dayStart);
+    return tasks.map(mapDailyTaskToDto);
+  }
 }

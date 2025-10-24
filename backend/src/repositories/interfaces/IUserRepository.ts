@@ -19,6 +19,7 @@ export interface IUserRepository extends IBaseRepository<IUser> {
     query?: Partial<Record<keyof IUser, any>>,
     options?: { page?: number; limit?: number }
   ): Promise<{ results: IUser[]; total: number }>;
+
   updateForgotPasswordOTP(
     email: string,
     code: string,
@@ -26,9 +27,20 @@ export interface IUserRepository extends IBaseRepository<IUser> {
     newPassword: string
   ): Promise<IUser | null>;
   verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null>;
-  updatePassword(
-    id: string,
+
+  updateForgotPasswordOTP(
+    email: string,
+    code: string,
+    expiresAt: Date
+  ): Promise<IUser | null>;
+
+  verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null>;
+
+  updatePasswordAndClearOTP(
+    email: string,
     newPassword: string
   ): Promise<IUser | null>;
+
+  updatePassword(id: string, newPassword: string): Promise<IUser | null>;
   updateUser(id: string, data: any): Promise<IUser | null>;
 }

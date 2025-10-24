@@ -34,7 +34,10 @@ router.post(
 
 router.patch("/users/:id/status", controller.updateUserStatus.bind(controller));
 
-router.patch("/mentors/:id/status", controller.updateMentorStatus.bind(controller));
+router.patch(
+  "/mentors/:id/status",
+  controller.updateMentorStatus.bind(controller)
+);
 
 // router.delete("/users/:id", controller.deleteUser.bind(controller));
 
@@ -51,8 +54,18 @@ router.patch("/mentors/approve/:id", controller.approveMentor.bind(controller));
 
 router.post("/mentors/reject/:id", controller.rejectMentor.bind(controller));
 
-router.post('/logout',controller.logout.bind(controller));
+router.post("/logout", controller.logout.bind(controller));
 
-router.get("/sessions",authMiddleware(["admin"]),controller.getAllSessionsAdmin.bind(controller))
+router.get(
+  "/sessions",
+  authMiddleware(["admin"]),
+  controller.getAllSessionsAdmin.bind(controller)
+);
+
+router.get("/payments", controller.getAllPayments.bind(controller));
+
+router.get("/tasks", controller.listAllDailyTasks.bind(controller));
+
+router.get("/reports", controller.getReports.bind(controller));
 
 export default router;

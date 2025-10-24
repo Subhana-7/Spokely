@@ -348,85 +348,102 @@ const SessionDetail = () => {
       </div>
 
       {/* Give Feedback Modal */}
-      {feedbackModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Give Feedback</h2>
-            <Input
-              type="text"
-              placeholder="Enter feedback..."
-              value={feedbackComment}
-              onChange={setFeedbackComment}
-              className="w-full mb-4"
-            />
-            <Input
-              type="number"
-              placeholder="Rating (1-5)"
-              value={feedbackRating}
-              onChange={(val) => setFeedbackRating(Number(val))}
-              className="w-full mb-4"
-              min={1}
-              max={5}
-            />
-            <div className="flex justify-end gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setFeedbackModal({ open: false })}
-              >
-                Close
-              </Button>
-              <Button variant="primary" onClick={handleSubmitFeedback}>
-                Submit
-              </Button>
+{feedbackModal.open && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
+      <h2 className="text-lg font-semibold mb-4">Give Feedback</h2>
+
+      <Input
+        type="text"
+        placeholder="Enter feedback..."
+        value={feedbackComment}
+        onChange={setFeedbackComment}
+        className="w-full mb-4"
+      />
+
+      {/* Star Rating Selector */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={28}
+            onClick={() => setFeedbackRating(star)}
+            className={`cursor-pointer transition-transform ${
+              star <= (feedbackRating || 0)
+                ? "text-yellow-500 fill-yellow-500 scale-110"
+                : "text-gray-400 hover:text-yellow-400"
+            }`}
+          />
+        ))}
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <Button
+          variant="secondary"
+          onClick={() => setFeedbackModal({ open: false })}
+        >
+          Close
+        </Button>
+        <Button variant="primary" onClick={handleSubmitFeedback}>
+          Submit
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* View Feedback Modal */}
+{viewFeedbackModal.open && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-gray-800 text-white rounded-xl p-6 w-96 shadow-lg">
+      <h2 className="text-lg font-semibold mb-4">Your Feedback</h2>
+
+      {viewFeedbackModal.feedback && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-1">
+              Rating
+            </label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  size={22}
+                  className={
+                    star <= viewFeedbackModal.feedback.rating
+                      ? "text-yellow-500 fill-yellow-500"
+                      : "text-gray-300"
+                  }
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-1">
+              Comment
+            </label>
+            <div className="p-3 bg-gray-50 rounded-lg border">
+              <p className="text-gray-800">
+                {viewFeedbackModal.feedback.comment}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* View Feedback Modal */}
-      {viewFeedbackModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-xl p-6 w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Your Feedback</h2>
+      <div className="flex justify-end gap-3 mt-6">
+        <Button
+          variant="secondary"
+          onClick={() => setViewFeedbackModal({ open: false })}
+        >
+          Close
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
 
-            {viewFeedbackModal.feedback && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rating
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                    <span className="font-semibold">
-                      {viewFeedbackModal.feedback.rating}/5
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Comment
-                  </label>
-                  <div className="p-3 bg-gray-50 rounded-lg border">
-                    <p className="text-gray-800">
-                      {viewFeedbackModal.feedback.comment}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                variant="secondary"
-                onClick={() => setViewFeedbackModal({ open: false })}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

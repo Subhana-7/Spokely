@@ -23,7 +23,7 @@ export interface IUser extends Document {
   forgotPasswordOtp?: {
     code: string;
     expiresAt: Date;
-    newPassword: string;
+    verified: boolean;
   };
   isVerified: boolean;
   googleId?: string;
@@ -48,7 +48,7 @@ const userSchema = new Schema<IUser>(
     forgotPasswordOtp: {
       code: { type: String },
       expiresAt: { type: Date },
-      newPassword: { type: String },
+      verified: { type: Boolean, default: false },
     },
     googleId: { type: String, default: null },
     isGoogleUser: { type: Boolean, default: false },

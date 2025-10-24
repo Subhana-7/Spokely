@@ -7,9 +7,7 @@ export interface IMentorService {
   verifyOtp(email: string, code: string): Promise<{ message: string }>;
 
   signup(data: any): Promise<MentorResponseDTO | null>;
-  login(
-    data: any
-  ): Promise<{
+  login(data: any): Promise<{
     mentor: MentorResponseDTO;
     accessToken: string;
     refreshToken: string;

@@ -16,8 +16,15 @@ router.post("/login", controller.login.bind(controller));
 router.post("/send-otp", controller.sendOtp.bind(controller));
 router.post("/verify-otp", controller.verifyOtp.bind(controller));
 
-router.post("/forgot-password", controller.forgotPassword.bind(controller));
-router.post("/verify-forgot-password", controller.verifyForgotPassword.bind(controller));
+router.post(
+  "/send-forgot-password-otp",
+  controller.sendForgotPasswordOtp.bind(controller)
+);
+router.post(
+  "/verify-forgot-password-otp",
+  controller.verifyForgotPasswordOtp.bind(controller)
+);
+router.post("/reset-password", controller.resetPassword.bind(controller));
 
 router.get("/home", authMiddleware(["user"]), controller.home.bind(controller));
 
@@ -32,7 +39,6 @@ router.get(
   controller.googleCallback.bind(controller)
 );
 
-
 router.post("/logout", controller.logout.bind(controller));
 router.get(
   "/all",
@@ -44,8 +50,10 @@ router.post("/refresh-token", controller.refreshToken.bind(controller));
 
 router.get("/peer/profile/:id", controller.profile.bind(controller));
 
-router.post("/edit/:id",controller.editUser.bind(controller));
+router.post("/edit/:id", controller.editUser.bind(controller));
 
-router.post("/change-password",controller.changePassword.bind(controller));
+router.post("/change-password", controller.changePassword.bind(controller));
+
+router.get("/mentor/listing", controller.mentorListing.bind(controller));
 
 export default router;

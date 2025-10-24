@@ -6,7 +6,10 @@ import Mentor, { IMentor } from "../models/mentor.model";
 import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class AdminRepository extends BaseRepository<IAdmin> implements IAdminRepository {
+export class AdminRepository
+  extends BaseRepository<IAdmin>
+  implements IAdminRepository
+{
   constructor() {
     super(Admin);
   }

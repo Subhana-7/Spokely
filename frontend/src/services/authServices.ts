@@ -70,13 +70,18 @@ export const verifyOTP = (data: { email: string; code: string }, role: Exclude<R
   return API.post(endpoint, data);
 };
 
-export const sendForgotPasswordOTP = (data: { email: string; newPassword?: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.forgotPassword}` : `${U.base}${U.forgotPassword}`;
+export const sendForgotPasswordOTP = (data: { email: string }, role: string) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.sendForgotPasswordOTP}` : `${U.base}${U.sendForgotPasswordOTP}`;
   return API.post(endpoint, data);
 };
 
 export const verifyForgotPasswordOTP = (data: { email: string; code: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.verifyForgotPassword}` : `${U.base}${U.verifyForgotPassword}`;
+  const endpoint = role === "mentor" ? `${M.base}${M.verifyForgotPasswordOTP}` : `${U.base}${M.verifyForgotPasswordOTP}`;
+  return API.post(endpoint, data);
+};
+
+export const resetPassword = (data: { email: string; newPassword: string }, role: Exclude<Role, "admin">) => {
+  const endpoint = role === "mentor" ? `${M.base}${M.resetPassword}` : `${U.base}${U.resetPassword}`;
   return API.post(endpoint, data);
 };
 

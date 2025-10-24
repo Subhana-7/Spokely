@@ -1,5 +1,5 @@
 import morgan from "morgan";
-import { createStream } from 'rotating-file-stream';
+import { createStream } from "rotating-file-stream";
 import path from "path";
 import fs from "fs";
 
@@ -14,7 +14,6 @@ const accessLogStream = createStream("access.log", {
   maxFiles: 7,
   compress: "gzip",
 });
-
 
 export const logger = morgan("combined", {
   stream: accessLogStream,

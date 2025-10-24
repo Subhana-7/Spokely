@@ -1,10 +1,9 @@
 export interface TaskDetailDto {
-  prompt: string;                
-  paragraph?: string;           
-  questions?: string[];        
-  userResponse?: string;        
+  prompt: string;
+  paragraph?: string;
+  questions?: string[];
+  userResponse?: string;
 }
-
 
 export interface DailyTaskDto {
   id: string;

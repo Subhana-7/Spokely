@@ -1,6 +1,9 @@
 import { ISubscription } from "../../models/subscription.modal";
 import { IMentorPlan } from "../../models/mentorPlan.model";
-import { CreateSubscriptionDTO, SetMentorPlansDTO } from "../../dto/subscription.dto";
+import {
+  CreateSubscriptionDTO,
+  SetMentorPlansDTO,
+} from "../../dto/subscription.dto";
 
 export interface ISubscriptionService {
   subscribe(dto: CreateSubscriptionDTO): Promise<ISubscription | null>;

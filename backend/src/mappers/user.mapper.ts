@@ -1,4 +1,6 @@
+import { MentorResponseDTO } from "../dto/mentor.dto";
 import { UserDTO, UserResponseDTO } from "../dto/user.dto";
+import { IMentor } from "../models/mentor.model";
 import { IUser } from "../models/user.model";
 
 export const toUserResponseDTO = (user: IUser): UserResponseDTO => {

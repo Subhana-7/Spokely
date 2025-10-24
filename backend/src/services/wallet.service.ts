@@ -11,20 +11,46 @@ export class WalletService {
     private readonly _walletRepo: IWalletRepository
   ) {}
 
-  async credit(userId: string, amount: number, reason: string, sessionId?: string, subscriptionId?: string):Promise<IWallet | null> {
-    return this._walletRepo.addTransaction(userId, amount, "CREDIT", reason, sessionId, subscriptionId);
+  async credit(
+    userId: string,
+    amount: number,
+    reason: string,
+    sessionId?: string,
+    subscriptionId?: string
+  ): Promise<IWallet | null> {
+    return this._walletRepo.addTransaction(
+      userId,
+      amount,
+      "CREDIT",
+      reason,
+      sessionId,
+      subscriptionId
+    );
   }
 
-  async debit(userId: string, amount: number, reason: string, sessionId?: string, subscriptionId?: string):Promise<IWallet | null> {
-    return this._walletRepo.addTransaction(userId, amount, "DEBIT", reason, sessionId, subscriptionId);
+  async debit(
+    userId: string,
+    amount: number,
+    reason: string,
+    sessionId?: string,
+    subscriptionId?: string
+  ): Promise<IWallet | null> {
+    return this._walletRepo.addTransaction(
+      userId,
+      amount,
+      "DEBIT",
+      reason,
+      sessionId,
+      subscriptionId
+    );
   }
 
-  async getBalance(userId: string):Promise<number | null> {
+  async getBalance(userId: string): Promise<number | null> {
     const wallet = await this._walletRepo.getWallet(userId);
     return wallet?.balance || 0;
   }
 
-  async getTransactions(userId: string):Promise<unknown> {
+  async getTransactions(userId: string): Promise<unknown> {
     const wallet = await this._walletRepo.getWallet(userId);
     return wallet?.transactions || [];
   }

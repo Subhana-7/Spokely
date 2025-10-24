@@ -157,8 +157,6 @@ export class ConnectionRepository
     }
   }
 
-  // inside ConnectionRepository
-
   async blockConnection(
     connectionId: string,
     userId: string
@@ -194,12 +192,12 @@ export class ConnectionRepository
   }
 
   async deleteConnection(connectionId: string): Promise<IConnection | null> {
-      try {
-        const connection = await ConnectionModel.findByIdAndDelete(connectionId);
-        return connection;
-      } catch (error) {
-        console.log("connection deletion error", error);
+    try {
+      const connection = await ConnectionModel.findByIdAndDelete(connectionId);
+      return connection;
+    } catch (error) {
+      console.log("connection deletion error", error);
       return null;
-      }
+    }
   }
 }

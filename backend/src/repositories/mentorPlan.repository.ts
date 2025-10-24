@@ -4,14 +4,17 @@ import { IMentorPlanRepository } from "./interfaces/IMentorPlanRepository";
 import { BaseRepository } from "./base.repository";
 
 @injectable()
-export class MentorPlanRepository extends BaseRepository<IMentorPlan> implements IMentorPlanRepository {
+export class MentorPlanRepository
+  extends BaseRepository<IMentorPlan>
+  implements IMentorPlanRepository
+{
   constructor() {
     super(MentorPlanModel);
   }
 
   async savePlans(mentorId: string, plans: any[]) {
     try {
-      console.log('heh')
+      console.log("heh");
       return MentorPlanModel.findOneAndUpdate(
         { mentorId },
         { mentorId, plans },

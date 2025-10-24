@@ -77,20 +77,11 @@ const OTPModal: React.FC<OTPModalProps> = ({
     if (isForgotPassword) {
       await verifyForgotPasswordOTP({ email, code: otp }, role as "user" | "mentor");
       setIsVerified(true);
-      if (onSuccess) onSuccess();
-  onClose();
+      if (onVerified) onVerified();  // ✅ trigger parent step
     } else {
       await verifyOTP({ email, code: otp }, role as "user" | "mentor");
       setIsVerified(true);
-
-      if (role === "user") {
-        navigate("/user/home");
-      } else {
-        setMentorMessage(
-          "Your mentor application and documents have been successfully submitted. Our team will review them shortly and contact you via email."
-        );
-        setShowMentorSuccess(true);
-      }
+      if (onVerified) onVerified();
     }
   } catch (err: any) {
     const msg = err.response?.data?.message || err.message || "Verification failed";

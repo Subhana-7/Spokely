@@ -4,7 +4,7 @@ const GreetingBanner = () => {
   const user = useAuthStore((state) => state.user);
 
   return (
-    <div className="bg-lime-400 rounded-2xl p-6 text-white">
+    <div className="rounded-2xl p-6 text-white">
       <h1 className="text-2xl font-bold mb-2">
         Hey {user?.name || "there"}! 👋
       </h1>

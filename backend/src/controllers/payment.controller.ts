@@ -95,12 +95,10 @@ export class PaymentController implements IPaymentController {
         req.id,
         req.body
       );
-      res
-        .status(STATUS_CODES.OK)
-        .json({
-          message: MESSAGES.SUCCESS.SUBSCRIPTION_CAPTURED,
-          data: result,
-        });
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SUCCESS.SUBSCRIPTION_CAPTURED,
+        data: result,
+      });
     } catch (error: any) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)

@@ -10,13 +10,17 @@ import { ChangePasswordDTO } from "../dto/mentor.dto";
 
 @injectable()
 export class MentorController implements IMentorController {
-  constructor(@inject(TYPES.IMentorService) private _mentorService: IMentorService) {}
+  constructor(
+    @inject(TYPES.IMentorService) private _mentorService: IMentorService
+  ) {}
 
   signup = async (req: Request, res: Response): Promise<void> => {
     try {
       const mentorDTO = await this._mentorService.signup(req.body);
       if (!mentorDTO) {
-        res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.UNAUTHORIZED });
+        res
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
       res.status(STATUS_CODES.CREATED).json(mentorDTO);
@@ -29,7 +33,9 @@ export class MentorController implements IMentorController {
     try {
       const result = await this._mentorService.login(req.body);
       if (!result) {
-        res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_CREDENTIALS });
+        res
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.INVALID_CREDENTIALS });
         return;
       }
 
@@ -71,7 +77,10 @@ export class MentorController implements IMentorController {
 
   verifyOtp = async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await this._mentorService.verifyOtp(req.body.email, req.body.code);
+      const result = await this._mentorService.verifyOtp(
+        req.body.email,
+        req.body.code
+      );
       res.status(STATUS_CODES.OK).json(result);
     } catch (error: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
@@ -97,7 +106,11 @@ export class MentorController implements IMentorController {
   updateMentorDocument = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, documentUrl, textMessage } = req.body;
-      const data = await this._mentorService.updateMentorDocument(email, documentUrl, textMessage);
+      const data = await this._mentorService.updateMentorDocument(
+        email,
+        documentUrl,
+        textMessage
+      );
       res.status(STATUS_CODES.OK).json({
         success: true,
         message: MESSAGES.SUCCESS.DOCUMENT_RESUBMITTED,
@@ -111,7 +124,9 @@ export class MentorController implements IMentorController {
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     const token = req.cookies["refresh-token"];
     if (!token) {
-      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_TOKEN });
+      res
+        .status(STATUS_CODES.UNAUTHORIZED)
+        .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
       return;
     }
 
@@ -122,17 +137,24 @@ export class MentorController implements IMentorController {
       };
 
       if (payload.role !== "mentor") {
-        res.status(STATUS_CODES.FORBIDDEN).json({ message: MESSAGES.ERROR.FORBIDDEN });
+        res
+          .status(STATUS_CODES.FORBIDDEN)
+          .json({ message: MESSAGES.ERROR.FORBIDDEN });
         return;
       }
 
       const mentor = await this._mentorService.getHome(payload.id);
       if (!mentor) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
 
-      const newAccessToken = generateAccessToken({ id: payload.id, role: payload.role });
+      const newAccessToken = generateAccessToken({
+        id: payload.id,
+        role: payload.role,
+      });
 
       res.cookie("auth-token", newAccessToken, {
         httpOnly: true,
@@ -141,9 +163,13 @@ export class MentorController implements IMentorController {
         maxAge: 15 * 60 * 1000,
       });
 
-      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.TOKEN_REFRESHED, mentor });
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.TOKEN_REFRESHED, mentor });
     } catch (err) {
-      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: MESSAGES.ERROR.INVALID_TOKEN });
+      res
+        .status(STATUS_CODES.UNAUTHORIZED)
+        .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
     }
   };
 
@@ -151,12 +177,16 @@ export class MentorController implements IMentorController {
     try {
       const { email, newPassword } = req.body;
       if (!newPassword) {
-        res.status(STATUS_CODES.BAD_REQUEST).json({ message: MESSAGES.ERROR.INVALID_INPUT });
+        res
+          .status(STATUS_CODES.BAD_REQUEST)
+          .json({ message: MESSAGES.ERROR.INVALID_INPUT });
         return;
       }
 
       await this._mentorService.forgotPassword(email, newPassword);
-      res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.PASSWORD_RESET_OTP_SENT });
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.PASSWORD_RESET_OTP_SENT });
     } catch (error: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
@@ -164,24 +194,31 @@ export class MentorController implements IMentorController {
 
   verifyForgotPassword = async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await this._mentorService.verifyForgotPassword(req.body.email, req.body.code);
+      const result = await this._mentorService.verifyForgotPassword(
+        req.body.email,
+        req.body.code
+      );
       res.status(STATUS_CODES.OK).json(result);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }
   };
 
-   home = async (req: Request, res: Response): Promise<void> => {
+  home = async (req: Request, res: Response): Promise<void> => {
     try {
       const mentorId = (req as any).id || req.body?.id || req.params?.id;
       if (!mentorId) {
-        res.status(STATUS_CODES.BAD_REQUEST).json({ message: MESSAGES.ERROR.INVALID_INPUT });
+        res
+          .status(STATUS_CODES.BAD_REQUEST)
+          .json({ message: MESSAGES.ERROR.INVALID_INPUT });
         return;
       }
 
       const dashboard = await this._mentorService.getHome(mentorId);
       if (!dashboard) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
 
@@ -195,7 +232,9 @@ export class MentorController implements IMentorController {
     try {
       const mentor = await this._mentorService.getHome(req.params.id);
       if (!mentor) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
       res.status(STATUS_CODES.OK).json(mentor);
@@ -206,29 +245,35 @@ export class MentorController implements IMentorController {
 
   editMentor = async (req: Request, res: Response): Promise<void> => {
     try {
-      const updateMentor = await this._mentorService.updateMentor(req.params.id, req.body);
+      const updateMentor = await this._mentorService.updateMentor(
+        req.params.id,
+        req.body
+      );
       if (!updateMentor) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
         return;
       }
       res.status(STATUS_CODES.OK).json(updateMentor);
     } catch {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: MESSAGES.ERROR.SERVER_ERROR });
+      res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
   };
 
-
-  changePassword = async(
-      req:Request<{},{},ChangePasswordDTO>,
-      res:Response
-    ) => {
-      try {
-        await this._mentorService.changePassword(req.body);
-        res
-          .status(STATUS_CODES.OK)
-          .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
-      } catch (error:any) {
-        res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
-      }
+  changePassword = async (
+    req: Request<{}, {}, ChangePasswordDTO>,
+    res: Response
+  ) => {
+    try {
+      await this._mentorService.changePassword(req.body);
+      res
+        .status(STATUS_CODES.OK)
+        .json({ message: MESSAGES.SUCCESS.PASSWORD_CHANGED });
+    } catch (error: any) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
     }
+  };
 }

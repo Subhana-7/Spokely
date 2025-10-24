@@ -34,36 +34,35 @@ export class SubscriptionService implements ISubscriptionService {
     private readonly _walletService: IWalletService
   ) {}
 
- async subscribe(raw: any) {
-  const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
+  async subscribe(raw: any) {
+    const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
 
-  const subscription = await this._subscriptionRepository.createSubscription({
-    userId: new Types.ObjectId(dto.userId),
-    mentorId: new Types.ObjectId(dto.mentorId),
-    plan: dto.plan,
-    price: dto.price,
-    time: dto.time,
-  });
+    const subscription = await this._subscriptionRepository.createSubscription({
+      userId: new Types.ObjectId(dto.userId),
+      mentorId: new Types.ObjectId(dto.mentorId),
+      plan: dto.plan,
+      price: dto.price,
+      time: dto.time,
+    });
 
-  if (!subscription) {
-    throw new Error("Failed to create subscription");
+    if (!subscription) {
+      throw new Error("Failed to create subscription");
+    }
+
+    if (dto.price === undefined) {
+      throw new Error("Subscription price is not defined");
+    }
+
+    await this._walletService.credit(
+      dto.mentorId,
+      dto.price,
+      `Subscription payment from user ${dto.userId}`,
+      undefined,
+      subscription._id?.toString()
+    );
+
+    return subscription;
   }
-
-  if (dto.price === undefined) {
-    throw new Error("Subscription price is not defined");
-  }
-
-  await this._walletService.credit(
-    dto.mentorId,
-    dto.price,
-    `Subscription payment from user ${dto.userId}`,
-    undefined,
-    subscription._id?.toString() 
-  );
-
-  return subscription;
-}
-
 
   getUserSubscriptions(userId: string) {
     return this._subscriptionRepository.findByUser(userId);

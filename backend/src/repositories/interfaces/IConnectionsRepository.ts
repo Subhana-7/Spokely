@@ -13,21 +13,37 @@ export interface IConnectionRepository {
     receiverId: Types.ObjectId
   ): Promise<IConnection | null>;
 
-  getReceivedRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null>;
+  getReceivedRequests(
+    userId: Types.ObjectId
+  ): Promise<PopulatedConnection[] | null>;
 
-  getSentRequests(userId: Types.ObjectId): Promise<PopulatedConnection[] | null>;
+  getSentRequests(
+    userId: Types.ObjectId
+  ): Promise<PopulatedConnection[] | null>;
 
-  getAcceptedConnections(userId: Types.ObjectId,search:any): Promise<PopulatedConnection[] | null>;
+  getAcceptedConnections(
+    userId: Types.ObjectId,
+    search: any
+  ): Promise<PopulatedConnection[] | null>;
 
-  acceptRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null>;
+  acceptRequest(
+    requestId: string,
+    userId: Types.ObjectId
+  ): Promise<IConnection | null>;
 
-  rejectRequest(requestId: string, userId: Types.ObjectId): Promise<IConnection | null>;
+  rejectRequest(
+    requestId: string,
+    userId: Types.ObjectId
+  ): Promise<IConnection | null>;
 
   findById(id: string): Promise<IConnection | null>;
 
-  blockConnection(connectionId: string,userId:string): Promise<IConnection | null>;
+  blockConnection(
+    connectionId: string,
+    userId: string
+  ): Promise<IConnection | null>;
 
   unblockConnection(connectionId: string): Promise<IConnection | null>;
 
-  deleteConnection(connectionId:string):Promise<IConnection | null>;
+  deleteConnection(connectionId: string): Promise<IConnection | null>;
 }

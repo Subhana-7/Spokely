@@ -42,14 +42,14 @@ export class ChatRepository extends BaseRepository<IMessage> {
       const messages: MessageDto[] = res
         .filter((msg: any) => msg.sender && msg.sender._id)
         .map((msg: any) => ({
-          _id: msg._id.toString(), 
-          id: msg._id.toString(), 
+          _id: msg._id.toString(),
+          id: msg._id.toString(),
           sessionId: msg.sessionId,
           text: msg.text,
           createdAt: msg.createdAt,
           sender: {
             _id: msg.sender._id.toString(),
-            id: msg.sender._id.toString(), 
+            id: msg.sender._id.toString(),
             name: msg.sender.name || "Unknown User",
             profilePicture: msg.sender.profilePicture || null,
             role: msg.sender.role || "user",
@@ -82,7 +82,6 @@ export class ChatRepository extends BaseRepository<IMessage> {
     }
   }
 
-  /* ✅ UPDATED: includes unread count + latest message */
   async getUserChats(userId: string): Promise<IChatPreview[] | null> {
     try {
       const sessions = await ChatSessionModel.find({

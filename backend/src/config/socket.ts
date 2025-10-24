@@ -1,13 +1,20 @@
 import { Server, Socket } from "socket.io";
-import container from "../config/inversify.config";
+import container from "./inversify.config";
 import { TYPES } from "../types/types";
 import { IChatService } from "../services/interfaces/IChatService";
 
-export const initChatSocket = (io: Server) => {
+import { INotificationService } from "../services/interfaces/INotificationService";
+
+export const initSocket = (io: Server) => {
   const chatService = container.get<IChatService>(TYPES.IChatService);
+  const notificationService = container.get<INotificationService>(
+    TYPES.INotificationService
+  );
 
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
+
+    // ----------CHAT EVENTS ----------
 
     socket.on("join-room", (sessionId: string) => {
       socket.join(sessionId);
@@ -47,13 +54,13 @@ export const initChatSocket = (io: Server) => {
 
           io.in(sessionId).emit("chat-message", outgoing);
 
-          io.emit("chat-updated", { 
-            sessionId, 
+          io.emit("chat-updated", {
+            sessionId,
             message: {
               text: outgoing.text,
               createdAt: outgoing.createdAt,
               sender: outgoing.sender,
-            }
+            },
           });
 
           console.log(`Message sent in room ${sessionId}:`, outgoing.id);
@@ -71,7 +78,9 @@ export const initChatSocket = (io: Server) => {
     socket.on("mark-read", async ({ sessionId, userId }) => {
       try {
         await chatService.markMessagesRead(sessionId, userId);
-        console.log(`Messages marked as read for user ${userId} in session ${sessionId}`);
+        console.log(
+          `Messages marked as read for user ${userId} in session ${sessionId}`
+        );
 
         io.in(sessionId).emit("messages-read", {
           sessionId,
@@ -80,6 +89,27 @@ export const initChatSocket = (io: Server) => {
         });
       } catch (err) {
         console.error("Mark read error:", err);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+
+    // ---------- NOTIFICATION EVENTS ----------
+    socket.on("register-user", (userId: string) => {
+      socket.join(userId); // each user gets their own "room"
+      console.log(
+        `User ${socket.id} registered for notifications as ${userId}`
+      );
+    });
+
+    socket.on("notification-read", async (notificationId: string) => {
+      try {
+        await notificationService.markAsRead(notificationId);
+        console.log(`Notification ${notificationId} marked as read`);
+      } catch (err) {
+        console.error("Notification read error:", err);
       }
     });
 

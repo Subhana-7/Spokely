@@ -664,12 +664,12 @@ const DailyTaskPage = () => {
                     <h4 className="text-xl font-semibold capitalize mb-3">
                       {taskKey} Feedback
                     </h4>
-                    <p className="text-gray-300 mb-2 whitespace-pre-wrap">
+                    {/* <p className="text-gray-300 mb-2 whitespace-pre-wrap">
                       <strong>✅ Your Response:</strong>{" "}
                       {JSON.stringify(
                         responses[taskKey as keyof typeof responses]
                       )}
-                    </p>
+                    </p> */}
                     <p className="text-green-400 font-semibold mb-1">
                       Strengths
                     </p>

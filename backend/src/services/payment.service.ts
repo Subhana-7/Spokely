@@ -1,7 +1,11 @@
 import axios from "axios";
 import { IPaymentRepository } from "../repositories/interfaces/IPaymentRepository";
 import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
-import { PaymentRequestDTO, PaymentEntityDTO, PaymentResponseDTO } from "../dto/payment.dto";
+import {
+  PaymentRequestDTO,
+  PaymentEntityDTO,
+  PaymentResponseDTO,
+} from "../dto/payment.dto";
 import { IPaymentService } from "./interfaces/IPaymentService";
 import { PaymentMapper } from "../mappers/payment.mapper";
 import { inject, injectable } from "inversify";
@@ -18,7 +22,8 @@ export class PaymentService implements IPaymentService {
     private _paymentRepository: IPaymentRepository,
     @inject(TYPES.ISessionRepository)
     private _sessionRepository: ISessionRepository,
-    @inject(TYPES.IWalletService) private readonly _walletService:IWalletService,
+    @inject(TYPES.IWalletService)
+    private readonly _walletService: IWalletService
   ) {}
 
   private async getAccessToken(): Promise<string> {
@@ -28,20 +33,28 @@ export class PaymentService implements IPaymentService {
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         auth: getPaypalAuth(),
-      } //here open api
+      }
     );
     return response.data.access_token;
   }
 
-  async createOrder(userId: string, dto: PaymentRequestDTO): Promise<{ id: string }> {
-    console.log("service pay")
+  async createOrder(
+    userId: string,
+    dto: PaymentRequestDTO
+  ): Promise<{ id: string }> {
+    console.log("service pay");
     const accessToken = await this.getAccessToken();
 
-    console.log(accessToken,"access","price:",dto.amount)
+    console.log(accessToken, "access", "price:", dto.amount);
 
     const order = await paypalAPI.post(
       "/v2/checkout/orders",
-      { intent: "CAPTURE", purchase_units: [{ amount: { currency_code: "USD", value: dto.amount } }] },
+      {
+        intent: "CAPTURE",
+        purchase_units: [
+          { amount: { currency_code: "USD", value: dto.amount } },
+        ],
+      },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
@@ -59,49 +72,79 @@ export class PaymentService implements IPaymentService {
     return { id: order.data.id };
   }
 
- async captureOrder(userId: string, dto: PaymentRequestDTO): Promise<PaymentResponseDTO> {
-  const accessToken = await this.getAccessToken();
+  async captureOrder(
+    userId: string,
+    dto: PaymentRequestDTO
+  ): Promise<PaymentResponseDTO> {
+    const accessToken = await this.getAccessToken();
 
-  const capture = await axios.post(
-    `${PAYPAL_BASE_URL}/v2/checkout/orders/${dto.orderId}/capture`,
-    {},
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+    const capture = await axios.post(
+      `${PAYPAL_BASE_URL}/v2/checkout/orders/${dto.orderId}/capture`,
+      {},
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
-  // Update payment status in DB
-  const paymentEntity = await this._paymentRepository.updateByPaypalId(dto.orderId!, {
-    status: "COMPLETED",
-    details: capture.data,
-  });
+    const paymentEntity = await this._paymentRepository.updateByPaypalId(
+      dto.orderId!,
+      {
+        status: "COMPLETED",
+        details: capture.data,
+      }
+    );
 
-  if (paymentEntity?.sessionId) {
-    const sessionIdStr = paymentEntity.sessionId.toString();
-    const userIdStr = paymentEntity.userId.toString();
+    if (paymentEntity?.sessionId) {
+      const sessionIdStr = paymentEntity.sessionId.toString();
+      const userIdStr = paymentEntity.userId.toString();
 
-    const session = await this._sessionRepository.addParticipant(sessionIdStr, userIdStr);
-
-    if (session?.type === "public" && session.sessionFee && session.mentorId) {
-      await this._walletService.credit(
-        session.mentorId.toString(),    
-        session.sessionFee,               
-        `Payment received from ${userIdStr} for session: ${session.topic}`, 
-        undefined,
-        session._id?.toString()
+      const session = await this._sessionRepository.addParticipant(
+        sessionIdStr,
+        userIdStr
       );
+
+      if (
+        session?.type === "public" &&
+        session.sessionFee &&
+        session.mentorId
+      ) {
+        await this._walletService.credit(
+          session.mentorId.toString(),
+          session.sessionFee,
+          `Payment received from ${userIdStr} for session: ${session.topic}`,
+          undefined,
+          session._id?.toString()
+        );
+      }
     }
+
+    const entityDTO = PaymentMapper.toEntity(paymentEntity!);
+    return PaymentMapper.toResponse(entityDTO);
   }
 
-  const entityDTO = PaymentMapper.toEntity(paymentEntity!);
-  return PaymentMapper.toResponse(entityDTO);
-}
-
-
-
-  async createSubscription(userId: string, dto: PaymentRequestDTO): Promise<{ id: string }> {
+  async createSubscription(
+    userId: string,
+    dto: PaymentRequestDTO
+  ): Promise<{ id: string }> {
     return this.createOrder(userId, dto);
   }
 
-  async captureSubscription(userId: string, dto: PaymentRequestDTO): Promise<PaymentResponseDTO> {
+  async captureSubscription(
+    userId: string,
+    dto: PaymentRequestDTO
+  ): Promise<PaymentResponseDTO> {
     return this.captureOrder(userId, dto);
+  }
+
+  async getAllPayments(): Promise<PaymentResponseDTO[]> {
+    const payments = await this._paymentRepository.findAllPayment();
+    return payments.map((p) =>
+      PaymentMapper.toResponse(PaymentMapper.toEntity(p))
+    );
+  }
+
+  async getPaymentById(id: string): Promise<PaymentResponseDTO | null> {
+    const payment = await this._paymentRepository.findById(id);
+    return payment
+      ? PaymentMapper.toResponse(PaymentMapper.toEntity(payment))
+      : null;
   }
 }

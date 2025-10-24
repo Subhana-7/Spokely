@@ -93,7 +93,10 @@ export class AdminService implements IAdminService {
     return this._adminRepository.updateMentor(mentorId);
   }
 
-  async rejectMentor(mentorId: string, reason: string): Promise<IMentor | null> {
+  async rejectMentor(
+    mentorId: string,
+    reason: string
+  ): Promise<IMentor | null> {
     const mentor = await this._adminRepository.getMentor(mentorId);
     const email = mentor?.[0]?.email;
     if (email)

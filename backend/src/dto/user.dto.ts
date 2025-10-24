@@ -1,43 +1,28 @@
+export interface SendForgotPasswordOtpDTO {
+  email: string;
+}
+
+export interface VerifyForgotPasswordOtpDTO {
+  email: string;
+  code: string;
+}
+
+export interface ResetPasswordDTO {
+  email: string;
+  newPassword: string;
+}
+
 export interface SignupDTO {
   name: string;
   email: string;
+  phone?: string;
   password: string;
-  phone?: number;
   role?: "user" | "mentor";
 }
 
 export interface LoginDTO {
   email: string;
   password: string;
-}
-
-export interface SendOtpDTO {
-  email: string;
-}
-
-export interface VerifyOtpDTO {
-  email: string;
-  code: string;
-}
-
-export interface UpdateRoleDTO {
-  role: "user" | "mentor";
-}
-
-export interface ForgotPasswordDTO {
-  email: string;
-  newPassword?: string;
-}
-
-export interface changePasswordDTO {
-  id: string;
-  currentPassword:string;
-  newPassword?: string;
-}
-
-export interface VerifyForgotPasswordDTO {
-  email: string;
-  code: string;
 }
 
 export interface UserResponseDTO {
@@ -59,6 +44,25 @@ export interface UserResponseDTO {
   updatedAt?: Date;
 }
 
+export interface SendOtpDTO {
+  email: string;
+}
+
+export interface VerifyOtpDTO {
+  email: string;
+  code: string;
+}
+
+export interface UpdateRoleDTO {
+  role: "user" | "mentor";
+}
+
+export interface changePasswordDTO {
+  id: string;
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface UserDTO {
   id: string;
   name: string;
@@ -66,4 +70,15 @@ export interface UserDTO {
   profilePicture?: string;
   role?: "user" | "mentor";
   uniqueCode?: string;
+}
+
+export interface MentorDTO {
+  id: string;
+  name: string;
+  email: string;
+  profilePicture: string;
+  uniqueCode: string;
+  sessionsDone: number;
+  tags: string;
+  createdAt: Date;
 }
