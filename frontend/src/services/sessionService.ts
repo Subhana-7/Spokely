@@ -20,7 +20,13 @@ export interface Feedback {
 // --- User Sessions ---
 export const createSession = (data: any) => API.post(`${R.base}${R.schedule}`, data);
 
-export const getSessions = () => API.get<Session[]>(`${R.base}${R.list}`);
+export const getSessions = (params?: {
+  search?: string;
+  status?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+}) => API.get(`${R.base}${R.list}`, { params });
 
 export const getSessionById = (id: string) => API.get<Session>(`${R.base}${R.details}/${id}`);
 

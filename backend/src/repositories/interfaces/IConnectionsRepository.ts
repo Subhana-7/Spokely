@@ -46,4 +46,23 @@ export interface IConnectionRepository {
   unblockConnection(connectionId: string): Promise<IConnection | null>;
 
   deleteConnection(connectionId: string): Promise<IConnection | null>;
+
+
+  findWithFilters(
+      userId: string,
+      filters?: {
+        search?: string;
+        status?: string; // accepted | pending_sent | pending_received | blocked | all
+        page?: number;
+        limit?: number;
+      }
+    ): Promise<PopulatedConnection[]>;
+
+    countWithFilters(
+    userId: string,
+    filters?: {
+      search?: string;
+      status?: string;
+    }
+  ): Promise<number>;
 }

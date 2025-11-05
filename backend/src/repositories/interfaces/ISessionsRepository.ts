@@ -29,4 +29,10 @@ export interface ISessionRepository {
   findSessions(query: any): Promise<ISession[] | null>;
 
   addParticipant(sessionId: string, userId: string): Promise<ISession | null>;
+
+  findSessions(query: any): Promise<ISession[] | null>;
+
+  findWithFilters(query: any, skip: number, limit: number):Promise<any>;
+
+  countSessions(query: any):Promise<any>
 }

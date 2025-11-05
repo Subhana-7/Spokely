@@ -42,15 +42,8 @@ const Dashboard = () => {
   );
 
   return (
-    <div
-      className="min-h-screen text-white relative"
-      style={{
-        backgroundImage: `url('/gradient-bg.jpg')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      {/* Overlay for glow effect */}
+    <div className="min-h-screen text-white relative bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      {/* Overlay for subtle glow effect */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
       {/* Header */}

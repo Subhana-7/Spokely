@@ -38,21 +38,30 @@ export class SessionController implements ISessionController {
     }
   };
 
-  getAllSessions = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
-    try {
-      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
-      const sessions = await this._sessionService.getSessions(req.id);
+  getAllSessions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-      res.status(STATUS_CODES.OK).json({ sessions });
-    } catch {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: MESSAGES.SESSION.FETCH_FAILED });
-    }
-  };
+    const { search = "", status = "all", type = "all", page = 1, limit = 10 } = req.query;
+
+    const filters = {
+      search: String(search),
+      status: String(status),
+      type: String(type),
+      page: Number(page),
+      limit: Number(limit),
+    };
+
+    const result = await this._sessionService.getSessions(req.id, filters);
+
+    res.status(STATUS_CODES.OK).json(result);
+  } catch (err: any) {
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: err?.message || MESSAGES.SESSION.FETCH_FAILED });
+  }
+};
+
 
   getSessionById = async (
     req: AuthenticatedRequest,

@@ -19,6 +19,7 @@ import { IChatRepository } from "../repositories/interfaces/IChatRepository";
 import { privateDecrypt } from "crypto";
 import session from "express-session";
 import { IWalletService } from "./interfaces/IWalletService";
+import { INotificationService } from "./interfaces/INotificationService";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
@@ -31,7 +32,8 @@ export class SubscriptionService implements ISubscriptionService {
     private _mentorPlanRepository: IMentorPlanRepository,
     @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository,
     @inject(TYPES.IWalletService)
-    private readonly _walletService: IWalletService
+    private readonly _walletService: IWalletService,
+    @inject(TYPES.INotificationService) private _notificationService:INotificationService,
   ) {}
 
   async subscribe(raw: any) {
@@ -61,12 +63,26 @@ export class SubscriptionService implements ISubscriptionService {
       subscription._id?.toString()
     );
 
+    await this._notificationService.send({
+      userId:dto.mentorId,
+      title:"New Student Subscription",
+      message:"A new student has subscribed to you. Congratulations.",
+      type:"success",
+    })
+
     return subscription;
   }
 
-  getUserSubscriptions(userId: string) {
-    return this._subscriptionRepository.findByUser(userId);
-  }
+  getUserSubscriptions(
+  userId: string,
+  search: string,
+  status: string,
+  page: number,
+  limit: number
+) {
+  return this._subscriptionRepository.findByUser(userId, search, status, page, limit);
+}
+
 
   getMentorSubscriptions(mentorId: string) {
     return this._subscriptionRepository.findByMentor(mentorId);
@@ -151,4 +167,9 @@ export class SubscriptionService implements ISubscriptionService {
       }
     });
   }
+
+  async getSubscriptionHistory(userId: string, page: number, limit: number) {
+  return this._subscriptionRepository.findSubscriptionHistory(userId, page, limit);
+}
+
 }

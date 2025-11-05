@@ -2,6 +2,7 @@ export interface PaymentRequestDTO {
   sessionId?: string;
   amount: number;
   orderId?: string;
+  userId?:string;
 }
 
 export interface PaymentEntityDTO {
@@ -22,4 +23,5 @@ export interface PaymentResponseDTO {
   amount: number;
   currency: string;
   details?: any;
+  userId?:string;
 }

@@ -23,4 +23,6 @@ export const subscriptionConfirmPayment = (orderId: string, sessionId: string) =
   API.post<PaymentResponse>(`${R.base}${R.captureSubscription}`, { orderId, sessionId });
 
 
-export const wallet = () => API.get(`${R.base}${R.wallet}`);
+export const wallet = (page = 1, limit = 10) =>
+  API.get(`${R.base}${R.wallet}?page=${page}&limit=${limit}`);
+

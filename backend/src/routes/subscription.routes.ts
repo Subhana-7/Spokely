@@ -41,4 +41,11 @@ router.post(
   controller.setMentorPlans.bind(controller)
 );
 
+router.get(
+  "/history/:id",
+  authMiddleware(["user"]),
+  controller.getSubscriptionHistory.bind(controller)
+);
+
+
 export default router;

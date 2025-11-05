@@ -174,16 +174,40 @@ const DataTable = ({
           </>
         );
       case "mentor":
-        return (
-          <>
-            <td className="px-6 py-4">{item.name} ({item.email})</td>
-            <td className="px-6 py-4">{item.verificationStatus}</td>
-            <td className="px-6 py-4">{item.isBlocked ? "Blocked" : "Active"}</td>
-            <td className="px-6 py-4">
-              <button onClick={() => onBlock?.(item.id)} className={getBlockButtonStyles(item.isBlocked)}>Toggle Block</button>
-            </td>
-          </>
-        );
+  return (
+    <>
+      <td className="px-6 py-4">
+        {item.name} <span className="text-gray-500 text-sm">({item.email})</span>
+      </td>
+
+      <td className="px-6 py-4 capitalize">
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.verificationStatus)}`}
+        >
+          {item.verificationStatus}
+        </span>
+      </td>
+
+      <td className="px-6 py-4">{item.isBlocked ? "Blocked" : "Active"}</td>
+
+      <td className="px-6 py-4 flex gap-2">
+        <button
+          onClick={() => onRowClick?.(item.id)}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+        >
+          View Verification
+        </button>
+
+        <button
+          onClick={() => onBlock?.(item.id)}
+          className={getBlockButtonStyles(item.isBlocked)}
+        >
+          Toggle Block
+        </button>
+      </td>
+    </>
+  );
+
       case "user":
       default:
         return (

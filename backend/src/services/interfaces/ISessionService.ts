@@ -2,7 +2,7 @@ import { ISession } from "../../models/sessions.model";
 
 export interface ISessionService {
   createSession(body: any, userId: string): Promise<ISession | null>;
-  getSessions(userId: string): Promise<ISession[] | null>;
+  getSessions(userId: string,filters:any): Promise<ISession[] | null>;
   getSessionById(sessionId: string): Promise<ISession | null>;
   updateSession(sessionId: string, body: any): Promise<ISession | null>;
   publicSessions(): Promise<ISession[] | null>;

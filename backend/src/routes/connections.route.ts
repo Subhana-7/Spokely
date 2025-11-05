@@ -24,6 +24,11 @@ router.patch(
   authMiddleware(["user", "mentor"]),
   controller.acceptConnection.bind(controller)
 );
+router.patch(
+  "/reject",
+  authMiddleware(["user", "mentor"]),
+  controller.acceptConnection.bind(controller)
+);
 router.get(
   "/list",
   authMiddleware(["user", "mentor"]),

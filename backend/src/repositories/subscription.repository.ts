@@ -20,28 +20,56 @@ export class SubscriptionRepository
     return await SubscriptionModel.create(data);
   }
 
-  async findByUser(userId: string) {
-    const subscriptions = await SubscriptionModel.find({ userId })
-      .populate({
-        path: "mentorId",
-        model: "Mentor",
-        select: "name email bio profilePicture sessionsDone tags",
-      })
-      .lean();
+  async findByUser(
+  userId: string,
+  search: string = "",
+  status: string = "All",
+  page: number = 1,
+  limit: number = 10
+) {
+    const query: any = { userId };
+
+  if (status !== "All") query.status = status;
+
+  const skip = (page - 1) * limit;
+
+  const subscriptions = await SubscriptionModel.find(query)
+    .populate({
+      path: "mentorId",
+      model: "Mentor",
+      select: "name email bio profilePicture sessionsDone tags",
+    })
+    .lean();
+
+    // Apply search (on mentor name or subscription id)
+  const searched = subscriptions.filter((sub: any) => {
+    const mentor = sub.mentorId;
+    if (!mentor) return false;
+
+    const searchLower = search.toLowerCase();
+    return (
+      mentor.name.toLowerCase().includes(searchLower) ||
+      sub._id.toString().includes(searchLower)
+    );
+  });
+
+  // Paginate manually
+  const total = searched.length;
+  const paginated = searched.slice(skip, skip + limit);
 
     const enriched = await Promise.all(
-      subscriptions.map(async (sub: any) => {
-        const mentor = sub.mentorId;
-        if (!mentor || !mentor._id) {
-          return {
-            ...sub,
-            mentor: null,
-            sessionsCount: 0,
-            sessionsByUser: 0,
-            feedbackByUser: [],
-            avgRating: null,
-          };
-        }
+    paginated.map(async (sub: any) => {
+      const mentor = sub.mentorId;
+      if (!mentor || !mentor._id) {
+        return {
+          ...sub,
+          mentor: null,
+          sessionsCount: 0,
+          sessionsByUser: 0,
+          feedbackByUser: [],
+          avgRating: null,
+        };
+      }
 
         const mentorId = mentor._id;
 
@@ -73,17 +101,15 @@ export class SubscriptionRepository
               feedbackByUser.length
             : null;
 
-        return {
-          ...sub,
-          mentor,
-          sessionsCount: sessions.length,
-          sessionsByUser: sessionsByUser.length,
-          feedbackByUser,
-          avgRating,
-        };
+         return { ...sub, mentor };
       })
     );
-    return enriched;
+     return {
+    data: enriched,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
   }
 
   async findByMentor(mentorId: string) {
@@ -176,4 +202,50 @@ export class SubscriptionRepository
   async findActive() {
     return SubscriptionModel.find({ status: "ACTIVE" });
   }
+
+  async findSubscriptionHistory(userId: string, page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  // Fetch all (ACTIVE, CANCELLED, EXPIRED)
+  const subscriptions = await this.model
+    .find({ userId })
+    .populate({
+      path: "mentorId",
+      model: "Mentor",
+      select: "name email profilePicture",
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const total = await this.model.countDocuments({ userId });
+  const totalPages = Math.ceil(total / limit);
+
+  // Format data for front-end
+  const formatted = subscriptions.map((sub: any) => ({
+    id: sub._id,
+    planName: sub.plan,
+    price: sub.price,
+    startDate: sub.startDate,
+    endDate: sub.endDate,
+    status: sub.status,
+    sessions: sub.sessionsCount || 0,
+    mentor: sub.mentorId
+      ? {
+          id: sub.mentorId._id,
+          name: sub.mentorId.name,
+          profilePicture: sub.mentorId.profilePicture,
+        }
+      : null,
+  }));
+
+  return {
+    data: formatted,
+    total,
+    page,
+    totalPages,
+  };
+}
+
 }

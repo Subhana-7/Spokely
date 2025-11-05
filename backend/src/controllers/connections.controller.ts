@@ -64,7 +64,7 @@ export class ConnectionController implements IConnectionController {
     }
   }
 
-  async listConnections(
+   async listConnections(
     req: AuthenticatedRequest,
     res: Response
   ): Promise<void> {
@@ -72,15 +72,24 @@ export class ConnectionController implements IConnectionController {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
       const userId = req.id;
-      const search = req.query.search as string;
-      const connections = await this._connectionsService.getAllConnections(
-        userId,
-        search
-      );
+      const search = (req.query.search as string) || "";
+      const status = (req.query.status as string) || "all";
+      const page = Number(req.query.page ?? 1);
+      const limit = Number(req.query.limit ?? 10);
 
-      console.log(connections);
+      const result = await this._connectionsService.getAllConnections(userId, {
+        search,
+        status,
+        page,
+        limit,
+      });
 
-      res.status(STATUS_CODES.OK).json(connections);
+      if (!result) {
+        res.status(STATUS_CODES.NOT_FOUND).json({ message: "No connections found" });
+        return;
+      }
+
+      res.status(STATUS_CODES.OK).json(result);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
     }

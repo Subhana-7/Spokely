@@ -1,5 +1,12 @@
-import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
-import { Search, Plus } from "lucide-react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
+import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/userAuthStore";
@@ -9,30 +16,49 @@ const Button = lazy(() => import("../../modals/Button"));
 const Input = lazy(() => import("../../modals/Input"));
 const Card = lazy(() => import("../../components/common/Cards"));
 const Badge = lazy(() => import("../../components/common/Badge"));
-const DashboardHeader = lazy(() => import("../user/DashBoardComponents/Header"));
+const DashboardHeader = lazy(
+  () => import("../user/DashBoardComponents/Header")
+);
 
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
-  const [cancelModal, setCancelModal] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [cancelModal, setCancelModal] = useState<{
+    open: boolean;
+    id?: string;
+  }>({ open: false });
   const [cancelReason, setCancelReason] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const userId = useAuthStore((state) => state.user?.id!);
   const navigate = useNavigate();
 
-  /** Fetch sessions */
+  /** Fetch sessions (server-side pagination) */
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await getSessions();
-      const data = res?.data?.sessions ?? res?.data ?? [];
+      const res = await getSessions({
+        page,
+        limit: 6,
+        search: searchQuery,
+        type: typeFilter !== "all" ? typeFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+      });
+
+      const data = res?.data?.sessions ?? [];
+      const total = res?.data?.total ?? data.length;
+      const limit = res?.data?.limit ?? 6;
+
       setSessions(Array.isArray(data) ? data : []);
+      setTotalPages(Math.ceil(total / limit) || 1);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to load sessions");
       setSessions([]);
+      setTotalPages(1);
     }
-  }, []);
+  }, [page, searchQuery, statusFilter, typeFilter]);
 
   useEffect(() => {
     if (userId) fetchSessions();
@@ -40,14 +66,9 @@ const Sessions = () => {
 
   /** Cancel session */
   const handleCancelConfirm = useCallback(async () => {
-    if (!cancelReason.trim() || !userId) {
-      toast.error("Please enter a reason");
-      return;
-    }
-    if (!cancelModal.id) {
-      toast.error("Invalid session id");
-      return;
-    }
+    if (!cancelReason.trim() || !userId)
+      return toast.error("Please enter a reason");
+    if (!cancelModal.id) return toast.error("Invalid session id");
     try {
       await cancelSession(userId, cancelModal.id, cancelReason);
       toast.success("Session cancelled");
@@ -61,10 +82,11 @@ const Sessions = () => {
 
   /** Compute session status */
   const renderStatus = useCallback((session: any) => {
-    if (!session) return "unknown";
     const now = Date.now();
     const start = session.startTime ? new Date(session.startTime).getTime() : 0;
-    const end = session.endTime ? new Date(session.endTime).getTime() : start + (session.durationMinutes || 60) * 60 * 1000;
+    const end = session.endTime
+      ? new Date(session.endTime).getTime()
+      : start + (session.durationMinutes || 60) * 60 * 1000;
 
     if (session.status === "cancelled") return "cancelled";
     if (now > end && end > 0) return "completed";
@@ -72,27 +94,27 @@ const Sessions = () => {
     return "upcoming";
   }, []);
 
-  /** Memoize filtered sessions */
-  const filteredSessions = useMemo(() => {
-    return sessions.filter((s) => {
-      if (!s) return false;
-      const matchesSearch = String(s.topic ?? "").toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || renderStatus(s) === statusFilter;
-      const matchesType = typeFilter === "all" || s.type === typeFilter;
-      return matchesSearch && matchesStatus && matchesType;
-    });
-  }, [sessions, searchQuery, statusFilter, typeFilter, renderStatus]);
+  /** Badge styles */
+  const badgeClasses = useMemo(
+    () => ({
+      public: "bg-green-500/20 text-green-300 border border-green-500/30",
+      private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+      "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30",
+      completed: "bg-green-500/20 text-green-300 border border-green-500/30",
+      "on-going": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+      cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
+      upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+    }),
+    []
+  );
 
-  /** Badge classes (memoized) */
-  const badgeClasses = useMemo(() => ({
-    public: "bg-green-500/20 text-green-300 border border-green-500/30",
-    private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
-    "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30",
-    completed: "bg-green-500/20 text-green-300 border border-green-500/30",
-    "on-going": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-    cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
-    upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
-  }), []);
+  /** Pagination handlers */
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
+
+  const handlePublicSessions = () => {
+    navigate("/user/sessions/public");
+  };
 
   return (
     <Suspense fallback={<p>Loading page...</p>}>
@@ -117,7 +139,10 @@ const Sessions = () => {
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-10">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+                size={20}
+              />
               <Input
                 type="text"
                 placeholder="Search by topic..."
@@ -149,64 +174,132 @@ const Sessions = () => {
                 <option value="peer-to-peer">Peer-to-peer</option>
               </select>
             </div>
+
+            <Button
+              onClick={() => handlePublicSessions()}
+              variant="primary"
+              className="px-3 py-2 bg-green-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500"
+            >
+              Public Sessions
+            </Button>
           </div>
 
           {/* Session Cards */}
-          {filteredSessions.length === 0 ? (
+          {sessions.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-400 mb-4">No sessions found</p>
-              <Button variant="success" className="px-6 py-3 rounded-full" onClick={() => navigate("/user/schedule-session")}>
+              <Button
+                variant="success"
+                className="px-6 py-3 rounded-full"
+                onClick={() => navigate("/user/schedule-session")}
+              >
                 Schedule a Session
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSessions.map((session, idx) => {
-                const id = session?._id ?? session?.id ?? `missing-${idx}`;
-                const status = renderStatus(session);
-                return (
-                  <Card key={id} className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg p-6 hover:shadow-green-500/20 transition-all duration-300">
-                    <div className="mb-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-lg truncate text-white">{session?.topic ?? "Untitled session"}</h3>
-                        <div className="flex items-center gap-2">
-                          <Badge className={badgeClasses[session?.type] || badgeClasses["peer-to-peer"]}>{session?.type ?? "—"}</Badge>
-                          <Badge className={badgeClasses[status]}>{status}</Badge>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sessions.map((session, idx) => {
+                  const id = session?._id ?? session?.id ?? `missing-${idx}`;
+                  const status = renderStatus(session);
+                  return (
+                    <Card
+                      key={id}
+                      className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg p-6 hover:shadow-green-500/20 transition-all duration-300"
+                    >
+                      <div className="mb-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-semibold text-lg truncate text-white">
+                            {session?.topic ?? "Untitled session"}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={
+                                badgeClasses[session?.type] ||
+                                badgeClasses["peer-to-peer"]
+                              }
+                            >
+                              {session?.type ?? "—"}
+                            </Badge>
+                            <Badge className={badgeClasses[status]}>
+                              {status}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <p className="text-sm text-gray-300 mb-1">{session?.startTime ? new Date(session.startTime).toLocaleString() : "—"}</p>
-                    <p className="text-sm text-gray-400 mb-4">
-                      Created By: {session?.createdBy?._id === userId ? "You" : session?.createdBy?.name || "Unknown"}
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        onClick={() => id && !String(id).startsWith("missing-") ? navigate(`/session/details/${id}`) : toast.error("Cannot open details")}
-                        variant="secondary"
-                      >
-                        View Details
-                      </Button>
-                      {status === "on-going" && (
+                      <p className="text-sm text-gray-300 mb-1">
+                        {session?.startTime
+                          ? new Date(session.startTime).toLocaleString()
+                          : "—"}
+                      </p>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Created By:{" "}
+                        {session?.createdBy?._id === userId
+                          ? "You"
+                          : session?.createdBy?.name || "Unknown"}
+                      </p>
+                      <div className="flex flex-col gap-2">
                         <Button
-                          onClick={() => id && !String(id).startsWith("missing-") ? navigate(`/session/${id}/video`) : toast.error("Cannot join session")}
-                          variant="success"
+                          onClick={() =>
+                            id && !String(id).startsWith("missing-")
+                              ? navigate(`/session/details/${id}`)
+                              : toast.error("Cannot open details")
+                          }
+                          variant="secondary"
                         >
-                          Join Session
+                          View Details
                         </Button>
-                      )}
-                      {status === "upcoming" && (
-                        <Button
-                          variant="danger"
-                          onClick={() => id && !String(id).startsWith("missing-") && setCancelModal({ open: true, id })}
-                        >
-                          Cancel Session
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+                        {status === "on-going" && (
+                          <Button
+                            onClick={() =>
+                              id && !String(id).startsWith("missing-")
+                                ? navigate(`/session/${id}/video`)
+                                : toast.error("Cannot join session")
+                            }
+                            variant="success"
+                          >
+                            Join Session
+                          </Button>
+                        )}
+                        {status === "upcoming" && (
+                          <Button
+                            variant="danger"
+                            onClick={() =>
+                              id && setCancelModal({ open: true, id })
+                            }
+                          >
+                            Cancel Session
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-12 gap-4">
+                  <Button
+                    onClick={handlePrevPage}
+                    disabled={page === 1}
+                    className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    <ChevronLeft size={18} /> Prev
+                  </Button>
+                  <span className="text-gray-400">
+                    Page {page} of {totalPages}
+                  </span>
+                  <Button
+                    onClick={handleNextPage}
+                    disabled={page === totalPages}
+                    className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    Next <ChevronRight size={18} />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -214,11 +307,26 @@ const Sessions = () => {
         {cancelModal.open && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl p-6 w-96 shadow-2xl backdrop-blur-xl">
-              <h2 className="text-lg font-semibold mb-4 text-emerald-400">Cancel Session</h2>
-              <Input type="text" placeholder="Enter reason..." value={cancelReason} onChange={setCancelReason} className="w-full mb-4 bg-gray-800 text-white border-gray-700" />
+              <h2 className="text-lg font-semibold mb-4 text-emerald-400">
+                Cancel Session
+              </h2>
+              <Input
+                type="text"
+                placeholder="Enter reason..."
+                value={cancelReason}
+                onChange={setCancelReason}
+                className="w-full mb-4 bg-gray-800 text-white border-gray-700"
+              />
               <div className="flex justify-end gap-3">
-                <Button variant="secondary" onClick={() => setCancelModal({ open: false })}>Close</Button>
-                <Button variant="danger" onClick={handleCancelConfirm}>Confirm Cancel</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setCancelModal({ open: false })}
+                >
+                  Close
+                </Button>
+                <Button variant="danger" onClick={handleCancelConfirm}>
+                  Confirm Cancel
+                </Button>
               </div>
             </div>
           </div>

@@ -83,35 +83,65 @@ export class SessionService {
     return session;
   }
 
-  async getSessions(userId: string): Promise<ISession[] | null> {
-    let sessions = await this._sessionRepository.getAllSessions(userId);
-    if (!sessions) return [];
-
-    const now = new Date();
-    for (const session of sessions) {
-      const start = new Date(session.startTime);
-      const end = new Date(
-        session.endTime ||
-          start.getTime() + (session.durationMinutes || 60) * 60000
-      );
-
-      if (session.status === "pending" && now >= start) {
-        session.status = "cancelled";
-        await this._sessionRepository.updateSession(session._id as string, {
-          status: "cancelled",
-        });
-      } else if (
-        (session.status === "upcoming" || session.status === "accepted") &&
-        now > end
-      ) {
-        session.status = "completed";
-        await this._sessionRepository.updateSession(session._id as string, {
-          status: "completed",
-        });
-      }
-    }
-    return sessions;
+  async getSessions(
+  userId: string,
+  filters?: {
+    search?: string;
+    status?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
   }
+): Promise<{ sessions: ISession[]; total: number; page: number; totalPages: number }> {
+  const { search = "", status = "all", type = "all", page = 1, limit = 10 } = filters || {};
+
+  const query: any = {
+    $or: [{ createdBy: userId }, { "participants.user": userId }],
+  };
+
+  if (status !== "all") query.status = status;
+  if (type !== "all") query.type = type;
+  if (search) query.topic = { $regex: search, $options: "i" };
+
+  const skip = (page - 1) * limit;
+
+  const [sessions, total] = await Promise.all([
+    this._sessionRepository.findWithFilters(query, skip, limit),
+    this._sessionRepository.countSessions(query),
+  ]);
+
+  const now = new Date();
+  for (const session of sessions) {
+    const start = new Date(session.startTime);
+    const end = new Date(
+      session.endTime ||
+        start.getTime() + (session.durationMinutes || 60) * 60000
+    );
+
+    if (session.status === "pending" && now >= start) {
+      session.status = "cancelled";
+      await this._sessionRepository.updateSession(session._id as string, {
+        status: "cancelled",
+      });
+    } else if (
+      (session.status === "upcoming" || session.status === "accepted") &&
+      now > end
+    ) {
+      session.status = "completed";
+      await this._sessionRepository.updateSession(session._id as string, {
+        status: "completed",
+      });
+    }
+  }
+
+  return {
+    sessions,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
 
   async getSessionById(sessionId: string): Promise<ISession | null> {
     return await this._sessionRepository.getSessionById(sessionId);

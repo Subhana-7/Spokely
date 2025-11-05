@@ -11,6 +11,7 @@ import { mapConnectionToDTO } from "../mappers/connection.mappers";
 import { MESSAGES } from "../utilis/constants";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IChatRepository } from "../repositories/interfaces/IChatRepository";
+import { INotificationService } from "./interfaces/INotificationService";
 
 @injectable()
 export class ConnectionService implements IConnectionService {
@@ -18,7 +19,8 @@ export class ConnectionService implements IConnectionService {
     @inject(TYPES.IConnectionRepository)
     private _connectionRepository: IConnectionRepository,
     @inject(TYPES.IUserRepository) private _userRepository: IUserRepository,
-    @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository
+    @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository,
+    @inject(TYPES.INotificationService) private _notificationService:INotificationService,
   ) {}
 
   async sendConnectionRequest(
@@ -49,6 +51,13 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(senderId),
         receiver._id
       );
+
+       await this._notificationService.send({
+      userId:receiver.id,
+      title:"New Connection Request.",
+      message:"A new connection request send to you, Check it out.",
+      type:"success",
+    })
 
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
@@ -94,6 +103,13 @@ export class ConnectionService implements IConnectionService {
 
       await this._chatRepository.findOrCreateSession(sessionId, participants);
 
+      await this._notificationService.send({
+      userId:connection.userId.toString(),
+      title:"Connection Request Accepted",
+      message:"Your connection request is accepted, Check it out.",
+      type:"success",
+    })
+
       return mapConnectionToDTO(connection as unknown as PopulatedConnection);
     } catch (error) {
       console.log("acceptRequest error", error);
@@ -101,22 +117,46 @@ export class ConnectionService implements IConnectionService {
     }
   }
 
-  async getAllConnections(
+   async getAllConnections(
     userId: string,
-    search?: string
-  ): Promise<ConnectionDTO[] | null> {
+    filters?: {
+      search?: string;
+      status?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ connections: ConnectionDTO[]; total: number; page: number; totalPages: number } | null> {
     try {
+      const page = filters?.page ?? 1;
+      const limit = filters?.limit ?? 10;
+
       const connections =
-        await this._connectionRepository.getAcceptedConnections(
-          new Types.ObjectId(userId),
-          search
-        );
-      return connections ? connections.map(mapConnectionToDTO) : null;
+        await this._connectionRepository.findWithFilters(userId, {
+          search: filters?.search,
+          status: filters?.status,
+          page,
+          limit,
+        });
+
+      const total = await this._connectionRepository.countWithFilters(userId, {
+        search: filters?.search,
+        status: filters?.status,
+      });
+
+      const dtos = connections.map(mapConnectionToDTO);
+
+      return {
+        connections: dtos,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      };
     } catch (error) {
       console.log("getAllConnections error", error);
       return null;
     }
   }
+
 
   async getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null> {
     try {
@@ -139,6 +179,14 @@ export class ConnectionService implements IConnectionService {
         requestId,
         new Types.ObjectId(userId)
       );
+
+       await this._notificationService.send({
+      userId:requestId,
+      title:"Connection Request Rejected",
+      message:"Your connection request is Rejected, Check it out.",
+      type:"success",
+    })
+
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
         : null;

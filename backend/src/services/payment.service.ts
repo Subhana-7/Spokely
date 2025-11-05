@@ -12,6 +12,8 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import paypalAPI, { getPaypalAuth } from "../config/paypal.axios";
 import { IWalletService } from "./interfaces/IWalletService";
+import { MESSAGES } from "../utilis/constants";
+import { INotificationService } from "./interfaces/INotificationService";
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL!;
 
@@ -23,7 +25,8 @@ export class PaymentService implements IPaymentService {
     @inject(TYPES.ISessionRepository)
     private _sessionRepository: ISessionRepository,
     @inject(TYPES.IWalletService)
-    private readonly _walletService: IWalletService
+    private readonly _walletService: IWalletService,
+    @inject(TYPES.INotificationService) private readonly _notificationService: INotificationService,
   ) {}
 
   private async getAccessToken(): Promise<string> {
@@ -101,18 +104,22 @@ export class PaymentService implements IPaymentService {
         userIdStr
       );
 
+      console.log('capture order',session);
+      console.log(session?.type,session?.sessionFee ,session?.mentorId)
+
       if (
         session?.type === "public" &&
         session.sessionFee &&
         session.mentorId
       ) {
-        await this._walletService.credit(
+        let res = await this._walletService.credit(
           session.mentorId.toString(),
           session.sessionFee,
           `Payment received from ${userIdStr} for session: ${session.topic}`,
           undefined,
           session._id?.toString()
         );
+        console.log(res,'payment')
       }
     }
 
@@ -131,7 +138,27 @@ export class PaymentService implements IPaymentService {
     userId: string,
     dto: PaymentRequestDTO
   ): Promise<PaymentResponseDTO> {
-    return this.captureOrder(userId, dto);
+    let payment = await this.captureOrder(userId, dto);
+    if(!payment){
+      throw new Error(MESSAGES.ERROR.NOT_FOUND);
+    }
+    console.log(payment);
+    if(payment?.status === "COMPLETED"){
+      await this._notificationService.send({
+      userId:userId,
+      title:"Subscription Successful",
+      message:"Your new Subscription is successfull. Enjoy our subscription feature.",
+      type:"success",
+    })
+    }else if(payment?.status === "COMPLETED"){
+      await this._notificationService.send({
+      userId:userId,
+      title:"Subscription Request Failed",
+      message:"Your new Subscription Request failed due to payment failure in payment request.",
+      type:"success",
+    })
+    }
+    return payment;
   }
 
   async getAllPayments(): Promise<PaymentResponseDTO[]> {

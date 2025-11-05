@@ -2,7 +2,7 @@ import API from "../api/axios.instance";
 import { NOTIFICATION_ROUTES as R } from "../constants/routes";
 
 
-export const getUserNotifications = async (userId: string) => {
+export const getNotifications = async (userId: string) => {
   const res = await API.get(`${R.base}/${userId}`);
   return res.data.data;
 };

@@ -7,6 +7,7 @@ import {
   getConnectionRequests,
   getSentConnectionRequests,
   acceptConnectionRequest,
+  rejectConnectionRequest,
 } from "../../../services/connectionService";
 import toast from "react-hot-toast";
 
@@ -41,9 +42,7 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
 }) => {
   const [uniqueCode, setUniqueCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>(
-    []
-  );
+  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
 
   const fetchRequests = async () => {
@@ -77,12 +76,21 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
 
   const handleAccept = async (requestId: string) => {
     try {
-      console.log(requestId, "req id");
       await acceptConnectionRequest(requestId);
       toast.success("Connection accepted!");
       fetchRequests();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to accept request");
+    }
+  };
+
+  const handleReject = async (requestId: string) => {
+    try {
+      await rejectConnectionRequest(requestId);
+      toast.success("Connection request rejected!");
+      fetchRequests();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reject request");
     }
   };
 
@@ -131,15 +139,14 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
               <Button
                 onClick={onClose}
                 variant="secondary"
-                className="px-8 py-3bg-gray-600 text-white hover:bg-gray-700 bg-gray-600  rounded-xl "
+                className="px-8 py-3 bg-gray-600 text-white hover:bg-gray-700 rounded-xl"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAddConnection}
                 disabled={loading || !uniqueCode.trim()}
-                variant="danger"
-                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white focus:ring-green-500 shadow-lg hover:shadow-xl  rounded-xl"
+                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white focus:ring-green-500 shadow-lg hover:shadow-xl rounded-xl"
               >
                 {loading ? (
                   <>
@@ -191,14 +198,25 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="success"
-                        className="px-6 py-2"
-                        onClick={() => handleAccept(req.id)}
-                      >
-                        <CheckCircle size={16} className="mr-2" />
-                        Accept
-                      </Button>
+
+                      <div className="flex gap-3">
+                        <Button
+                          variant="success"
+                          className="px-5 py-2"
+                          onClick={() => handleAccept(req.id)}
+                        >
+                          <CheckCircle size={16} className="mr-2" />
+                          Accept
+                        </Button>
+                        <Button
+                          variant="danger"
+                          className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white"
+                          onClick={() => handleReject(req.id)}
+                        >
+                          <X size={16} className="mr-2" />
+                          Reject
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

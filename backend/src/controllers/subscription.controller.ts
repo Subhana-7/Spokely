@@ -25,11 +25,30 @@ export class SubscriptionController implements ISubscriptionController {
   }
 
   async getUserSubscriptions(req: Request, res: Response): Promise<void> {
-    const subs = await this._subscriptionService.getUserSubscriptions(
-      req.params.id
+  try {
+    const userId = req.params.id;
+    const { search = "", status = "All", page = "1", limit = "10" } = req.query;
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    const result = await this._subscriptionService.getUserSubscriptions(
+      userId,
+      search as string,
+      status as string,
+      pageNum,
+      limitNum
     );
-    res.status(STATUS_CODES.OK).json(subs);
+
+    res.status(STATUS_CODES.OK).json(result);
+  } catch (err: any) {
+    res.status(STATUS_CODES.BAD_REQUEST).json({
+      success: false,
+      message: err.message || "Failed to fetch subscriptions",
+    });
   }
+}
+
 
   async getMentorSubscriptions(req: Request, res: Response): Promise<void> {
     const subs = await this._subscriptionService.getMentorSubscriptions(
@@ -68,4 +87,31 @@ export class SubscriptionController implements ISubscriptionController {
       });
     }
   }
+
+  async getSubscriptionHistory(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.params.id;
+    const { page = "1", limit = "10" } = req.query;
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    const result = await this._subscriptionService.getSubscriptionHistory(
+      userId,
+      pageNum,
+      limitNum
+    );
+
+    res.status(STATUS_CODES.OK).json({
+      success: true,
+      ...result,
+    });
+  } catch (err: any) {
+    res.status(STATUS_CODES.BAD_REQUEST).json({
+      success: false,
+      message: err.message || "Failed to fetch subscription history",
+    });
+  }
+}
+
 }

@@ -1,25 +1,26 @@
 import { useState, useEffect } from "react";
-import { Bell, MessageCircle, User } from "lucide-react";
+import { Bell, MessageCircle, User, Wallet } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../../store/userAuthStore";
 import { logoutService } from "../../../services/authServices";
-import NotificationModal from "../../../pages/Notification";
-import { getUserNotifications, markNotificationAsRead } from "../../../services/notificationService";
+import {
+  getNotifications,
+} from "../../../services/notificationService";
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuthStore();
 
-  const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Fetch notifications when modal opens
+  // Fetch notifications count periodically (optional)
   useEffect(() => {
-    if (notifOpen && user?.id) {
-      getUserNotifications(user.id)
-        .then((data) =>
+    if (user?.id) {
+      const fetchNotifications = async () => {
+        try {
+          const data = await getNotifications(user.id);
           setNotifications(
             data.map((n: any) => ({
               id: n._id,
@@ -28,22 +29,17 @@ const DashboardHeader = () => {
               time: new Date(n.createdAt).toLocaleString(),
               read: n.isRead,
             }))
-          )
-        )
-        .catch((err) => console.error("Error fetching notifications:", err));
-    }
-  }, [notifOpen, user?.id]);
+          );
+        } catch (err) {
+          console.error("Error fetching notifications:", err);
+        }
+      };
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await markNotificationAsRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000); // refresh every minute
+      return () => clearInterval(interval);
     }
-  };
+  }, [user?.id]);
 
   const handleLogout = async () => {
     try {
@@ -55,7 +51,6 @@ const DashboardHeader = () => {
     }
   };
 
-  // Helper for nav button styling
   const navButtonClass = (path: string) =>
     `text-gray-200 font-medium px-3 py-2 rounded-lg transition-colors ${
       location.pathname === path
@@ -76,16 +71,28 @@ const DashboardHeader = () => {
 
         {/* Nav Links */}
         <nav className="hidden md:flex items-center space-x-6">
-          <button onClick={() => navigate("/user/home")} className={navButtonClass("/user/home")}>
+          <button
+            onClick={() => navigate("/user/home")}
+            className={navButtonClass("/user/home")}
+          >
             Dashboard
           </button>
-          <button onClick={() => navigate("/user/session")} className={navButtonClass("/user/session")}>
+          <button
+            onClick={() => navigate("/user/session")}
+            className={navButtonClass("/user/session")}
+          >
             Sessions
           </button>
-          <button onClick={() => navigate("/user/mentors")} className={navButtonClass("/user/mentors")}>
+          <button
+            onClick={() => navigate("/user/mentors")}
+            className={navButtonClass("/user/mentors")}
+          >
             Mentors
           </button>
-          <button onClick={() => navigate("/user/connections")} className={navButtonClass("/user/connections")}>
+          <button
+            onClick={() => navigate("/user/connections")}
+            className={navButtonClass("/user/connections")}
+          >
             Connections
           </button>
         </nav>
@@ -100,10 +107,10 @@ const DashboardHeader = () => {
             <MessageCircle size={20} />
           </button>
 
-          {/* Notification Bell */}
+          {/* Notifications */}
           <div className="relative">
             <button
-              onClick={() => setNotifOpen(true)}
+              onClick={() => navigate("/notifications")}
               className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors relative"
             >
               <Bell size={20} />
@@ -114,6 +121,21 @@ const DashboardHeader = () => {
               )}
             </button>
           </div>
+
+          {/* Wallet */}
+          <button
+            onClick={() => navigate("/wallet")}
+            className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Wallet size={20} />
+          </button>
+
+          <button
+            onClick={() => navigate("/user/subscription/history")}
+            className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Wallet size={20} />
+          </button>
 
           {/* Profile */}
           <button
@@ -132,14 +154,6 @@ const DashboardHeader = () => {
           </button>
         </div>
       </div>
-
-      {/* Notification Modal */}
-      <NotificationModal
-        open={notifOpen}
-        onClose={() => setNotifOpen(false)}
-        notifications={notifications}
-        onMarkAsRead={handleMarkAsRead}
-      />
     </header>
   );
 };

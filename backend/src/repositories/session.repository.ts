@@ -1,9 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import SessionModel, { ISession } from "../models/sessions.model";
 import { ISessionRepository } from "./interfaces/ISessionsRepository";
 import { injectable } from "inversify";
 import { BaseRepository } from "./base.repository";
-import { Types } from "mongoose";
 
 @injectable()
 export class SessionRepository
@@ -26,7 +25,6 @@ export class SessionRepository
   async getAllSessions(id: string): Promise<ISession[] | null> {
     try {
       const objectId = new mongoose.Types.ObjectId(id);
-
       const res = await SessionModel.find({
         $or: [{ createdBy: objectId }, { "participants.user": objectId }],
       })
@@ -57,10 +55,7 @@ export class SessionRepository
     }
   }
 
-  async updateSession(
-    id: string,
-    data: Partial<ISession>
-  ): Promise<ISession | null> {
+  async updateSession(id: string, data: Partial<ISession>): Promise<ISession | null> {
     try {
       return await SessionModel.findByIdAndUpdate(id, data, { new: true });
     } catch (error) {
@@ -81,9 +76,7 @@ export class SessionRepository
         {
           $set: {
             "participants.$.status": status,
-            ...(cancelReason && {
-              "participants.$.cancelReason": cancelReason,
-            }),
+            ...(cancelReason && { "participants.$.cancelReason": cancelReason }),
           },
         },
         { new: true }
@@ -94,18 +87,14 @@ export class SessionRepository
     }
   }
 
-  async addParticipant(
-    sessionId: string,
-    userId: string
-  ): Promise<ISession | null> {
+  async addParticipant(sessionId: string, userId: string): Promise<ISession | null> {
     try {
       const session = await SessionModel.findById(sessionId);
       if (!session) return null;
 
       let maxParticipants = 2;
       if (session.type === "peer-to-peer") maxParticipants = 10;
-      if (session.type === "private" || session.type === "public")
-        maxParticipants = 25;
+      if (session.type === "private" || session.type === "public") maxParticipants = 25;
 
       const alreadyJoined = session.participants.some(
         (p) => p.user.toString() === userId.toString()
@@ -137,9 +126,7 @@ export class SessionRepository
       return await SessionModel.findByIdAndUpdate(
         sessionId,
         {
-          $push: {
-            flags: { flaggedBy, reason, ...(againstUser && { againstUser }) },
-          },
+          $push: { flags: { flaggedBy, reason, ...(againstUser && { againstUser }) } },
           $set: { status: "flagged" },
         },
         { new: true }
@@ -203,6 +190,36 @@ export class SessionRepository
     } catch (error) {
       console.error(error);
       return null;
+    }
+  }
+
+  async findWithFilters(query: any, skip: number, limit: number) {
+    try {
+      return await SessionModel.find(query)
+        .populate({
+          path: "participants.user",
+          select: "name email profilePicture",
+        })
+        .populate({
+          path: "createdBy",
+          select: "name email profilePicture",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    } catch (error) {
+      console.error("Error in findWithFilters:", error);
+      return [];
+    }
+  }
+
+  async countSessions(query: any) {
+    try {
+      return await SessionModel.countDocuments(query);
+    } catch (error) {
+      console.error("Error in countSessions:", error);
+      return 0;
     }
   }
 }

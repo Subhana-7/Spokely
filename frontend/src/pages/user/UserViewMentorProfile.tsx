@@ -87,13 +87,19 @@ const UserViewMentorProfile = () => {
     };
 
     const fetchUserSubscriptions = async () => {
-      try {
-        const res = await getUserSubscriptions(user.id);
-        setUserSubscriptions(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch user subscriptions:", err);
-      }
-    };
+  try {
+    const res = await getUserSubscriptions(user.id);
+    const subs =
+      Array.isArray(res.data)
+        ? res.data
+        : res.data?.subscriptions || res.subscriptions || [];
+    setUserSubscriptions(subs);
+  } catch (err) {
+    console.error("Failed to fetch user subscriptions:", err);
+    setUserSubscriptions([]);
+  }
+};
+
 
     fetchMentorDetails();
     fetchPlans();

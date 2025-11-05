@@ -12,8 +12,22 @@ export const acceptConnectionRequest = (requestId: string) =>
 export const rejectConnectionRequest = (requestId: string) =>
   API.delete(`${R.base}${R.reject}/${requestId}`);
 
-export const getAllConnections = (search?: string) =>
-  API.get(`${R.base}${R.list}${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+export const getAllConnections = (params?: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const query = new URLSearchParams();
+
+  if (params?.search) query.append("search", params.search);
+  if (params?.status && params.status !== "all") query.append("status", params.status);
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.limit) query.append("limit", params.limit.toString());
+
+  const queryString = query.toString() ? `?${query.toString()}` : "";
+  return API.get(`${R.base}${R.list}${queryString}`);
+};
 
 export const getSentConnectionRequests = () => API.get(`${R.base}${R.sentRequests}`);
 

@@ -9,6 +9,7 @@ export class WalletRepository extends BaseRepository<IWallet> {
   }
 
   async getWallet(userId: string): Promise<IWallet | null> {
+    console.log('wallet repo get wallet')
     let wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       wallet = await Wallet.create({ userId, balance: 0, transactions: [] });
@@ -25,6 +26,7 @@ export class WalletRepository extends BaseRepository<IWallet> {
     subscriptionId?: string
   ): Promise<IWallet | null> {
     const wallet = await this.getWallet(userId);
+    console.log('add trans',wallet)
     if (!wallet) return null;
 
     const newBalance =

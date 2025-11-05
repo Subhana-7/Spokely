@@ -20,10 +20,15 @@ export interface IConnectionService {
 
   getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null>;
 
-  getAllConnections(
+ getAllConnections(
     userId: string,
-    search?: string
-  ): Promise<ConnectionDTO[] | null>;
+    filters?: {
+      search?: string;
+      status?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ connections: ConnectionDTO[]; total: number; page: number; totalPages: number } | null>;
 
   blockConnection(connectionId: string, userId: string): Promise<unknown>;
 

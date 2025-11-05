@@ -4,13 +4,13 @@ import ConnectionsTable from "./ConnectionsTable";
 import Button from "../../../modals/Button";
 import Input from "../../../modals/Input";
 import AddConnectionModal from "./AddConnectionsModal";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { getAllConnections } from "../../../services/connectionService";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../../store/userAuthStore";
 
 interface Connection {
-  id: string; // connection id
+  id: string;
   connectedUser: {
     id: string;
     name: string;
@@ -38,50 +38,94 @@ interface Connection {
 
 const Connections = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [status, setStatus] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
-  const [incomingCount, setIncomingCount] = useState(2);
+  const [incomingCount, setIncomingCount] = useState(0);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 5;
 
   const currentUserId = useAuthStore((state) => state.user?.id);
 
-  // Fetch all connections
-  const fetchConnections = async (term?: string) => {
+  // Fetch connections from backend
+  const fetchConnections = async (params?: { 
+    search?: string; 
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
     try {
       setLoading(true);
-      const res = await getAllConnections(term);
-      console.log("Fetched connections:", res.data);
-      setConnections(res.data);
-    } catch (err) {
+      const res = await getAllConnections(params);
+      console.log("Fetched connections response:", res.data);
+      
+      // Handle both response formats
+      const connectionsData = res.data.connections || res.data || [];
+      const totalCount = res.data.total || connectionsData.length || 0;
+      const pagesCount = res.data.totalPages || Math.ceil(totalCount / (params?.limit || limit)) || 1;
+      
+      setConnections(connectionsData);
+      setTotal(totalCount);
+      setTotalPages(pagesCount);
+      
+      console.log("Pagination state:", { 
+        connections: connectionsData.length, 
+        total: totalCount, 
+        totalPages: pagesCount,
+        currentPage: params?.page || 1
+      });
+    } catch (err: any) {
       toast.error("Failed to fetch connections");
+      console.error("Fetch error:", err);
+      setConnections([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial fetch
   useEffect(() => {
-    fetchConnections();
+    fetchConnections({ page: 1, limit });
   }, []);
 
+  // Refetch on search, filter, or page change
   useEffect(() => {
-    fetchConnections(searchTerm);
-  }, [searchTerm]);
+    const timeout = setTimeout(() => {
+      fetchConnections({ 
+        search: searchTerm, 
+        status,
+        page,
+        limit 
+      });
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchTerm, status, page]);
 
-  // ✅ Corrected filteredConnections logic
-  const filteredConnections = connections
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [searchTerm, status]);
+
+  // Transform backend data for table
+  const formattedConnections = connections
     .map((c) => {
-      const isCurrentUserUser = c.user.id === currentUserId;
-      const isCurrentUserConnectedUser = c.connectedUser.id === currentUserId;
+      const isCurrentUserUser = c.user?.id === currentUserId;
+      const isCurrentUserConnectedUser = c.connectedUser?.id === currentUserId;
+      if (!isCurrentUserUser && !isCurrentUserConnectedUser) return null;
 
-      // Determine which side to display
-      let displayUser;
-      if (isCurrentUserUser) displayUser = c.connectedUser;
-      else if (isCurrentUserConnectedUser) displayUser = c.user;
-      else return null;
-
-      // Correctly determine who initiated the block
-      const blockedByCurrentUser =
-        c.isBlocked && c.blockedBy?.id === currentUserId;
+      const displayUser = isCurrentUserUser ? c.connectedUser : c.user;
+      if (!displayUser) return null;
+      
+      const blockedByCurrentUser = c.isBlocked && c.blockedBy?.id === currentUserId;
 
       return {
         id: displayUser.id,
@@ -89,20 +133,21 @@ const Connections = () => {
         username: displayUser.name,
         email: displayUser.email,
         role: displayUser.role,
-        sessions: c.sessionCount,
+        sessions: c.sessionCount || 0,
+        status: c.status,
         isBlocked: c.isBlocked,
         blockedByCurrentUser,
       };
     })
-    .filter((u): u is NonNullable<typeof u> => u !== null)
-    .filter((user) => {
-      const name = user.username?.toLowerCase() || "";
-      const email = user.email?.toLowerCase() || "";
-      return (
-        name.includes(searchTerm.toLowerCase()) ||
-        email.includes(searchTerm.toLowerCase())
-      );
-    });
+    .filter(Boolean) as any[];
+
+  const handlePrevPage = () => {
+    if (page > 1) setPage(page - 1);
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) setPage(page + 1);
+  };
 
   return (
     <>
@@ -133,38 +178,126 @@ const Connections = () => {
           </Button>
         </div>
 
-        {/* Search */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="mb-8">
-            <div className="relative max-w-md">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
-                size={20}
-              />
-              <Input
-                type="text"
-                placeholder="Search connections..."
-                value={searchTerm}
-                onChange={setSearchTerm}
-                className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white placeholder-gray-400 shadow-md"
-              />
-            </div>
+        {/* Search & Filter */}
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="relative w-full md:w-1/2">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+              size={20}
+            />
+            <Input
+              type="text"
+              placeholder="Search connections..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white placeholder-gray-400 shadow-md w-full"
+            />
           </div>
 
-          {/* Table */}
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="w-14 h-14 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <div className="text-gray-400 font-medium text-lg">
-                Loading connections...
-              </div>
-            </div>
-          ) : (
-            <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
-              <ConnectionsTable connections={filteredConnections} />
-            </div>
-          )}
+          <div>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="bg-gray-800 border border-gray-700 text-gray-300 text-sm rounded-full px-5 py-3 focus:ring-2 focus:ring-green-500 shadow-md"
+            >
+              <option value="all">All</option>
+              <option value="accepted">Accepted</option>
+              <option value="pending_sent">Pending Sent</option>
+              <option value="pending_received">Pending Received</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
         </div>
+
+        {/* Table Section */}
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="w-14 h-14 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="text-gray-400 font-medium text-lg">
+              Loading connections...
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
+              {formattedConnections.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  No connections found
+                </div>
+              ) : (
+                <>
+                  <ConnectionsTable connections={formattedConnections} />
+                  
+                  {/* Pagination Controls - Always show if there's data */}
+                  {total > 0 && (
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-700 pt-4">
+                      <div className="text-sm text-gray-400">
+                        Showing {Math.min(((page - 1) * limit) + 1, total)} to {Math.min(page * limit, total)} of {total} connection{total !== 1 ? 's' : ''}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrevPage}
+                          disabled={page === 1}
+                          className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            page === 1
+                              ? "bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
+                              : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
+                          }`}
+                        >
+                          <ChevronLeft size={16} />
+                          Previous
+                        </button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (page <= 3) {
+                              pageNum = i + 1;
+                            } else if (page >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = page - 2 + i;
+                            }
+                            
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => setPage(pageNum)}
+                                className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                                  page === pageNum
+                                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
+                                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <button
+                          onClick={handleNextPage}
+                          disabled={page === totalPages}
+                          className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            page === totalPages
+                              ? "bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
+                              : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
+                          }`}
+                        >
+                          Next
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Connection Modal */}

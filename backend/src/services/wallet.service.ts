@@ -50,8 +50,30 @@ export class WalletService {
     return wallet?.balance || 0;
   }
 
-  async getTransactions(userId: string): Promise<unknown> {
-    const wallet = await this._walletRepo.getWallet(userId);
-    return wallet?.transactions || [];
-  }
+  async getTransactions(
+  userId: string,
+  page = 1,
+  limit = 10
+): Promise<{ transactions: unknown[]; total: number; totalPages: number; currentPage: number }> {
+  const wallet = await this._walletRepo.getWallet(userId);
+  const allTransactions = wallet?.transactions || [];
+
+  // Sort by createdAt descending
+  const sorted = allTransactions.sort(
+    (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+  );
+
+  const total = sorted.length;
+  const totalPages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+  const paginated = sorted.slice(start, start + limit);
+
+  return {
+    transactions: paginated,
+    total,
+    totalPages,
+    currentPage: page,
+  };
+}
+
 }
