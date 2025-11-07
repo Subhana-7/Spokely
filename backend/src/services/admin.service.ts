@@ -13,6 +13,15 @@ import { MESSAGES } from "../utilis/constants";
 import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
 import { ISession } from "../models/sessions.model";
 
+import User from "../models/user.model";
+import Mentor from "../models/mentor.model";
+import Session from "../models/sessions.model";
+import Payment from "../models/payment.model";
+import Wallet from "../models/wallet.model";
+import Subscription from "../models/subscription.modal";
+import { DailyTaskModel } from "../models/daily.task.model";
+import Connection from "../models/connections.model";
+
 @injectable()
 export class AdminService implements IAdminService {
   constructor(
@@ -137,20 +146,74 @@ export class AdminService implements IAdminService {
     return admin ? mapAdminToDto(admin) : null;
   }
 
-  async getAllSessionsAdmin(filters?: {
-    status?: string;
-    type?: string;
-    mentorId?: string;
-  }): Promise<ISession[] | null> {
-    const query: any = {};
+  async getDashboardStats() {
+  const [
+    totalUsers,
+    totalMentors,
+    totalSessions,
+    totalPayments,
+    totalConnections,
+    totalSubscriptions,
+    totalDailyTasks,
+    wallets,
+  ] = await Promise.all([
+    User.countDocuments({ isVerified: true }),
+    Mentor.countDocuments({ isVerified: true }),
+    Session.countDocuments({}),
+    Payment.countDocuments({ status: "COMPLETED" }),
+    Connection.countDocuments({ status: "accepted" }),
+    Subscription.countDocuments({ status: "ACTIVE" }),
+    DailyTaskModel.countDocuments({}),
+    Wallet.aggregate([{ $group: { _id: null, total: { $sum: "$balance" } } }]),
+  ]);
 
-    if (filters?.status && filters.status !== "all") {
-      query.status = filters.status;
-    }
+  const walletBalance = wallets[0]?.total || 0;
 
-    if (filters?.type) query.type = filters.type;
-    if (filters?.mentorId) query.mentorId = filters.mentorId;
+  // Calculate total payment sum
+  const paymentSum = await Payment.aggregate([
+    { $match: { status: "COMPLETED" } },
+    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+  ]);
 
-    return await this._sessionRepository.findSessions(query);
+  return {
+    totalUsers,
+    totalMentors,
+    totalSessions,
+    totalPayments: paymentSum[0]?.totalAmount || 0,
+    totalConnections,
+    totalSubscriptions,
+    totalDailyTasks,
+    walletBalance,
+  };
+}
+
+  async getAllSessionsAdmin(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<{ sessions: ISession[]; total: number }> {
+  const { page = 1, limit = 10, search = "", status = "all" } = params;
+
+  const query: any = {};
+
+  if (status && status !== "all") query.status = status;
+
+  // Search by topic or mentor name/email
+  if (search) {
+    query.$or = [
+      { topic: { $regex: search, $options: "i" } },
+      { "createdBy.name": { $regex: search, $options: "i" } },
+      { "createdBy.email": { $regex: search, $options: "i" } },
+    ];
   }
+
+  const { sessions, total } = await this._sessionRepository.findSessionsPaginated(query, {
+    page,
+    limit,
+  });
+
+  return { sessions, total };
+}
+
 }

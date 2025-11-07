@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardHeader from "./DashBoardComponents/Header";
-import { Award, Star, User } from "lucide-react";
+import { Award, Star, User, MessageSquare } from "lucide-react";
 import Badge from "../../components/common/Badge";
 import {
   subscriptionStartPayment,
@@ -49,10 +49,7 @@ interface Subscription {
 const UserViewMentorProfile = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [mentor, setMentor] = useState<Mentor | null>(null);
-  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>(
-    []
-  );
-
+  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>([]);
   const [showPayPalModal, setShowPayPalModal] = useState(false);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -63,6 +60,11 @@ const UserViewMentorProfile = () => {
 
   const { user } = useAuthStore();
   const mentorId = useParams<{ id: string }>();
+
+  // ⭐ Rating & Feedback State
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     if (!mentorId.id || !user?.id) return;
@@ -87,26 +89,23 @@ const UserViewMentorProfile = () => {
     };
 
     const fetchUserSubscriptions = async () => {
-  try {
-    const res = await getUserSubscriptions(user.id);
-    const subs =
-      Array.isArray(res.data)
-        ? res.data
-        : res.data?.subscriptions || res.subscriptions || [];
-    setUserSubscriptions(subs);
-  } catch (err) {
-    console.error("Failed to fetch user subscriptions:", err);
-    setUserSubscriptions([]);
-  }
-};
-
+      try {
+        const res = await getUserSubscriptions(user.id);
+        const subs =
+          Array.isArray(res.data)
+            ? res.data
+            : res.data?.subscriptions || res.subscriptions || [];
+        setUserSubscriptions(subs);
+      } catch (err) {
+        console.error("Failed to fetch user subscriptions:", err);
+        setUserSubscriptions([]);
+      }
+    };
 
     fetchMentorDetails();
     fetchPlans();
     fetchUserSubscriptions();
   }, [mentorId, user?.id]);
-
-  console.log(userSubscriptions, "user subs");
 
   const formatTime = (hour: number) => {
     if (hour >= 1 && hour <= 8) return `${hour} PM`;
@@ -261,6 +260,7 @@ const UserViewMentorProfile = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT PROFILE CARD */}
           <div className="lg:col-span-1">
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <div className="text-center mb-6">
@@ -325,7 +325,9 @@ const UserViewMentorProfile = () => {
             </div>
           </div>
 
+          {/* RIGHT SIDE DETAILS */}
           <div className="lg:col-span-2 space-y-6">
+            {/* ABOUT */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold flex items-center mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 <User size={20} className="mr-2 text-green-400" /> About{" "}
@@ -336,6 +338,7 @@ const UserViewMentorProfile = () => {
               </p>
             </div>
 
+            {/* EXPERTISE */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold flex items-center mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 <Award size={20} className="mr-2 text-green-400" /> Expertise &
@@ -354,6 +357,7 @@ const UserViewMentorProfile = () => {
               </div>
             </div>
 
+            {/* SUBSCRIPTION */}
             <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                 Subscription Plans
@@ -402,10 +406,61 @@ const UserViewMentorProfile = () => {
                 </div>
               )}
             </div>
+
+            {/* ⭐ FEEDBACK & RATING CARD */}
+            <div className="backdrop-blur-lg bg-white/10 rounded-2xl shadow-lg p-6 border border-white/10">
+              <h3 className="text-xl font-bold flex items-center mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                <MessageSquare size={20} className="mr-2 text-green-400" />{" "}
+                Rate & Share Feedback
+              </h3>
+
+              <div className="flex items-center gap-2 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={28}
+                    className={`cursor-pointer transition ${
+                      star <= (hover || rating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-500"
+                    }`}
+                    onMouseEnter={() => setHover(star)}
+                    onMouseLeave={() => setHover(0)}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
+
+              <textarea
+                className="w-full bg-gray-900/50 text-gray-200 border border-gray-700 rounded-lg p-3 mb-3"
+                placeholder="Write your feedback here..."
+                rows={4}
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+              />
+
+              <button
+                disabled={!rating}
+                className={`px-6 py-2 rounded-full font-medium ${
+                  rating
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105"
+                    : "bg-gray-600 cursor-not-allowed"
+                } transition`}
+              >
+                Submit Feedback
+              </button>
+
+              {rating > 0 && (
+                <p className="mt-3 text-sm text-gray-400">
+                  ⭐ You rated this mentor <span className="text-yellow-400">{rating}</span>/5
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* PAYMENT MODAL */}
       {showPayPalModal && activePlan && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
@@ -431,6 +486,7 @@ const UserViewMentorProfile = () => {
         </div>
       )}
 
+      {/* PAYMENT RESULT */}
       {paymentResult && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">

@@ -248,4 +248,91 @@ export class SubscriptionRepository
   };
 }
 
+
+async findByMentorPaginated(
+  mentorId: string,
+  search: string = "",
+  page: number = 1,
+  limit: number = 9
+) {
+  const skip = (page - 1) * limit;
+
+  // Base query
+  const query: any = { mentorId };
+
+  const allSubs = await SubscriptionModel.find(query)
+    .populate({
+      path: "userId",
+      model: "User",
+      select: "name email profilePicture",
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // Apply search (by user name or email)
+  const filtered = allSubs.filter((sub: any) => {
+    const user = sub.userId;
+    if (!user) return false;
+    const searchLower = search.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const total = filtered.length;
+  const paginated = filtered.slice(skip, skip + limit);
+
+  const enriched = await Promise.all(
+    paginated.map(async (sub: any) => {
+      const user = sub.userId;
+      if (!user || !user._id) {
+        return {
+          ...sub,
+          user: null,
+          sessionsCount: 0,
+          avgRating: null,
+        };
+      }
+
+      const userId = user._id;
+
+      const sessions = await SessionModel.find({
+        mentorId,
+        $or: [{ createdBy: userId }, { "participants.user": userId }],
+        status: "completed",
+      }).populate("feedback.from feedback.to", "name email");
+
+      const feedbackByMentor = sessions
+        .flatMap((s) => s.feedback || [])
+        .filter(
+          (fb) =>
+            fb.from?.toString() === mentorId.toString() &&
+            fb.to?.toString() === userId.toString()
+        );
+
+      const avgRating =
+        feedbackByMentor.length > 0
+          ? feedbackByMentor.reduce((acc, f) => acc + (f.rating || 0), 0) /
+            feedbackByMentor.length
+          : null;
+
+      return {
+        ...sub,
+        user,
+        sessionsCount: sessions.length,
+        avgRating,
+      };
+    })
+  );
+
+  return {
+    data: enriched,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+
 }

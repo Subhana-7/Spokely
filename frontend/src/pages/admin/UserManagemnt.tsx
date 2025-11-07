@@ -14,35 +14,34 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-  const fetchUsers = async () => {
-    try {
-      const response = await getAllUsers({
-        search,
-        level: filter,
-        page,
-        limit,
-        isBlocked:
-          statusFilter === "blocked"
-            ? true
-            : statusFilter === "active"
-            ? false
-            : undefined,
-      });
+    const fetchUsers = async () => {
+      try {
+        const response = await getAllUsers({
+          search,
+          level: filter,
+          page,
+          limit,
+          isBlocked:
+            statusFilter === "blocked"
+              ? true
+              : statusFilter === "active"
+              ? false
+              : undefined,
+        });
 
-      const { result } = response.data;
+        const { result } = response.data;
 
-      console.log(result);
+        console.log(result);
 
-      setUsers(result.users);
-      setTotal(result.total);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    }
-  };
+        setUsers(result.users);
+        setTotal(result.total);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    };
 
-  fetchUsers();
-}, [search, filter, statusFilter, page, limit]);
-
+    fetchUsers();
+  }, [search, filter, statusFilter, page, limit]);
 
   const handleBlock = async (id: string) => {
     try {
@@ -89,11 +88,11 @@ const UserManagement = () => {
   }));
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 ">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <div className="w-16 h-1 bg-purple-500 rounded-full mb-2"></div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
             User Management
           </h1>
           <p className="text-sm text-gray-600">
@@ -102,13 +101,15 @@ const UserManagement = () => {
         </div>
       </div>
 
-      <SearchFilterBar
-        searchPlaceholder="Search users by name or email"
-        filterOptions={["All Levels", "Beginner", "Intermediate", "Advanced"]}
-        onSearch={setSearch}
-        onFilter={setFilter}
-        onStatusFilter={setStatusFilter}
-      />
+      <div className="text-black">
+        <SearchFilterBar
+          searchPlaceholder="Search users by name or email"
+          filterOptions={["All Levels", "Beginner", "Intermediate", "Advanced"]}
+          onSearch={setSearch}
+          onFilter={setFilter}
+          onStatusFilter={setStatusFilter}
+        />
+      </div>
 
       <DataTable
         data={userData}

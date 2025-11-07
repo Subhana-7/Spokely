@@ -27,7 +27,17 @@ export interface IMentor extends Document {
   };
   role?: "mentor" | "user";
   bio?: string;
-  tags?: string[];
+  tags?: [
+    "Public Speaking",
+    "Presentation Skills",
+    "Active Listening",
+    "Body Language",
+    "Business Communication",
+    "Spoken English",
+    "Accent Training",
+    "Emotional Intelligence",
+    "Leadership Communication"
+  ];
   forgotPasswordOtp?: {
     code: string;
     expiresAt: Date;

@@ -18,7 +18,8 @@ export interface ISubscriptionService {
   limit: number
 ):Promise<any>;
 
-  getMentorSubscriptions(mentorId: string): Promise<ISubscription[]>;
+  getMentorSubscriptions(mentorId: string, search:any, page:any, limit:any): Promise<any>;
+  
   cancelSubscription(subscriptionId: string): Promise<ISubscription | null>;
   scheduleCronJobs(): Promise<void> | void;
   getMentorPlans(mentorId: string): Promise<IMentorPlan["plans"]>;

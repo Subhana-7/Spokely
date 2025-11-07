@@ -32,7 +32,6 @@ export const getAllConnections = (params?: {
 export const getSentConnectionRequests = () => API.get(`${R.base}${R.sentRequests}`);
 
 export const blockUnblockUser = (connectionId: string, isBlocked: boolean) => {
-  console.log('frontend service hiting?')
   const endpoint = isBlocked
     ? `/users/connections/${connectionId}/unblock`
     : `/users/connections/${connectionId}/block`;

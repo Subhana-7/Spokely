@@ -37,4 +37,9 @@ export interface IAdminRepository {
   }): Promise<{ mentors: IMentor[]; total: number }>;
 
   findById(id: string): Promise<IAdmin | null>;
+
+   findAllMentorsPaginated(
+  query: any,
+  options: { page: number; limit: number }
+):Promise<any>;
 }

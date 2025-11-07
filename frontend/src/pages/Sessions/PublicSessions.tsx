@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, Search, IndianRupee, DollarSign } from "lucide-react";
+import {
+  Calendar,
+  Search,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
-import Header from "../user/DashBoardComponents/Header";
+import DashboardHeader from "../user/DashBoardComponents/Header";
 import SpokelyCard from "../../components/common/Cards";
 import Input from "../../modals/Input";
 import Badge from "../../components/common/Badge";
@@ -10,6 +16,7 @@ import { getPublicSessions } from "../../services/sessionService";
 import { startPayment, confirmPayment } from "../../services/paymentService";
 import { useAuthStore } from "../../store/userAuthStore";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 declare global {
   interface Window {
@@ -32,18 +39,8 @@ interface Session {
   startTime: string;
   endTime: string;
   status: string;
-  createdBy: string;
+  createdBy: any;
   participants: Participant[];
-}
-
-interface PaymentResponse {
-  orderId?: string;
-  id?: string;
-  message?: string;
-  success?: boolean;
-  data?: {
-    orderId?: string;
-  };
 }
 
 const MentorPublicSessions = () => {
@@ -51,114 +48,62 @@ const MentorPublicSessions = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6;
 
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [showPayPalModal, setShowPayPalModal] = useState(false);
-  const [activeSession, setActiveSession] = useState<{
-    id: string;
-    fee: number;
-  } | null>(null);
+  const [activeSession, setActiveSession] = useState<{ id: string; fee: number } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
   const [paymentResult, setPaymentResult] = useState<{
     status: "success" | "error";
     message: string;
   } | null>(null);
 
-  const { user } = useAuthStore();
+  /** Debounce search */
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
+  /** Fetch public sessions */
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const { data } = await getPublicSessions();
-        const publicOnly = data.publicSessions.filter(
-          (s: Session) => s.type === "public"
-        );
-        setSessions(publicOnly);
-      } catch (error) {
-        console.error("Error fetching sessions:", error);
+        setLoading(true);
+        const { data } = await getPublicSessions({
+          search: debouncedSearch,
+          status: selectedFilter,
+          page,
+          limit,
+        });
+        setSessions(data.sessions || []);
+        setTotalPages(data.totalPages || 1);
+      } catch (err: any) {
+        toast.error("Failed to fetch public sessions");
       } finally {
         setLoading(false);
       }
     };
     fetchSessions();
-  }, []);
+  }, [debouncedSearch, selectedFilter, page]);
 
-  console.log(sessions);
-
-  const filteredSessions = sessions.filter((session) => {
-    const matchesSearch =
-      session.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      session.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    if (selectedFilter === "all") return matchesSearch;
-    return (
-      matchesSearch &&
-      session.status.toLowerCase() === selectedFilter.toLowerCase()
-    );
-  });
-
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return (
-      today.getFullYear() === date.getFullYear() &&
-      today.getMonth() === date.getMonth() &&
-      today.getDate() === date.getDate()
-    );
-  };
-
-  const now = new Date();
-  const fifteenMinsFromNow = new Date(now.getTime() + 15 * 60000);
-
-  const todayUpcoming = filteredSessions
-    .filter(
-      (s) =>
-        isToday(s.startTime) &&
-        new Date(s.startTime) >= fifteenMinsFromNow &&
-        s.status.toLowerCase() !== "completed" &&
-        s.status.toLowerCase() !== "cancelled"
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
-
-  const otherSessions = filteredSessions
-    .filter(
-      (s) =>
-        !(
-          isToday(s.startTime) &&
-          new Date(s.startTime) >= fifteenMinsFromNow &&
-          s.status.toLowerCase() !== "completed" &&
-          s.status.toLowerCase() !== "cancelled"
-        )
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    );
-
+  /** Payment handler */
   const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
-    if (!sessionFee || sessionFee <= 0) {
-      setPaymentResult({
-        status: "error",
-        message: "Invalid session fee. Cannot proceed with payment.",
-      });
-      return;
-    }
-
+    if (!sessionFee || sessionFee <= 0)
+      return toast.error("Invalid session fee");
     setActiveSession({ id: sessionId, fee: sessionFee });
     setShowPayPalModal(true);
   };
 
   useEffect(() => {
     if (!showPayPalModal || !activeSession) return;
-
     const container = document.getElementById("paypal-button-container");
     if (!container) return;
-
     container.innerHTML = "";
 
     const loadPaypalButtons = async () => {
@@ -169,50 +114,20 @@ const MentorPublicSessions = () => {
           currency: "USD",
         });
 
-        if (!paypal?.Buttons) {
-          setPaymentResult({
-            status: "error",
-            message: "PayPal failed to load",
-          });
-          setShowPayPalModal(false);
-          return;
-        }
-
-        const buttons = paypal.Buttons({
+        const buttons = paypal?.Buttons?.({
           createOrder: async () => {
-            try {
-              const resp = await startPayment(
-                activeSession.id,
-                activeSession.fee
-              );
-              console.log("Payment response:", resp);
-
-              return resp.data?.id;
-            } catch (err: any) {
-              console.error("createOrder error:", err);
-              setShowPayPalModal(false);
-              setPaymentResult({
-                status: "error",
-                message: err?.message || "Failed to create order.",
-              });
-              throw err;
-            }
+            const resp = await startPayment(activeSession.id, activeSession.fee);
+            return resp.data?.id;
           },
-
           onApprove: async (data: any) => {
             try {
               setIsProcessing(true);
-              const orderId = data.orderID;
-              const verify = await confirmPayment(orderId, activeSession.id);
-
-              console.log("Verify response:", verify);
-
+              const verify = await confirmPayment(data.orderID, activeSession.id);
               if (
                 verify.data?.status === "COMPLETED" ||
-                verify.data?.message
-                  ?.toLowerCase()
-                  .includes("captured successfully")
+                verify.data?.message?.toLowerCase()?.includes("captured")
               ) {
+                toast.success("Payment successful!");
                 setSessions((prev) =>
                   prev.map((s) =>
                     s._id === activeSession.id
@@ -226,362 +141,214 @@ const MentorPublicSessions = () => {
                       : s
                   )
                 );
-
-                setPaymentResult({
-                  status: "success",
-                  message:
-                    verify.data?.message ||
-                    "Payment successful! Session scheduled 🎉",
-                });
-              } else {
-                setPaymentResult({
-                  status: "error",
-                  message:
-                    verify.data?.message || "Payment verification failed.",
-                });
-              }
-            } catch (err: any) {
-              console.error("onApprove error:", err);
-              setPaymentResult({
-                status: "error",
-                message: err?.message || "Payment failed.",
-              });
+              } else toast.error("Payment verification failed");
+            } catch {
+              toast.error("Payment failed");
             } finally {
               setIsProcessing(false);
               setShowPayPalModal(false);
             }
           },
-
           onCancel: () => {
             setShowPayPalModal(false);
-            setPaymentResult({
-              status: "error",
-              message: "Payment cancelled.",
-            });
+            toast("Payment cancelled");
           },
-          onError: (err: any) => {
-            console.error("PayPal error:", err);
+          onError: () => {
             setShowPayPalModal(false);
-            setPaymentResult({
-              status: "error",
-              message: "Payment error. Please try again.",
-            });
+            toast.error("PayPal error occurred");
           },
         });
-
-        buttons.render("#paypal-button-container");
-      } catch (err) {
-        console.error("PayPal script load error:", err);
-        container.innerText = "PayPal failed to load";
+        buttons?.render("#paypal-button-container");
+      } catch {
+        toast.error("PayPal failed to load");
       }
     };
 
     loadPaypalButtons();
   }, [showPayPalModal, activeSession, user?.id]);
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
+  const formatDateTime = (start: string) =>
+    new Date(start).toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-  const getLevelBadgeVariant = (
-    status: string
-  ):
-    | "accepted"
-    | "mentor"
-    | "peer"
-    | "public"
-    | "upcoming"
-    | "completed"
-    | "private"
-    | "pending"
-    | "cancelled" => {
-    switch (status.toLowerCase()) {
-      case "upcoming":
-        return "upcoming";
-      case "completed":
-        return "completed";
-      case "scheduled":
-        return "accepted";
-      default:
-        return "public";
-    }
+  const badgeColors = {
+    upcoming: "bg-gray-500/20 text-gray-300 border border-gray-600",
+    completed: "bg-green-500/20 text-green-300 border border-green-600",
+    public: "bg-emerald-500/20 text-emerald-300 border border-emerald-600",
+    accepted: "bg-blue-500/20 text-blue-300 border border-blue-600",
   };
 
   return (
-    <div
-      className="min-h-screen text-white relative bg-cover bg-center"
-      style={{ backgroundImage: `url('/gradient-bg.jpg')` }}
-    >
-      <Header />
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
+      <DashboardHeader />
+      <div className="max-w-7xl mx-auto px-6 pt-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
             Public Sessions
-          </h1>
-          <p className="text-gray-300">
-            Discover and join our mentor's upcoming public sessions
-          </p>
+          </h2>
+          <Button
+            variant="primary"
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg"
+            onClick={() => navigate("/user/session")}
+          >
+            Back to My Sessions
+          </Button>
         </div>
 
-        {/* Search & Filter */}
-        <SpokelyCard className="mb-8 bg-white/10 border shadow-lg" padding="md">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={20}
-              />
-              <Input
-                type="text"
-                placeholder="Search sessions by topic..."
-                value={searchTerm}
-                onChange={setSearchTerm}
-                className="pl-10 h-12 bg-gray border-gray-300 text-white"
-              />
-            </div>
-            <div className="lg:w-48">
-              <select
-                value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="all" className="border-gray-300 text-black bg-gray" >All Status</option>
-                <option value="upcoming" className="border-gray-300 text-black bg-gray">Upcoming</option>
-                <option value="completed" className="border-gray-300 text-black bg-gray">Completed</option>
-                {/* <option value="scheduled" className="border-gray-300 text-black bg-gray">Scheduled</option> */}
-              </select>
-            </div>
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-10">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+              size={20}
+            />
+            <Input
+              type="text"
+              placeholder="Search by topic or description..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full bg-gray-800 text-white placeholder-gray-400 shadow-md"
+            />
           </div>
-        </SpokelyCard>
-
-        {/* 🟢 Upcoming Today Section */}
-        {todayUpcoming.length > 0 && (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">Upcoming (Today)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              {todayUpcoming.map((session) => {
-                const isScheduled = session.participants.some(
-                  (p) => p.user === user?.id
-                );
-
-                return (
-                  <SpokelyCard
-                    key={session._id}
-                    className="bg-white/10 border shadow-lg relative flex flex-col"
-                  >
-                    <div className="absolute top-4 right-4">
-                      <Badge variant={getLevelBadgeVariant(session.status)}>
-                        {session.status}
-                      </Badge>
-                    </div>
-                    <h3 className="font-bold text-white">{session.topic}</h3>
-                    {/* <p className="text-sm text-gray-200">
-                      {session.description}
-                    </p> */}
-                    <p className="text-xs text-gray-300">
-                      {formatDate(session.startTime)} –{" "}
-                      {new Date(session.startTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-1">
-                        <DollarSign size={18} className="text-green-400" />
-                        <span className="text-lg font-bold">
-                          {session.sessionFee}/-
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-2 m-5">
-                        <Button
-                          variant="secondary"
-                          onClick={() =>
-                            navigate(`/session/details/${session._id}`)
-                          }
-                        >
-                          View Details
-                        </Button>
-
-                        {isScheduled ? (
-                          <Button variant="secondary" disabled>
-                            Scheduled
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="success"
-                            onClick={() =>
-                              handlePayToSchedule(
-                                session._id,
-                                session.sessionFee
-                              )
-                            }
-                          >
-                            Pay to Schedule
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </SpokelyCard>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* 🟢 Other Sessions Section */}
-        {otherSessions.length > 0 ? (
-          <>
-            <h2 className="text-2xl font-semibold mb-4">Other Sessions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {otherSessions.map((session) => {
-                const isScheduled = session.participants.some(
-                  (p) => p.user === user?.id
-                );
-
-                return (
-                  <SpokelyCard
-                    key={session._id}
-                    className="bg-white/10 border shadow-lg relative flex flex-col"
-                  >
-                    <div className="absolute top-4 right-4">
-                      <Badge variant={getLevelBadgeVariant(session.status)}>
-                        {session.status}
-                      </Badge>
-                    </div>
-                    <h3 className="font-bold text-white">{session.topic}</h3>
-                    {/* <p className="text-sm text-gray-200">
-                      {session.description}
-                    </p> */}
-                    <p className="text-xs text-gray-300">
-                      {formatDate(session.startTime)} –{" "}
-                      {new Date(session.startTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-1">
-                        <DollarSign size={18} className="text-green-400" />
-                        <span className="text-lg font-bold">
-                          {session.sessionFee}/-
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="secondary"
-                          onClick={() =>
-                            navigate(`/session/details/${session._id}`)
-                          }
-                        >
-                          View Details
-                        </Button>
-
-                        {isScheduled ? (
-                          <Button variant="secondary" disabled>
-                            Scheduled
-                          </Button>
-                        ) : session.participants.length >= 25 ? (
-                          <Button variant="secondary" disabled>
-                            Session Full
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="success"
-                            onClick={() =>
-                              handlePayToSchedule(
-                                session._id,
-                                session.sessionFee
-                              )
-                            }
-                          >
-                            Pay to Schedule
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </SpokelyCard>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          !loading &&
-          todayUpcoming.length === 0 && (
-            <SpokelyCard
-              variant="secondary"
-              className="text-center py-12 bg-white/10"
+          <div className="flex gap-3">
+            <select
+              value={selectedFilter}
+              onChange={(e) => {
+                setSelectedFilter(e.target.value);
+                setPage(1);
+              }}
+              className="px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500"
             >
-              <div className="max-w-md mx-auto">
-                <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                  No sessions found
-                </h3>
-                <p className="text-gray-400">
-                  {searchTerm || selectedFilter !== "all"
-                    ? "Try adjusting your search or filter criteria"
-                    : "No public sessions are currently available"}
-                </p>
+              <option value="all">All Status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Session Cards */}
+        {loading ? (
+          <div className="text-center py-20 text-gray-400">Loading...</div>
+        ) : sessions.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-400 mb-4">No public sessions found</p>
+            <Button
+              variant="success"
+              className="px-6 py-3 rounded-full"
+              onClick={() => navigate("/user/schedule-session")}
+            >
+              Schedule a Session
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sessions.map((session) => {
+                const isJoined = session.participants.some(
+                  (p) => p.user === user?.id
+                );
+                const badgeStyle =
+                  badgeColors[
+                    session.status.toLowerCase() as keyof typeof badgeColors
+                  ] || badgeColors.public;
+
+                return (
+                  <SpokelyCard
+                    key={session._id}
+                    className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg p-6 hover:shadow-green-500/20 transition-all duration-300"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold text-lg truncate text-white">
+                        {session.topic}
+                      </h3>
+                      <Badge className={badgeStyle}>{session.status}</Badge>
+                    </div>
+                    <p className="text-sm text-gray-300 mb-1">
+                      {formatDateTime(session.startTime)}
+                    </p>
+                    <p className="text-sm text-gray-400 mb-4">
+                      Fee: ₹{session.sessionFee} | Mentor:{" "}
+                      {session.createdBy?.name || "Unknown"}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          navigate(`/session/details/${session._id}`)
+                        }
+                      >
+                        View Details
+                      </Button>
+                      {isJoined ? (
+                        <Button variant="secondary" disabled>
+                          Joined
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="success"
+                          onClick={() =>
+                            handlePayToSchedule(session._id, session.sessionFee)
+                          }
+                        >
+                          Pay & Join
+                        </Button>
+                      )}
+                    </div>
+                  </SpokelyCard>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-12 gap-4">
+                <Button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  <ChevronLeft size={18} /> Prev
+                </Button>
+                <span className="text-gray-400">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  Next <ChevronRight size={18} />
+                </Button>
               </div>
-            </SpokelyCard>
-          )
+            )}
+          </>
         )}
-      </main>
+      </div>
 
       {/* PayPal Modal */}
       {showPayPalModal && activeSession && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
-            <button
-              onClick={() => (isProcessing ? null : setShowPayPalModal(false))}
-              className={`absolute top-2 right-2 ${
-                isProcessing
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-500 hover:text-gray-800"
-              }`}
-              disabled={isProcessing}
-            >
-              ✕
-            </button>
-            <h2 className="text-lg font-bold mb-4">Complete Payment</h2>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl p-6 w-96 shadow-2xl">
+            <h2 className="text-lg font-semibold mb-4 text-emerald-400">
+              Complete Payment
+            </h2>
             <div id="paypal-button-container" />
             {isProcessing && (
-              <div className="mt-4 text-sm text-gray-600 text-center">
-                Finalizing payment… please wait
+              <div className="mt-4 text-sm text-gray-400 text-center">
+                Processing payment...
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Payment Result Modal */}
-      {paymentResult && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative text-center">
-            <h2
-              className={`text-lg font-bold mb-4 ${
-                paymentResult.status === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {paymentResult.status === "success"
-                ? "Payment Successful"
-                : "Payment Failed"}
-            </h2>
-            <p className="text-gray-700 mb-6">{paymentResult.message}</p>
-            <button
-              onClick={() => setPaymentResult(null)}
-              className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600"
-            >
-              Close
-            </button>
+            <div className="flex justify-end mt-4">
+              <Button variant="secondary" onClick={() => setShowPayPalModal(false)}>
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}

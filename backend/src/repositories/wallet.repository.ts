@@ -9,7 +9,6 @@ export class WalletRepository extends BaseRepository<IWallet> {
   }
 
   async getWallet(userId: string): Promise<IWallet | null> {
-    console.log('wallet repo get wallet')
     let wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       wallet = await Wallet.create({ userId, balance: 0, transactions: [] });
@@ -25,6 +24,7 @@ export class WalletRepository extends BaseRepository<IWallet> {
     sessionId?: string,
     subscriptionId?: string
   ): Promise<IWallet | null> {
+    console.log('credit repo hitting')
     const wallet = await this.getWallet(userId);
     console.log('add trans',wallet)
     if (!wallet) return null;
@@ -35,12 +35,12 @@ export class WalletRepository extends BaseRepository<IWallet> {
 
     wallet.balance = newBalance;
     wallet.transactions.push({
-      type,
-      amount,
-      reason,
-      sessionId: sessionId ? (sessionId as any) : undefined,
-      subscriptionId: subscriptionId ? (subscriptionId as any) : undefined,
-    });
+  type,
+  amount,
+  reason,
+  sessionId: sessionId ? (sessionId as any) : undefined,
+  subscriptionId: subscriptionId ? (subscriptionId as any) : undefined,
+} as any);
 
     await wallet.save();
     return wallet;

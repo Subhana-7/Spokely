@@ -21,4 +21,11 @@ export interface ISubscriptionRepository {
   findActive(): Promise<ISubscription[]>;
 
   findSubscriptionHistory(userId: string, page:number, limit:number):Promise<any>;
+
+  findByMentorPaginated(
+  mentorId: string,
+  search: string,
+  page: number,
+  limit: number,
+):Promise<any>;
 }

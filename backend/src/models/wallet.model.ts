@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface IWalletTransaction {
+  toObject(): any;
   type: "CREDIT" | "DEBIT";
   amount: number;
   reason: string;

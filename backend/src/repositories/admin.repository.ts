@@ -202,4 +202,23 @@ export class AdminRepository
 
     return { mentors, total };
   }
+
+ async findAllMentorsPaginated(
+  query: any,
+  options: { page: number; limit: number }
+) {
+  const { page, limit } = options;
+  const skip = (page - 1) * limit;
+
+  // ✅ Use Mentor model and proper filters
+  const results = await Mentor.find(query)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const total = await Mentor.countDocuments(query);
+
+  return { results, total };
+}
 }

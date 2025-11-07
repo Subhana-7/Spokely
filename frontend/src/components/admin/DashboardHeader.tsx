@@ -26,10 +26,10 @@ const DashboardHeader = () => {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-gray-700 shadow-sm border-b text-white">
       <div className="px-4 md:px-6 py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="w-full flex flex-col lg:flex-row lg:items-center gap-4">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Spokely Admin</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-white">Spokely Admin</h1>
           <nav className="flex flex-wrap gap-2 overflow-x-auto">
             {navItems.map((item) => (
               <NavLink
@@ -39,7 +39,7 @@ const DashboardHeader = () => {
                   `px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                     isActive
                       ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      : 'text-white hover:text-gray-800 hover:bg-gray-100'
                   }`
                 }
               >

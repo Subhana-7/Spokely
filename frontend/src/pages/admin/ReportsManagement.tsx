@@ -144,7 +144,7 @@ const Reports = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="w-16 h-1 bg-purple-600 rounded-full mb-2"></div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+        <h1 className="text-2xl md:text-3xl font-bold text-white">
           Analytics & Reports
         </h1>
         <p className="text-sm text-gray-600 mb-6">
@@ -159,7 +159,7 @@ const Reports = () => {
               className={`py-2 px-4 rounded-lg text-sm font-medium border transition-all ${
                 reportType === type
                   ? "border-purple-500 bg-purple-100 text-purple-800"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                  : "border-gray-300 text-white hover:bg-gray-100"
               }`}
               onClick={() =>
                 handleReportTypeChange(type as typeof reportType)

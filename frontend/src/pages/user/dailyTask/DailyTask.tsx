@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense, lazy } from "react";
 import {
   BookOpen,
   Mic,
@@ -14,6 +14,9 @@ import {
   topicGenerate,
   submitResponse,
 } from "../../../services/dailyTaskService";
+
+const DashboardHeader = lazy(() => import("../DashBoardComponents/Header"));
+const Button = lazy(() => import("../../../modals/Button"));
 
 const DailyTaskPage = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -44,7 +47,6 @@ const DailyTaskPage = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [listeningSpeaking, setListeningSpeaking] =
     useState<SpeechSynthesisUtterance | null>(null);
@@ -64,7 +66,7 @@ const DailyTaskPage = () => {
       id: "writing",
       title: "Writing Task",
       icon: PenTool,
-      color: "from-purple-500 to-pink-500",
+      color: "from-green-500 to-emerald-500",
       description: "Express your thoughts in writing",
     },
     {
@@ -78,7 +80,7 @@ const DailyTaskPage = () => {
       id: "listening",
       title: "Listening Task",
       icon: Headphones,
-      color: "from-green-500 to-emerald-500",
+      color: "from-purple-500 to-pink-500",
       description: "Enhance your listening comprehension",
     },
     {
@@ -96,12 +98,9 @@ const DailyTaskPage = () => {
       try {
         const response = await latestSubmission();
         const data = response.data;
-        console.log("Fetched task:", data);
-
         if (data.task) {
           setSelectedTopic(data.task.topic);
           setTaskData(data.task);
-
           setResponses(
             data.task.userResponses || {
               writing: "",
@@ -110,15 +109,13 @@ const DailyTaskPage = () => {
               reading: {},
             }
           );
-
           setSubmittedTasks(taskCards.map((c) => c.id));
 
           const normalizedFeedback: any = {};
           for (const key of ["writing", "reading", "listening", "speaking"]) {
             const fb =
               data.task[key]?.feedback || data.task.feedback?.[key] || null;
-
-            if (fb) {
+            if (fb)
               normalizedFeedback[key] = fb.feedback
                 ? fb
                 : {
@@ -126,7 +123,6 @@ const DailyTaskPage = () => {
                     weaknesses: fb.weaknesses || "",
                     feedback: fb.feedback || fb || "",
                   };
-            }
           }
 
           setFeedback(
@@ -204,14 +200,10 @@ const DailyTaskPage = () => {
     try {
       const response = await submitResponse(taskData.id, responses);
       const data = await response.data;
-      console.log(data);
-      console.log(data.feedback);
       setFeedback(data.feedback);
       localStorage.setItem("dailyTaskSubmitted", new Date().toISOString());
       setAlreadySubmitted(true);
-      alert(
-        "✅ Submitted! Click 'View Answers & Feedback' to see your results."
-      );
+      alert("✅ Submitted! Click 'View Answers & Feedback' to see your results.");
     } catch (err) {
       console.error(err);
       alert("Failed to submit. Try again.");
@@ -290,104 +282,98 @@ const DailyTaskPage = () => {
   };
 
   return (
-    <div
-      className="min-h-screen text-white relative bg-cover bg-center"
-      style={{ backgroundImage: `url('/gradient-bg.jpg')` }}
-    >
-      <div className="absolute inset-0 bg-black/40" />
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="text-yellow-400" size={32} />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-              Daily Task
+    <Suspense fallback={<p>Loading Daily Task...</p>}>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
+        <DashboardHeader />
+
+        <div className="max-w-7xl mx-auto px-6 pt-6">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight mb-2">
+              Daily Language Tasks
             </h1>
-            <Sparkles className="text-yellow-400" size={32} />
+            <p className="text-gray-400 text-lg">
+              Challenge yourself with interactive skill tasks each day
+            </p>
           </div>
-          <p className="text-gray-300 text-lg">
-            Challenge yourself with today's language tasks
-          </p>
-        </div>
 
-        {!selectedTopic && !alreadySubmitted && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-semibold text-center mb-8">
-              Choose Your Topic
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {topics.map((topic) => (
-                <button
-                  key={topic.id}
-                  onClick={() => handleTopicSelect(topic.id)}
-                  className="group relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-                >
-                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
-                    {topic.icon}
-                  </div>
-                  <div className="text-sm font-semibold">{topic.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500"></div>
-            <p className="mt-4 text-xl text-gray-300">Loading your tasks...</p>
-          </div>
-        )}
-
-        {selectedTopic && taskData && !loading && (
-          <>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold capitalize">
-                  {selectedTopic} Tasks
-                </h2>
-                <p className="text-gray-400 mt-1">
-                  Complete all four tasks to master today's challenge
-                </p>
-              </div>
-              {!alreadySubmitted && (
-                <button
-                  onClick={() => {
-                    setSelectedTopic("");
-                    setTaskData(null);
-                    setSubmittedTasks([]);
-                    setResponses({
-                      writing: "",
-                      speaking: null,
-                      listening: {},
-                      reading: {},
-                    });
-                  }}
-                  className="px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all"
-                >
-                  Change Topic
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {taskCards.map((card) => {
-                const Icon = card.icon;
-                const isCompleted =
-                  submittedTasks.includes(card.id) || alreadySubmitted;
-                return (
-                  <div
-                    key={card.id}
-                    className="group relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden"
+          {/* Topic Selection */}
+          {!selectedTopic && !alreadySubmitted && (
+            <div className="mb-16">
+              <h2 className="text-2xl font-semibold text-center mb-8 text-green-400">
+                Choose Your Topic
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {topics.map((topic) => (
+                  <button
+                    key={topic.id}
+                    onClick={() => handleTopicSelect(topic.id)}
+                    className="group relative bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-green-500/20"
                   >
+                    <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
+                      {topic.icon}
+                    </div>
+                    <div className="text-sm font-semibold text-white">
+                      {topic.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-500"></div>
+              <p className="mt-4 text-xl text-gray-300">
+                Loading your tasks...
+              </p>
+            </div>
+          )}
+
+          {/* Tasks Display */}
+          {selectedTopic && taskData && !loading && (
+            <>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl font-bold text-emerald-400 capitalize">
+                    {selectedTopic} Tasks
+                  </h2>
+                  <p className="text-gray-400 mt-1">
+                    Complete all four tasks to master today’s challenge
+                  </p>
+                </div>
+                {!alreadySubmitted && (
+                  <Button
+                    onClick={() => {
+                      setSelectedTopic("");
+                      setTaskData(null);
+                      setSubmittedTasks([]);
+                      setResponses({
+                        writing: "",
+                        speaking: null,
+                        listening: {},
+                        reading: {},
+                      });
+                    }}
+                    className="px-6 py-3 bg-white/10 backdrop-blur-md border border-gray-700 rounded-xl hover:bg-white/20 transition-all"
+                  >
+                    Change Topic
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {taskCards.map((card) => {
+                  const Icon = card.icon;
+                  const isCompleted =
+                    submittedTasks.includes(card.id) || alreadySubmitted;
+                  return (
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
-                    />
-                    {isCompleted && (
-                      <div className="absolute top-4 right-4">
-                        <CheckCircle className="text-green-400" size={32} />
-                      </div>
-                    )}
-                    <div className="relative z-10">
+                      key={card.id}
+                      className="backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl p-8 hover:border-green-500/40 shadow-lg transition-all duration-300 hover:shadow-emerald-500/10 hover:scale-[1.02]"
+                    >
                       <div
                         className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${card.color} mb-4`}
                       >
@@ -396,7 +382,7 @@ const DailyTaskPage = () => {
                       <h3 className="text-2xl font-bold mb-2">{card.title}</h3>
                       <p className="text-gray-300 mb-6">{card.description}</p>
                       {!alreadySubmitted && (
-                        <button
+                        <Button
                           onClick={() => handleOpenModal(card.id)}
                           disabled={isCompleted}
                           className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${
@@ -406,296 +392,98 @@ const DailyTaskPage = () => {
                           }`}
                         >
                           {isCompleted ? "Completed ✓" : "Start Task"}
-                        </button>
+                        </Button>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {alreadySubmitted && (
-              <div className="mt-10 text-center">
-                <button
-                  onClick={() => setFeedbackModal(true)}
-                  className="px-8 py-4 text-lg font-bold bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl hover:scale-105 transition-all"
-                >
-                  View Answers & Feedback 📝
-                </button>
+                  );
+                })}
               </div>
-            )}
 
-            {!alreadySubmitted &&
-              submittedTasks.length === taskCards.length && (
+              {alreadySubmitted && (
                 <div className="mt-10 text-center">
-                  <button
-                    onClick={handleFinalSubmit}
-                    className="px-8 py-4 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl hover:scale-105 transition-all"
+                  <Button
+                    onClick={() => setFeedbackModal(true)}
+                    className="px-8 py-4 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl hover:scale-105 transition-all"
                   >
-                    Submit All Tasks 🚀
+                    View Answers & Feedback 📝
+                  </Button>
+                </div>
+              )}
+
+              {!alreadySubmitted &&
+                submittedTasks.length === taskCards.length && (
+                  <div className="mt-10 text-center">
+                    <Button
+                      onClick={handleFinalSubmit}
+                      className="px-8 py-4 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl hover:scale-105 transition-all"
+                    >
+                      Submit All Tasks 🚀
+                    </Button>
+                  </div>
+                )}
+            </>
+          )}
+
+          {/* Feedback Modal */}
+          {feedbackModal && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-white/20">
+                <div className="flex justify-between items-center p-6 border-b border-white/10">
+                  <h3 className="text-2xl font-bold text-green-400">
+                    AI Feedback & Your Answers
+                  </h3>
+                  <button
+                    onClick={() => setFeedbackModal(false)}
+                    className="p-2 hover:bg-white/20 rounded-full transition-all"
+                  >
+                    <X size={24} />
                   </button>
                 </div>
-              )}
-          </>
-        )}
-      </main>
-
-      {/* Active Task Modal */}
-      {activeModal && taskData && !alreadySubmitted && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-white/20">
-            <div
-              className={`bg-gradient-to-r ${
-                taskCards.find((t) => t.id === activeModal)?.color
-              } p-6 flex items-center justify-between`}
-            >
-              <div className="flex items-center gap-3">
-                {React.createElement(
-                  taskCards.find((t) => t.id === activeModal)?.icon || PenTool,
-                  { size: 28 }
-                )}
-                <h3 className="text-2xl font-bold capitalize">
-                  {activeModal} Task
-                </h3>
+                <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+                  {feedback && Object.keys(feedback).length > 0 ? (
+                    Object.keys(feedback).map((taskKey) => {
+                      const taskFeedback = feedback[taskKey];
+                      return (
+                        <div
+                          key={taskKey}
+                          className="bg-white/5 p-4 rounded-xl border border-white/10"
+                        >
+                          <h4 className="text-xl font-semibold capitalize mb-3 text-emerald-400">
+                            {taskKey} Feedback
+                          </h4>
+                          <p className="text-green-400 font-semibold mb-1">
+                            Strengths
+                          </p>
+                          <p className="text-gray-300 mb-3 whitespace-pre-wrap">
+                            {taskFeedback.strengths || "N/A"}
+                          </p>
+                          <p className="text-red-400 font-semibold mb-1">
+                            Weaknesses
+                          </p>
+                          <p className="text-gray-300 mb-3 whitespace-pre-wrap">
+                            {taskFeedback.weaknesses || "N/A"}
+                          </p>
+                          <p className="text-blue-400 font-semibold mb-1">
+                            💡 Feedback
+                          </p>
+                          <p className="text-gray-300 whitespace-pre-wrap">
+                            {taskFeedback.feedback || "No feedback provided."}
+                          </p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-gray-400 text-center">
+                      No feedback available yet.
+                    </p>
+                  )}
+                </div>
               </div>
-              <button
-                onClick={handleCloseModal}
-                className="p-2 hover:bg-white/20 rounded-full transition-all"
-              >
-                <X size={24} />
-              </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-              <div className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
-                <h4 className="text-lg font-semibold mb-3 text-purple-400">
-                  Task Instructions
-                </h4>
-                <div className="text-gray-300 whitespace-pre-wrap">
-                  {taskData[activeModal]?.prompt || "No prompt available"}
-                </div>
-              </div>
-
-              {activeModal === "listening" && (
-                <div>
-                  <div className="flex gap-2 mb-4">
-                    {!listeningSpeaking && (
-                      <button
-                        className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                        onClick={handlePlayAudio}
-                      >
-                        <Headphones /> Play
-                      </button>
-                    )}
-                    {listeningSpeaking && !listeningPaused && (
-                      <button
-                        className="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700"
-                        onClick={pauseListening}
-                      >
-                        ⏸ Pause
-                      </button>
-                    )}
-                    {listeningSpeaking && listeningPaused && (
-                      <button
-                        className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-700"
-                        onClick={resumeListening}
-                      >
-                        ▶ Resume
-                      </button>
-                    )}
-                    {listeningSpeaking && (
-                      <button
-                        className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700"
-                        onClick={stopListening}
-                      >
-                        ⏹ Stop
-                      </button>
-                    )}
-                  </div>
-
-                  <ul className="mt-4 space-y-6 text-gray-300">
-                    {taskData.listening.questions?.map(
-                      (q: string, idx: number) => (
-                        <li key={idx} className="border-b border-white/10 pb-4">
-                          <p className="mb-2">{q}</p>
-                          <textarea
-                            value={responses.listening?.[idx] || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setResponses((prev) => ({
-                                ...prev,
-                                listening: { ...prev.listening, [idx]: val },
-                              }));
-                            }}
-                            placeholder="Type your answer..."
-                            className="w-full h-20 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 resize-none"
-                          />
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              )}
-
-              {activeModal === "speaking" && (
-                <div className="space-y-4">
-                  {!recording && !paused && (
-                    <button
-                      onClick={startRecording}
-                      className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700"
-                    >
-                      🎤 Start Recording
-                    </button>
-                  )}
-                  {recording && !paused && (
-                    <button
-                      onClick={pauseRecording}
-                      className="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700"
-                    >
-                      ⏸ Pause Recording
-                    </button>
-                  )}
-                  {paused && (
-                    <button
-                      onClick={resumeRecording}
-                      className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-700"
-                    >
-                      ▶ Resume Recording
-                    </button>
-                  )}
-                  {(recording || paused) && (
-                    <button
-                      onClick={stopRecording}
-                      className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700"
-                    >
-                      ⏹ Stop Recording
-                    </button>
-                  )}
-                  {audioUrl && <audio controls src={audioUrl}></audio>}
-                </div>
-              )}
-              {activeModal === "writing" && (
-                <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-300">
-                    Your Response
-                  </label>
-                  <textarea
-                    value={responses.writing}
-                    onChange={(e) =>
-                      setResponses((prev) => ({
-                        ...prev,
-                        writing: e.target.value,
-                      }))
-                    }
-                    placeholder="Type your response here..."
-                    className="w-full h-64 px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-400 resize-none"
-                  />
-                </div>
-              )}
-              {activeModal === "reading" && (
-                <div>
-                  <div className="mt-2 text-gray-300">
-                    <h4 className="font-semibold text-lg mb-2">Paragraph</h4>
-                    <p>{taskData.reading.paragraph}</p>
-                  </div>
-                  <ul className="mt-4 space-y-6 text-gray-300">
-                    {taskData.reading.questions?.map(
-                      (q: string, idx: number) => (
-                        <li key={idx} className="border-b border-white/10 pb-4">
-                          <p className="mb-2">{q}</p>
-                          <textarea
-                            value={responses.reading?.[idx] || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setResponses((prev) => ({
-                                ...prev,
-                                reading: { ...prev.reading, [idx]: val },
-                              }));
-                            }}
-                            placeholder="Type your answer..."
-                            className="w-full h-20 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-400 resize-none"
-                          />
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t border-white/10 flex gap-3">
-              <button
-                onClick={handleCloseModal}
-                className="flex-1 py-3 px-6 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTaskComplete}
-                className="flex-1 py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:scale-105 transition-all rounded-xl font-semibold"
-              >
-                Mark as Complete ✓
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Feedback Modal */}
-      {feedbackModal && feedback && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-white/20">
-            <div className="flex justify-between items-center p-6 border-b border-white/10">
-              <h3 className="text-2xl font-bold">AI Feedback & Your Answers</h3>
-              <button
-                onClick={() => setFeedbackModal(false)}
-                className="p-2 hover:bg-white/20 rounded-full transition-all"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
-              {Object.keys(feedback || {}).map((taskKey) => {
-                const taskFeedback = feedback[taskKey];
-                return (
-                  <div
-                    key={taskKey}
-                    className="bg-white/5 p-4 rounded-xl border border-white/10"
-                  >
-                    <h4 className="text-xl font-semibold capitalize mb-3">
-                      {taskKey} Feedback
-                    </h4>
-                    {/* <p className="text-gray-300 mb-2 whitespace-pre-wrap">
-                      <strong>✅ Your Response:</strong>{" "}
-                      {JSON.stringify(
-                        responses[taskKey as keyof typeof responses]
-                      )}
-                    </p> */}
-                    <p className="text-green-400 font-semibold mb-1">
-                      Strengths
-                    </p>
-                    <p className="text-gray-300 mb-3 whitespace-pre-wrap">
-                      {taskFeedback.strengths}
-                    </p>
-                    <p className="text-red-400 font-semibold mb-1">
-                      Weaknesses
-                    </p>
-                    <p className="text-gray-300 mb-3 whitespace-pre-wrap">
-                      {taskFeedback.weaknesses}
-                    </p>
-                    <p className="text-blue-400 font-semibold mb-1">
-                      💡 Feedback
-                    </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
-                      {taskFeedback.feedback}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </Suspense>
   );
 };
 

@@ -11,6 +11,7 @@ import { generateAgoraToken } from "../config/agora";
 import { MESSAGES } from "../utilis/constants";
 import { IWalletService } from "./interfaces/IWalletService";
 import { INotificationService } from "./interfaces/INotificationService";
+import { Types } from "mongoose";
 
 @injectable()
 export class SessionService {
@@ -26,6 +27,12 @@ export class SessionService {
   async createSession(body: any, userId: string): Promise<ISession | null> {
     console.log("create session");
     const dto = mapToCreateSessionDTO(body, userId);
+
+    if (!dto.mentorId) {
+    dto.mentorId = new Types.ObjectId(userId);
+  }
+
+  console.log('create session',dto.mentorId)
 
     let maxParticipants = 2;
     if (dto.type === "peer-to-peer") maxParticipants = 10;
@@ -84,64 +91,74 @@ export class SessionService {
   }
 
   async getSessions(
-  userId: string,
-  filters?: {
-    search?: string;
-    status?: string;
-    type?: string;
-    page?: number;
-    limit?: number;
-  }
-): Promise<{ sessions: ISession[]; total: number; page: number; totalPages: number }> {
-  const { search = "", status = "all", type = "all", page = 1, limit = 10 } = filters || {};
-
-  const query: any = {
-    $or: [{ createdBy: userId }, { "participants.user": userId }],
-  };
-
-  if (status !== "all") query.status = status;
-  if (type !== "all") query.type = type;
-  if (search) query.topic = { $regex: search, $options: "i" };
-
-  const skip = (page - 1) * limit;
-
-  const [sessions, total] = await Promise.all([
-    this._sessionRepository.findWithFilters(query, skip, limit),
-    this._sessionRepository.countSessions(query),
-  ]);
-
-  const now = new Date();
-  for (const session of sessions) {
-    const start = new Date(session.startTime);
-    const end = new Date(
-      session.endTime ||
-        start.getTime() + (session.durationMinutes || 60) * 60000
-    );
-
-    if (session.status === "pending" && now >= start) {
-      session.status = "cancelled";
-      await this._sessionRepository.updateSession(session._id as string, {
-        status: "cancelled",
-      });
-    } else if (
-      (session.status === "upcoming" || session.status === "accepted") &&
-      now > end
-    ) {
-      session.status = "completed";
-      await this._sessionRepository.updateSession(session._id as string, {
-        status: "completed",
-      });
+    userId: string,
+    filters?: {
+      search?: string;
+      status?: string;
+      type?: string;
+      page?: number;
+      limit?: number;
     }
+  ): Promise<{
+    sessions: ISession[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const {
+      search = "",
+      status = "all",
+      type = "all",
+      page = 1,
+      limit = 10,
+    } = filters || {};
+
+    const query: any = {
+      $or: [{ createdBy: userId }, { "participants.user": userId }],
+    };
+
+    if (status !== "all") query.status = status;
+    if (type !== "all") query.type = type;
+    if (search) query.topic = { $regex: search, $options: "i" };
+
+    const skip = (page - 1) * limit;
+
+    const [sessions, total] = await Promise.all([
+      this._sessionRepository.findWithFilters(query, skip, limit),
+      this._sessionRepository.countSessions(query),
+    ]);
+
+    const now = new Date();
+    for (const session of sessions) {
+      const start = new Date(session.startTime);
+      const end = new Date(
+        session.endTime ||
+          start.getTime() + (session.durationMinutes || 60) * 60000
+      );
+
+      if (session.status === "pending" && now >= start) {
+        session.status = "cancelled";
+        await this._sessionRepository.updateSession(session._id as string, {
+          status: "cancelled",
+        });
+      } else if (
+        (session.status === "upcoming" || session.status === "accepted") &&
+        now > end
+      ) {
+        session.status = "completed";
+        await this._sessionRepository.updateSession(session._id as string, {
+          status: "completed",
+        });
+      }
+    }
+
+    return {
+      sessions,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
-
-  return {
-    sessions,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-  };
-}
-
 
   async getSessionById(sessionId: string): Promise<ISession | null> {
     return await this._sessionRepository.getSessionById(sessionId);
@@ -194,8 +211,6 @@ export class SessionService {
   ): Promise<ISession | null> {
     const session = await this._sessionRepository.getSessionById(sessionId);
     if (!session) return null;
-
-    console.log(session);
 
     if (session.type === "public") {
       await this._walletService.credit(
@@ -291,4 +306,45 @@ export class SessionService {
     const token = generateAgoraToken(channelName, userId.toString());
     return { token, channelName, appId: process.env.AGORA_APP_ID, uid: userId };
   }
+
+
+  async publicSessionsWithFilters(filters?: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const {
+    search = "",
+    status = "all",
+    page = 1,
+    limit = 10,
+  } = filters || {};
+
+  const query: any = { type: "public" };
+
+  if (status !== "all") query.status = status;
+  if (search) {
+  query.$or = [
+    { topic: { $regex: search, $options: "i" } },
+    { description: { $regex: search, $options: "i" } },
+  ];
+}
+
+
+  const skip = (page - 1) * limit;
+
+  const [sessions, total] = await Promise.all([
+    this._sessionRepository.findWithFilters(query, skip, limit),
+    this._sessionRepository.countSessions(query),
+  ]);
+
+  return {
+    sessions,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
 }

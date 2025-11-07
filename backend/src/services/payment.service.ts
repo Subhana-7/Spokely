@@ -26,7 +26,8 @@ export class PaymentService implements IPaymentService {
     private _sessionRepository: ISessionRepository,
     @inject(TYPES.IWalletService)
     private readonly _walletService: IWalletService,
-    @inject(TYPES.INotificationService) private readonly _notificationService: INotificationService,
+    @inject(TYPES.INotificationService)
+    private readonly _notificationService: INotificationService
   ) {}
 
   private async getAccessToken(): Promise<string> {
@@ -47,8 +48,6 @@ export class PaymentService implements IPaymentService {
   ): Promise<{ id: string }> {
     console.log("service pay");
     const accessToken = await this.getAccessToken();
-
-    console.log(accessToken, "access", "price:", dto.amount);
 
     const order = await paypalAPI.post(
       "/v2/checkout/orders",
@@ -104,22 +103,21 @@ export class PaymentService implements IPaymentService {
         userIdStr
       );
 
-      console.log('capture order',session);
-      console.log(session?.type,session?.sessionFee ,session?.mentorId)
+      console.log(session?.type, session?.sessionFee, session?.createdBy);
 
       if (
         session?.type === "public" &&
         session.sessionFee &&
-        session.mentorId
+        session.createdBy
       ) {
-        let res = await this._walletService.credit(
-          session.mentorId.toString(),
+        const res = await this._walletService.credit(
+          session.createdBy.toString(),
           session.sessionFee,
           `Payment received from ${userIdStr} for session: ${session.topic}`,
-          undefined,
-          session._id?.toString()
+          session._id?.toString(), // <-- sessionId here
+          undefined // subscriptionId (none)
         );
-        console.log(res,'payment')
+        console.log(res, "payment");
       }
     }
 
@@ -139,24 +137,26 @@ export class PaymentService implements IPaymentService {
     dto: PaymentRequestDTO
   ): Promise<PaymentResponseDTO> {
     let payment = await this.captureOrder(userId, dto);
-    if(!payment){
+    if (!payment) {
       throw new Error(MESSAGES.ERROR.NOT_FOUND);
     }
     console.log(payment);
-    if(payment?.status === "COMPLETED"){
+    if (payment?.status === "COMPLETED") {
       await this._notificationService.send({
-      userId:userId,
-      title:"Subscription Successful",
-      message:"Your new Subscription is successfull. Enjoy our subscription feature.",
-      type:"success",
-    })
-    }else if(payment?.status === "COMPLETED"){
+        userId: userId,
+        title: "Subscription Successful",
+        message:
+          "Your new Subscription is successfull. Enjoy our subscription feature.",
+        type: "success",
+      });
+    } else if (payment?.status === "COMPLETED") {
       await this._notificationService.send({
-      userId:userId,
-      title:"Subscription Request Failed",
-      message:"Your new Subscription Request failed due to payment failure in payment request.",
-      type:"success",
-    })
+        userId: userId,
+        title: "Subscription Request Failed",
+        message:
+          "Your new Subscription Request failed due to payment failure in payment request.",
+        type: "success",
+      });
     }
     return payment;
   }

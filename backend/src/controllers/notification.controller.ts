@@ -11,7 +11,6 @@ export class NotificationController {
   ) {}
 
   async getUserNotifications(req: Request, res: Response) {
-    console.log("hiting");
     const userId = req.params.userId;
     const data = await this._notificationService.getUserNotifications(userId);
     res.json({ success: true, data });

@@ -34,5 +34,10 @@ export interface ISessionRepository {
 
   findWithFilters(query: any, skip: number, limit: number):Promise<any>;
 
-  countSessions(query: any):Promise<any>
+  countSessions(query: any):Promise<any>;
+
+   findSessionsPaginated(
+  query: any,
+  options: { page: number; limit: number }
+): Promise<{ sessions: any[]; total: number }>
 }

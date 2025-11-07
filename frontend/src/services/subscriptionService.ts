@@ -43,8 +43,19 @@ export const getUserSubscriptions = (
 };
 
 
-export const getMentorStudents = (mentorId: string) =>
-  API.get(`${R.base}${R.mentorStudents}/${mentorId}`);
+export const getMentorStudents = (
+  mentorId: string,
+  search: string = "",
+  page: number = 1,
+  limit: number = 9
+) => {
+  const query = new URLSearchParams();
+  if (search) query.append("search", search);
+  query.append("page", page.toString());
+  query.append("limit", limit.toString());
+  return API.get(`${R.base}${R.mentorStudents}/${mentorId}?${query.toString()}`);
+};
+
 
 
 export const getSubscriptionHistory = (userId: string, page = 1, limit = 6) =>

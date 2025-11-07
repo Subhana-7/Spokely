@@ -51,11 +51,29 @@ export class SubscriptionController implements ISubscriptionController {
 
 
   async getMentorSubscriptions(req: Request, res: Response): Promise<void> {
-    const subs = await this._subscriptionService.getMentorSubscriptions(
-      req.params.id
+  try {
+    const mentorId = req.params.id;
+    const { search = "", page = "1", limit = "9" } = req.query;
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    const result = await this._subscriptionService.getMentorSubscriptions(
+      mentorId,
+      search as string,
+      pageNum,
+      limitNum
     );
-    res.status(STATUS_CODES.OK).json(subs);
+
+    res.status(STATUS_CODES.OK).json(result);
+  } catch (err: any) {
+    res.status(STATUS_CODES.BAD_REQUEST).json({
+      success: false,
+      message: err.message || "Failed to fetch mentor students",
+    });
   }
+}
+
 
   async cancelSubscription(req: Request, res: Response): Promise<void> {
     const { id } = req.params;

@@ -214,21 +214,26 @@ export class SessionController implements ISessionController {
   };
 
   getPublicSessions = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const publicSessions = await this._sessionService.publicSessions();
-      if (!publicSessions || publicSessions.length === 0) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.SESSION.NOT_FOUND });
-        return;
-      }
-      res.status(STATUS_CODES.OK).json({ publicSessions });
-    } catch {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: MESSAGES.SESSION.FETCH_FAILED });
-    }
-  };
+  try {
+    const { search = "", status = "all", page = 1, limit = 10 } = req.query;
+
+    const filters = {
+      search: String(search),
+      status: String(status),
+      page: Number(page),
+      limit: Number(limit),
+    };
+
+    const result = await this._sessionService.publicSessionsWithFilters(filters);
+
+    res.status(STATUS_CODES.OK).json(result);
+  } catch (err: any) {
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: err?.message || MESSAGES.SESSION.FETCH_FAILED });
+  }
+};
+
 
   addFeedback = async (
     req: AuthenticatedRequest,

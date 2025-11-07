@@ -56,3 +56,10 @@ export const rejectMentor = (mentorId: string, rejectionReason: string) =>
 // --- Sessions ---
 export const adminSessionListing = (params: AdminSessionParams) =>
   API.get(`${R.base}${R.sessions}`, { params });
+
+
+export const getAdminHomeStats = () =>
+  API.get(`${R.base}${R.home}`); // /api/admin/home
+
+export const getReports = (params: Record<string, any>) =>
+  API.get(`${R.base}${R.reports}`, { params });

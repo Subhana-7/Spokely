@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import DashboardHeader from "../../components/admin/DashboardHeader";
-import DataTable from "../../components/admin/DataTables";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
+import DataTable from "../../components/admin/DataTables";
 import { adminSessionListing } from "../../services/adminService";
+import toast from "react-hot-toast";
 
 interface SessionItem {
   id: string;
@@ -23,10 +23,14 @@ const AdminSessionsPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const limit = 10;
 
+  // Fetch sessions from backend with pagination & search
   const fetchSessions = async () => {
     try {
+      setLoading(true);
+
       const { data } = await adminSessionListing({
         page,
         limit,
@@ -34,14 +38,20 @@ const AdminSessionsPage = () => {
         status: statusFilter,
       });
 
+      const rawSessions = data.sessions || [];
+
       setSessions(
-        (data.sessions || []).map((s: any) => ({
+        rawSessions.map((s: any) => ({
           id: s._id,
           topic: s.topic,
           type: s.type,
           status: s.status,
-          mentor: s.createdBy,
-          participants: s.participants || [],
+          mentor: s.createdBy || { name: "Unknown", email: "-" },
+          participants:
+            s.participants?.map((p: any) => ({
+              name: p.user?.name || "N/A",
+              status: p.status || "-",
+            })) || [],
           startTime: s.startTime,
           endTime: s.endTime,
           feedbackCount: s.feedback?.length || 0,
@@ -49,54 +59,117 @@ const AdminSessionsPage = () => {
         }))
       );
 
-      // Ensure total is taken from backend
       setTotal(data.total || 0);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch sessions:", err);
+      toast.error(err?.response?.data?.message || "Failed to load sessions");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchTerm, statusFilter]);
 
+  // Handlers for search and filter
+  const handleSearch = (val: string) => {
+    setSearchTerm(val);
+    setPage(1);
+  };
+
+  const handleStatus = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="p-6">
-        <h2 className="text-2xl font-semibold mb-4">Session Management</h2>
+    <div className="p-4 md:p-8">
+      {/* Header Section - matches mentor listing style */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <div className="w-16 h-1 bg-green-500 rounded-full mb-2"></div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Session Management
+          </h1>
+          <p className="text-sm text-gray-600">
+            Manage and monitor all platform sessions
+          </p>
+        </div>
+      </div>
 
-        <SearchFilterBar
-          searchPlaceholder="Search by topic or mentor"
-          onSearch={(val) => {
-            setPage(1); // Reset to first page when searching
-            setSearchTerm(val);
-          }}
-          onStatusFilter={(val) => {
-            setPage(1); // Reset to first page when changing status
-            setStatusFilter(val);
-          }}
-        />
+      {/* Search + Filter Bar */}
+      <div className="text-black">
+      <SearchFilterBar
+        searchPlaceholder="Search sessions by topic or mentor"
+        onSearch={handleSearch}
+        onStatusFilter={handleStatus}
+      />
+      </div>
 
-        <DataTable
-          data={sessions.map((s) => ({
-            id: s.id,
-            topic: s.topic,
-            type: s.type,
-            status: s.status,
-            feedbackCount: s.feedbackCount || 0,
-          }))}
-          type="session"
-          page={page}
-          setPage={setPage}
-          total={total}
-          limit={limit}
-          onRowClick={(id) => (window.location.href = `/admin/sessions/${id}`)}
-          onDelete={(id) => {
-            // TODO: implement delete call
-            console.log("delete session", id);
-          }}
-        />
-      </main>
+      {/* Data Table Section */}
+      <div className="mt-6  rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-gray-500">Loading sessions...</div>
+        ) : sessions.length === 0 ? (
+          <div className="p-10 text-center text-gray-500">No sessions found</div>
+        ) : (
+          <DataTable
+            data={sessions.map((s) => ({
+              id: s.id,
+              topic: s.topic,
+              type: s.type,
+              status: s.status,
+              feedbackCount: s.feedbackCount || 0,
+            }))}
+            type="session"
+            page={page}
+            setPage={setPage}
+            total={total}
+            limit={limit}
+            onRowClick={(id) => (window.location.href = `/session/details/${id}`)}
+            onDelete={(id) => {
+              toast("Delete session feature coming soon", { icon: "🗑️" });
+            }}
+          />
+        )}
+      </div>
+
+      {/* Pagination (Mentor-style) */}
+      {total > limit && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className={`px-4 py-2 text-sm border rounded-lg transition ${
+              page === 1
+                ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
+                : "border-gray-300 hover:bg-gray-100 text-gray-700"
+            }`}
+          >
+            Prev
+          </button>
+
+          <span className="text-gray-600 text-sm">
+            Page {page} of {Math.ceil(total / limit)}
+          </span>
+
+          <button
+            disabled={page >= Math.ceil(total / limit)}
+            onClick={() =>
+              setPage((p) => Math.min(p + 1, Math.ceil(total / limit)))
+            }
+            className={`px-4 py-2 text-sm border rounded-lg transition ${
+              page >= Math.ceil(total / limit)
+                ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
+                : "border-gray-300 hover:bg-gray-100 text-gray-700"
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

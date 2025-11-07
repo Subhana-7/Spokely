@@ -177,11 +177,34 @@ export class UserService implements IUserService {
     return toUserResponseDTO(updated);
   }
 
-  async getHome(userId: string): Promise<UserResponseDTO> {
-    const user = await this._userRepository.findById(userId);
-    if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
-    return toUserResponseDTO(user);
-  }
+  async getHome(userId: string): Promise<any> {
+  const user = await this._userRepository.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const stats = await this._userRepository.getUserStats(userId);
+
+  // compute completion rate dynamically
+  const completionRate =
+    stats.dailyTasksCompleted > 0
+      ? Math.min(100, stats.sessionsDone * 5 + (user.levels ?? 0) * 10)
+      : 0;
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    uniqueCode: user.uniqueCode,
+    profilePicture: user.profilePicture,
+    sessionsDone: stats.sessionsDone,
+    levels: user.levels,
+    streak: user.streak,
+    completionRate,
+    mentorsSubscribed: stats.mentorsSubscribed,
+    totalConnections: stats.totalConnections,
+    dailyTasksCompleted: stats.dailyTasksCompleted,
+  };
+}
+
 
   async getAllUsers(): Promise<UserResponseDTO[]> {
     const { results } = await this._userRepository.findAll();
@@ -318,19 +341,41 @@ export class UserService implements IUserService {
     }
   }
 
-  async listMentors(): Promise<{ mentors: MentorDTO[] }> {
-    try {
-      const mentors = await this._adminRepository.findAllMentors();
+ async listMentors({
+  page = 1,
+  limit = 6,
+  search = "",
+}: {
+  page: number;
+  limit: number;
+  search: string;
+}): Promise<any> {
+  
+  const query: any = {
+  "document.verificationStatus": "approved",
+  isBlocked: false, 
+};
 
-      if (!mentors || mentors.length === 0) {
-        return { mentors: [] };
-      }
+if (search && search.trim()) {
+  query.$or = [
+    { name: { $regex: search, $options: "i" } },
+    { email: { $regex: search, $options: "i" } },
+  ];
+}
 
-      const mentorDtos = mentors.map(toPublicMentorResponseDTO);
-      return { mentors: mentorDtos };
-    } catch (error) {
-      console.error("Public mentor listing error:", error);
-      throw error;
-    }
-  }
+
+  const { results, total } = await this._adminRepository.findAllMentorsPaginated(query, { page, limit });
+
+  const mentors = results.map(toPublicMentorResponseDTO);
+
+  return {
+    mentors,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+
 }

@@ -53,9 +53,18 @@ const FeedbackModal = ({
           return (
             <div key={section} className="mb-4 border-b pb-2">
               <h3 className="font-semibold capitalize">{section}</h3>
-              <p><strong>Feedback:</strong> {secData.feedback?.feedback || "No feedback"}</p>
-              <p><strong>Strengths:</strong> {secData.feedback?.strengths || "N/A"}</p>
-              <p><strong>Weaknesses:</strong> {secData.feedback?.weaknesses || "N/A"}</p>
+              <p>
+                <strong>Feedback:</strong>{" "}
+                {secData.feedback?.feedback || "No feedback"}
+              </p>
+              <p>
+                <strong>Strengths:</strong>{" "}
+                {secData.feedback?.strengths || "N/A"}
+              </p>
+              <p>
+                <strong>Weaknesses:</strong>{" "}
+                {secData.feedback?.weaknesses || "N/A"}
+              </p>
             </div>
           );
         })}
@@ -78,14 +87,17 @@ const DailyTaskManagement = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/admin/tasks", {
-          params: {
-            search,
-            topic: filter === "All Topics" ? undefined : filter,
-            page,
-            limit,
-          },
-        });
+        const response = await axios.get(
+          "http://localhost:5000/api/admin/tasks",
+          {
+            params: {
+              search,
+              topic: filter === "All Topics" ? undefined : filter,
+              page,
+              limit,
+            },
+          }
+        );
 
         const { tasks: fetchedTasks, total: totalTasks } = response.data;
         setTasks(fetchedTasks);
@@ -132,7 +144,7 @@ const DailyTaskManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <div className="w-16 h-1 bg-purple-500 rounded-full mb-2"></div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
             Daily Task Management
           </h1>
           <p className="text-sm text-gray-600">
@@ -141,12 +153,14 @@ const DailyTaskManagement = () => {
         </div>
       </div>
 
-      <SearchFilterBar
-        searchPlaceholder="Search by topic or user ID"
-        filterOptions={["All Topics", "Environment", "Education"]}
-        onSearch={setSearch}
-        onFilter={setFilter}
-      />
+      <div className="text-black">
+        <SearchFilterBar
+          searchPlaceholder="Search by topic or user ID"
+          filterOptions={["All Topics", "Environment", "Education"]}
+          onSearch={setSearch}
+          onFilter={setFilter}
+        />
+      </div>
 
       <DataTable
         data={taskData}

@@ -84,9 +84,15 @@ export class SubscriptionService implements ISubscriptionService {
 }
 
 
-  getMentorSubscriptions(mentorId: string) {
-    return this._subscriptionRepository.findByMentor(mentorId);
-  }
+ getMentorSubscriptions(mentorId: string, search = "", page = 1, limit = 9) {
+  return this._subscriptionRepository.findByMentorPaginated(
+    mentorId,
+    search,
+    page,
+    limit
+  );
+}
+
 
   cancelSubscription(subscriptionId: string) {
     return this._subscriptionRepository.cancelSubscription(subscriptionId);

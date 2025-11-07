@@ -4,11 +4,11 @@ const Dashboard = () => {
     <div className="p-4 md:p-8">
       <div className="mb-8">
         <div className="w-16 h-1 bg-blue-500 rounded-full mb-3"></div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Dashboard Overview</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Dashboard Overview</h1>
         <p className="text-gray-600 text-sm md:text-base">Welcome to Spokely Admin Dashboard</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
         <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-5 text-white">
           <h3 className="text-base font-semibold mb-1">Total Users</h3>
           <p className="text-2xl font-bold">1,247</p>
@@ -32,7 +32,7 @@ const Dashboard = () => {
           <p className="text-2xl font-bold">$24,680</p>
           <p className="text-blue-100 text-xs mt-1">+8% from last month</p>
         </div>
-      </div>
+      </div> */}
 
       <div className="text-center text-gray-500 text-sm">
         <p>Select a management section from the navigation above to get started.</p>

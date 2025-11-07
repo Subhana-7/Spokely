@@ -20,6 +20,8 @@ export const ADMIN_ROUTES = {
   approve: "/approve",
   reject: "/reject",
   refreshToken: "/refresh-token",
+  home:"/home",
+  reports:"/home"
 };
 
 export const USER_ROUTES = {

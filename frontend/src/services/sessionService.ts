@@ -47,7 +47,13 @@ export const flagSession = (id: string, reason: string, againstUser: string) =>
 
 export const getAgoraToken = (id: string) => API.get(`${R.base}/${id}${R.token}`);
 
-export const getPublicSessions = () => API.get(`${R.base}${R.publicSessions}`);
+export const getPublicSessions = (params?: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => API.get(`${R.base}${R.publicSessions}`, { params });
+
 
 export const addFeedback = (id: string, data: Feedback) =>
   API.post(`${R.base}/${id}${R.feedback}`, data);

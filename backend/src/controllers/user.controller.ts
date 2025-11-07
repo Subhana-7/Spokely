@@ -109,13 +109,24 @@ export class UserController implements IUserController {
   };
 
   home = async (req: Request, res: Response) => {
-    try {
-      const user = await this._userService.getHome(req.params.id);
-      res.status(STATUS_CODES.OK).json(user);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+  try {
+    // ✅ get userId from authMiddleware
+    const userId = (req as any).id;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ message: "User ID not found in token" });
     }
-  };
+
+    const user = await this._userService.getHome(userId);
+    res.status(200).json(user);
+  } catch (err: any) {
+    console.error("Home route error:", err);
+    res.status(400).json({ message: err.message });
+  }
+};
+
 
   sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
     try {
@@ -242,13 +253,22 @@ export class UserController implements IUserController {
   };
 
   mentorListing = async (req: Request, res: Response) => {
-    try {
-      let result = await this._userService.listMentors();
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SUCCESS.MENTOR_LISTING, result });
-    } catch (error: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
-    }
-  };
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const result = await this._userService.listMentors({
+      page: Number(page),
+      limit: Number(limit),
+      search: String(search),
+    });
+
+    res.status(200).json({
+      message: "Mentor listing fetched successfully",
+      ...result,
+    });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 }

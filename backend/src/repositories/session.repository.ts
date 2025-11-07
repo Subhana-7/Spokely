@@ -222,4 +222,27 @@ export class SessionRepository
       return 0;
     }
   }
+
+  async findSessionsPaginated(
+  query: any = {},
+  options: { page: number; limit: number }
+): Promise<{ sessions: any[]; total: number }> {
+  const { page, limit } = options;
+  const skip = (page - 1) * limit;
+
+  // Populate mentor and participants
+  const sessions = await SessionModel
+    .find(query)
+    .populate("createdBy", "name email role")
+    .populate("participants.user", "name email role")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const total = await SessionModel.countDocuments(query);
+
+  return { sessions, total };
+}
+
 }

@@ -1,69 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardHeader from "./DashBoardComponents/Header";
 import SpokelyCard from "../../components/common/Cards";
 import {
   Award,
   Camera,
   Edit,
-  Mail,
-  Phone,
   Star,
   TrendingUp,
-  User,
   Zap,
   Lock,
+  Users,
+  BookOpen,
+  Layers,
+  Activity,
 } from "lucide-react";
 import Badge from "../../components/common/Badge";
 import { useAuthStore } from "../../store/userAuthStore";
-import { editUserDetails, changePassword } from "../../services/authServices";
+import {
+  editUserDetails,
+  changePassword,
+  getUserStats,
+} from "../../services/authServices";
 import { uploadImageToCloudinary } from "../../utilis/cloudinary ";
 import ChangePasswordModal from "../../modals/ChangePassword";
-import SuccessModal from "../../modals/SuccessModal"; // ✅ import
+import SuccessModal from "../../modals/SuccessModal";
+import toast from "react-hot-toast";
 
 const UserProfile = () => {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("overview");
   const { user, setUser } = useAuthStore();
-  console.log("user", user?.id);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone ? String(user.phone) : "",
-    uniqueCode: user?.uniqueCode || "",
-    profilePicture: user?.profilePicture || "",
-  });
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // ✅ new state
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  const userId = user?.id;
+  const [formData, setFormData] = useState({
+    name: user?.name || "John Doe",
+    email: user?.email || "john@example.com",
+    phone: user?.phone ? String(user.phone) : "9876543210",
+    uniqueCode: user?.uniqueCode || "USR-12345",
+    profilePicture:
+      user?.profilePicture ||
+      "https://avatars.githubusercontent.com/u/000000?v=4",
+  });
 
-  const validateField = (name: string, value: string) => {
-    let error = "";
-    if (name === "name") {
-      if (!value.trim()) {
-        error = "Name is required.";
-      } else if (value.length < 3) {
-        error = "Name must be at least 3 characters.";
+  const [stats, setStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setStatsLoading(true);
+        const data = await getUserStats();
+        setStats(data);
+      } catch (error) {
+        toast.error("Failed to load profile stats");
+        console.error(error);
+      } finally {
+        setStatsLoading(false);
       }
-    }
-    if (name === "phone") {
-      const phoneRegex = /^[0-9]{10}$/;
-      if (!value.trim()) {
-        error = "Phone number is required.";
-      } else if (!phoneRegex.test(value)) {
-        error = "Enter a valid 10-digit phone number.";
-      }
-    }
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
+    };
+    fetchStats();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    validateField(name, value);
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleProfilePicUpload = async (
@@ -75,253 +78,205 @@ const UserProfile = () => {
       setLoading(true);
       const url = await uploadImageToCloudinary(file);
       setFormData((prev) => ({ ...prev, profilePicture: url }));
-    } catch (err) {
-      console.error("Profile pic upload failed:", err);
-      alert("Failed to upload profile picture. Try again.");
+    } catch {
+      toast.error("Failed to upload image");
     } finally {
       setLoading(false);
     }
   };
 
-  const isFormValid = () => {
-    return (
-      !errors.name &&
-      !errors.phone &&
-      formData.name.trim().length >= 3 &&
-      /^[0-9]{10}$/.test(formData.phone)
-    );
-  };
-
   const handleSave = async () => {
-    console.log("Saving with data:", formData);
-    validateField("name", formData.name);
-    validateField("phone", formData.phone);
-
-    if (!isFormValid()) return;
+    if (!user?.id || !user?.role) {
+      toast.error("User information missing!");
+      return;
+    }
 
     try {
       setLoading(true);
-      if (!user?.id || !user?.role) return;
-
-      const payload = {
-        ...formData,
-        phone: Number(formData.phone),
-      };
-
-      const updated = await editUserDetails(user.id, user.role, payload);
+      const updated = await editUserDetails(user.id, user.role, formData);
       setUser(updated);
+      toast.success("Profile updated successfully!");
       setIsEditing(false);
     } catch (err) {
-      console.error("Failed to update user:", err);
+      toast.error("Failed to update profile");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handlePasswordChange = async (oldPass: string, newPass: string) => {
-    const payload = {
-      currentPassword: oldPass,
-      newPassword: newPass,
-      id: userId,
-    };
-    await changePassword("user", payload);
-    setIsPasswordModalOpen(false); // close modal
-    setIsSuccessModalOpen(true); // show success modal
+    if (!user?.id) {
+      toast.error("User not logged in!");
+      return;
+    }
+
+    try {
+      await changePassword("user", {
+        currentPassword: oldPass,
+        newPassword: newPass,
+        id: user.id,
+      });
+      setIsPasswordModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (err) {
+      toast.error("Failed to change password");
+    }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white bg-gray-900">
+        <DashboardHeader />
+        <p className="mt-10 text-lg text-gray-300">Loading your profile...</p>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="min-h-screen text-white relative bg-cover bg-center"
-      style={{ backgroundImage: `url('/gradient-bg.jpg')` }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
       <DashboardHeader />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-24">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Profile Overview</h1>
-          <p className="text-gray-200">
-            Manage your account settings and track your learning journey
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Left Column */}
-          <div className="xl:col-span-1">
-            <SpokelyCard className="p-8 bg-white/10 border shadow-lg text-white">
-              <div className="text-center">
-                {/* Profile Image */}
-                <div className="relative mb-6">
-                  <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full p-1 mx-auto">
-                    <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                      {formData.profilePicture ? (
-                        <img
-                          src={formData.profilePicture}
-                          alt="profile"
-                          className="rounded-full w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User size={48} className="text-gray-600" />
-                      )}
-                    </div>
-                  </div>
-                  {isEditing && (
-                    <label className="absolute bottom-0 right-1/2 transform translate-x-1/2 translate-y-2 bg-white rounded-full p-2 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 cursor-pointer">
-                      <Camera size={16} className="text-gray-600" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePicUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-
-                <h2 className="text-2xl font-bold mb-3">
-                  {user?.name || "User Name"}
-                </h2>
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Badge variant="peer">
-                    <Star size={14} className="mr-1" />
-                    {user?.tags?.[0] || "Beginner"}
-                  </Badge>
-                </div>
-
-                {/* Streak Counter */}
-                <div className="bg-gradient-to-r from-amber-100/20 to-orange-100/20 border border-amber-200 rounded-xl p-4 mb-6">
-                  <div className="flex items-center justify-center gap-2 text-amber-300">
-                    <Zap size={18} />
-                    <span className="font-semibold">15-Day Streak</span>
-                  </div>
-                </div>
-              </div>
-            </SpokelyCard>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <SpokelyCard className="p-6 text-center bg-white/10 border shadow-lg">
-                <div className="text-3xl font-bold text-indigo-300 mb-2">
-                  {user?.sessionsDone ?? 0}
-                </div>
-                <div className="text-sm text-gray-200 font-medium">
-                  Sessions
-                </div>
-              </SpokelyCard>
-              <SpokelyCard className="p-6 text-center bg-white/10 border shadow-lg">
-                <div className="text-3xl font-bold text-purple-300 mb-2">23</div>
-                <div className="text-sm text-gray-200 font-medium">Levels</div>
-              </SpokelyCard>
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-10">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+              Your Profile
+            </h1>
+            <p className="text-gray-400">
+              View and manage your learning journey
+            </p>
           </div>
 
-          {/* Middle Column */}
-          {/* <div className="xl:col-span-2"> */}
-            {/* Progress */}
-            {/* <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center">
-                  <TrendingUp size={24} className="mr-3 text-indigo-300" />
-                  Learning Progress
-                </h3>
-              </div>
+          <div className="flex items-center gap-3 mt-4 sm:mt-0">
+            {["overview", "settings"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-2 rounded-lg capitalize transition-all ${
+                  activeTab === tab
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-semibold">
-                      Overall Progress
-                    </span>
-                    <span className="text-3xl font-bold text-indigo-300">
-                      87%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-100/30 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                      style={{ width: "87%" }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-200 mt-2">
-                    Excellent progress! Keep it up.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">This Week</h4>
-                  <div className="flex gap-2">
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                      (day, index) => (
-                        <div key={day} className="flex-1 text-center">
-                          <div className="text-xs text-gray-300 mb-1">
-                            {day}
-                          </div>
-                          <div
-                            className={`h-12 rounded-lg ${
-                              index < 5
-                                ? "bg-gradient-to-t from-indigo-500 to-purple-600"
-                                : "bg-gray-100/20"
-                            }`}
-                          ></div>
-                        </div>
-                      )
+        {/* Overview Section */}
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            {/* Profile Card */}
+            <div className="xl:col-span-1">
+              <SpokelyCard className="p-8 backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <div className="w-32 h-32 rounded-full border-4 border-emerald-500 mx-auto overflow-hidden">
+                      <img
+                        src={formData.profilePicture}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {isEditing && (
+                      <label className="absolute bottom-0 right-1/2 transform translate-x-1/2 translate-y-2 bg-gray-800 border border-gray-700 rounded-full p-2 shadow cursor-pointer">
+                        <Camera size={16} className="text-gray-300" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePicUpload}
+                          className="hidden"
+                        />
+                      </label>
                     )}
                   </div>
-                </div>
-              </div>
-            </SpokelyCard> */}
 
-            {/* Achievements */}
-            {/* <SpokelyCard className="p-8 bg-white/10 border shadow-lg">
-              <h3 className="text-xl font-bold flex items-center mb-6">
-                <Award size={24} className="mr-3 text-indigo-300" />
-                Recent Achievements
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center p-4 bg-gradient-to-r from-purple-50/10 to-indigo-50/10 rounded-xl border border-purple-200/30">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-4">
-                    <Star size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Grammar Master</div>
-                    <div className="text-sm text-gray-300">
-                      Completed advanced grammar
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center p-4 bg-gradient-to-r from-amber-50/10 to-orange-50/10 rounded-xl border border-amber-200/30">
-                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mr-4">
-                    <Zap size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Streak Warrior</div>
-                    <div className="text-sm text-gray-300">
-                      15 consecutive days
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SpokelyCard> */}
-          {/* </div> */}
+                  <h2 className="text-2xl font-bold mb-2 text-white">
+                    {formData.name}
+                  </h2>
+                  <Badge
+                    variant="peer"
+                    className="mb-4 bg-green-500/20 text-green-300 border border-green-500/30"
+                  >
+                    <Star size={14} className="mr-1" /> {user.email}
+                  </Badge>
 
-          {/* Right Column - Account Settings */}
-          <div className="xl:col-span-1">
-            <SpokelyCard className="p-8 mb-6 bg-white/10 border shadow-lg text-white">
+                  {statsLoading ? (
+                    <div className="text-gray-400 text-sm">
+                      Loading streak...
+                    </div>
+                  ) : (
+                    <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/30 mb-6">
+                      <div className="flex justify-center items-center gap-2 text-green-400">
+                        <Zap size={18} />{" "}
+                        <span>{user.uniqueCode} - User Code</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SpokelyCard>
+            </div>
+
+            {/* Stats Section */}
+            <div className="xl:col-span-3">
+              {statsLoading ? (
+                <div className="flex justify-center items-center h-64 text-gray-300">
+                  Loading your progress...
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[
+                    { label: "Sessions Completed", value: stats?.sessionsDone ?? 0, icon: <BookOpen size={22} /> },
+                    { label: "Levels Achieved", value: stats?.levels ?? 0, icon: <Layers size={22} /> },
+                    { label: "Mentors Subscribed", value: stats?.mentorsSubscribed ?? 0, icon: <Award size={22} /> },
+                    { label: "Connections", value: stats?.totalConnections ?? 0, icon: <Users size={22} /> },
+                    { label: "Daily Tasks", value: stats?.dailyTasksCompleted ?? 0, icon: <Activity size={22} /> },
+                    { label: "Completion Rate", value: `${stats?.completionRate ?? 0}%`, icon: <TrendingUp size={22} /> },
+                  ].map((item, idx) => (
+                    <SpokelyCard
+                      key={idx}
+                      className="p-6 backdrop-blur-lg bg-white/10 border border-white/10 text-center rounded-2xl hover:shadow-green-500/20 transition-all duration-300"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="mb-3 text-green-400">{item.icon}</div>
+                        <div className="text-3xl font-bold mb-1 text-white">
+                          {item.value}
+                        </div>
+                        <p className="text-sm text-gray-400 font-medium">
+                          {item.label}
+                        </p>
+                      </div>
+                    </SpokelyCard>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Settings Section */}
+        {activeTab === "settings" && (
+          <div className="max-w-3xl mx-auto mt-10">
+            <SpokelyCard className="p-8 backdrop-blur-lg bg-white/10 border border-white/10 rounded-2xl shadow-lg">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold">Account Settings</h3>
+                <h3 className="text-lg font-bold text-white">
+                  Account Settings
+                </h3>
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium"
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg"
                   >
-                    <Edit size={16} className="mr-2" />
-                    Edit
+                    <Edit size={16} className="mr-2" /> Edit
                   </button>
                 ) : (
                   <button
                     onClick={handleSave}
-                    disabled={loading || !isFormValid()}
-                    className="flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 text-sm font-medium disabled:opacity-50"
+                    disabled={loading}
+                    className="flex items-center px-4 py-2 bg-green-600 rounded-lg text-white"
                   >
                     {loading ? "Saving..." : "Save"}
                   </button>
@@ -329,104 +284,73 @@ const UserProfile = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Name */}
-                <div className="group">
-                  <label className="block text-sm font-medium mb-2 flex items-center">
-                    <User size={16} className="mr-2" /> Full Name
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                    Full Name
                   </label>
                   <input
-                    type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     readOnly={!isEditing}
-                    className={`w-full p-4 border rounded-xl text-black ${
+                    className={`w-full p-3 rounded-xl text-white ${
                       isEditing
-                        ? "bg-white focus:ring-2 focus:ring-indigo-500 border-gray-200"
-                        : "bg-gray-50 border-gray-200"
-                    } transition-all duration-200`}
+                        ? "bg-gray-800 border border-green-500/30 focus:ring-2 focus:ring-green-500"
+                        : "bg-gray-900 border border-gray-800"
+                    }`}
                   />
-                  {errors.name && (
-                    <p className="text-red-400 text-sm mt-1">{errors.name}</p>
-                  )}
                 </div>
 
-                {/* Email (always read-only) */}
-                <div className="group">
-                  <label className="block text-sm font-medium mb-2 flex items-center">
-                    <Mail size={16} className="mr-2" /> Email Address
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                    Email
                   </label>
                   <input
-                    type="email"
-                    name="email"
                     value={formData.email}
                     readOnly
-                    className="w-full p-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed text-black"
+                    className="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 text-gray-500"
                   />
                 </div>
 
-                {/* Unique Code (always read-only) */}
-                <div className="group">
-                  <label className="block text-sm font-medium mb-2 flex items-center">
-                    <Mail size={16} className="mr-2" /> Unique Code
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                    Phone
                   </label>
                   <input
-                    type="text"
-                    name="uniqueCode"
-                    value={formData.uniqueCode}
-                    readOnly
-                    className="w-full p-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed text-black"
-                  />
-                </div>
-
-                {/* Phone */}
-                <div className="group">
-                  <label className="block text-sm font-medium mb-2 flex items-center">
-                    <Phone size={16} className="mr-2" /> Phone Number
-                  </label>
-                  <input
-                    type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     readOnly={!isEditing}
-                    className={`w-full p-4 border rounded-xl text-black ${
+                    className={`w-full p-3 rounded-xl text-white ${
                       isEditing
-                        ? "bg-white focus:ring-2 focus:ring-indigo-500 border-gray-200"
-                        : "bg-gray-50 border-gray-200"
+                        ? "bg-gray-800 border border-green-500/30 focus:ring-2 focus:ring-green-500"
+                        : "bg-gray-900 border border-gray-800"
                     }`}
                   />
-                  {errors.phone && (
-                    <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
-                  )}
                 </div>
 
-                {/* Change Password Button */}
                 <button
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-medium hover:shadow-green-500/20 transition-all"
                 >
-                  <Lock size={16} className="mr-2" />
-                  Change Password
+                  <Lock size={16} className="mr-2 inline" /> Change Password
                 </button>
               </div>
             </SpokelyCard>
           </div>
-        </div>
+        )}
       </main>
 
-      {/* 🔹 Password Modal */}
+      {/* Modals */}
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onSubmit={handlePasswordChange}
       />
-
-      {/* 🔹 Success Modal */}
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
-        message="Your password has been successfully updated."
+        message="Password updated successfully!"
       />
     </div>
   );

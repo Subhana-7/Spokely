@@ -108,7 +108,7 @@ export default function AppRoutes() {
       {
         path: "/session/details/:id",
         element: (
-          <RoleProtectedRoute roles={["user", "mentor"]}>
+          <RoleProtectedRoute roles={["user", "mentor","admin"]}>
             <SessionDetail />
           </RoleProtectedRoute>
         ),

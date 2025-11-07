@@ -43,4 +43,11 @@ export interface IUserRepository extends IBaseRepository<IUser> {
 
   updatePassword(id: string, newPassword: string): Promise<IUser | null>;
   updateUser(id: string, data: any): Promise<IUser | null>;
+
+  getUserStats(userId: string): Promise<{
+  sessionsDone: number;
+  totalConnections: number;
+  mentorsSubscribed: number;
+  dailyTasksCompleted: number;
+}>
 }

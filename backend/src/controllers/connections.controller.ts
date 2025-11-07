@@ -113,7 +113,6 @@ export class ConnectionController implements IConnectionController {
 
   async blockConnection(req: AuthenticatedRequest, res: Response) {
     try {
-      console.log("hiting");
       const userId = req.id!;
       const connectionId = req.params.id;
       console.log(connectionId);

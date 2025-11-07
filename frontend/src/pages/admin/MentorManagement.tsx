@@ -119,7 +119,7 @@ const MentorManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <div className="w-16 h-1 bg-yellow-500 rounded-full mb-2"></div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
             Mentor Management
           </h1>
           <p className="text-sm text-gray-600">
@@ -128,6 +128,7 @@ const MentorManagement = () => {
         </div>
       </div>
 
+<div className="text-black">
       <SearchFilterBar
         searchPlaceholder="Search mentors by name or email"
         filterOptions={[
@@ -140,6 +141,7 @@ const MentorManagement = () => {
         onFilter={handleFilter}
         onStatusFilter={handleStatusFilter}
       />
+      </div>
 
       <DataTable
         data={mentorData}

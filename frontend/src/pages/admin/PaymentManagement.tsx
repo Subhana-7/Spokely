@@ -72,14 +72,14 @@ const PaymentManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <div className="p-6">
-        <div className="bg-white rounded-t-3xl pt-12 pb-8 px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
+        <div className="rounded-t-3xl pt-12 pb-8 px-8">
+          <h2 className="text-3xl font-bold text-white mb-8">
             Payment Management
           </h2>
 
-          <div className="bg-white rounded-lg p-6">
+          <div className="bg-white rounded-lg p-6 text-black">
             {/* Search & Filter */}
             <SearchFilterBar
               searchPlaceholder="Search by PayPal Order ID or currency"
@@ -104,7 +104,7 @@ const PaymentManagement = () => {
                 {/* Payment Table */}
                 <div className="rounded-lg border border-gray-200 overflow-hidden">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-700 font-semibold">
+                    <thead className="text-gray-700 font-semibold">
                       <tr>
                         <th className="px-6 py-3">PayPal Order ID</th>
                         <th className="px-6 py-3">Amount</th>

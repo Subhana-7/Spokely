@@ -194,25 +194,24 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async home(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const admin = await this._adminService.getHome(id);
+ async home(req: Request, res: Response): Promise<void> {
+  try {
+    const stats = await this._adminService.getDashboardStats();
 
-      if (!admin) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
-        return;
-      }
-
-      res.status(STATUS_CODES.OK).json(admin);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ message: error.message || MESSAGES.ERROR.SERVER_ERROR });
-    }
+    res.status(200).json({
+      success: true,
+      ...stats,
+    });
+  } catch (error: any) {
+    console.error("Error fetching admin dashboard stats:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to load admin dashboard stats",
+    });
   }
+}
+
+
 
   async refreshToken(req: Request, res: Response): Promise<void> {
     const token = req.cookies["refresh-token"];
@@ -286,33 +285,33 @@ export class AdminController implements IAdminController {
     res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.LOGOUT });
   }
 
-  getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const filters = {
-        status: req.query.status as string,
-        type: req.query.type as string,
-        mentorId: req.query.mentorId as string,
-      };
+ getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const status = (req.query.status as string) || "all";
 
-      const sessions = await this._adminService.getAllSessionsAdmin(filters);
+    const result = await this._adminService.getAllSessionsAdmin({
+      page,
+      limit,
+      search,
+      status,
+    });
 
-      if (!sessions || sessions.length === 0) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.SESSION.NOT_FOUND });
-        return;
-      }
+    res.status(200).json({
+      sessions: result.sessions,
+      total: result.total,
+      page,
+      limit,
+      totalPages: Math.ceil(result.total / limit),
+    });
+  } catch (err: any) {
+    console.error("Error fetching sessions:", err);
+    res.status(500).json({ message: err.message || "Server error" });
+  }
+};
 
-      res.status(STATUS_CODES.OK).json({
-        sessions,
-        total: sessions.length,
-      });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: err.message });
-    }
-  };
 
   getAllPayments = async (req: any, res: Response) => {
     try {

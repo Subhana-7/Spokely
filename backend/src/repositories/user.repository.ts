@@ -3,6 +3,10 @@ import { IUserRepository } from "./interfaces/IUserRepository";
 import { injectable } from "inversify";
 import { BaseRepository } from "./base.repository";
 import passport from "passport";
+import sessionsModel from "../models/sessions.model";
+import connectionsModel from "../models/connections.model";
+import subscriptionModal from "../models/subscription.modal";
+import { DailyTaskModel } from "../models/daily.task.model";
 
 @injectable()
 export class UserRepository
@@ -197,4 +201,43 @@ export class UserRepository
       return null;
     }
   }
+
+  async getUserStats(userId: string): Promise<{
+  sessionsDone: number;
+  totalConnections: number;
+  mentorsSubscribed: number;
+  dailyTasksCompleted: number;
+}> {
+  try {
+    const [sessionsDone, totalConnections, mentorsSubscribed, dailyTasksCompleted] =
+      await Promise.all([
+        sessionsModel.countDocuments({
+          $or: [{ createdBy: userId }, { "participants.user": userId }],
+          status: "completed",
+        }),
+        connectionsModel.countDocuments({
+          $or: [{ userId }, { connectedUserId: userId }],
+          status: "accepted",
+        }),
+        subscriptionModal.countDocuments({ userId, status: "ACTIVE" }),
+        DailyTaskModel.countDocuments({ userId }),
+      ]);
+
+    return {
+      sessionsDone,
+      totalConnections,
+      mentorsSubscribed,
+      dailyTasksCompleted,
+    };
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return {
+      sessionsDone: 0,
+      totalConnections: 0,
+      mentorsSubscribed: 0,
+      dailyTasksCompleted: 0,
+    };
+  }
+}
+
 }

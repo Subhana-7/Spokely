@@ -1,14 +1,16 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
-import { WalletRepository } from "../repositories/wallet.repository";
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IWallet } from "../models/wallet.model";
 
 @injectable()
 export class WalletService {
   constructor(
     @inject(TYPES.IWalletRepository)
-    private readonly _walletRepo: IWalletRepository
+    private readonly _walletRepo: IWalletRepository,
+    @inject(TYPES.IUserRepository)
+    private readonly _userRepo: IUserRepository // ✅ add this
   ) {}
 
   async credit(
@@ -51,29 +53,48 @@ export class WalletService {
   }
 
   async getTransactions(
-  userId: string,
-  page = 1,
-  limit = 10
-): Promise<{ transactions: unknown[]; total: number; totalPages: number; currentPage: number }> {
-  const wallet = await this._walletRepo.getWallet(userId);
-  const allTransactions = wallet?.transactions || [];
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ transactions: any[]; total: number; totalPages: number; currentPage: number }> {
+    const wallet = await this._walletRepo.getWallet(userId);
+    const allTransactions = wallet?.transactions || [];
 
-  // Sort by createdAt descending
-  const sorted = allTransactions.sort(
-    (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
-  );
+    // Sort by latest first
+    const sorted = allTransactions.sort(
+      (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+    );
 
-  const total = sorted.length;
-  const totalPages = Math.ceil(total / limit);
-  const start = (page - 1) * limit;
-  const paginated = sorted.slice(start, start + limit);
+    // Pagination
+    const total = sorted.length;
+    const totalPages = Math.ceil(total / limit);
+    const start = (page - 1) * limit;
+    const paginated = sorted.slice(start, start + limit);
 
-  return {
-    transactions: paginated,
-    total,
-    totalPages,
-    currentPage: page,
-  };
-}
+    // ✅ Enhance each transaction with user name (if possible)
+    const enhanced = await Promise.all(
+      paginated.map(async (tx) => {
+        let updatedReason = tx.reason;
 
+        // Detect userId pattern in reason like "Payment received from <id>"
+        const match = tx.reason.match(/from ([a-f0-9]{24})/);
+        if (match) {
+          const fromUserId = match[1];
+          const user = await this._userRepo.findById(fromUserId);
+          if (user?.name) {
+            updatedReason = tx.reason.replace(fromUserId, user.name);
+          }
+        }
+
+        return { ...tx.toObject?.() ?? tx, reason: updatedReason };
+      })
+    );
+
+    return {
+      transactions: enhanced,
+      total,
+      totalPages,
+      currentPage: page,
+    };
+  }
 }

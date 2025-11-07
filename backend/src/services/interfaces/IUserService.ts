@@ -42,5 +42,5 @@ export interface IUserService {
     profile: any
   ): Promise<{ user: any; accessToken: string; refreshToken: string }>;
 
-  listMentors(): Promise<{ mentors: MentorDTO[] }>;
+  listMentors({}:any): Promise<{ mentors: MentorDTO[] }>;
 }

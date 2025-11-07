@@ -49,11 +49,13 @@ export interface IAdminService {
     isBlocked?: boolean;
   }): Promise<{ mentors: IMentor[]; total: number }>;
 
+  getDashboardStats(): Promise<any | null>;
   getHome(adminId: string): Promise<AdminResponseDto | null>;
 
-  getAllSessionsAdmin(filters?: {
-    status?: string;
-    type?: string;
-    mentorId?: string;
-  }): Promise<ISession[] | null>;
+  getAllSessionsAdmin(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<{ sessions: ISession[]; total: number }>;
 }

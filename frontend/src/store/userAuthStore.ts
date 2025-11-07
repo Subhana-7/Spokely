@@ -11,6 +11,7 @@ interface User {
   phone?:number;
   bio?:string;
   level?:number;
+  tags?:string[];
 }
 
 interface AuthState {
@@ -25,11 +26,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   setUser: (user) => {
-    console.log(user);
-    Cookies.set("role", user.role, { sameSite: "Lax" });
-    set({ user, isAuthenticated: true });
-  },
+  console.log("Setting user in store:", user);
 
+  const normalizedUser = {
+    ...user,
+    tags: Array.isArray(user.tags) ? user.tags : [],
+  };
+
+  Cookies.set("role", normalizedUser.role, { sameSite: "Lax" });
+  set({ user: normalizedUser, isAuthenticated: true });
+
+  console.log("User stored in Zustand:", normalizedUser);
+},
   logout: () => {
     Cookies.remove("role");
     set({ user: null, isAuthenticated: false });

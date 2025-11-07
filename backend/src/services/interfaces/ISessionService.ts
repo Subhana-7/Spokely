@@ -43,4 +43,11 @@ export interface ISessionService {
     mentorId?: string;
   }): Promise<ISession[] | null>;
   getAgoraToken(sessionId: string, userId: string): Promise<any>;
+
+  publicSessionsWithFilters(filters?: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}):Promise<any>;
 }

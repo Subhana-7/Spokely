@@ -27,7 +27,7 @@ export interface IUserController {
     next: Function
   ): Promise<void>;
   googleCallback(req: Request, res: Response, next: Function): Promise<void>;
-  home(req: Request, res: Response): Promise<void>;
+  home(req: Request, res: Response): Promise<any>;
   changePassword(req: Request, res: Response): Promise<void>;
 
   mentorListing(req: Request, res: Response): Promise<void>;

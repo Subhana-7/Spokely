@@ -40,14 +40,20 @@ const WalletPage = () => {
 
       try {
         setLoading(true);
-        const response: AxiosResponse<IWalletResponse> = await fetchWallet(page, limit);
+        const response: AxiosResponse<IWalletResponse> = await fetchWallet(
+          page,
+          limit
+        );
         const res = response.data;
+        console.log(res);
 
-        if (Array.isArray(res.transactions)) {
-          setTransactions(res.transactions);
-          setTotalPages(res.totalPages);
+        const walletData = (res as any).data || res;
+
+        if (Array.isArray(walletData.transactions)) {
+          setTransactions(walletData.transactions);
+          setTotalPages(walletData.totalPages);
         } else {
-          console.warn("Wallet data is not an array:", res.transactions);
+          console.warn("Wallet data is not an array:", walletData.transactions);
           setTransactions([]);
         }
       } catch (err) {
@@ -91,7 +97,9 @@ const WalletPage = () => {
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
-              <span className="ml-3 text-gray-300">Loading transactions...</span>
+              <span className="ml-3 text-gray-300">
+                Loading transactions...
+              </span>
             </div>
           ) : transactions.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
@@ -110,7 +118,9 @@ const WalletPage = () => {
                     }`}
                   >
                     <div className="flex flex-col">
-                      <span className="font-medium text-white">{tx.reason}</span>
+                      <span className="font-medium text-white">
+                        {tx.reason}
+                      </span>
                       <span className="text-gray-400 text-sm">
                         {tx.createdAt
                           ? new Date(tx.createdAt).toLocaleString()

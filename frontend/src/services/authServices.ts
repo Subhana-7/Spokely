@@ -100,12 +100,27 @@ export const home = async () => {
 export const userProfiles = (id: string) => API.get(`${U.base}${U.peerProfile}/${id}`);
 export const mentorProfile = (id: string) => API.get(`${M.base}${M.mentorProfile}/${id}`);
 
-export const editUserDetails = (id: string, role: Exclude<Role, "admin">, data: Record<string, any>) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.edit}/${id}` : `${U.base}${U.edit}/${id}`;
-  return API.post(endpoint, data);
+export const editUserDetails = async (
+  id: string,
+  role: Exclude<Role, "admin">,
+  data: Record<string, any>
+) => {
+  console.log('hiting')
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.edit}/${id}` : `${U.base}${U.edit}/${id}`;
+
+  const res = await API.post(endpoint, data);
+  return res.data?.updatedMentor || res.data?.user || res.data;
 };
+
 
 export const changePassword = (role: Exclude<Role, "admin">, data: any) => {
   const endpoint = role === "mentor" ? `${M.base}${M.changePassword}` : `${U.base}${U.changePassword}`;
   return API.post(endpoint, data);
+};
+
+
+export const getUserStats = async () => {
+  const res = await API.get("/users/home");
+  return res.data;
 };
