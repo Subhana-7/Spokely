@@ -70,7 +70,7 @@ export class ConnectionService implements IConnectionService {
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
         : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("sendConnectionRequest error", error);
       return null;
     }
@@ -82,7 +82,7 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(userId)
       );
       return requests ? requests.map(mapConnectionToDTO) : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getIncomingRequests error", error);
       return null;
     }
@@ -117,7 +117,7 @@ export class ConnectionService implements IConnectionService {
       });
 
       return mapConnectionToDTO(connection as unknown as PopulatedConnection);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("acceptRequest error", error);
       return null;
     }
@@ -162,7 +162,7 @@ export class ConnectionService implements IConnectionService {
         page,
         totalPages: Math.ceil(total / limit),
       };
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getAllConnections error", error);
       return null;
     }
@@ -174,7 +174,7 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(userId)
       );
       return requests ? requests.map(mapConnectionToDTO) : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getOutgoingRequests error", error);
       return null;
     }
@@ -200,7 +200,7 @@ export class ConnectionService implements IConnectionService {
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
         : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("rejectRequest error", error);
       return null;
     }

@@ -22,7 +22,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
         $set: { updatedAt: new Date() },
       });
       return msg;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -57,7 +57,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
         }));
 
       return messages;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("Repository error:", error);
       return null;
     }
@@ -76,7 +76,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
         });
       }
       return session;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -125,7 +125,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
       );
 
       return chats;
-    } catch (err) {
+    } catch (err:unknown) {
       console.error("Error fetching user chats:", err);
       return [];
     }
@@ -137,7 +137,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
         { sessionId, readBy: { $ne: userId } },
         { $addToSet: { readBy: userId } }
       );
-    } catch (err) {
+    } catch (err:unknown) {
       console.error("Error marking messages as read:", err);
     }
   }

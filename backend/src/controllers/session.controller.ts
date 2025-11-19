@@ -13,6 +13,11 @@ export class SessionController implements ISessionController {
     private readonly _sessionService: ISessionService
   ) {}
 
+  // 🔵 Safe reusable helper
+  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+    return err instanceof Error ? err.message : fallback;
+  }
+
   createSession = async (
     req: AuthenticatedRequest,
     res: Response
@@ -24,14 +29,16 @@ export class SessionController implements ISessionController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const newSession = await this._sessionService.createSession(
         req.body,
         req.id
       );
+
       res
         .status(STATUS_CODES.CREATED)
         .json({ message: MESSAGES.SESSION.CREATED, session: newSession });
-    } catch {
+    } catch (err: unknown) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.SESSION.CREATE_FAILED });
@@ -39,29 +46,28 @@ export class SessionController implements ISessionController {
   };
 
   getAllSessions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
+    try {
+      if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
 
-    const { search = "", status = "all", type = "all", page = 1, limit = 10 } = req.query;
+      const { search = "", status = "all", type = "all", page = 1, limit = 10 } = req.query;
 
-    const filters = {
-      search: String(search),
-      status: String(status),
-      type: String(type),
-      page: Number(page),
-      limit: Number(limit),
-    };
+      const filters = {
+        search: String(search),
+        status: String(status),
+        type: String(type),
+        page: Number(page),
+        limit: Number(limit),
+      };
 
-    const result = await this._sessionService.getSessions(req.id, filters);
+      const result = await this._sessionService.getSessions(req.id, filters);
 
-    res.status(STATUS_CODES.OK).json(result);
-  } catch (err: any) {
-    res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ message: err?.message || MESSAGES.SESSION.FETCH_FAILED });
-  }
-};
-
+      res.status(STATUS_CODES.OK).json(result);
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err, MESSAGES.SESSION.FETCH_FAILED),
+      });
+    }
+  };
 
   getSessionById = async (
     req: AuthenticatedRequest,
@@ -69,14 +75,16 @@ export class SessionController implements ISessionController {
   ): Promise<void> => {
     try {
       const session = await this._sessionService.getSessionById(req.params.id);
+
       if (!session) {
         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: MESSAGES.SESSION.NOT_FOUND });
         return;
       }
+
       res.status(STATUS_CODES.OK).json(session);
-    } catch {
+    } catch (err: unknown) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.SESSION.FETCH_FAILED });
@@ -94,14 +102,16 @@ export class SessionController implements ISessionController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const updated = await this._sessionService.updateSession(
         req.params.id,
         req.body
       );
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SESSION.UPDATED, session: updated });
-    } catch {
+    } catch (err: unknown) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.SESSION.UPDATE_FAILED });
@@ -118,11 +128,14 @@ export class SessionController implements ISessionController {
         req.id!,
         req.body.status
       );
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: `Session ${req.body.status}`, session: updated });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -136,14 +149,15 @@ export class SessionController implements ISessionController {
         req.id!,
         req.body.reason
       );
-      res
-        .status(STATUS_CODES.OK)
-        .json({
-          message: MESSAGES.SESSION.PARTICIPATION_CANCELLED,
-          session: updated,
-        });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SESSION.PARTICIPATION_CANCELLED,
+        session: updated,
+      });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -157,11 +171,14 @@ export class SessionController implements ISessionController {
         req.body.userId,
         req.body.reason
       );
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SESSION.CANCELLED, session: updated });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -176,11 +193,14 @@ export class SessionController implements ISessionController {
         req.body.reason,
         req.body.againstUser
       );
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SESSION.FLAGGED, session: updated });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -195,18 +215,21 @@ export class SessionController implements ISessionController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const tokenData = await this._sessionService.getAgoraToken(
         req.params.id,
         req.id
       );
+
       if (!tokenData) {
         res
           .status(STATUS_CODES.FORBIDDEN)
           .json({ message: MESSAGES.SESSION.OUTSIDE_TIMEFRAME });
         return;
       }
+
       res.status(STATUS_CODES.OK).json(tokenData);
-    } catch {
+    } catch (err: unknown) {
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.SESSION.TOKEN_FAILED });
@@ -214,26 +237,26 @@ export class SessionController implements ISessionController {
   };
 
   getPublicSessions = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { search = "", status = "all", page = 1, limit = 10 } = req.query;
+    try {
+      const { search = "", status = "all", page = 1, limit = 10 } = req.query;
 
-    const filters = {
-      search: String(search),
-      status: String(status),
-      page: Number(page),
-      limit: Number(limit),
-    };
+      const filters = {
+        search: String(search),
+        status: String(status),
+        page: Number(page),
+        limit: Number(limit),
+      };
 
-    const result = await this._sessionService.publicSessionsWithFilters(filters);
+      const result =
+        await this._sessionService.publicSessionsWithFilters(filters);
 
-    res.status(STATUS_CODES.OK).json(result);
-  } catch (err: any) {
-    res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ message: err?.message || MESSAGES.SESSION.FETCH_FAILED });
-  }
-};
-
+      res.status(STATUS_CODES.OK).json(result);
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err, MESSAGES.SESSION.FETCH_FAILED),
+      });
+    }
+  };
 
   addFeedback = async (
     req: AuthenticatedRequest,
@@ -247,11 +270,15 @@ export class SessionController implements ISessionController {
         req.body.comment,
         req.body.rating
       );
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SESSION.FEEDBACK_ADDED, session: updated });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SESSION.FEEDBACK_ADDED,
+        session: updated,
+      });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -263,17 +290,19 @@ export class SessionController implements ISessionController {
       const sessions = await this._sessionService.getAllSessionsAdmin(
         req.query
       );
+
       if (!sessions || sessions.length === 0) {
         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: MESSAGES.SESSION.NOT_FOUND });
         return;
       }
+
       res.status(STATUS_CODES.OK).json({ sessions });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -283,17 +312,19 @@ export class SessionController implements ISessionController {
   ): Promise<void> => {
     try {
       const session = await this._sessionService.getSessionById(req.params.id);
+
       if (!session) {
         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: MESSAGES.SESSION.NOT_FOUND });
         return;
       }
+
       res.status(STATUS_CODES.OK).json({ session });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 }

@@ -23,7 +23,6 @@ import {
 import { IWalletService } from "./interfaces/IWalletService";
 import { INotificationService } from "./interfaces/INotificationService";
 
-// New constants for removed inline strings
 export const PAYMENT_CONSTANTS = {
   OAUTH_GRANT_TYPE: "grant_type=client_credentials",
   PAYPAL_OAUTH_URL: "/v1/oauth2/token",

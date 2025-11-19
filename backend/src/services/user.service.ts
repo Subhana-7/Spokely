@@ -374,7 +374,7 @@ export class UserService implements IUserService {
         accessToken,
         refreshToken,
       };
-    } catch (err) {
+    } catch (err:unknown) {
       console.error("processGoogleAuth error:", err);
       throw err;
     }

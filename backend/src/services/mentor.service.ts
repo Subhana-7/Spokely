@@ -249,7 +249,7 @@ export class MentorService implements IMentorService {
         mentor: toMentorResponseDTO(mentor),
         accessToken: newAccessToken,
       };
-    } catch (err) {
+    } catch (err:unknown) {
       throw new Error(MENTOR_MESSAGES.ERROR.INVALID_REFRESH_TOKEN);
     }
   }

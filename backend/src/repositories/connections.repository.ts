@@ -20,7 +20,7 @@ export class ConnectionRepository
   ): Promise<IConnection | null> {
     try {
       return await ConnectionModel.create({ userId, connectedUserId });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("createConnection error", error);
       return null;
     }
@@ -37,7 +37,7 @@ export class ConnectionRepository
           { userId: receiverId, connectedUserId: senderId },
         ],
       });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("findByUniqueCode error", error);
       return null;
     }
@@ -56,7 +56,7 @@ export class ConnectionRepository
         "userId",
         "name email profilePicture"
       )) as unknown as PopulatedConnection[];
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getReceivedRequests error", error);
       return null;
     }
@@ -76,7 +76,7 @@ export class ConnectionRepository
       connection.status = "accepted";
       await connection.save();
       return connection;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("acceptRequest error", error);
       return null;
     }
@@ -95,7 +95,7 @@ export class ConnectionRepository
       connection.status = "rejected";
       await connection.save();
       return connection;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("rejectRequest error", error);
       return null;
     }
@@ -132,7 +132,7 @@ export class ConnectionRepository
       const connections = await query.exec();
       console.log("repo", connections);
       return connections as unknown as PopulatedConnection[];
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getAcceptedConnections error", error);
       return null;
     }
@@ -151,7 +151,7 @@ export class ConnectionRepository
         "connectedUserId",
         "name email profilePicture"
       )) as unknown as PopulatedConnection[];
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getSentRequests error", error);
       return null;
     }
@@ -168,7 +168,7 @@ export class ConnectionRepository
         { new: true }
       );
       return connection;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("blockConnection error", error);
       return null;
     }
@@ -185,7 +185,7 @@ export class ConnectionRepository
         { new: true }
       );
       return connection;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("unblockConnection error", error);
       return null;
     }
@@ -195,7 +195,7 @@ export class ConnectionRepository
     try {
       const connection = await ConnectionModel.findByIdAndDelete(connectionId);
       return connection;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("connection deletion error", error);
       return null;
     }
@@ -309,7 +309,7 @@ export class ConnectionRepository
       .lean();
 
     return results as unknown as PopulatedConnection[];
-  } catch (error) {
+  } catch (error:unknown) {
     console.log("findWithFilters error", error);
     return [];
   }
@@ -384,7 +384,7 @@ async countWithFilters(
     }
 
     return await ConnectionModel.countDocuments(baseQuery);
-  } catch (error) {
+  } catch (error:unknown) {
     console.log("countWithFilters error", error);
     return 0;
   }

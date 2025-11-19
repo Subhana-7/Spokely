@@ -36,6 +36,11 @@ import {
 export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private _userService: IUserService) {}
 
+  // 🔵 Shared safe error helper
+  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+    return err instanceof Error ? err.message : fallback;
+  }
+
   /* ----------------------------------------------------
       SIGNUP
   ----------------------------------------------------- */
@@ -43,8 +48,10 @@ export class UserController implements IUserController {
     try {
       const user = await this._userService.signup(req.body);
       res.status(STATUS_CODES.CREATED).json(user);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -60,8 +67,10 @@ export class UserController implements IUserController {
       res.cookie(COOKIE_KEYS.ROLE, result.user.role);
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -98,9 +107,9 @@ export class UserController implements IUserController {
         user: result.user,
         accessToken: result.accessToken,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       return res.status(STATUS_CODES.UNAUTHORIZED).json({
-        message: err.message || MESSAGES.ERROR.INVALID_TOKEN,
+        message: this.getErrorMessage(err, MESSAGES.ERROR.INVALID_TOKEN),
       });
     }
   };
@@ -135,8 +144,8 @@ export class UserController implements IUserController {
         .cookie(COOKIE_KEYS.REFRESH, refreshToken, { httpOnly: true })
         .cookie(COOKIE_KEYS.ROLE, user.role)
         .redirect(`${REDIRECT_URLS.DEFAULT_CLIENT}${REDIRECT_URLS.USER_HOME}`);
-    } catch (error: any) {
-      console.error(GOOGLE_AUTH_MESSAGES.ERROR_AUTH_FAILED, error);
+    } catch (err: unknown) {
+      console.error(GOOGLE_AUTH_MESSAGES.ERROR_AUTH_FAILED, err);
       return res.redirect(
         `${REDIRECT_URLS.DEFAULT_CLIENT}/?${REDIRECT_URLS.GOOGLE_AUTH_FAILED}`
       );
@@ -150,9 +159,12 @@ export class UserController implements IUserController {
     try {
       const userId = (req as any).userId;
       const data = await this._userService.getHome(userId);
+
       return res.status(STATUS_CODES.OK).json(data);
-    } catch (err: any) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -165,8 +177,10 @@ export class UserController implements IUserController {
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.OTP_SENT,
       });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -181,8 +195,10 @@ export class UserController implements IUserController {
       );
 
       res.status(STATUS_CODES.OK).json(result);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -198,8 +214,10 @@ export class UserController implements IUserController {
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.OTP_SENT,
       });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -217,8 +235,10 @@ export class UserController implements IUserController {
       );
 
       res.status(STATUS_CODES.OK).json(result);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -238,8 +258,10 @@ export class UserController implements IUserController {
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.PASSWORD_CHANGED,
       });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -257,8 +279,10 @@ export class UserController implements IUserController {
         message: MESSAGES.SUCCESS.ROLE_UPDATED,
         user,
       });
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -268,9 +292,12 @@ export class UserController implements IUserController {
   getAllUsers = async (_req: Request, res: Response) => {
     try {
       const users = await this._userService.getAllUsers();
+
       res.status(STATUS_CODES.OK).json(users);
-    } catch (err: any) {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -283,8 +310,10 @@ export class UserController implements IUserController {
       const data = await this._userService.getHome(userId);
 
       return res.status(STATUS_CODES.OK).json(data);
-    } catch (err: any) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -296,8 +325,10 @@ export class UserController implements IUserController {
       const user = await this._userService.updateUser(req.params.id, req.body);
 
       res.status(STATUS_CODES.OK).json(user);
-    } catch (err: any) {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -314,8 +345,10 @@ export class UserController implements IUserController {
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.PASSWORD_CHANGED,
       });
-    } catch (error: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -338,8 +371,10 @@ export class UserController implements IUserController {
         message: MESSAGES.SUCCESS.MENTOR_FETCHED,
         ...result,
       });
-    } catch (error: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 }

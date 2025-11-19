@@ -1,3 +1,5 @@
+// ⭐ UPDATED — NO “any” IN ANY CATCH BLOCK ⭐
+
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { IAdminController } from "./interfaces/IAdminController";
@@ -17,7 +19,7 @@ import {
   ReportType,
   LOG_STRINGS,
   ROLES,
-  VERIFICATION_STATUS
+  VERIFICATION_STATUS,
 } from "../utilis/constants";
 
 import { IPaymentService } from "../services/interfaces/IPaymentService";
@@ -25,6 +27,10 @@ import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { ISessionService } from "../services/interfaces/ISessionService";
 import { IMentorService } from "../services/interfaces/IMentorService";
 import { IUserService } from "../services/interfaces/IUserService";
+
+// 🟦 Helper for error message extraction
+const getErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
 
 export class AdminController implements IAdminController {
   constructor(
@@ -78,10 +84,9 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.LOGIN, admin });
-    } catch (err: any) {
-      res.status(STATUS_CODES.UNAUTHORIZED).json({
-        error: err.message || MESSAGES.ERROR.INVALID_CREDENTIALS,
-      });
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, MESSAGES.ERROR.INVALID_CREDENTIALS);
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ error: message });
     }
   }
 
@@ -98,9 +103,9 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.ROLE_UPDATED, result });
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: error.message || MESSAGES.ERROR.INVALID_INPUT,
+        error: getErrorMessage(err, MESSAGES.ERROR.INVALID_INPUT),
       });
     }
   }
@@ -121,9 +126,9 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.ROLE_UPDATED, result });
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: error.message || MESSAGES.ERROR.INVALID_INPUT,
+        error: getErrorMessage(err, MESSAGES.ERROR.INVALID_INPUT),
       });
     }
   }
@@ -137,9 +142,9 @@ export class AdminController implements IAdminController {
       const data = await this._adminService.getMentor(id);
 
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: error.message || MESSAGES.ERROR.SERVER_ERROR,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -153,9 +158,9 @@ export class AdminController implements IAdminController {
       const data = await this._adminService.approveMentor(id);
 
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: error.message || MESSAGES.ERROR.SERVER_ERROR,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -168,9 +173,9 @@ export class AdminController implements IAdminController {
       const data = await this._adminService.rejectMentor(id, rejectionReason);
 
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: error.message || MESSAGES.ERROR.SERVER_ERROR,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -185,12 +190,8 @@ export class AdminController implements IAdminController {
         limit: parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT,
         search: (req.query.search as string) || ADMIN_QUERY.SEARCH,
         level: req.query.level as string,
-        minSessions: req.query.minSessions
-          ? +req.query.minSessions
-          : undefined,
-        maxSessions: req.query.maxSessions
-          ? +req.query.maxSessions
-          : undefined,
+        minSessions: req.query.minSessions ? +req.query.minSessions : undefined,
+        maxSessions: req.query.maxSessions ? +req.query.maxSessions : undefined,
         minMentors: req.query.minMentors ? +req.query.minMentors : undefined,
         maxMentors: req.query.maxMentors ? +req.query.maxMentors : undefined,
         isBlocked:
@@ -204,9 +205,9 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.USER_FETCHED, result });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        error: err.message || MESSAGES.ERROR.SERVER_ERROR,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -221,8 +222,10 @@ export class AdminController implements IAdminController {
         limit: parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT,
         search: (req.query.search as string) || ADMIN_QUERY.SEARCH,
         sortBy: req.query.sortBy as "students" | "sessions",
-        verificationStatus: req.query.verificationStatus as
-          (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS],
+        verificationStatus:
+          req.query.verificationStatus as
+            | (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS]
+            | undefined,
         isBlocked:
           req.query.isBlocked === "true"
             ? true
@@ -234,9 +237,9 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.USER_FETCHED, result });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        error: err.message || MESSAGES.ERROR.SERVER_ERROR,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -252,12 +255,15 @@ export class AdminController implements IAdminController {
         success: true,
         ...stats,
       });
-    } catch (error: any) {
-      console.error(LOG_STRINGS.DASHBOARD_ERROR, error);
+    } catch (err: unknown) {
+      console.error(LOG_STRINGS.DASHBOARD_ERROR, err);
 
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || ADMIN_MESSAGES.ERROR.DASHBOARD_LOAD_FAILED,
+        message: getErrorMessage(
+          err,
+          ADMIN_MESSAGES.ERROR.DASHBOARD_LOAD_FAILED
+        ),
       });
     }
   }
@@ -313,7 +319,7 @@ export class AdminController implements IAdminController {
         message: MESSAGES.SUCCESS.TOKEN_REFRESHED,
         user: result,
       });
-    } catch (error) {
+    } catch (_err: unknown) {
       res
         .status(STATUS_CODES.UNAUTHORIZED)
         .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
@@ -352,17 +358,10 @@ export class AdminController implements IAdminController {
   ----------------------------------------------------- */
   getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
     try {
-      const page =
-        parseInt(req.query.page as string) || ADMIN_QUERY.PAGE;
-
-      const limit =
-        parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT;
-
-      const search =
-        (req.query.search as string) || ADMIN_QUERY.SEARCH;
-
-      const status =
-        (req.query.status as string) || ADMIN_QUERY.STATUS_ALL;
+      const page = parseInt(req.query.page as string) || ADMIN_QUERY.PAGE;
+      const limit = parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT;
+      const search = (req.query.search as string) || ADMIN_QUERY.SEARCH;
+      const status = (req.query.status as string) || ADMIN_QUERY.STATUS_ALL;
 
       const result = await this._adminService.getAllSessionsAdmin({
         page,
@@ -378,11 +377,14 @@ export class AdminController implements IAdminController {
         limit,
         totalPages: Math.ceil(result.total / limit),
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED, err);
 
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        message: err.message || ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED,
+        message: getErrorMessage(
+          err,
+          ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED
+        ),
       });
     }
   };
@@ -390,14 +392,13 @@ export class AdminController implements IAdminController {
   /* ----------------------------------------------------
       ADMIN - ALL PAYMENTS
   ----------------------------------------------------- */
-  getAllPayments = async (req: Request, res: Response) => {
+  getAllPayments = async (req: Request, res: Response): Promise<void> => {
     try {
       const payments = await this._paymentService.getAllPayments();
-
       res.status(STATUS_CODES.OK).json({ data: payments });
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        message: error.message,
+        message: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   };
@@ -405,7 +406,7 @@ export class AdminController implements IAdminController {
   /* ----------------------------------------------------
       PAYMENT BY ID
   ----------------------------------------------------- */
-  getPaymentById = async (req: Request, res: Response) => {
+  getPaymentById = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
       const payment = await this._paymentService.getPaymentById(id);
@@ -418,9 +419,9 @@ export class AdminController implements IAdminController {
       }
 
       res.status(STATUS_CODES.OK).json({ data: payment });
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        message: error.message,
+        message: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   };
@@ -428,13 +429,13 @@ export class AdminController implements IAdminController {
   /* ----------------------------------------------------
       ALL DAILY TASKS
   ----------------------------------------------------- */
-  async listAllDailyTasks(req: Request, res: Response) {
+  async listAllDailyTasks(req: Request, res: Response): Promise<void> {
     try {
       const tasks = await this._dailyTaskService.getAllUsersLatestTasks();
       res.status(STATUS_CODES.OK).json({ tasks });
-    } catch (error: any) {
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        error: error.message,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
@@ -449,7 +450,7 @@ export class AdminController implements IAdminController {
       const reportType = type as ReportType;
 
       if (!type || !REPORT_TYPE_LIST.includes(reportType)) {
-         res.status(STATUS_CODES.BAD_REQUEST).json({
+        res.status(STATUS_CODES.BAD_REQUEST).json({
           message: ADMIN_MESSAGES.ERROR.INVALID_REPORT_TYPE,
         });
       }
@@ -477,9 +478,7 @@ export class AdminController implements IAdminController {
           break;
 
         case REPORT_TYPES.DAILY_TASK:
-          data =
-            (await this._dailyTaskService.getAllUsersLatestTasks()) ||
-            [];
+          data = (await this._dailyTaskService.getAllUsersLatestTasks()) || [];
           break;
 
         case REPORT_TYPES.PAYMENT:
@@ -487,14 +486,11 @@ export class AdminController implements IAdminController {
           break;
       }
 
-      /* ------------------ DATE RANGE FILTER ------------------ */
+      /* Date Filter */
       if (start || end) {
         data = data.filter((item: any) => {
           const dateField =
-            item.createdAt ||
-            item.updatedAt ||
-            item.date ||
-            item.timestamp;
+            item.createdAt || item.updatedAt || item.date || item.timestamp;
 
           if (!dateField) return true;
 
@@ -513,13 +509,13 @@ export class AdminController implements IAdminController {
         count: data.length,
         data,
       });
-    } catch (error: any) {
-      console.error(LOG_STRINGS.REPORT_ERROR, error);
+    } catch (err: unknown) {
+      console.error(LOG_STRINGS.REPORT_ERROR, err);
 
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ADMIN_MESSAGES.ERROR.REPORT_GENERATION_FAILED,
-        error: error.message,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }

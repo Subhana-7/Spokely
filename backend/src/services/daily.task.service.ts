@@ -74,7 +74,7 @@ export class DailyTaskService {
         .trim();
 
       return JSON.parse(cleaned ?? "{}");
-    } catch (err) {
+    } catch (err:unknown) {
       console.error(`AI JSON parse error for task type ${type}:`, err);
       return { prompt: aiContent ?? "" };
     }

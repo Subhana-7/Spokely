@@ -21,7 +21,7 @@ export class DailyTaskController {
         topic,
       });
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err) {
+    } catch (err:unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -38,7 +38,7 @@ export class DailyTaskController {
         userResponse
       );
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err) {
+    } catch (err:unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -55,7 +55,7 @@ export class DailyTaskController {
         req.id!
       );
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err) {
+    } catch (err:unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -75,7 +75,7 @@ export class DailyTaskController {
       }
 
       return res.status(STATUS_CODES.OK).json({ task });
-    } catch (err) {
+    } catch (err:unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)

@@ -18,7 +18,7 @@ export class MentorRepository
   async findByEmail(email: string): Promise<IMentor | null> {
     try {
       return Mentor.findOne({ email });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -27,7 +27,7 @@ export class MentorRepository
   async createMentor(data: Partial<IMentor>): Promise<IMentor | null> {
     try {
       return Mentor.create(data);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -36,7 +36,7 @@ export class MentorRepository
   async findByUniqueCode(code: string): Promise<IMentor | null> {
     try {
       return Mentor.findOne({ uniqueCode: code });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -53,7 +53,7 @@ export class MentorRepository
         { otp: { code, expiresAt } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -68,7 +68,7 @@ export class MentorRepository
       mentor.otp = undefined;
       await mentor.save();
       return true;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -90,7 +90,7 @@ export class MentorRepository
       const total = await Mentor.countDocuments(query);
 
       return { results, total };
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return { results: [], total: 0 };
     }
@@ -118,7 +118,7 @@ export class MentorRepository
           runValidators: true,
         }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -136,7 +136,7 @@ export class MentorRepository
         { forgotPasswordOtp: { code, expiresAt, newPassword } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -165,7 +165,7 @@ export class MentorRepository
       mentor.forgotPasswordOtp = undefined;
       await mentor.save();
       return true;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -177,7 +177,7 @@ export class MentorRepository
   ): Promise<IMentor | null> {
     try {
       return Mentor.findByIdAndUpdate(id, { newPassword }, { new: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -290,7 +290,7 @@ export class MentorRepository
         sessionsToday,
         recentActivities,
       };
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error in getDashboardData", error);
       return null;
     }

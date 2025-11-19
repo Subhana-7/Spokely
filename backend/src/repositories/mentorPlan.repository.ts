@@ -20,7 +20,7 @@ export class MentorPlanRepository
         { mentorId, plans },
         { upsert: true, new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -30,7 +30,7 @@ export class MentorPlanRepository
     try {
       const record = await MentorPlanModel.findOne({ mentorId });
       return record ? record.plans : [];
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return [];
     }

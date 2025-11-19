@@ -20,7 +20,7 @@ export class UserRepository
   async findByEmail(email: String): Promise<IUser | null> {
     try {
       return User.findOne({ email });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -29,7 +29,7 @@ export class UserRepository
   async createUser(data: any): Promise<IUser | null> {
     try {
       return User.create(data);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -38,7 +38,7 @@ export class UserRepository
   async findByUniqueCode(code: String): Promise<IUser | null> {
     try {
       return User.findOne({ uniqueCode: code });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -55,7 +55,7 @@ export class UserRepository
         { otp: { code, expiresAt } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -71,7 +71,7 @@ export class UserRepository
       user.otp = undefined;
       await user.save();
       return true;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -88,7 +88,7 @@ export class UserRepository
         { forgotPasswordOtp: { code, expiresAt, verified: false } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -116,7 +116,7 @@ export class UserRepository
       user.forgotPasswordOtp.verified = true;
       await user.save();
       return true;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -135,7 +135,7 @@ export class UserRepository
         },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -150,7 +150,7 @@ export class UserRepository
       );
 
       return updatedUser;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -162,7 +162,7 @@ export class UserRepository
   ): Promise<IUser | null> {
     try {
       return User.findByIdAndUpdate(userId, { role }, { new: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -187,7 +187,7 @@ export class UserRepository
       const total = await User.countDocuments(query);
 
       return { results, total };
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return { results: [], total: 0 };
     }
@@ -196,7 +196,7 @@ export class UserRepository
   async updateUser(id: string, data: any): Promise<IUser | null> {
     try {
       return await User.findByIdAndUpdate(id, data, { new: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -229,7 +229,7 @@ export class UserRepository
       mentorsSubscribed,
       dailyTasksCompleted,
     };
-  } catch (error) {
+  } catch (error:unknown) {
     console.error("Error fetching user stats:", error);
     return {
       sessionsDone: 0,

@@ -98,7 +98,7 @@ export class EmailService implements IEmailService {
         subject,
         text,
       });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
