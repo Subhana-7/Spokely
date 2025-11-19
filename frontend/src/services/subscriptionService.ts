@@ -58,5 +58,18 @@ export const getMentorStudents = (
 
 
 
-export const getSubscriptionHistory = (userId: string, page = 1, limit = 6) =>
-  API.get(`/subscription/history/${userId}?page=${page}&limit=${limit}`);
+export const getSubscriptionHistory = (
+  userId: string,
+  page = 1,
+  limit = 6,
+  search?: string,
+  status?: string
+) => {
+  const query = new URLSearchParams();
+  query.append("page", page.toString());
+  query.append("limit", limit.toString());
+  if (search && search.trim()) query.append("search", search.trim());
+  if (status && status !== "All") query.append("status", status);
+  return API.get(`/subscription/history/${userId}?${query.toString()}`);
+};
+

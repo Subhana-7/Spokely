@@ -31,23 +31,6 @@ export class WalletService {
     );
   }
 
-  async debit(
-    userId: string,
-    amount: number,
-    reason: string,
-    sessionId?: string,
-    subscriptionId?: string
-  ): Promise<IWallet | null> {
-    return this._walletRepo.addTransaction(
-      userId,
-      amount,
-      PAYMENT_STATUS.DEBIT,
-      reason,
-      sessionId,
-      subscriptionId
-    );
-  }
-
   async getBalance(userId: string): Promise<number | null> {
     const wallet = await this._walletRepo.getWallet(userId);
     return wallet?.balance || 0;

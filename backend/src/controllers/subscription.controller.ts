@@ -127,16 +127,18 @@ export class SubscriptionController implements ISubscriptionController {
     }
   }
 
-  async getSubscriptionHistory(req: Request, res: Response): Promise<void> {
+    async getSubscriptionHistory(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.params.id;
-      const { page = "1", limit = "10" } = req.query;
+      const { page = "1", limit = "10", search = "", status = "All" } = req.query;
 
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
 
       const result = await this._subscriptionService.getSubscriptionHistory(
         userId,
+        search as string,
+        status as string,
         pageNum,
         limitNum
       );
@@ -155,4 +157,5 @@ export class SubscriptionController implements ISubscriptionController {
       });
     }
   }
+
 }

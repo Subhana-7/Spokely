@@ -187,11 +187,20 @@ export class SubscriptionService implements ISubscriptionService {
     });
   }
 
-  async getSubscriptionHistory(userId: string, page: number, limit: number) {
+   async getSubscriptionHistory(
+    userId: string,
+    search: string = "",
+    status: string = "All",
+    page: number = 1,
+    limit: number = 10
+  ) {
     return this._subscriptionRepository.findSubscriptionHistory(
       userId,
+      search,
+      status,
       page,
       limit
     );
   }
+
 }
