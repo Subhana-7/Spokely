@@ -5,7 +5,7 @@ import { IMentorService } from "../services/interfaces/IMentorService";
 import { IMentorController } from "./interfaces/IMentorController";
 import jwt from "jsonwebtoken";
 import { generateAccessToken } from "../utilis/token";
-import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { STATUS_CODES, MESSAGES,COOKIE_KEYS } from "../utilis/constants";
 import { ChangePasswordDTO } from "../dto/mentor.dto";
 
 @injectable()
@@ -41,23 +41,23 @@ export class MentorController implements IMentorController {
 
       const { mentor, accessToken, refreshToken } = result;
 
-      res.cookie("auth-token", accessToken, {
+      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
-      res.cookie("refresh-token", refreshToken, {
+      res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge:Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
-      res.cookie("role", mentor.role, {
+      res.cookie(COOKIE_KEYS.ROLE, mentor.role, {
         httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res.status(STATUS_CODES.OK).json({ mentor });
@@ -97,9 +97,9 @@ export class MentorController implements IMentorController {
   };
 
   logout = async (req: Request, res: Response): Promise<void> => {
-    res.clearCookie("auth-token");
-    res.clearCookie("refresh-token");
-    res.clearCookie("role");
+    res.clearCookie(COOKIE_KEYS.AUTH);
+    res.clearCookie(COOKIE_KEYS.REFRESH);
+    res.clearCookie(COOKIE_KEYS.ROLE);
     res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.LOGOUT });
   };
 
@@ -123,7 +123,7 @@ export class MentorController implements IMentorController {
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     try {
-      const refresh = req.cookies["refresh-token"];
+      const refresh = req.cookies[COOKIE_KEYS.REFRESH];
       if (!refresh) {
         res
           .status(STATUS_CODES.UNAUTHORIZED)
@@ -132,11 +132,11 @@ export class MentorController implements IMentorController {
 
       const result = await this._mentorService.refreshToken(refresh);
 
-      res.cookie("auth-token", result.accessToken, {
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       res.status(STATUS_CODES.OK).json({

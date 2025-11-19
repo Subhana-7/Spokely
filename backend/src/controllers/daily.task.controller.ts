@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
-import { MESSAGES, STATUS_CODES } from "../utilis/constants";
+import { MESSAGES, STATUS_CODES,DAILY_TASK_MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class DailyTaskController {
@@ -71,7 +71,7 @@ export class DailyTaskController {
       if (!task) {
         return res
           .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: "No daily task found for today" });
+          .json({ message: DAILY_TASK_MESSAGES.ERROR.TODAYS_TASK_NOT_FOUND });
       }
 
       return res.status(STATUS_CODES.OK).json({ task });

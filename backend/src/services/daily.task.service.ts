@@ -11,6 +11,15 @@ import { chatWithGroq } from "../config/groq.client";
 import { Types } from "mongoose";
 import userModel from "../models/user.model";
 
+import {
+  DAILY_TASK_MESSAGES,
+  TASK_TYPES,
+  DAILY_TASK_LEVEL_HINT,
+  DAILY_TASK_PROMPTS,
+  DAILY_TASK_GENERATION,
+  DailyTaskType,
+} from "../utilis/constants";
+
 @injectable()
 export class DailyTaskService {
   constructor(
@@ -18,53 +27,55 @@ export class DailyTaskService {
     private readonly _dailyTaskRepository: IDailyTaskRepository
   ) {}
 
+  private getLevelHint(level: number): string {
+    if (level <= 1) return DAILY_TASK_LEVEL_HINT.EASY;
+    if (level === 2) return DAILY_TASK_LEVEL_HINT.MEDIUM;
+    return DAILY_TASK_LEVEL_HINT.HARD;
+  }
+
   private async generateTaskDetail(
     topic: string,
-    type: "writing" | "reading" | "speaking" | "listening",
+    type: (typeof TASK_TYPES)[keyof typeof TASK_TYPES],
     level: number
   ): Promise<TaskDetailDto> {
-    let levelHint = "";
-    if (level <= 1) levelHint = "Keep it very simple, max 1–2 lines.";
-    else if (level === 2)
-      levelHint = "Slightly more detailed but still concise.";
-    else levelHint = "Give a more challenging but short task.";
-
+    const levelHint = this.getLevelHint(level);
     let prompt = "";
 
-    if (type === "writing" || type === "speaking") {
+    if (type === TASK_TYPES.WRITING || type === TASK_TYPES.SPEAKING) {
       prompt = `
         Generate a ${type} task for topic "${topic}".
         Difficulty: Level ${level}.
         Instruction: ${levelHint}.
-        Output JSON ONLY (no markdown, no backticks):
+        Output JSON ONLY:
         {
-          "prompt": "short question or instruction (1–2 lines max)"
+          "prompt": "${DAILY_TASK_GENERATION.WRITING_INSTRUCTION}"
         }
       `;
     } else {
       prompt = `
         Generate a ${type} task for topic "${topic}".
         Difficulty: Level ${level}.
-        Provide a short paragraph (10-12 sentences) and exactly 5 short questions.
-        Output JSON ONLY (no markdown, no backticks):
+        Provide a short paragraph (${DAILY_TASK_PROMPTS.PARAGRAPH_SENTENCE_COUNT}) 
+        and exactly ${DAILY_TASK_PROMPTS.QUESTIONS_COUNT} questions.
+        Output JSON ONLY:
         {
-          "prompt": "short task instruction",
-          "paragraph": "short paragraph text",
-          "questions": ["Q1...", "Q2...", "Q3...", "Q4...", "Q5..."]
+          "prompt": "${DAILY_TASK_GENERATION.READING_INSTRUCTION}",
+          "paragraph": "text",
+          "questions": ["Q1", "Q2", "Q3", "Q4", "Q5"]
         }
       `;
     }
 
     const aiContent = await chatWithGroq(prompt);
-
     try {
       const cleaned = aiContent
         ?.replace(/```(json)?/g, "")
         .replace(/```/g, "")
         .trim();
+
       return JSON.parse(cleaned ?? "{}");
     } catch (err) {
-      console.error(`AI JSON parse error for ${type}:`, err, aiContent);
+      console.error(`AI JSON parse error for task type ${type}:`, err);
       return { prompt: aiContent ?? "" };
     }
   }
@@ -81,16 +92,24 @@ export class DailyTaskService {
     const user = await userModel.findById(dto.userId);
     const level = user?.levels ?? 1;
 
-    const writing = await this.generateTaskDetail(dto.topic, "writing", level);
-    const reading = await this.generateTaskDetail(dto.topic, "reading", level);
+    const writing = await this.generateTaskDetail(
+      dto.topic,
+      TASK_TYPES.WRITING,
+      level
+    );
+    const reading = await this.generateTaskDetail(
+      dto.topic,
+      TASK_TYPES.READING,
+      level
+    );
     const speaking = await this.generateTaskDetail(
       dto.topic,
-      "speaking",
+      TASK_TYPES.SPEAKING,
       level
     );
     const listening = await this.generateTaskDetail(
       dto.topic,
-      "listening",
+      TASK_TYPES.LISTENING,
       level
     );
 
@@ -118,14 +137,15 @@ export class DailyTaskService {
     return mapDailyTaskToDto(task!);
   }
 
-  async submitAll(taskId: string, responses: any, userId: string) {
+  async submitAll(taskId: string, responses: any) {
     const task = await this._dailyTaskRepository.findById(taskId);
     if (!task) return null;
 
-    if (responses.writing) task.writing.userResponse = responses.writing;
-    if (responses.speaking) task.speaking.userResponse = responses.speaking;
-    if (responses.reading) task.reading.userResponse = responses.reading;
-    if (responses.listening) task.listening.userResponse = responses.listening;
+    (Object.keys(responses) as DailyTaskType[]).forEach((key) => {
+      if (task[key]) {
+        task[key].userResponse = responses[key];
+      }
+    });
 
     await task.save();
 
@@ -170,20 +190,19 @@ export class DailyTaskService {
 
     let feedback;
     try {
-      feedback = JSON.parse(
-        feedbackStr
-          .replace(/```(json)?/g, "")
-          .replace(/```/g, "")
-          .trim()
-      );
-    } catch (e) {
-      feedback = { error: "Failed to parse AI feedback", raw: feedbackStr };
+      feedback = JSON.parse(feedbackStr.replace(/```(json)?|```/g, "").trim());
+    } catch {
+      feedback = {
+        error: DAILY_TASK_MESSAGES.ERROR.PARSE_FAILED,
+        raw: feedbackStr,
+      };
     }
 
     task.writing.feedback = feedback.writing || "";
     task.reading.feedback = feedback.reading || "";
     task.listening.feedback = feedback.listening || "";
     task.speaking.feedback = feedback.speaking || "";
+
     await task.save();
 
     return { task, feedback };
@@ -193,12 +212,13 @@ export class DailyTaskService {
     const task = await this._dailyTaskRepository.findById(taskId);
     if (!task) return null;
 
-    task.userResponses[type] = userResponse;
+    const section = type as DailyTaskType;
 
-    if (type === "writing") task.writing.userResponse = userResponse;
-    else if (type === "speaking") task.speaking.userResponse = userResponse;
-    else if (type === "reading") task.reading.userResponse = userResponse;
-    else if (type === "listening") task.listening.userResponse = userResponse;
+    task.userResponses[section] = userResponse;
+
+    if (task[section]) {
+      task[section].userResponse = userResponse;
+    }
 
     await task.save();
     return mapDailyTaskToDto(task);
@@ -208,21 +228,18 @@ export class DailyTaskService {
     const today = new Date();
     const dayStart = new Date(today.setHours(0, 0, 0, 0));
 
-    let task = await this._dailyTaskRepository.findByUserAndDate(
+    const task = await this._dailyTaskRepository.findByUserAndDate(
       userId,
       dayStart
     );
 
-    if (!task) {
-      return null;
-    }
-
-    return mapDailyTaskToDto(task);
+    return task ? mapDailyTaskToDto(task) : null;
   }
 
   async getAllUsersLatestTasks(): Promise<DailyTaskDto[]> {
     const today = new Date();
     const dayStart = new Date(today.setHours(0, 0, 0, 0));
+
     const tasks = await this._dailyTaskRepository.findAllByDate(dayStart);
     return tasks.map(mapDailyTaskToDto);
   }

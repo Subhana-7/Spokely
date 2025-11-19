@@ -15,20 +15,7 @@ export class DailyTaskRepository extends BaseRepository<IDailyTask> {
     return this.model.findOne({ userId, date });
   }
 
-  async create(data: Partial<IDailyTask>): Promise<IDailyTask | null> {
-    return this.model.create(data);
-  }
-
-  async findById(id: string): Promise<IDailyTask | null> {
-    console.log("repo findbyid", id);
-    let res = this.model.findById(id).exec();
-    console.log("res", res);
-    return res;
-  }
-
   async findAllByDate(date: Date): Promise<IDailyTask[]> {
-    // return this.model.find({ date }).populate("userId", "name email").exec();
-
-    return this.model.find();
+    return this.model.find({ date });
   }
 }

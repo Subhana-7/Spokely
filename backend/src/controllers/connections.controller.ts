@@ -4,7 +4,7 @@ import { IConnectionController } from "./interfaces/IConnectionsController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IConnectionService } from "../services/interfaces/IConnectionsService";
-import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { STATUS_CODES, MESSAGES,CONNECTION_MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class ConnectionController implements IConnectionController {
@@ -85,7 +85,7 @@ export class ConnectionController implements IConnectionController {
       });
 
       if (!result) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: "No connections found" });
+        res.status(STATUS_CODES.NOT_FOUND).json({ message:CONNECTION_MESSAGES.REQUEST.EMPTY });
         return;
       }
 

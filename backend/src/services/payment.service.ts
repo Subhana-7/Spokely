@@ -11,9 +11,29 @@ import { PaymentMapper } from "../mappers/payment.mapper";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import paypalAPI, { getPaypalAuth } from "../config/paypal.axios";
+import {
+  MESSAGES,
+  PAYMENT_STATUS,
+  PAYPAL_INTENT,
+  CURRENCY,
+  SESSION_TYPE,
+  SUBSCRIPTION_MESSAGES,
+  NOTIFICATION_TYPE,
+} from "../utilis/constants";
 import { IWalletService } from "./interfaces/IWalletService";
-import { MESSAGES } from "../utilis/constants";
 import { INotificationService } from "./interfaces/INotificationService";
+
+// New constants for removed inline strings
+export const PAYMENT_CONSTANTS = {
+  OAUTH_GRANT_TYPE: "grant_type=client_credentials",
+  PAYPAL_OAUTH_URL: "/v1/oauth2/token",
+  PAYPAL_ORDER_URL: "/v2/checkout/orders",
+  CAPTURE_SUFFIX: "/capture",
+  WALLET_DESCRIPTION: (userId: string, topic: string) =>
+    `Payment received from ${userId} for session: ${topic}`,
+  LOG_SESSION: "Session Type / Fee / CreatedBy:",
+  LOG_PAYMENT: "Payment wallet credit:",
+} as const;
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL!;
 
@@ -32,8 +52,8 @@ export class PaymentService implements IPaymentService {
 
   private async getAccessToken(): Promise<string> {
     const response = await paypalAPI.post(
-      "/v1/oauth2/token",
-      "grant_type=client_credentials",
+      PAYMENT_CONSTANTS.PAYPAL_OAUTH_URL,
+      PAYMENT_CONSTANTS.OAUTH_GRANT_TYPE,
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         auth: getPaypalAuth(),
@@ -46,15 +66,16 @@ export class PaymentService implements IPaymentService {
     userId: string,
     dto: PaymentRequestDTO
   ): Promise<{ id: string }> {
-    console.log("service pay");
+    console.log("PAYMENT: Creating PayPal order");
+
     const accessToken = await this.getAccessToken();
 
     const order = await paypalAPI.post(
-      "/v2/checkout/orders",
+      PAYMENT_CONSTANTS.PAYPAL_ORDER_URL,
       {
-        intent: "CAPTURE",
+        intent: PAYPAL_INTENT.CAPTURE,
         purchase_units: [
-          { amount: { currency_code: "USD", value: dto.amount } },
+          { amount: { currency_code: CURRENCY.USD, value: dto.amount } },
         ],
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -64,9 +85,9 @@ export class PaymentService implements IPaymentService {
       sessionId: dto.sessionId,
       userId,
       paypalOrderId: order.data.id,
-      status: "CREATED",
+      status: PAYMENT_STATUS.CREATED,
       amount: dto.amount,
-      currency: "USD",
+      currency: CURRENCY.USD,
     };
 
     await this._paymentRepository.create(PaymentMapper.toPersistence(entity));
@@ -81,7 +102,7 @@ export class PaymentService implements IPaymentService {
     const accessToken = await this.getAccessToken();
 
     const capture = await axios.post(
-      `${PAYPAL_BASE_URL}/v2/checkout/orders/${dto.orderId}/capture`,
+      `${PAYPAL_BASE_URL}${PAYMENT_CONSTANTS.PAYPAL_ORDER_URL}/${dto.orderId}${PAYMENT_CONSTANTS.CAPTURE_SUFFIX}`,
       {},
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
@@ -89,7 +110,7 @@ export class PaymentService implements IPaymentService {
     const paymentEntity = await this._paymentRepository.updateByPaypalId(
       dto.orderId!,
       {
-        status: "COMPLETED",
+        status: PAYMENT_STATUS.COMPLETED,
         details: capture.data,
       }
     );
@@ -103,21 +124,27 @@ export class PaymentService implements IPaymentService {
         userIdStr
       );
 
-      console.log(session?.type, session?.sessionFee, session?.createdBy);
+      console.log(PAYMENT_CONSTANTS.LOG_SESSION, session?.type, session?.sessionFee, session?.createdBy);
 
       if (
-        session?.type === "public" &&
+        session?.type === SESSION_TYPE.PUBLIC &&
         session.sessionFee &&
         session.createdBy
       ) {
-        const res = await this._walletService.credit(
+        const walletDescription = PAYMENT_CONSTANTS.WALLET_DESCRIPTION(
+          userIdStr,
+          session.topic
+        );
+
+        const walletResult = await this._walletService.credit(
           session.createdBy.toString(),
           session.sessionFee,
-          `Payment received from ${userIdStr} for session: ${session.topic}`,
-          session._id?.toString(), 
-          undefined 
+          walletDescription,
+          session._id?.toString(),
+          undefined
         );
-        console.log(res, "payment");
+
+        console.log(PAYMENT_CONSTANTS.LOG_PAYMENT, walletResult);
       }
     }
 
@@ -136,28 +163,27 @@ export class PaymentService implements IPaymentService {
     userId: string,
     dto: PaymentRequestDTO
   ): Promise<PaymentResponseDTO> {
-    let payment = await this.captureOrder(userId, dto);
-    if (!payment) {
-      throw new Error(MESSAGES.ERROR.NOT_FOUND);
-    }
-    console.log(payment);
-    if (payment?.status === "COMPLETED") {
+    const payment = await this.captureOrder(userId, dto);
+    if (!payment) throw new Error(MESSAGES.ERROR.NOT_FOUND);
+
+    console.log("PAYMENT: Subscription Capture", payment);
+
+    if (payment.status === PAYMENT_STATUS.COMPLETED) {
       await this._notificationService.send({
-        userId: userId,
-        title: "Subscription Successful",
-        message:
-          "Your new Subscription is successfull. Enjoy our subscription feature.",
-        type: "success",
+        userId,
+        title: SUBSCRIPTION_MESSAGES.SUCCESS.TITLE,
+        message: SUBSCRIPTION_MESSAGES.SUCCESS.MESSAGE,
+        type: NOTIFICATION_TYPE.SUCCESS,
       });
-    } else if (payment?.status === "COMPLETED") {
+    } else {
       await this._notificationService.send({
-        userId: userId,
-        title: "Subscription Request Failed",
-        message:
-          "Your new Subscription Request failed due to payment failure in payment request.",
-        type: "success",
+        userId,
+        title: SUBSCRIPTION_MESSAGES.FAILED.TITLE,
+        message: SUBSCRIPTION_MESSAGES.FAILED.MESSAGE,
+        type: NOTIFICATION_TYPE.SUCCESS,
       });
     }
+
     return payment;
   }
 

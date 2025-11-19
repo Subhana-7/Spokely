@@ -3,7 +3,7 @@ import { ISubscriptionService } from "../services/interfaces/ISubscriptionServic
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { ISubscriptionController } from "./interfaces/ISubscriptionController";
-import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { STATUS_CODES, MESSAGES ,SUBSCRIPTION_MESSAGES} from "../utilis/constants";
 
 @injectable()
 export class SubscriptionController implements ISubscriptionController {
@@ -44,7 +44,7 @@ export class SubscriptionController implements ISubscriptionController {
   } catch (err: any) {
     res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: err.message || "Failed to fetch subscriptions",
+      message: err.message || SUBSCRIPTION_MESSAGES.ERROR.FAILED_TO_FETCH,
     });
   }
 }
@@ -69,7 +69,7 @@ export class SubscriptionController implements ISubscriptionController {
   } catch (err: any) {
     res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: err.message || "Failed to fetch mentor students",
+      message: err.message || MESSAGES.ERROR.FETCH_MENTOR_STUDENT,
     });
   }
 }
@@ -127,7 +127,7 @@ export class SubscriptionController implements ISubscriptionController {
   } catch (err: any) {
     res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: err.message || "Failed to fetch subscription history",
+      message: err.message || MESSAGES.ERROR.FETCH_SUBSCRIPTION_HISTORY,
     });
   }
 }

@@ -14,13 +14,20 @@ import {
 } from "../dto/user.dto";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
-import { MESSAGES } from "../utilis/constants";
-import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
-import { MentorDTO, MentorResponseDTO } from "../dto/mentor.dto";
+
 import {
-  toMentorResponseDTO,
-  toPublicMentorResponseDTO,
-} from "../mappers/mentor.mapper";
+  MESSAGES,
+  PASSWORD_RULES,
+  EMAIL_PROVIDER_CONSTANTS,
+  EMAIL_TEMPLATES,
+  USER_STRINGS,
+  GOOGLE_AUTH_STRINGS,
+  MENTOR_FILTER_STRINGS,
+  HOME_STATS_STRINGS,
+} from "../utilis/constants";
+
+import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
+import { toPublicMentorResponseDTO } from "../mappers/mentor.mapper";
 
 @injectable()
 export class UserService implements IUserService {
@@ -29,32 +36,42 @@ export class UserService implements IUserService {
     @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository
   ) {}
 
+  /* ----------------------------------------
+   * PASSWORD VALIDATION
+   * ---------------------------------------- */
   private async passwordValidation(password: string) {
-    const strongPasswordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    if (!strongPasswordRegex.test(password)) {
-      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+    if (!PASSWORD_RULES.REGEX.test(password)) {
+      throw new Error(USER_STRINGS.PASSWORD.INVALID_FORMAT);
     }
   }
 
+  /* ----------------------------------------
+   * OTP GENERATION
+   * ---------------------------------------- */
   public generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
+  /* ----------------------------------------
+   * EMAIL SENDER (OTP + FORGOT PASSWORD)
+   * ---------------------------------------- */
   private async sendOTPEmail(
     to: string,
     otp: string,
     isForgotPassword = false
   ) {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: EMAIL_PROVIDER_CONSTANTS.GMAIL,
       auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
     });
 
-    const subject = isForgotPassword ? "Password Reset Code" : "Your OTP Code";
+    const subject = isForgotPassword
+      ? EMAIL_TEMPLATES.FORGOT_PASSWORD.SUBJECT
+      : EMAIL_TEMPLATES.OTP.SUBJECT;
+
     const text = isForgotPassword
-      ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
-      : `Your verification code is ${otp}. It expires in 10 minutes.`;
+      ? EMAIL_TEMPLATES.FORGOT_PASSWORD.TEXT(otp)
+      : EMAIL_TEMPLATES.OTP.TEXT(otp);
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -64,6 +81,9 @@ export class UserService implements IUserService {
     });
   }
 
+  /* ----------------------------------------
+   * SIGNUP
+   * ---------------------------------------- */
   async signup(data: SignupDTO): Promise<UserResponseDTO> {
     await this.passwordValidation(data.password);
 
@@ -91,13 +111,13 @@ export class UserService implements IUserService {
     return toUserResponseDTO(user!);
   }
 
-  async login(data: LoginDTO): Promise<{
-    user: UserResponseDTO;
-    accessToken: string;
-    refreshToken: string;
-  }> {
+  /* ----------------------------------------
+   * LOGIN
+   * ---------------------------------------- */
+  async login(data: LoginDTO) {
     const user = await this._userRepository.findByEmail(data.email);
     if (!user) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
+
     if (!user.password) throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
 
     const match = await bcrypt.compare(data.password, user.password);
@@ -110,6 +130,9 @@ export class UserService implements IUserService {
     };
   }
 
+  /* ----------------------------------------
+   * SEND OTP
+   * ---------------------------------------- */
   async sendOtp(email: string): Promise<void> {
     const user = await this._userRepository.findByEmail(email);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
@@ -121,13 +144,20 @@ export class UserService implements IUserService {
     await this.sendOTPEmail(email, otp);
   }
 
-  async verifyOtp(email: string, code: string): Promise<{ message: string }> {
+  /* ----------------------------------------
+   * VERIFY OTP
+   * ---------------------------------------- */
+  async verifyOtp(email: string, code: string) {
     const isValid = await this._userRepository.verifyOTP(email, code);
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED };
   }
 
-  async sendForgotPasswordOtp(email: string): Promise<void> {
+  /* ----------------------------------------
+   * FORGOT PASSWORD OTP
+   * ---------------------------------------- */
+  async sendForgotPasswordOtp(email: string) {
     const user = await this._userRepository.findByEmail(email);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -138,24 +168,25 @@ export class UserService implements IUserService {
     await this.sendOTPEmail(email, otp, true);
   }
 
-  async verifyForgotPasswordOtp(
-    email: string,
-    code: string
-  ): Promise<{ message: string }> {
+  async verifyForgotPasswordOtp(email: string, code: string) {
     const isValid = await this._userRepository.verifyForgotPasswordOTP(
       email,
       code
     );
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
+
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED };
   }
 
-  async resetPassword(email: string, newPassword: string): Promise<void> {
+  /* ----------------------------------------
+   * RESET PASSWORD
+   * ---------------------------------------- */
+  async resetPassword(email: string, newPassword: string) {
     const user = await this._userRepository.findByEmail(email);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     if (!user.forgotPasswordOtp || !user.forgotPasswordOtp.verified) {
-      throw new Error("OTP not verified. Please verify OTP first.");
+      throw new Error(USER_STRINGS.OTP.NOT_VERIFIED);
     }
 
     await this.passwordValidation(newPassword);
@@ -164,20 +195,26 @@ export class UserService implements IUserService {
     await this._userRepository.updatePasswordAndClearOTP(email, hashedPassword);
   }
 
-  async updateRole(
-    userId: string,
-    role: "user" | "mentor"
-  ): Promise<UserResponseDTO> {
-    if (!["user", "mentor"].includes(role))
+  /* ----------------------------------------
+   * UPDATE ROLE
+   * ---------------------------------------- */
+  async updateRole(userId: string, role: "user" | "mentor") {
+    if (![USER_STRINGS.ROLE.USER, USER_STRINGS.ROLE.MENTOR].includes(role)) {
       throw new Error(MESSAGES.ERROR.INVALID_ROLE);
+    }
+
     const updated = await this._userRepository.updateUserRole(userId, role);
     if (!updated) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+
     return toUserResponseDTO(updated);
   }
 
-  async getHome(userId: string): Promise<any> {
+  /* ----------------------------------------
+   * DASHBOARD HOME
+   * ---------------------------------------- */
+  async getHome(userId: string):Promise<any> {
     const user = await this._userRepository.findById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error(HOME_STATS_STRINGS.NOT_FOUND);
 
     const stats = await this._userRepository.getUserStats(userId);
 
@@ -202,20 +239,24 @@ export class UserService implements IUserService {
     };
   }
 
-  async getAllUsers(): Promise<UserResponseDTO[]> {
+   async getAllUsers(): Promise<UserResponseDTO[]> {
     const { results } = await this._userRepository.findAll();
     return results.length ? results.map(toUserResponseDTO) : [];
   }
 
-  async updateUser(
-    userId: string,
-    data: Partial<IUser>
-  ): Promise<UserResponseDTO> {
-    const updatedUser = await this._userRepository.updateUser(userId, data);
-    if (!updatedUser) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
-    return toUserResponseDTO(updatedUser);
+  /* ----------------------------------------
+   * UPDATE USER PROFILE
+   * ---------------------------------------- */
+  async updateUser(userId: string, data: Partial<IUser>) {
+    const updated = await this._userRepository.updateUser(userId, data);
+    if (!updated) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+
+    return toUserResponseDTO(updated);
   }
 
+  /* ----------------------------------------
+   * UNIQUE CODE GENERATOR
+   * ---------------------------------------- */
   async generateUniqueCode(): Promise<string> {
     let code = Math.random().toString(36).substring(2, 8).toUpperCase();
     while (await this._userRepository.findByUniqueCode(code)) {
@@ -224,9 +265,10 @@ export class UserService implements IUserService {
     return code;
   }
 
-  async refreshToken(
-    token: string
-  ): Promise<{ user: UserResponseDTO; accessToken: string }> {
+  /* ----------------------------------------
+   * REFRESH TOKEN
+   * ---------------------------------------- */
+  async refreshToken(token: string) {
     if (!token) throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
 
     try {
@@ -236,23 +278,24 @@ export class UserService implements IUserService {
       };
 
       const user = await this._userRepository.findById(payload.id);
-      if (!user) throw new Error("User not found");
-
-      const newAccess = generateAccessToken({
-        id: payload.id,
-        role: payload.role,
-      });
+      if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
       return {
         user: toUserResponseDTO(user),
-        accessToken: newAccess,
+        accessToken: generateAccessToken({
+          id: payload.id,
+          role: payload.role,
+        }),
       };
-    } catch (err) {
+    } catch {
       throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
     }
   }
 
-  async changePassword(data: changePasswordDTO): Promise<{ message: string }> {
+  /* ----------------------------------------
+   * CHANGE PASSWORD
+   * ---------------------------------------- */
+  async changePassword(data: changePasswordDTO) {
     const user = await this._userRepository.findById(data.id);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -260,52 +303,44 @@ export class UserService implements IUserService {
       throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
 
-    if (!user.password) {
-      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
-    }
-
     await this.passwordValidation(data.newPassword);
 
-    const isMatch = await bcrypt.compare(data.currentPassword, user.password);
-    if (!isMatch) {
-      throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
-    }
+    const match = await bcrypt.compare(data.currentPassword, user.password!);
+    if (!match) throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
 
-    const newHashedPassword = await bcrypt.hash(data.newPassword, 10);
+    const hashed = await bcrypt.hash(data.newPassword, 10);
 
-    const updation = await this._userRepository.updatePassword(
-      data.id,
-      newHashedPassword
-    );
-    if (!updation) {
-      throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
-    }
+    const updated = await this._userRepository.updatePassword(data.id, hashed);
+    if (!updated) throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
 
     return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
   }
 
-  async processGoogleAuth(
-    profile: any
-  ): Promise<{ user: any; accessToken: string; refreshToken: string }> {
+  /* ----------------------------------------
+   * GOOGLE AUTH
+   * ---------------------------------------- */
+  async processGoogleAuth(profile: any) {
     try {
       const email = profile?.emails?.[0]?.value;
-      if (!email) throw new Error("Google profile missing email");
+      if (!email) throw new Error(USER_STRINGS.ERRORS.GOOGLE_EMAIL_MISSING);
 
       let user = await this._userRepository.findByEmail(email);
 
       if (!user) {
-        const newUserData: Partial<any> = {
-          name: profile.displayName || "Google User",
+        const newUser = {
+          name:
+            profile.displayName || GOOGLE_AUTH_STRINGS.DEFAULT_PROFILE_NAME,
           email,
           googleId: profile.id,
-          role: "user",
+          role: GOOGLE_AUTH_STRINGS.ROLE,
           isVerified: true,
-          profilePicture: profile.photos?.[0]?.value || "",
+          profilePicture:
+            profile.photos?.[0]?.value ||
+            GOOGLE_AUTH_STRINGS.DEFAULT_PROFILE_PICTURE,
           uniqueCode: await this.generateUniqueCode(),
           isGoogleUser: true,
         };
-
-        user = await this._userRepository.createUser(newUserData);
+        user = await this._userRepository.createUser(newUser);
       } else {
         if (!user.isGoogleUser || !user.googleId) {
           const updated = await this._userRepository.updateUser(
@@ -320,19 +355,22 @@ export class UserService implements IUserService {
         }
       }
 
-      const userDto = toUserResponseDTO(user as any);
+      if(!user){
+        throw Error(MESSAGES.ERROR.INTERNAL_ERROR)
+      }
 
       const accessToken = generateAccessToken({
-        id: (user as any)._id,
-        role: (user as any).role,
+        id: user._id,
+        role: user.role,
       });
+
       const refreshToken = generateRefreshToken({
-        id: (user as any)._id,
-        role: (user as any).role,
+        id: user._id,
+        role: user.role,
       });
 
       return {
-        user: userDto,
+        user: toUserResponseDTO(user),
         accessToken,
         refreshToken,
       };
@@ -342,21 +380,16 @@ export class UserService implements IUserService {
     }
   }
 
-  async listMentors({
-    page = 1,
-    limit = 6,
-    search = "",
-  }: {
-    page: number;
-    limit: number;
-    search: string;
-  }): Promise<any> {
+  /* ----------------------------------------
+   * GET ALL MENTORS LISTING
+   * ---------------------------------------- */
+  async listMentors({ page = 1, limit = 6, search = "" }) {
     const query: any = {
-      "document.verificationStatus": "approved",
-      isBlocked: false,
+      "document.verificationStatus": MENTOR_FILTER_STRINGS.VERIFIED,
+      isBlocked: MENTOR_FILTER_STRINGS.NOT_BLOCKED,
     };
 
-    if (search && search.trim()) {
+    if (search.trim()) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
@@ -369,10 +402,8 @@ export class UserService implements IUserService {
         limit,
       });
 
-    const mentors = results.map(toPublicMentorResponseDTO);
-
     return {
-      mentors,
+      mentors: results.map(toPublicMentorResponseDTO),
       total,
       page,
       limit,
