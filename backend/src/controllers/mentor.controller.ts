@@ -122,54 +122,30 @@ export class MentorController implements IMentorController {
   };
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
-    const token = req.cookies["refresh-token"];
-    if (!token) {
-      res
-        .status(STATUS_CODES.UNAUTHORIZED)
-        .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
-      return;
-    }
-
     try {
-      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
-        id: string;
-        role: "user" | "mentor";
-      };
-
-      if (payload.role !== "mentor") {
+      const refresh = req.cookies["refresh-token"];
+      if (!refresh) {
         res
-          .status(STATUS_CODES.FORBIDDEN)
-          .json({ message: MESSAGES.ERROR.FORBIDDEN });
-        return;
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
       }
 
-      const mentor = await this._mentorService.getHome(payload.id);
-      if (!mentor) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
-        return;
-      }
+      const result = await this._mentorService.refreshToken(refresh);
 
-      const newAccessToken = generateAccessToken({
-        id: payload.id,
-        role: payload.role,
-      });
-
-      res.cookie("auth-token", newAccessToken, {
+      res.cookie("auth-token", result.accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 15 * 60 * 1000,
       });
 
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SUCCESS.TOKEN_REFRESHED, mentor });
-    } catch (err) {
-      res
-        .status(STATUS_CODES.UNAUTHORIZED)
-        .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SUCCESS.TOKEN_REFRESHED,
+        mentor: result.mentor,
+        accessToken: result.accessToken,
+      });
+    } catch (err: any) {
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: err.message });
     }
   };
 
@@ -206,12 +182,12 @@ export class MentorController implements IMentorController {
 
   home = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentorId = (req as any).id || req.body?.id || req.params?.id;
+      const mentorId = (req as any).id;
+
       if (!mentorId) {
         res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({ message: MESSAGES.ERROR.INVALID_INPUT });
-        return;
+          .status(STATUS_CODES.UNAUTHORIZED)
+          .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
       }
 
       const dashboard = await this._mentorService.getHome(mentorId);
@@ -219,7 +195,6 @@ export class MentorController implements IMentorController {
         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
-        return;
       }
 
       res.status(STATUS_CODES.OK).json(dashboard);
@@ -230,13 +205,15 @@ export class MentorController implements IMentorController {
 
   profile = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentor = await this._mentorService.getHome(req.params.id);
+      const mentorId = (req as any).userId;
+
+      const mentor = await this._mentorService.getHome(mentorId);
       if (!mentor) {
         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: MESSAGES.ERROR.USER_NOT_FOUND });
-        return;
       }
+
       res.status(STATUS_CODES.OK).json(mentor);
     } catch (err: any) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });

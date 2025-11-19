@@ -55,7 +55,10 @@ export class SessionRepository
     }
   }
 
-  async updateSession(id: string, data: Partial<ISession>): Promise<ISession | null> {
+  async updateSession(
+    id: string,
+    data: Partial<ISession>
+  ): Promise<ISession | null> {
     try {
       return await SessionModel.findByIdAndUpdate(id, data, { new: true });
     } catch (error) {
@@ -76,7 +79,9 @@ export class SessionRepository
         {
           $set: {
             "participants.$.status": status,
-            ...(cancelReason && { "participants.$.cancelReason": cancelReason }),
+            ...(cancelReason && {
+              "participants.$.cancelReason": cancelReason,
+            }),
           },
         },
         { new: true }
@@ -87,14 +92,18 @@ export class SessionRepository
     }
   }
 
-  async addParticipant(sessionId: string, userId: string): Promise<ISession | null> {
+  async addParticipant(
+    sessionId: string,
+    userId: string
+  ): Promise<ISession | null> {
     try {
       const session = await SessionModel.findById(sessionId);
       if (!session) return null;
 
       let maxParticipants = 2;
       if (session.type === "peer-to-peer") maxParticipants = 10;
-      if (session.type === "private" || session.type === "public") maxParticipants = 25;
+      if (session.type === "private" || session.type === "public")
+        maxParticipants = 25;
 
       const alreadyJoined = session.participants.some(
         (p) => p.user.toString() === userId.toString()
@@ -126,7 +135,9 @@ export class SessionRepository
       return await SessionModel.findByIdAndUpdate(
         sessionId,
         {
-          $push: { flags: { flaggedBy, reason, ...(againstUser && { againstUser }) } },
+          $push: {
+            flags: { flaggedBy, reason, ...(againstUser && { againstUser }) },
+          },
           $set: { status: "flagged" },
         },
         { new: true }
@@ -224,25 +235,24 @@ export class SessionRepository
   }
 
   async findSessionsPaginated(
-  query: any = {},
-  options: { page: number; limit: number }
-): Promise<{ sessions: any[]; total: number }> {
-  const { page, limit } = options;
-  const skip = (page - 1) * limit;
+    query: any = {},
+    options: { page: number; limit: number }
+  ): Promise<{ sessions: any[]; total: number }> {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
 
-  // Populate mentor and participants
-  const sessions = await SessionModel
-    .find(query)
-    .populate("createdBy", "name email role")
-    .populate("participants.user", "name email role")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+    const sessions = await SessionModel.find(query)
+      .populate("createdBy", "name email role")
+      .populate("participants.user", "name email role")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-  const total = await SessionModel.countDocuments(query);
+    const total = await SessionModel.countDocuments(query);
 
-  return { sessions, total };
-}
+    return { sessions, total };
+  }
+
 
 }

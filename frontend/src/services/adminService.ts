@@ -59,7 +59,7 @@ export const adminSessionListing = (params: AdminSessionParams) =>
 
 
 export const getAdminHomeStats = () =>
-  API.get(`${R.base}${R.home}`); // /api/admin/home
+  API.get(`${R.base}${R.home}`); 
 
 export const getReports = (params: Record<string, any>) =>
   API.get(`${R.base}${R.reports}`, { params });

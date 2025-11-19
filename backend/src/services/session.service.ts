@@ -26,6 +26,7 @@ export class SessionService {
 
   async createSession(body: any, userId: string): Promise<ISession | null> {
     console.log("create session");
+
     const dto = mapToCreateSessionDTO(body, userId);
 
     if (!dto.mentorId) {

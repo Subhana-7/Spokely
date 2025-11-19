@@ -114,8 +114,8 @@ export class PaymentService implements IPaymentService {
           session.createdBy.toString(),
           session.sessionFee,
           `Payment received from ${userIdStr} for session: ${session.topic}`,
-          session._id?.toString(), // <-- sessionId here
-          undefined // subscriptionId (none)
+          session._id?.toString(), 
+          undefined 
         );
         console.log(res, "payment");
       }

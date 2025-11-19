@@ -91,9 +91,7 @@ export class UserService implements IUserService {
     return toUserResponseDTO(user!);
   }
 
-  async login(
-    data: LoginDTO
-  ): Promise<{
+  async login(data: LoginDTO): Promise<{
     user: UserResponseDTO;
     accessToken: string;
     refreshToken: string;
@@ -178,33 +176,31 @@ export class UserService implements IUserService {
   }
 
   async getHome(userId: string): Promise<any> {
-  const user = await this._userRepository.findById(userId);
-  if (!user) throw new Error("User not found");
+    const user = await this._userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
 
-  const stats = await this._userRepository.getUserStats(userId);
+    const stats = await this._userRepository.getUserStats(userId);
 
-  // compute completion rate dynamically
-  const completionRate =
-    stats.dailyTasksCompleted > 0
-      ? Math.min(100, stats.sessionsDone * 5 + (user.levels ?? 0) * 10)
-      : 0;
+    const completionRate =
+      stats.dailyTasksCompleted > 0
+        ? Math.min(100, stats.sessionsDone * 5 + (user.levels ?? 0) * 10)
+        : 0;
 
-  return {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    uniqueCode: user.uniqueCode,
-    profilePicture: user.profilePicture,
-    sessionsDone: stats.sessionsDone,
-    levels: user.levels,
-    streak: user.streak,
-    completionRate,
-    mentorsSubscribed: stats.mentorsSubscribed,
-    totalConnections: stats.totalConnections,
-    dailyTasksCompleted: stats.dailyTasksCompleted,
-  };
-}
-
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      uniqueCode: user.uniqueCode,
+      profilePicture: user.profilePicture,
+      sessionsDone: stats.sessionsDone,
+      levels: user.levels,
+      streak: user.streak,
+      completionRate,
+      mentorsSubscribed: stats.mentorsSubscribed,
+      totalConnections: stats.totalConnections,
+      dailyTasksCompleted: stats.dailyTasksCompleted,
+    };
+  }
 
   async getAllUsers(): Promise<UserResponseDTO[]> {
     const { results } = await this._userRepository.findAll();
@@ -236,17 +232,22 @@ export class UserService implements IUserService {
     try {
       const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
         id: string;
-        role: "user" | "mentor";
+        role: string;
       };
 
-      const user = await this.getHome(payload.id);
-      const newAccessToken = generateAccessToken({
+      const user = await this._userRepository.findById(payload.id);
+      if (!user) throw new Error("User not found");
+
+      const newAccess = generateAccessToken({
         id: payload.id,
         role: payload.role,
       });
 
-      return { user, accessToken: newAccessToken };
-    } catch {
+      return {
+        user: toUserResponseDTO(user),
+        accessToken: newAccess,
+      };
+    } catch (err) {
       throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
     }
   }
@@ -341,41 +342,41 @@ export class UserService implements IUserService {
     }
   }
 
- async listMentors({
-  page = 1,
-  limit = 6,
-  search = "",
-}: {
-  page: number;
-  limit: number;
-  search: string;
-}): Promise<any> {
-  
-  const query: any = {
-  "document.verificationStatus": "approved",
-  isBlocked: false, 
-};
+  async listMentors({
+    page = 1,
+    limit = 6,
+    search = "",
+  }: {
+    page: number;
+    limit: number;
+    search: string;
+  }): Promise<any> {
+    const query: any = {
+      "document.verificationStatus": "approved",
+      isBlocked: false,
+    };
 
-if (search && search.trim()) {
-  query.$or = [
-    { name: { $regex: search, $options: "i" } },
-    { email: { $regex: search, $options: "i" } },
-  ];
-}
+    if (search && search.trim()) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
 
+    const { results, total } =
+      await this._adminRepository.findAllMentorsPaginated(query, {
+        page,
+        limit,
+      });
 
-  const { results, total } = await this._adminRepository.findAllMentorsPaginated(query, { page, limit });
+    const mentors = results.map(toPublicMentorResponseDTO);
 
-  const mentors = results.map(toPublicMentorResponseDTO);
-
-  return {
-    mentors,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  };
-}
-
-
+    return {
+      mentors,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }

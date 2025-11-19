@@ -1,4 +1,3 @@
-// repositories/NotificationRepository.ts
 import { injectable } from "inversify";
 import { NotificationModel } from "../models/notification.model";
 import { INotificationRepository } from "./interfaces/INotificationRepository";

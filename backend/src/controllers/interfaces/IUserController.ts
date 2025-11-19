@@ -17,10 +17,10 @@ export interface IUserController {
 
   updateRole(req: Request, res: Response): Promise<void>;
   getAllUsers(req: Request, res: Response): Promise<void>;
-  profile(req: Request, res: Response): Promise<void>;
+  profile(req: Request, res: Response): Promise<any>;
   editUser(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
-  refreshToken(req: Request, res: Response): Promise<void>;
+  refreshToken(req: Request, res: Response): Promise<any>;
   handleGoogleAccounts(
     req: Request,
     res: Response,

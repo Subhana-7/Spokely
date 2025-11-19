@@ -218,16 +218,14 @@ export class ConnectionRepository
 
     const userObjId = new Types.ObjectId(userId);
 
-    // Base query
     const baseQuery: any = {
       isRemoved: false,
       $or: [{ userId: userObjId }, { connectedUserId: userObjId }],
     };
 
-    // Status filters
     if (status === "accepted") {
       baseQuery.status = "accepted";
-      baseQuery.isBlocked = false; // accepted shouldn't be blocked
+      baseQuery.isBlocked = false; 
     } else if (status === "pending_sent") {
       baseQuery.userId = userObjId;
       baseQuery.status = "pending";
@@ -238,13 +236,11 @@ export class ConnectionRepository
       baseQuery.isBlocked = true;
     }
 
-    // If there's a search term, use aggregation pipeline
     if (search && search.trim() !== "") {
       const regex = new RegExp(search.trim(), "i");
 
       const pipeline: any[] = [
         { $match: baseQuery },
-        // Lookup blockedBy user
         {
           $lookup: {
             from: "users",
@@ -253,7 +249,6 @@ export class ConnectionRepository
             as: "blockedByUser",
           },
         },
-        // Lookup userId
         {
           $lookup: {
             from: "users",
@@ -263,7 +258,6 @@ export class ConnectionRepository
           },
         },
         { $unwind: { path: "$userDoc", preserveNullAndEmptyArrays: true } },
-        // Lookup connectedUserId
         {
           $lookup: {
             from: "users",
@@ -273,7 +267,6 @@ export class ConnectionRepository
           },
         },
         { $unwind: { path: "$connectedUserDoc", preserveNullAndEmptyArrays: true } },
-        // Search filter
         {
           $match: {
             $or: [
@@ -287,7 +280,6 @@ export class ConnectionRepository
         { $sort: { createdAt: -1 } },
         { $skip: skip },
         { $limit: limit },
-        // Project to match PopulatedConnection structure
         {
           $project: {
             _id: 1,
@@ -307,7 +299,6 @@ export class ConnectionRepository
       return results as PopulatedConnection[];
     }
 
-    // No search: use regular populate
     const results = await ConnectionModel.find(baseQuery)
       .populate("userId", "name email profilePicture role uniqueCode isBlocked")
       .populate("connectedUserId", "name email profilePicture role uniqueCode isBlocked")

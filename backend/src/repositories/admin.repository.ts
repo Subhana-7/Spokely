@@ -210,7 +210,6 @@ export class AdminRepository
   const { page, limit } = options;
   const skip = (page - 1) * limit;
 
-  // ✅ Use Mentor model and proper filters
   const results = await Mentor.find(query)
     .skip(skip)
     .limit(limit)

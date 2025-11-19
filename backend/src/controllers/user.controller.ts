@@ -51,13 +51,24 @@ export class UserController implements IUserController {
 
   refreshToken = async (req: Request, res: Response) => {
     try {
-      const result = await this._userService.refreshToken(
-        req.cookies["refresh-token"]
-      );
-      res.cookie("auth-token", result.accessToken, { httpOnly: true });
-      res.status(STATUS_CODES.OK).json({ user: result.user });
+      const refresh = req.cookies["refresh-token"];
+      const result = await this._userService.refreshToken(refresh);
+
+      res.cookie("auth-token", result.accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      });
+
+      return res.status(200).json({
+        message: "Access token refreshed",
+        user: result.user,
+        accessToken: result.accessToken,
+      });
     } catch (err: any) {
-      res.status(STATUS_CODES.UNAUTHORIZED).json({ message: err.message });
+      return res
+        .status(401)
+        .json({ message: err.message || "Refresh token invalid" });
     }
   };
 
@@ -109,24 +120,15 @@ export class UserController implements IUserController {
   };
 
   home = async (req: Request, res: Response) => {
-  try {
-    // ✅ get userId from authMiddleware
-    const userId = (req as any).id;
+    try {
+      const userId = (req as any).userId;
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: "User ID not found in token" });
+      const data = await this._userService.getHome(userId);
+      return res.status(200).json(data);
+    } catch (err: any) {
+      return res.status(400).json({ message: err.message });
     }
-
-    const user = await this._userService.getHome(userId);
-    res.status(200).json(user);
-  } catch (err: any) {
-    console.error("Home route error:", err);
-    res.status(400).json({ message: err.message });
-  }
-};
-
+  };
 
   sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
     try {
@@ -220,10 +222,11 @@ export class UserController implements IUserController {
 
   profile = async (req: Request, res: Response) => {
     try {
-      const user = await this._userService.getHome(req.params.id);
-      res.status(STATUS_CODES.OK).json(user);
+      const userId = (req as any).userId;
+      const data = await this._userService.getHome(userId);
+      return res.status(200).json(data);
     } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
   };
 
@@ -253,22 +256,21 @@ export class UserController implements IUserController {
   };
 
   mentorListing = async (req: Request, res: Response) => {
-  try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    try {
+      const { page = 1, limit = 10, search = "" } = req.query;
 
-    const result = await this._userService.listMentors({
-      page: Number(page),
-      limit: Number(limit),
-      search: String(search),
-    });
+      const result = await this._userService.listMentors({
+        page: Number(page),
+        limit: Number(limit),
+        search: String(search),
+      });
 
-    res.status(200).json({
-      message: "Mentor listing fetched successfully",
-      ...result,
-    });
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
+      res.status(200).json({
+        message: "Mentor listing fetched successfully",
+        ...result,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  };
 }

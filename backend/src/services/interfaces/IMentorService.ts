@@ -30,4 +30,8 @@ export interface IMentorService {
   updateMentor(id: string, data: any): Promise<MentorResponseDTO | null>;
 
   changePassword(data: ChangePasswordDTO): Promise<{ message: string }>;
+
+  refreshToken(
+  token: string
+): Promise<{ mentor: MentorResponseDTO; accessToken: string }>;
 }

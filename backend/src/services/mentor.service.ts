@@ -211,4 +211,36 @@ export class MentorService implements IMentorService {
 
     return { message: MESSAGES.SUCCESS.PASSWORD_CHANGED };
   }
+
+  async refreshToken(
+    token: string
+  ): Promise<{ mentor: MentorResponseDTO; accessToken: string }> {
+    if (!token) throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
+
+    try {
+      const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
+        id: string;
+        role: string;
+      };
+
+      if (payload.role !== "mentor") {
+        throw new Error(MESSAGES.ERROR.FORBIDDEN);
+      }
+
+      const mentor = await this._mentorRepository.findById(payload.id);
+      if (!mentor) throw new Error("Mentor not found");
+
+      const newAccessToken = generateAccessToken({
+        id: payload.id,
+        role: "mentor",
+      });
+
+      return {
+        mentor: toMentorResponseDTO(mentor),
+        accessToken: newAccessToken,
+      };
+    } catch (err) {
+      throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
+    }
+  }
 }

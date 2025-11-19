@@ -20,22 +20,18 @@ const Button = lazy(() => import("../../../modals/Button"));
 
 const DailyTaskPage = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
-  const [taskData, setTaskData] = useState<any>(null);
+  const [taskData, setTaskData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [submittedTasks, setSubmittedTasks] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState<any>(null);
+  const [activeModal, setActiveModal] = useState(null);
+  const [submittedTasks, setSubmittedTasks] = useState([]);
+  const [feedback, setFeedback] = useState(null);
   const [feedbackModal, setFeedbackModal] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [submitConfirmModal, setSubmitConfirmModal] = useState(false);
 
   const user = useAuthStore((s) => s.user);
 
-  const [responses, setResponses] = useState<{
-    writing: string;
-    speaking: string | null;
-    listening: Record<number, string>;
-    reading: Record<number, string>;
-  }>({
+  const [responses, setResponses] = useState({
     writing: "",
     speaking: null,
     listening: {},
@@ -44,12 +40,11 @@ const DailyTaskPage = () => {
 
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
-  const [listeningSpeaking, setListeningSpeaking] =
-    useState<SpeechSynthesisUtterance | null>(null);
+  const [listeningSpeaking, setListeningSpeaking] = useState(null);
   const [listeningPaused, setListeningPaused] = useState(false);
 
   const topics = [
@@ -111,7 +106,7 @@ const DailyTaskPage = () => {
           );
           setSubmittedTasks(taskCards.map((c) => c.id));
 
-          const normalizedFeedback: any = {};
+          const normalizedFeedback = {};
           for (const key of ["writing", "reading", "listening", "speaking"]) {
             const fb =
               data.task[key]?.feedback || data.task.feedback?.[key] || null;
@@ -140,7 +135,7 @@ const DailyTaskPage = () => {
     fetchExistingTask();
   }, []);
 
-  const handleTopicSelect = async (topic: string) => {
+  const handleTopicSelect = async (topic) => {
     setSelectedTopic(topic);
     setLoading(true);
     try {
@@ -166,10 +161,10 @@ const DailyTaskPage = () => {
     }
   };
 
-  const handleOpenModal = (taskType: string) => {
+  const handleOpenModal = (taskType) => {
     setActiveModal(taskType);
     setAudioUrl(
-      (responses[taskType as keyof typeof responses] as string) || null
+      responses[taskType] || null
     );
   };
 
@@ -177,18 +172,22 @@ const DailyTaskPage = () => {
 
   const handleTaskComplete = () => {
     if (!activeModal) return;
-    const response = responses[activeModal as keyof typeof responses];
+    const response = responses[activeModal];
+
     const isValid =
       typeof response === "string"
         ? response.trim() !== ""
         : response && Object.values(response).some((val) => val.trim() !== "");
+
     if (!isValid) {
       alert("Please provide a response first!");
       return;
     }
+
     if (!submittedTasks.includes(activeModal)) {
       setSubmittedTasks((prev) => [...prev, activeModal]);
     }
+
     handleCloseModal();
   };
 
@@ -197,13 +196,14 @@ const DailyTaskPage = () => {
       alert("Please complete all tasks before submitting!");
       return;
     }
+
     try {
       const response = await submitResponse(taskData.id, responses);
       const data = await response.data;
       setFeedback(data.feedback);
       localStorage.setItem("dailyTaskSubmitted", new Date().toISOString());
       setAlreadySubmitted(true);
-      alert("✅ Submitted! Click 'View Answers & Feedback' to see your results.");
+      setSubmitConfirmModal(true);
     } catch (err) {
       console.error(err);
       alert("Failed to submit. Try again.");
@@ -215,15 +215,18 @@ const DailyTaskPage = () => {
     const mediaRecorder = new MediaRecorder(stream);
     mediaRecorderRef.current = mediaRecorder;
     chunksRef.current = [];
+
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
+
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: "audio/webm" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setResponses((prev) => ({ ...prev, speaking: url }));
     };
+
     mediaRecorder.start();
     setRecording(true);
     setPaused(false);
@@ -287,17 +290,6 @@ const DailyTaskPage = () => {
         <DashboardHeader />
 
         <div className="max-w-7xl mx-auto px-6 pt-6">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight mb-2">
-              Daily Language Tasks
-            </h1>
-            <p className="text-gray-400 text-lg">
-              Challenge yourself with interactive skill tasks each day
-            </p>
-          </div>
-
-          {/* Topic Selection */}
           {!selectedTopic && !alreadySubmitted && (
             <div className="mb-16">
               <h2 className="text-2xl font-semibold text-center mb-8 text-green-400">
@@ -322,17 +314,13 @@ const DailyTaskPage = () => {
             </div>
           )}
 
-          {/* Loading State */}
           {loading && (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-500"></div>
-              <p className="mt-4 text-xl text-gray-300">
-                Loading your tasks...
-              </p>
+              <p className="mt-4 text-xl text-gray-300">Loading your tasks...</p>
             </div>
           )}
 
-          {/* Tasks Display */}
           {selectedTopic && taskData && !loading && (
             <>
               <div className="flex items-center justify-between mb-8">
@@ -424,6 +412,168 @@ const DailyTaskPage = () => {
             </>
           )}
 
+          {/* Task Modal */}
+          {activeModal && taskData && !alreadySubmitted && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-white/20">
+                <div
+                  className={`bg-gradient-to-r ${
+                    taskCards.find((t) => t.id === activeModal)?.color
+                  } p-6 flex items-center justify-between`}
+                >
+                  <div className="flex items-center gap-3">
+                    {React.createElement(
+                      taskCards.find((t) => t.id === activeModal)?.icon || PenTool,
+                      { size: 28 }
+                    )}
+                    <h3 className="text-2xl font-bold capitalize">
+                      {activeModal} Task
+                    </h3>
+                  </div>
+                  <button
+                    onClick={handleCloseModal}
+                    className="p-2 hover:bg-white/20 rounded-full transition-all"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                  <div className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
+                    <h4 className="text-lg font-semibold mb-3 text-emerald-400">
+                      Task Instructions
+                    </h4>
+                    <div className="text-gray-300 whitespace-pre-wrap">
+                      {taskData[activeModal]?.prompt || "No prompt available"}
+                    </div>
+                  </div>
+
+                  {activeModal === "writing" && (
+                    <textarea
+                      value={responses.writing}
+                      onChange={(e) =>
+                        setResponses((prev) => ({
+                          ...prev,
+                          writing: e.target.value,
+                        }))
+                      }
+                      className="w-full h-64 px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Type your response..."
+                    />
+                  )}
+
+                  {activeModal === "speaking" && (
+                    <div className="space-y-4">
+                      {!recording ? (
+                        <Button
+                          onClick={startRecording}
+                          className="bg-blue-600 w-full py-3 px-6 rounded-xl"
+                        >
+                          🎤 Start Recording
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={stopRecording}
+                          className="bg-red-600 w-full py-3 px-6 rounded-xl"
+                        >
+                          ⏹ Stop Recording
+                        </Button>
+                      )}
+
+                      {audioUrl && (
+                        <audio controls src={audioUrl} className="w-full" />
+                      )}
+                    </div>
+                  )}
+
+                  {activeModal === "listening" && (
+                    <div className="space-y-4">
+                      <div className="flex gap-3 mb-4">
+                        <Button
+                          className="bg-purple-600 flex-1 py-3 px-6 rounded-xl"
+                          onClick={handlePlayAudio}
+                          disabled={listeningSpeaking && !listeningPaused}
+                        >
+                          🎧 {listeningSpeaking ? "Restart" : "Play Audio"}
+                        </Button>
+
+                        <Button
+                          className="bg-red-600 flex-1 py-3 px-6 rounded-xl"
+                          onClick={stopListening}
+                          disabled={!listeningSpeaking}
+                        >
+                          ⏹ Stop
+                        </Button>
+                      </div>
+
+                      {taskData.listening?.questions?.map((q, i) => (
+                        <div key={i} className="mb-4">
+                          <p className="text-gray-300 mb-2">{q}</p>
+                          <textarea
+                            value={responses.listening?.[i] || ""}
+                            onChange={(e) =>
+                              setResponses((prev) => ({
+                                ...prev,
+                                listening: {
+                                  ...prev.listening,
+                                  [i]: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full h-20 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activeModal === "reading" && (
+                    <div>
+                      <div className="text-gray-300 mb-4">
+                        <h4 className="font-semibold mb-2">Paragraph</h4>
+                        <p>{taskData.reading.paragraph}</p>
+                      </div>
+
+                      {taskData.reading?.questions?.map((q, i) => (
+                        <div key={i} className="mb-4">
+                          <p className="text-gray-300 mb-2">{q}</p>
+                          <textarea
+                            value={responses.reading?.[i] || ""}
+                            onChange={(e) =>
+                              setResponses((prev) => ({
+                                ...prev,
+                                reading: {
+                                  ...prev.reading,
+                                  [i]: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full h-20 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6 border-t border-white/10 flex gap-3">
+                  <Button
+                    onClick={handleCloseModal}
+                    className="flex-1 bg-white/10 py-3 px-6 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleTaskComplete}
+                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 py-3 px-6 rounded-xl"
+                  >
+                    Mark as Complete ✓
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Feedback Modal */}
           {feedbackModal && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -477,6 +627,44 @@ const DailyTaskPage = () => {
                       No feedback available yet.
                     </p>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Confirmation Modal */}
+          {submitConfirmModal && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-white/20 p-6">
+                <div className="flex flex-col items-center text-center">
+                  <Sparkles size={48} className="text-green-400 mb-4" />
+
+                  <h3 className="text-2xl font-bold text-green-400 mb-2">
+                    Submission Successful! 🎉
+                  </h3>
+
+                  <p className="text-gray-300 mb-6">
+                    Your responses have been submitted. You can now view your answers and AI feedback.
+                  </p>
+
+                  <div className="flex gap-3 w-full">
+                    <Button
+                      onClick={() => setSubmitConfirmModal(false)}
+                      className="flex-1 bg-white/10 py-3 rounded-xl"
+                    >
+                      Close
+                    </Button>
+
+                    <Button
+                      onClick={() => {
+                        setSubmitConfirmModal(false);
+                        setFeedbackModal(true);
+                      }}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 py-3 rounded-xl"
+                    >
+                      View Feedback
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

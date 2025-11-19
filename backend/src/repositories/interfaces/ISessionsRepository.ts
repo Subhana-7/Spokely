@@ -39,5 +39,6 @@ export interface ISessionRepository {
    findSessionsPaginated(
   query: any,
   options: { page: number; limit: number }
-): Promise<{ sessions: any[]; total: number }>
+): Promise<{ sessions: any[]; total: number }>;
+
 }

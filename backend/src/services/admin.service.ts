@@ -22,6 +22,8 @@ import Subscription from "../models/subscription.modal";
 import { DailyTaskModel } from "../models/daily.task.model";
 import Connection from "../models/connections.model";
 
+import { ACCOUNT_STATUS } from "../utilis/constants";
+
 @injectable()
 export class AdminService implements IAdminService {
   constructor(
@@ -147,73 +149,73 @@ export class AdminService implements IAdminService {
   }
 
   async getDashboardStats() {
-  const [
-    totalUsers,
-    totalMentors,
-    totalSessions,
-    totalPayments,
-    totalConnections,
-    totalSubscriptions,
-    totalDailyTasks,
-    wallets,
-  ] = await Promise.all([
-    User.countDocuments({ isVerified: true }),
-    Mentor.countDocuments({ isVerified: true }),
-    Session.countDocuments({}),
-    Payment.countDocuments({ status: "COMPLETED" }),
-    Connection.countDocuments({ status: "accepted" }),
-    Subscription.countDocuments({ status: "ACTIVE" }),
-    DailyTaskModel.countDocuments({}),
-    Wallet.aggregate([{ $group: { _id: null, total: { $sum: "$balance" } } }]),
-  ]);
+    const [
+      totalUsers,
+      totalMentors,
+      totalSessions,
+      totalPayments,
+      totalConnections,
+      totalSubscriptions,
+      totalDailyTasks,
+      wallets,
+    ] = await Promise.all([
+      User.countDocuments({ isVerified: true }),
+      Mentor.countDocuments({ isVerified: true }),
+      Session.countDocuments({}),
+      Payment.countDocuments({ status: "COMPLETED" }),
+      Connection.countDocuments({ status: "accepted" }),
+      Subscription.countDocuments({ status: "ACTIVE" }),
+      DailyTaskModel.countDocuments({}),
+      Wallet.aggregate([
+        { $group: { _id: null, total: { $sum: "$balance" } } },
+      ]),
+    ]);
 
-  const walletBalance = wallets[0]?.total || 0;
+    const walletBalance = wallets[0]?.total || 0;
 
-  // Calculate total payment sum
-  const paymentSum = await Payment.aggregate([
-    { $match: { status: "COMPLETED" } },
-    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-  ]);
+    const paymentSum = await Payment.aggregate([
+      { $match: { status: "COMPLETED" } },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]);
 
-  return {
-    totalUsers,
-    totalMentors,
-    totalSessions,
-    totalPayments: paymentSum[0]?.totalAmount || 0,
-    totalConnections,
-    totalSubscriptions,
-    totalDailyTasks,
-    walletBalance,
-  };
-}
-
-  async getAllSessionsAdmin(params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-}): Promise<{ sessions: ISession[]; total: number }> {
-  const { page = 1, limit = 10, search = "", status = "all" } = params;
-
-  const query: any = {};
-
-  if (status && status !== "all") query.status = status;
-
-  // Search by topic or mentor name/email
-  if (search) {
-    query.$or = [
-      { topic: { $regex: search, $options: "i" } },
-      { "createdBy.name": { $regex: search, $options: "i" } },
-      { "createdBy.email": { $regex: search, $options: "i" } },
-    ];
+    return {
+      totalUsers,
+      totalMentors,
+      totalSessions,
+      totalPayments: paymentSum[0]?.totalAmount || 0,
+      totalConnections,
+      totalSubscriptions,
+      totalDailyTasks,
+      walletBalance,
+    };
   }
 
-  const { sessions, total } = await this._sessionRepository.findSessionsPaginated(query, {
-    page,
-    limit,
-  });
+  async getAllSessionsAdmin(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }): Promise<{ sessions: ISession[]; total: number }> {
+    const { page = 1, limit = 10, search = "", status = "all" } = params;
 
-  return { sessions, total };
-}
+    const query: any = {};
 
+    if (status && status !== "all") query.status = status;
+
+    if (search) {
+      query.$or = [
+        { topic: { $regex: search, $options: "i" } },
+        { "createdBy.name": { $regex: search, $options: "i" } },
+        { "createdBy.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const { sessions, total } =
+      await this._sessionRepository.findSessionsPaginated(query, {
+        page,
+        limit,
+      });
+
+    return { sessions, total };
+  }
 }

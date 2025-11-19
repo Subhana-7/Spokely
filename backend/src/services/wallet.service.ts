@@ -10,7 +10,7 @@ export class WalletService {
     @inject(TYPES.IWalletRepository)
     private readonly _walletRepo: IWalletRepository,
     @inject(TYPES.IUserRepository)
-    private readonly _userRepo: IUserRepository // ✅ add this
+    private readonly _userRepo: IUserRepository
   ) {}
 
   async credit(
@@ -60,23 +60,19 @@ export class WalletService {
     const wallet = await this._walletRepo.getWallet(userId);
     const allTransactions = wallet?.transactions || [];
 
-    // Sort by latest first
     const sorted = allTransactions.sort(
       (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
 
-    // Pagination
     const total = sorted.length;
     const totalPages = Math.ceil(total / limit);
     const start = (page - 1) * limit;
     const paginated = sorted.slice(start, start + limit);
 
-    // ✅ Enhance each transaction with user name (if possible)
     const enhanced = await Promise.all(
       paginated.map(async (tx) => {
         let updatedReason = tx.reason;
 
-        // Detect userId pattern in reason like "Payment received from <id>"
         const match = tx.reason.match(/from ([a-f0-9]{24})/);
         if (match) {
           const fromUserId = match[1];

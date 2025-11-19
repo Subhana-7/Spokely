@@ -85,3 +85,50 @@ export const MESSAGES = {
     FLAG_NOT_ALLOWED: "Can only flag completed sessions",
   },
 };
+
+
+// User + Mentor account statuses
+export const ACCOUNT_STATUS = {
+  BLOCKED: "blocked",
+  UNBLOCKED: "unBlocked",
+};
+
+// Session statuses
+export const SESSION_STATUS = {
+  UPCOMING: "upcoming",
+  ONGOING: "ongoing",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+};
+
+// Payment statuses
+export const PAYMENT_STATUS = {
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+  PENDING: "PENDING",
+};
+
+// Subscription
+export const SUBSCRIPTION_STATUS = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  CANCELLED: "CANCELLED",
+};
+
+// Connection statuses
+export const CONNECTION_STATUS = {
+  ACCEPTED: "accepted",
+  PENDING: "pending",
+  REJECTED: "rejected",
+};
+
+// Sort options
+export const SORT_BY = {
+  STUDENTS: "students",
+  SESSIONS: "sessions",
+};
+
+// Query defaults
+export const QUERY_STATUS = {
+  ALL: "all",
+};

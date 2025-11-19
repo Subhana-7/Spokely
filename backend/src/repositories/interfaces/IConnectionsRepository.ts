@@ -52,7 +52,7 @@ export interface IConnectionRepository {
       userId: string,
       filters?: {
         search?: string;
-        status?: string; // accepted | pending_sent | pending_received | blocked | all
+        status?: string; 
         page?: number;
         limit?: number;
       }

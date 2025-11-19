@@ -41,7 +41,6 @@ export class SubscriptionRepository
     })
     .lean();
 
-    // Apply search (on mentor name or subscription id)
   const searched = subscriptions.filter((sub: any) => {
     const mentor = sub.mentorId;
     if (!mentor) return false;
@@ -53,7 +52,6 @@ export class SubscriptionRepository
     );
   });
 
-  // Paginate manually
   const total = searched.length;
   const paginated = searched.slice(skip, skip + limit);
 
@@ -206,7 +204,6 @@ export class SubscriptionRepository
   async findSubscriptionHistory(userId: string, page = 1, limit = 10) {
   const skip = (page - 1) * limit;
 
-  // Fetch all (ACTIVE, CANCELLED, EXPIRED)
   const subscriptions = await this.model
     .find({ userId })
     .populate({
@@ -222,7 +219,6 @@ export class SubscriptionRepository
   const total = await this.model.countDocuments({ userId });
   const totalPages = Math.ceil(total / limit);
 
-  // Format data for front-end
   const formatted = subscriptions.map((sub: any) => ({
     id: sub._id,
     planName: sub.plan,
@@ -257,7 +253,6 @@ async findByMentorPaginated(
 ) {
   const skip = (page - 1) * limit;
 
-  // Base query
   const query: any = { mentorId };
 
   const allSubs = await SubscriptionModel.find(query)
@@ -269,7 +264,6 @@ async findByMentorPaginated(
     .sort({ createdAt: -1 })
     .lean();
 
-  // Apply search (by user name or email)
   const filtered = allSubs.filter((sub: any) => {
     const user = sub.userId;
     if (!user) return false;
