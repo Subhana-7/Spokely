@@ -13,13 +13,14 @@ export const generateAgoraToken = (
     const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
     const token = RtcTokenBuilder.buildTokenWithAccount(
-      APP_ID,
-      APP_CERTIFICATE,
-      channelName,
-      userAccount,
-      RtcRole.PUBLISHER,
-      privilegeExpiredTs
-    );
+  APP_ID,
+  APP_CERTIFICATE,
+  channelName,
+  userAccount,          
+  RtcRole.PUBLISHER,
+  privilegeExpiredTs
+);
+
 
     return token;
   } catch (error) {

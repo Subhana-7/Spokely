@@ -63,8 +63,10 @@ router.get(
 );
 
 router.get("/payments", controller.getAllPayments.bind(controller));
+router.get("/payment/:id",controller.getPaymentById.bind(controller));
 
 router.get("/tasks", controller.listAllDailyTasks.bind(controller));
+router.get("/task/:id",controller.getDailyTaskById.bind(controller));
 
 router.get("/reports", controller.getReports.bind(controller));
 

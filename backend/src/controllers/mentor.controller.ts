@@ -14,7 +14,6 @@ export class MentorController implements IMentorController {
     @inject(TYPES.IMentorService) private _mentorService: IMentorService
   ) {}
 
-  // 🔵 Safe helper for extracting error messages
   private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
     return err instanceof Error ? err.message : fallback;
   }
@@ -222,6 +221,10 @@ export class MentorController implements IMentorController {
   home = async (req: Request, res: Response): Promise<void> => {
     try {
       const mentorId = (req as any).id;
+      const months = Number(req.query.months) || 6;
+
+
+
 
       if (!mentorId) {
         res
@@ -230,7 +233,7 @@ export class MentorController implements IMentorController {
         return;
       }
 
-      const dashboard = await this._mentorService.getHome(mentorId);
+     const dashboard = await this._mentorService.getHome(mentorId, months);
 
       if (!dashboard) {
         res
@@ -249,9 +252,10 @@ export class MentorController implements IMentorController {
 
   profile = async (req: Request, res: Response): Promise<void> => {
     try {
-      const mentorId = (req as any).userId;
+      const mentorId = req.params.id;
+      const months = 12
 
-      const mentor = await this._mentorService.getHome(mentorId);
+      const mentor = await this._mentorService.getHome(mentorId,months);
 
       if (!mentor) {
         res

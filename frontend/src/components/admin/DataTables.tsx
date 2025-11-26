@@ -204,6 +204,13 @@ const DataTable = ({
         >
           Toggle Block
         </button>
+
+        <button
+          onClick={() => onDelete?.(item.id)}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+        >
+          View
+        </button>
       </td>
     </>
   );
@@ -220,6 +227,9 @@ const DataTable = ({
             <td className="px-6 py-4">
               <button onClick={() => onBlock?.(item.id)} className={getBlockButtonStyles(item.isBlocked)}>Toggle Block</button>
             </td>
+            <td className="px-6 py-4">
+              <button onClick={() => onRowClick?.(item.id)}>View Details</button>
+            </td>
           </>
         );
     }
@@ -234,7 +244,7 @@ const DataTable = ({
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 border-t">
+              <tr key={item.id} className="hover:bg-gray-700 border-t">
                 {renderRows(item)}
               </tr>
             ))}

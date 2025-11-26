@@ -21,7 +21,11 @@ export const ADMIN_ROUTES = {
   reject: "/reject",
   refreshToken: "/refresh-token",
   home:"/home",
-  reports:"/home"
+  reports:"/home",
+  payment:"/payment",
+  payments:"/payments",
+  tasks:"/tasks",
+  task:"/task",
 };
 
 export const USER_ROUTES = {

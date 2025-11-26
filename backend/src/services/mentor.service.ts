@@ -160,26 +160,29 @@ export class MentorService implements IMentorService {
     return { message: MENTOR_MESSAGES.SUCCESS.PASSWORD_UPDATED };
   }
 
-  async getHome(id: string): Promise<any | null> {
-    const mentor = await this._mentorRepository.findById(id);
-    if (!mentor) return null;
+  async getHome(id: string, months = 6): Promise<any | null> {
+  const mentor = await this._mentorRepository.findById(id);
+  if (!mentor) return null;
 
-    const dashboardData = await this._mentorRepository.getDashboardData(id);
-    if (!dashboardData) return null;
+  const dashboardData = await this._mentorRepository.getDashboardData(id, months);
 
-    return {
-      mentor: toMentorResponseDTO(mentor),
-      stats: {
-        totalStudents: dashboardData.totalStudents,
-        todaysSessionsCount: dashboardData.todaysSessionsCount,
-        avgProgress: dashboardData.avgProgress,
-        avgFeedback: dashboardData.avgFeedback,
-        avgFeedbackValue: dashboardData.avgFeedbackValue,
-      },
-      sessionsToday: dashboardData.sessionsToday,
-      recentActivities: dashboardData.recentActivities,
-    };
-  }
+  if (!dashboardData) return null;
+
+  return {
+    mentor: toMentorResponseDTO(mentor),
+    stats: {
+      totalStudents: dashboardData.totalStudents,
+      todaysSessionsCount: dashboardData.todaysSessionsCount,
+      avgProgress: dashboardData.avgProgress,
+      avgFeedback: dashboardData.avgFeedback,
+      avgFeedbackValue: dashboardData.avgFeedbackValue,
+    },
+    sessionsToday: dashboardData.sessionsToday,
+    recentActivities: dashboardData.recentActivities,
+    chartData: dashboardData.chartData, 
+  };
+}
+
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
     const mentor = await this._mentorRepository.updateMentor(id, data);

@@ -28,7 +28,6 @@ import { ISessionService } from "../services/interfaces/ISessionService";
 import { IMentorService } from "../services/interfaces/IMentorService";
 import { IUserService } from "../services/interfaces/IUserService";
 
-// 🟦 Helper for error message extraction
 const getErrorMessage = (err: unknown, fallback: string) =>
   err instanceof Error ? err.message : fallback;
 
@@ -407,6 +406,7 @@ export class AdminController implements IAdminController {
       PAYMENT BY ID
   ----------------------------------------------------- */
   getPaymentById = async (req: Request, res: Response): Promise<void> => {
+    console.log('hit')
     try {
       const { id } = req.params;
       const payment = await this._paymentService.getPaymentById(id);
@@ -434,6 +434,19 @@ export class AdminController implements IAdminController {
       const tasks = await this._dailyTaskService.getAllUsersLatestTasks();
       res.status(STATUS_CODES.OK).json({ tasks });
     } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
+    }
+  }
+
+  async getDailyTaskById(req:Request,res:Response):Promise<void>{
+    try {
+      const dailyTaskId = req.params.id;
+      console.log(dailyTaskId)
+    const task = await this._dailyTaskService.getDailyTaskById(dailyTaskId);
+    res.status(STATUS_CODES.OK).json({ task });
+    } catch (err:unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
@@ -486,7 +499,6 @@ export class AdminController implements IAdminController {
           break;
       }
 
-      /* Date Filter */
       if (start || end) {
         data = data.filter((item: any) => {
           const dateField =

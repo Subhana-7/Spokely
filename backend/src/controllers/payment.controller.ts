@@ -14,7 +14,6 @@ export class PaymentController implements IPaymentController {
     @inject(TYPES.IWalletService) private _walletService: IWalletService
   ) {}
 
-  // 🔵 Safe helper for all error messages
   private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
     return err instanceof Error ? err.message : fallback;
   }

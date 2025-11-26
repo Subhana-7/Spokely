@@ -147,7 +147,6 @@ const SubscriptionHistory = () => {
                     <th className="px-6 py-4">End Date</th>
                     <th className="px-6 py-4">Price</th>
                     <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -182,14 +181,7 @@ const SubscriptionHistory = () => {
                         {sub.status}
                       </td>
 
-                      <td className="px-6 py-4 text-center">
-                        <Button
-                          variant="primary"
-                          className="px-4 py-1 rounded-full"
-                        >
-                          View
-                        </Button>
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>

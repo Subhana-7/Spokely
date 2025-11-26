@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle, Bell } from "lucide-react";
 import Button from "../modals/Button";
 import DashboardHeader from "./user/DashBoardComponents/Header";
+import Header from "./mentor/DashboardComponents/Header"
 import { useAuthStore } from "../store/userAuthStore"; // assuming you store user details here
 
 interface Notification {
@@ -79,7 +80,7 @@ const NotificationPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <DashboardHeader />
+      {user?.role === "user" ? <DashboardHeader /> : <Header/>}
 
       <div className="max-w-3xl mx-auto px-6 py-24">
         <div className="flex justify-between items-center mb-6">

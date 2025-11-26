@@ -214,6 +214,7 @@ export class UserService implements IUserService {
    * ---------------------------------------- */
   async getHome(userId: string):Promise<any> {
     const user = await this._userRepository.findById(userId);
+    console.log(user)
     if (!user) throw new Error(HOME_STATS_STRINGS.NOT_FOUND);
 
     const stats = await this._userRepository.getUserStats(userId);
@@ -238,6 +239,7 @@ export class UserService implements IUserService {
       dailyTasksCompleted: stats.dailyTasksCompleted,
     };
   }
+
 
    async getAllUsers(): Promise<UserResponseDTO[]> {
     const { results } = await this._userRepository.findAll();

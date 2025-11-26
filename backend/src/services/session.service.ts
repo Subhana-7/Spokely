@@ -145,18 +145,25 @@ export class SessionService {
           start.getTime() + (session.durationMinutes || 60) * 60000
       );
 
-      if (session.status === SESSION_STATUS.PENDING && now >= start) {
-        session.status = SESSION_STATUS.CANCELLED;
-        await this._sessionRepository.updateSession(session._id as string, {
-          status: SESSION_STATUS.CANCELLED,
+      if (
+        (session.status === SESSION_STATUS.UPCOMING ||
+          session.status === SESSION_STATUS.PENDING ||
+          session.status === SESSION_STATUS.ACCEPTED) &&
+        now >= start &&
+        now <= end
+      ) {
+        session.status = SESSION_STATUS.ONGOING;
+        await this._sessionRepository.updateSession(session._id, {
+          status: SESSION_STATUS.ONGOING,
         });
       } else if (
         (session.status === SESSION_STATUS.UPCOMING ||
-          session.status === SESSION_STATUS.ACCEPTED) &&
+          session.status === SESSION_STATUS.ACCEPTED ||
+          session.status === SESSION_STATUS.ONGOING) &&
         now > end
       ) {
         session.status = SESSION_STATUS.COMPLETED;
-        await this._sessionRepository.updateSession(session._id as string, {
+        await this._sessionRepository.updateSession(session._id, {
           status: SESSION_STATUS.COMPLETED,
         });
       }
@@ -302,11 +309,14 @@ export class SessionService {
 
     const token = generateAgoraToken(channelName, userId.toString());
 
+    const uid = userId.toString(); // use string UID
+    const agoraUid = userId.toString();
+
     return {
       token,
       channelName,
       appId: process.env.AGORA_APP_ID,
-      uid: userId,
+      uid: agoraUid, // string uid
     };
   }
 

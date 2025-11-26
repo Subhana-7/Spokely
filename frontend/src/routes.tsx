@@ -59,6 +59,8 @@ const Reports = lazy(() => import("./pages/admin/ReportsManagement"));
 const SubscriptionHistory = lazy(() => import("./pages/user/SubscriptionHistory"));
 
 const Notification = lazy(() => import("./pages/Notification"));
+const PaymentDetails = lazy(() => import("./pages/PaymentDetails"));
+const AdminDailyTaskDetails = lazy(() => import("./pages/admin/DailyTaskDetails"))
 
 export default function AppRoutes() {
   const routes: RouteObject[] = useMemo(
@@ -130,9 +132,9 @@ export default function AppRoutes() {
         ),
       },
       {
-        path: "/user/mentor-profile/:id",
+        path: "/mentor-profile/:id",
         element: (
-          <RoleProtectedRoute roles={["user"]}>
+          <RoleProtectedRoute roles={["user","mentor","admin"]}>
             <UserViewMentorProfile />
           </RoleProtectedRoute>
         ),
@@ -172,7 +174,7 @@ export default function AppRoutes() {
       {
         path: "/user-profile/:id",
         element: (
-          <RoleProtectedRoute roles={["mentor", "user"]}>
+          <RoleProtectedRoute roles={["mentor", "user","admin"]}>
             <MentorViewUserProfile />
           </RoleProtectedRoute>
         ),
@@ -254,6 +256,22 @@ export default function AppRoutes() {
         element: (
           <RoleProtectedRoute roles={["user", "mentor"]}>
             <WalletPage />
+          </RoleProtectedRoute>
+        ),
+      },
+      {
+        path: "/payment/:id",
+        element: (
+          <RoleProtectedRoute roles={["admin"]}>
+            <PaymentDetails />
+          </RoleProtectedRoute>
+        ),
+      },
+      {
+        path: "/admin/task/:id",
+        element: (
+          <RoleProtectedRoute roles={["admin"]}>
+            <AdminDailyTaskDetails />
           </RoleProtectedRoute>
         ),
       },

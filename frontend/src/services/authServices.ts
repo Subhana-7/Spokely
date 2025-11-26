@@ -90,12 +90,23 @@ export const resubmitDocument = (email: string, documentUrl: string, textMessage
   API.patch(`${M.base}${M.resubmitDocument}`, { email, documentUrl, textMessage });
 
 // --------------------- HOME & PROFILE ---------------------
-export const home = async () => {
+export const home = async (months?: number) => {
   const role = Cookies.get("role") as Exclude<Role, "admin"> | undefined;
   const endpoint = role === "mentor" ? `${M.base}${M.home}` : `${U.base}${U.home}`;
+
+  // Only mentor home uses the months parameter
+  if (role === "mentor") {
+    const res = await API.post(endpoint, null, {
+      params: { months: months || 6 }, // default 6
+    });
+    return res.data;
+  }
+
+  // user dashboard (no months param)
   const res = await API.post(endpoint);
   return res.data;
 };
+
 
 export const userProfiles = (id: string) => API.get(`${U.base}${U.peerProfile}/${id}`);
 export const mentorProfile = (id: string) => API.get(`${M.base}${M.mentorProfile}/${id}`);

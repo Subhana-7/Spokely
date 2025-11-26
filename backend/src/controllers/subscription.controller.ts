@@ -12,14 +12,15 @@ export class SubscriptionController implements ISubscriptionController {
     private _subscriptionService: ISubscriptionService
   ) {}
 
-  // 🔵 Safe reusable error helper
   private getErrorMessage(err: unknown, fallback: string) {
     return err instanceof Error ? err.message : fallback;
   }
 
   async subscribe(req: Request, res: Response): Promise<void> {
     try {
+      console.log('cont',req.body)
       const subscription = await this._subscriptionService.subscribe(req.body);
+      console.log('cont after',subscription)
 
       res.status(STATUS_CODES.OK).json({ success: true, subscription });
     } catch (err: unknown) {

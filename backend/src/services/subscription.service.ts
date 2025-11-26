@@ -67,6 +67,15 @@ export class SubscriptionService implements ISubscriptionService {
       throw new Error(SUBSCRIPTION_STRINGS.ERRORS.PRICE_MISSING);
     }
 
+     const userId = dto.userId.toString();
+  const mentorId = dto.mentorId.toString();
+
+  const participants = [userId, mentorId].sort();
+
+  const sessionId = participants.join("_");
+
+  await this._chatRepository.findOrCreateSession(sessionId, participants);
+
     await this._walletService.credit(
       dto.mentorId,
       dto.price,

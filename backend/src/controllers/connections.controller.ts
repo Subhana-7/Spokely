@@ -13,7 +13,6 @@ export class ConnectionController implements IConnectionController {
     private _connectionsService: IConnectionService
   ) {}
 
-  // Safe helper to extract error message
   private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
     return err instanceof Error ? err.message : fallback;
   }

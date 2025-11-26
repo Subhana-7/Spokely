@@ -127,7 +127,7 @@ const SpokelyMentors = () => {
 
         <Button
           variant="primary"
-          onClick={() => navigate(`/user/mentor-profile/${mentor._id}`)}
+          onClick={() => navigate(`/mentor-profile/${mentor._id}`)}
           className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:shadow-lg transition-all"
         >
           View Details

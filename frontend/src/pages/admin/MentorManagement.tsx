@@ -148,6 +148,7 @@ const MentorManagement = () => {
         type="mentor"
         onBlock={handleBlock}
         onRowClick={handleMentorClick}
+        onDelete={(id) => (window.location.href = `/mentor-profile/${id}`)}
         page={page}
         setPage={setPage}
         total={total}

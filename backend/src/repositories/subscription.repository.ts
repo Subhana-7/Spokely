@@ -211,13 +211,11 @@ export class SubscriptionRepository
   ) {
     const skip = (page - 1) * limit;
 
-    // Build base query
     const query: any = { userId: new Types.ObjectId(userId) };
     if (status && status !== "All") {
       query.status = status;
     }
 
-    // Fetch matching subscriptions (sorted newest first) and populate mentor
     const subscriptions = await this.model
       .find(query)
       .populate({
@@ -228,7 +226,6 @@ export class SubscriptionRepository
       .sort({ createdAt: -1 })
       .lean();
 
-    // If search provided, filter in JS (matching mentor.name, plan, or subscription id)
     let filtered = subscriptions;
     if (search && search.trim()) {
       const searchLower = search.toString().toLowerCase();

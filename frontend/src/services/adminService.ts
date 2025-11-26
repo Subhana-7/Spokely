@@ -63,3 +63,24 @@ export const getAdminHomeStats = () =>
 
 export const getReports = (params: Record<string, any>) =>
   API.get(`${R.base}${R.reports}`, { params });
+
+export const paymentDetails = (id:string) => 
+  API.get(`${R.base}${R.payment}/${id}`);
+
+export const getPayments = () => {
+  console.log("getPayments called");
+  return API.get(`${R.base}${R.payments}`);
+};
+
+
+// --- Daily Tasks ---
+export const getAdminTasks = (params: {
+  search?: string;
+  topic?: string;
+  page?: number;
+  limit?: number;
+}) =>
+  API.get(`${R.base}${R.tasks}`, { params });
+
+export const getAdminTaskById = (id: string) =>
+  API.get(`${R.base}${R.task}/${id}`);

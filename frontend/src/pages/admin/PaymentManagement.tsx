@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import DataTable from "../../components/admin/DataTables";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
+import { data } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { getPayments } from "../../services/adminService";
 
 interface PaymentItem {
   id: string;
@@ -20,14 +23,17 @@ const PaymentManagement = () => {
   const [page, setPage] = useState(1);
   const limit = 5;
 
+  const navigate = useNavigate()
+
   // ✅ Fetch payments from API
   useEffect(() => {
     const fetchPayments = async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:5000/api/admin/payments");
-        const data = await res.json();
-        setPayments(data.data); // assuming API returns { data: [...] }
+
+        const res = await getPayments()
+        const data = await res.data;
+        setPayments(data.data); 
       } catch (err: any) {
         setError(err.message || "Failed to fetch payments");
       } finally {
@@ -37,6 +43,9 @@ const PaymentManagement = () => {
 
     fetchPayments();
   }, []);
+
+  console.log(payments)
+
 
   // ✅ Filter + Search logic
   const filteredPayments = payments.filter((p) => {
@@ -68,7 +77,7 @@ const PaymentManagement = () => {
   };
 
   const handleViewDetails = (id: string) => {
-    alert(`Viewing details for payment ID: ${id}`);
+    navigate(window.location.href = `/payment/${id}`)
   };
 
   return (

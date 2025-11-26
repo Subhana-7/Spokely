@@ -22,10 +22,7 @@ const DashboardHeader = lazy(
 
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
-  const [cancelModal, setCancelModal] = useState<{
-    open: boolean;
-    id?: string;
-  }>({ open: false });
+  const [cancelModal, setCancelModal] = useState<{ open: boolean; id?: string }>({ open: false });
   const [cancelReason, setCancelReason] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -101,7 +98,7 @@ const Sessions = () => {
       private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
       "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30",
       completed: "bg-green-500/20 text-green-300 border border-green-500/30",
-      "on-going": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+      "on-going": "bg-blue-500/20 text-white border border-blue-500/30",
       cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
       upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
     }),
@@ -112,15 +109,14 @@ const Sessions = () => {
   const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
   const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
-  const handlePublicSessions = () => {
-    navigate("/user/sessions/public");
-  };
+  const handlePublicSessions = () => navigate("/user/sessions/public");
 
   return (
     <Suspense fallback={<p>Loading page...</p>}>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
         <DashboardHeader />
         <div className="max-w-7xl mx-auto px-6 pt-6">
+
           {/* Header */}
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
@@ -139,10 +135,7 @@ const Sessions = () => {
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-10">
             <div className="relative flex-1 max-w-md">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
-                size={20}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={20} />
               <Input
                 type="text"
                 placeholder="Search by topic..."
@@ -151,6 +144,7 @@ const Sessions = () => {
                 className="pl-12 pr-4 py-3 text-sm border border-gray-700 rounded-full bg-gray-800 text-white placeholder-gray-400 shadow-md"
               />
             </div>
+
             <div className="flex gap-3">
               <select
                 value={statusFilter}
@@ -163,6 +157,7 @@ const Sessions = () => {
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
@@ -176,7 +171,7 @@ const Sessions = () => {
             </div>
 
             <Button
-              onClick={() => handlePublicSessions()}
+              onClick={handlePublicSessions}
               variant="primary"
               className="px-3 py-2 bg-green-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500"
             >
@@ -202,6 +197,7 @@ const Sessions = () => {
                 {sessions.map((session, idx) => {
                   const id = session?._id ?? session?.id ?? `missing-${idx}`;
                   const status = renderStatus(session);
+
                   return (
                     <Card
                       key={id}
@@ -212,6 +208,7 @@ const Sessions = () => {
                           <h3 className="font-semibold text-lg truncate text-white">
                             {session?.topic ?? "Untitled session"}
                           </h3>
+
                           <div className="flex items-center gap-2">
                             <Badge
                               className={
@@ -221,24 +218,31 @@ const Sessions = () => {
                             >
                               {session?.type ?? "—"}
                             </Badge>
+
                             <Badge className={badgeClasses[status]}>
                               {status}
                             </Badge>
                           </div>
                         </div>
                       </div>
+
                       <p className="text-sm text-gray-300 mb-1">
                         {session?.startTime
                           ? new Date(session.startTime).toLocaleString()
                           : "—"}
                       </p>
+
                       <p className="text-sm text-gray-400 mb-4">
                         Created By:{" "}
                         {session?.createdBy?._id === userId
                           ? "You"
                           : session?.createdBy?.name || "Unknown"}
                       </p>
+
+                      {/* Buttons */}
                       <div className="flex flex-col gap-2">
+
+                        {/* Details */}
                         <Button
                           onClick={() =>
                             id && !String(id).startsWith("missing-")
@@ -249,6 +253,8 @@ const Sessions = () => {
                         >
                           View Details
                         </Button>
+
+                        {/* Join session (creator + participants) */}
                         {status === "on-going" && (
                           <Button
                             onClick={() =>
@@ -261,23 +267,24 @@ const Sessions = () => {
                             Join Session
                           </Button>
                         )}
-                        {status === "upcoming" && (
-                          <Button
-                            variant="danger"
-                            onClick={() =>
-                              id && setCancelModal({ open: true, id })
-                            }
-                          >
-                            Cancel Session
-                          </Button>
-                        )}
+
+                        {/* Cancel session (creator ONLY) */}
+                        {status === "upcoming" &&
+                          session?.createdBy?._id === userId && (
+                            <Button
+                              variant="danger"
+                              onClick={() => id && setCancelModal({ open: true, id })}
+                            >
+                              Cancel Session
+                            </Button>
+                          )}
                       </div>
                     </Card>
                   );
                 })}
               </div>
 
-              {/* Pagination Controls */}
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center mt-12 gap-4">
                   <Button
@@ -287,9 +294,11 @@ const Sessions = () => {
                   >
                     <ChevronLeft size={18} /> Prev
                   </Button>
+
                   <span className="text-gray-400">
                     Page {page} of {totalPages}
                   </span>
+
                   <Button
                     onClick={handleNextPage}
                     disabled={page === totalPages}
@@ -310,6 +319,7 @@ const Sessions = () => {
               <h2 className="text-lg font-semibold mb-4 text-emerald-400">
                 Cancel Session
               </h2>
+
               <Input
                 type="text"
                 placeholder="Enter reason..."
@@ -317,6 +327,7 @@ const Sessions = () => {
                 onChange={setCancelReason}
                 className="w-full mb-4 bg-gray-800 text-white border-gray-700"
               />
+
               <div className="flex justify-end gap-3">
                 <Button
                   variant="secondary"
@@ -324,6 +335,7 @@ const Sessions = () => {
                 >
                   Close
                 </Button>
+
                 <Button variant="danger" onClick={handleCancelConfirm}>
                   Confirm Cancel
                 </Button>

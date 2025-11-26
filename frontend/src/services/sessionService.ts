@@ -61,6 +61,3 @@ export const addFeedback = (id: string, data: Feedback) =>
 // --- Admin Sessions ---
 export const adminSessionListing = (params: { page: number; limit: number; search: string; status: string }) =>
   API.get(`${R.base}${R.adminList}`, { params });
-
-export const adminSessionDetails = (id: string) =>
-  API.get(`${R.base}/${id}${R.adminDetails}`);

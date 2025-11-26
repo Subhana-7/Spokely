@@ -25,4 +25,3 @@ export const subscriptionConfirmPayment = (orderId: string, sessionId: string) =
 
 export const wallet = (page = 1, limit = 10) =>
   API.get(`${R.base}${R.wallet}?page=${page}&limit=${limit}`);
-

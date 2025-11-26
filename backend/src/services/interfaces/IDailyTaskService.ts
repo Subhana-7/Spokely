@@ -15,4 +15,5 @@ export interface IDailyTaskService {
   getUserLatestTask(userId: string): Promise<DailyTaskDto | null>;
 
   getAllUsersLatestTasks(): Promise<DailyTaskDto[]>;
+  getDailyTaskById(dailyTaskId:string):Promise<any>;
 }

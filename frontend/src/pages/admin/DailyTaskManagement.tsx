@@ -3,6 +3,8 @@ import axios from "axios";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
 import toast from "react-hot-toast";
+import { getAdminTasks } from "../../services/adminService";
+import { useNavigate } from "react-router-dom";
 
 interface Feedback {
   feedback: string;
@@ -36,6 +38,8 @@ const FeedbackModal = ({
   task: DailyTask | null;
 }) => {
   if (!open || !task) return null;
+
+  
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -84,21 +88,19 @@ const DailyTaskManagement = () => {
 
   const limit = 10;
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/admin/tasks",
-          {
-            params: {
-              search,
-              topic: filter === "All Topics" ? undefined : filter,
-              page,
-              limit,
-            },
-          }
-        );
+        const response = await getAdminTasks({
+          search,
+          topic: filter === "All Topics" ? undefined : filter,
+          page,
+          limit,
+        });
 
+        console.log(response.data);
         const { tasks: fetchedTasks, total: totalTasks } = response.data;
         setTasks(fetchedTasks);
         setTotal(totalTasks);
@@ -111,12 +113,11 @@ const DailyTaskManagement = () => {
     fetchTasks();
   }, [search, filter, page]);
 
+  console.log(tasks);
+
   // Open feedback modal when a row is clicked
   const handleTaskClick = (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    setSelectedTask(task);
-    setFeedbackOpen(true);
+    (window.location.href = `/admin/task/${id}`)
   };
 
   const taskData = tasks.map((task) => ({

@@ -36,7 +36,6 @@ import {
 export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private _userService: IUserService) {}
 
-  // 🔵 Shared safe error helper
   private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
     return err instanceof Error ? err.message : fallback;
   }
@@ -157,7 +156,7 @@ export class UserController implements IUserController {
   ----------------------------------------------------- */
   home = async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
+      const userId = (req as any).id;
       const data = await this._userService.getHome(userId);
 
       return res.status(STATUS_CODES.OK).json(data);
@@ -306,7 +305,8 @@ export class UserController implements IUserController {
   ----------------------------------------------------- */
   profile = async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
+      const userId = req.params.id;
+      console.log(userId)
       const data = await this._userService.getHome(userId);
 
       return res.status(STATUS_CODES.OK).json(data);

@@ -205,6 +205,8 @@ export class DailyTaskService {
 
     await task.save();
 
+    await this.updateUserLevel(task.userId.toString());
+
     return { task, feedback };
   }
 
@@ -241,6 +243,28 @@ export class DailyTaskService {
     const dayStart = new Date(today.setHours(0, 0, 0, 0));
 
     const tasks = await this._dailyTaskRepository.findAllByDate(dayStart);
+
+    console.log(tasks,'ser')
     return tasks.map(mapDailyTaskToDto);
   }
+
+  async getDailyTaskById(dailyTaskId:string):Promise<any> {
+    const task = await this._dailyTaskRepository.findById(dailyTaskId);
+    console.log('serv',task)
+    return task;
+  }
+
+  private async updateUserLevel(userId: string) {
+  const completedTasks = await this._dailyTaskRepository.countByUser(userId);
+
+  const level = Math.floor(completedTasks / 5);
+
+  const user = await userModel.findById(userId);
+
+  if (user && level > (user.levels ?? 0)) {
+    user.levels = level;
+    await user.save();
+  }
+}
+
 }

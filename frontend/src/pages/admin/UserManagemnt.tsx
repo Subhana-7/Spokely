@@ -73,6 +73,7 @@ const UserManagement = () => {
     }
   };
 
+
   const userData = users.map((user) => ({
     id: user.id,
     name: user.name,
@@ -115,6 +116,7 @@ const UserManagement = () => {
         data={userData}
         type="user"
         onBlock={handleBlock}
+        onRowClick={(id) => (window.location.href = `/user-profile/${id}`)}
         page={page}
         setPage={setPage}
         total={total}

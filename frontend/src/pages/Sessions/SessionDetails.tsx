@@ -15,6 +15,8 @@ import Input from "../../modals/Input";
 import { getSessionById, addFeedback } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
+import MentorHeader from "../mentor/DashboardComponents/Header";
 
 const SessionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -119,7 +121,10 @@ const SessionDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-16">
       {/* Header */}
-      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10">
+
+      {currentUser?.role === "user" ? <Header/> : <MentorHeader/>}
+
+      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10 py-8">
         <button
           onClick={() => navigate(-1)}
           className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors mr-4"
@@ -205,7 +210,7 @@ const SessionDetail = () => {
         {/* Created By */}
         {session.createdBy && (
           <Card
-            onClick={() => navigate(`/user/mentor-profile/${session.createdBy._id}`)}
+            onClick={() => navigate(`/mentor-profile/${session.createdBy._id}`)}
             className="cursor-pointer bg-white/6 border border-white/8 hover:bg-white/8 rounded-2xl p-5 flex items-center gap-4 transition"
           >
             <img

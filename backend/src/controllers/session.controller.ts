@@ -13,7 +13,6 @@ export class SessionController implements ISessionController {
     private readonly _sessionService: ISessionService
   ) {}
 
-  // 🔵 Safe reusable helper
   private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
     return err instanceof Error ? err.message : fallback;
   }
@@ -299,28 +298,6 @@ export class SessionController implements ISessionController {
       }
 
       res.status(STATUS_CODES.OK).json({ sessions });
-    } catch (err: unknown) {
-      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        message: this.getErrorMessage(err),
-      });
-    }
-  };
-
-  getSessionDetailsAdmin = async (
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const session = await this._sessionService.getSessionById(req.params.id);
-
-      if (!session) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.SESSION.NOT_FOUND });
-        return;
-      }
-
-      res.status(STATUS_CODES.OK).json({ session });
     } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         message: this.getErrorMessage(err),

@@ -18,4 +18,13 @@ export class DailyTaskRepository extends BaseRepository<IDailyTask> {
   async findAllByDate(date: Date): Promise<IDailyTask[]> {
     return this.model.find({ date });
   }
+
+  async findById(id: string): Promise<any> {
+      return this.model.findById({_id:id})
+  }
+
+  async countByUser(userId: string): Promise<number> {
+  return this.model.countDocuments({ userId });
+}
+
 }
