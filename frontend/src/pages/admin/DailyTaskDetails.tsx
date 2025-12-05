@@ -44,20 +44,25 @@ const DailyTaskDetails = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTask = async () => {
-      try {
-        const res = await getAdminTaskById(id);
+  if (!id) {
+    console.error("Missing ID param");
+    return;
+  }
 
-        setTask(res.data.task || null);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTask = async () => {
+    try {
+      const res = await getAdminTaskById(id); 
+      setTask(res.data.task || null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchTask();
-  }, [id]);
+  fetchTask();
+}, [id]);
+
 
   if (loading)
     return (

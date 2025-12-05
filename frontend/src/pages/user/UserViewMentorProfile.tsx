@@ -71,6 +71,10 @@ const UserViewMentorProfile = () => {
   const { user } = useAuthStore();
   const { id: mentorId } = useParams<{ id: string }>();
 
+  if (!mentorId) {
+    return <div className="text-white">Invalid mentor ID</div>;
+  }
+
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>(
@@ -222,7 +226,7 @@ const UserViewMentorProfile = () => {
                   .includes("captured successfully")
               ) {
                 await subscribeMentor({
-                  mentorId: mentorId,
+                  mentorId,
                   plan: activePlan.type,
                   price: activePlan.price,
                   userId: user?.id!,
