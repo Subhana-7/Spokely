@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { CheckCircle, Bell } from "lucide-react";
 import Button from "../modals/Button";
 import DashboardHeader from "./user/DashBoardComponents/Header";
-import { useAuthStore } from "../store/userAuthStore"; // assuming you store user details here
+import Header from "./mentor/DashboardComponents/Header";
+import { useAuthStore } from "../store/userAuthStore";
+
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../services/notificationService";
 
 interface Notification {
   id: string;
@@ -15,22 +22,15 @@ interface Notification {
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const user = useAuthStore((state) => state.user); // Example: { id, name, email }
+  const user = useAuthStore((state) => state.user);
 
   const fetchNotifications = async () => {
+    if (!user?.id) return;
+
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/notifications/${user?.id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // if auth needed
-        },
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(data.data);
-      }
+      const data = await getNotifications(user.id);
+      setNotifications(data);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -40,11 +40,7 @@ const NotificationPage = () => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-      });
-
+      await markNotificationAsRead(id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -55,31 +51,20 @@ const NotificationPage = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      // Call each PATCH in parallel
-      await Promise.all(
-        notifications
-          .filter((n) => !n.isRead)
-          .map((n) =>
-            fetch(`http://localhost:5000/api/notifications/${n.id}/read`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-            })
-          )
-      );
-
+      await markAllNotificationsAsRead(notifications);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.error("Error marking all as read:", error);
     }
   };
 
   useEffect(() => {
-    if (user?.id) fetchNotifications();
+    fetchNotifications();
   }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <DashboardHeader />
+      {user?.role === "user" ? <DashboardHeader /> : <Header />}
 
       <div className="max-w-3xl mx-auto px-6 py-24">
         <div className="flex justify-between items-center mb-6">

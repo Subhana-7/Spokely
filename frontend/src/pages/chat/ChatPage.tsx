@@ -5,6 +5,7 @@ import ChatBox from "./ChatBox";
 import { ArrowLeft, MoreVertical, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import Header from "../user/DashBoardComponents/Header";
 
 const socket = io(import.meta.env.VITE_SERVER_SIDE_URL, { autoConnect: true });
 
@@ -50,7 +51,6 @@ export default function ChatPage() {
       if (chatData.length) setActiveChat(chatData[0]);
     })();
 
-    // Listen for new messages on ANY chat
     const handleChatUpdated = ({ sessionId, message }: any) => {
       setChats((prevChats) => {
         const updatedChats = prevChats.map((chat) => {
@@ -58,9 +58,6 @@ export default function ChatPage() {
             const isActive = activeChatRef.current?.id === sessionId;
             const isFromCurrentUser = message.sender?.id === currentUser?.id;
             
-            // Only increment unread if:
-            // 1. Not the active chat
-            // 2. Not from the current user
             const unread = isActive || isFromCurrentUser ? 0 : (chat.unread || 0) + 1;
 
             return {
@@ -73,7 +70,6 @@ export default function ChatPage() {
           return chat;
         });
 
-        // Sort chats by most recent message
         return updatedChats.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -89,7 +85,6 @@ export default function ChatPage() {
 
   const handleSelectChat = (chat: Chat) => {
     setActiveChat(chat);
-    // Reset unread count for selected chat
     setChats((prev) =>
       prev.map((c) => (c.id === chat.id ? { ...c, unread: 0 } : c))
     );
@@ -100,9 +95,15 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="h-screen flex bg-slate-700 text-white">
+    <div
+  className={`h-screen flex bg-slate-700 text-white ${
+    currentUser?.role === "user" ? "pt-20" : "pt-0"
+  }`}
+>
+  {currentUser?.role === "user" ? <Header /> : ''}
+
       {/* Sidebar */}
-      <div className="w-96 bg-slate-800 border-r border-slate-600 flex flex-col">
+      <div className="w-96 bg-slate-800 border-r border-slate-600 flex flex-col py-18">
         <div className="bg-slate-900 px-4 py-3 border-b border-slate-600">
           <div className="flex items-center justify-between mb-3">
             <button
@@ -194,7 +195,7 @@ export default function ChatPage() {
       <div className="flex-1">
         {activeChat ? (
           <ChatBox
-            key={activeChat.id} // Force remount when chat changes
+            key={activeChat.id} 
             socket={socket}
             chatId={activeChat.id}
             chatRole={activeChat.role}

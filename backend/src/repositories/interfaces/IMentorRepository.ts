@@ -29,5 +29,5 @@ export interface IMentorRepository extends IBaseRepository<IMentor> {
   verifyForgotPasswordOTP(email: string, code: string): Promise<boolean | null>;
   updatePassword(id: string, newPassword: string): Promise<IMentor | null>;
   updateMentor(id: string, data: any): Promise<IMentor | null>;
-  getDashboardData(mentorId: string): Promise<any>;
+  getDashboardData(mentorId: string,months:number): Promise<any>;
 }

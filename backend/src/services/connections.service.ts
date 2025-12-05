@@ -8,7 +8,15 @@ import { IConnectionRepository } from "../repositories/interfaces/IConnectionsRe
 import { PopulatedConnection } from "../types/populated";
 import { ConnectionDTO } from "../dto/connection.dto";
 import { mapConnectionToDTO } from "../mappers/connection.mappers";
-import { MESSAGES } from "../utilis/constants";
+
+import {
+  CONNECTION_MESSAGES,
+  CONNECTION_ERRORS,
+  MESSAGES,
+  NOTIFICATION_MESSAGES,
+  NOTIFICATION_TYPE,
+} from "../utilis/constants";
+
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IChatRepository } from "../repositories/interfaces/IChatRepository";
 import { INotificationService } from "./interfaces/INotificationService";
@@ -20,7 +28,8 @@ export class ConnectionService implements IConnectionService {
     private _connectionRepository: IConnectionRepository,
     @inject(TYPES.IUserRepository) private _userRepository: IUserRepository,
     @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository,
-    @inject(TYPES.INotificationService) private _notificationService:INotificationService,
+    @inject(TYPES.INotificationService)
+    private _notificationService: INotificationService
   ) {}
 
   async sendConnectionRequest(
@@ -34,35 +43,34 @@ export class ConnectionService implements IConnectionService {
         isVerified: true,
       });
 
-      console.log(receiver, senderId, uniqueCode);
-
       if (!receiver) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
+
       if (receiver._id.equals(senderId))
-        throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+        throw new Error(CONNECTION_MESSAGES.REQUEST.SELF);
 
       const existing = await this._connectionRepository.findByUniqueCode(
         new Types.ObjectId(senderId),
         receiver._id
       );
 
-      if (existing) throw new Error(MESSAGES.ERROR.CONNECTION_EXISTS);
+      if (existing) throw new Error(CONNECTION_MESSAGES.REQUEST.EXISTS);
 
       const connection = await this._connectionRepository.createConnection(
         new Types.ObjectId(senderId),
         receiver._id
       );
 
-       await this._notificationService.send({
-      userId:receiver.id,
-      title:"New Connection Request.",
-      message:"A new connection request send to you, Check it out.",
-      type:"success",
-    })
+      await this._notificationService.send({
+        userId: receiver.id,
+        title: NOTIFICATION_MESSAGES.CONNECTION_REQUEST.TITLE,
+        message: NOTIFICATION_MESSAGES.CONNECTION_REQUEST.MESSAGE,
+        type: NOTIFICATION_TYPE.SUCCESS,
+      });
 
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
         : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("sendConnectionRequest error", error);
       return null;
     }
@@ -74,7 +82,7 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(userId)
       );
       return requests ? requests.map(mapConnectionToDTO) : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getIncomingRequests error", error);
       return null;
     }
@@ -85,8 +93,6 @@ export class ConnectionService implements IConnectionService {
     userId: string
   ): Promise<ConnectionDTO | null> {
     try {
-      console.log(requestId, userId);
-
       const connection = await this._connectionRepository.acceptRequest(
         requestId,
         new Types.ObjectId(userId)
@@ -104,20 +110,20 @@ export class ConnectionService implements IConnectionService {
       await this._chatRepository.findOrCreateSession(sessionId, participants);
 
       await this._notificationService.send({
-      userId:connection.userId.toString(),
-      title:"Connection Request Accepted",
-      message:"Your connection request is accepted, Check it out.",
-      type:"success",
-    })
+        userId: connection.userId.toString(),
+        title: NOTIFICATION_MESSAGES.REQUEST_ACCEPTED.TITLE,
+        message: NOTIFICATION_MESSAGES.REQUEST_ACCEPTED.MESSAGE,
+        type: NOTIFICATION_TYPE.SUCCESS,
+      });
 
       return mapConnectionToDTO(connection as unknown as PopulatedConnection);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("acceptRequest error", error);
       return null;
     }
   }
 
-   async getAllConnections(
+  async getAllConnections(
     userId: string,
     filters?: {
       search?: string;
@@ -125,38 +131,42 @@ export class ConnectionService implements IConnectionService {
       page?: number;
       limit?: number;
     }
-  ): Promise<{ connections: ConnectionDTO[]; total: number; page: number; totalPages: number } | null> {
+  ): Promise<{
+    connections: ConnectionDTO[];
+    total: number;
+    page: number;
+    totalPages: number;
+  } | null> {
     try {
       const page = filters?.page ?? 1;
       const limit = filters?.limit ?? 10;
 
-      const connections =
-        await this._connectionRepository.findWithFilters(userId, {
+      const connections = await this._connectionRepository.findWithFilters(
+        userId,
+        {
           search: filters?.search,
           status: filters?.status,
           page,
           limit,
-        });
+        }
+      );
 
       const total = await this._connectionRepository.countWithFilters(userId, {
         search: filters?.search,
         status: filters?.status,
       });
 
-      const dtos = connections.map(mapConnectionToDTO);
-
       return {
-        connections: dtos,
+        connections: connections.map(mapConnectionToDTO),
         total,
         page,
         totalPages: Math.ceil(total / limit),
       };
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getAllConnections error", error);
       return null;
     }
   }
-
 
   async getOutgoingRequests(userId: string): Promise<ConnectionDTO[] | null> {
     try {
@@ -164,7 +174,7 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(userId)
       );
       return requests ? requests.map(mapConnectionToDTO) : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("getOutgoingRequests error", error);
       return null;
     }
@@ -180,17 +190,17 @@ export class ConnectionService implements IConnectionService {
         new Types.ObjectId(userId)
       );
 
-       await this._notificationService.send({
-      userId:requestId,
-      title:"Connection Request Rejected",
-      message:"Your connection request is Rejected, Check it out.",
-      type:"success",
-    })
+      await this._notificationService.send({
+        userId: requestId,
+        title: NOTIFICATION_MESSAGES.REQUEST_REJECTED.TITLE,
+        message: NOTIFICATION_MESSAGES.REQUEST_REJECTED.MESSAGE,
+        type: NOTIFICATION_TYPE.SUCCESS,
+      });
 
       return connection
         ? mapConnectionToDTO(connection as unknown as PopulatedConnection)
         : null;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("rejectRequest error", error);
       return null;
     }
@@ -198,17 +208,19 @@ export class ConnectionService implements IConnectionService {
 
   async blockConnection(connectionId: string, userId: string) {
     const connection = await this._connectionRepository.findById(connectionId);
-    if (!connection) throw new Error("Connection not found");
+    if (!connection) throw new Error(CONNECTION_ERRORS.NOT_FOUND);
+
     if (
       connection.userId.toString() !== userId &&
       connection.connectedUserId.toString() !== userId
     )
-      throw new Error("Unauthorized");
+      throw new Error(CONNECTION_MESSAGES.ERROR.UNAUTHORIZED);
 
     const updated = await this._connectionRepository.blockConnection(
       connectionId,
       userId
     );
+
     return updated
       ? mapConnectionToDTO(updated as unknown as PopulatedConnection)
       : null;
@@ -216,16 +228,18 @@ export class ConnectionService implements IConnectionService {
 
   async unblockConnection(connectionId: string, userId: string) {
     const connection = await this._connectionRepository.findById(connectionId);
-    if (!connection) throw new Error("Connection not found");
+    if (!connection) throw new Error(CONNECTION_ERRORS.NOT_FOUND);
+
     if (
       connection.userId.toString() !== userId &&
       connection.connectedUserId.toString() !== userId
     )
-      throw new Error("Unauthorized");
+      throw new Error(CONNECTION_MESSAGES.ERROR.UNAUTHORIZED);
 
     const updated = await this._connectionRepository.unblockConnection(
       connectionId
     );
+
     return updated
       ? mapConnectionToDTO(updated as unknown as PopulatedConnection)
       : null;
@@ -233,12 +247,8 @@ export class ConnectionService implements IConnectionService {
 
   async removeConnection(connectionId: string) {
     const connection = await this._connectionRepository.findById(connectionId);
-    if (!connection) throw new Error("Connection not found");
+    if (!connection) throw new Error(CONNECTION_ERRORS.NOT_FOUND);
 
-    const result = await this._connectionRepository.deleteConnection(
-      connectionId
-    );
-
-    return result;
+    return this._connectionRepository.deleteConnection(connectionId);
   }
 }

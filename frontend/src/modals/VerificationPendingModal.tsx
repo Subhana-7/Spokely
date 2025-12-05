@@ -37,12 +37,8 @@ const VerificationPendingModal: React.FC<VerificationPendingModalProps> = ({
             </div>
           </div>
         </div>
-        
-        <Button
-          variant="primary"
-          onClick={onClose}
-          className="w-full"
-        >
+
+        <Button variant="primary" onClick={onClose} className="w-full">
           OK
         </Button>
       </div>

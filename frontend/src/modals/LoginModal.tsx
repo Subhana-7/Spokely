@@ -5,8 +5,6 @@ import Input from "./Input";
 import Button from "./Button";
 import { login } from "../services/authServices";
 import OTPModal from "./OTPModal";
-import VerificationPendingModal from "./VerificationPendingModal";
-import DocumentResubmissionModal from "./DocumentReSubmissionModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
@@ -24,7 +22,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onSwitchToSignup,
-  onForgotPassword,
 }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -37,15 +34,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const [showDocumentResubmission, setShowDocumentResubmission] =
+  const [_showDocumentResubmission, setShowDocumentResubmission] =
     useState(false);
-  const [verificationPendingMessage, setVerificationPendingMessage] =
+  const [_verificationPendingMessage, setVerificationPendingMessage] =
     useState("");
-  const [blockedMessage, setBlockedMessage] = useState("");
+  const [_blockedMessage, setBlockedMessage] = useState("");
 
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
-  const [passwordResetEmail, setPasswordResetEmail] = useState("");
+  const [_passwordResetEmail, setPasswordResetEmail] = useState("");
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
 
   const validate = () => {
@@ -123,7 +120,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
     setShowChangePasswordModal(true);
   };
 
-  const handleChangePassword = (email: string, newPassword: string) => {
+  const handleChangePassword = (email: string, _newPassword: string) => {
     setIsPasswordResetMode(true);
     setPasswordResetEmail(email);
     setShowChangePasswordModal(false);
@@ -133,12 +130,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
   
 const handlePasswordResetOTPSuccess = () => {
-  setShowOtpModal(false); // close OTP modal first
+  setShowOtpModal(false); 
   setIsPasswordResetMode(false);
   
-  // Slight delay to ensure OTP modal unmounts
   setTimeout(() => {
-    setPasswordResetSuccess(true); // now show success modal
+    setPasswordResetSuccess(true); 
   }, 0);
 };
 
@@ -155,20 +151,20 @@ const handlePasswordResetOTPSuccess = () => {
     onClose();
   };
 
-  const handleVerificationPendingClose = () => {
-    setVerificationPendingMessage("");
-    handleCloseModal();
-  };
+  // const handleVerificationPendingClose = () => {
+  //   setVerificationPendingMessage("");
+  //   handleCloseModal();
+  // };
 
-  const handleDocumentResubmissionClose = () => {
-    setShowDocumentResubmission(false);
-    handleCloseModal();
-  };
+  // const handleDocumentResubmissionClose = () => {
+  //   setShowDocumentResubmission(false);
+  //   handleCloseModal();
+  // };
 
-  const handleBlockedMessageClose = () => {
-    setBlockedMessage("");
-    handleCloseModal();
-  };
+  // const handleBlockedMessageClose = () => {
+  //   setBlockedMessage("");
+  //   handleCloseModal();
+  // };
 
   const roleOptions = [
     { value: "user", label: "User" },

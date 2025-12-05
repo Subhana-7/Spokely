@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { User, Lock, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../services/authServices"; 
+import { login } from "../../services/authServices";
 import { useAuthStore } from "../../store/userAuthStore";
 
 const AdminLogin = () => {
@@ -27,7 +27,7 @@ const AdminLogin = () => {
         role: "admin",
       });
 
-      navigate("/admin/home"); 
+      navigate("/admin/home");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
     }
@@ -55,9 +55,7 @@ const AdminLogin = () => {
 
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Spokely</h1>
-            <p className="text-gray-300 text-sm">
-              Spokely Administrator Login
-            </p>
+            <p className="text-gray-300 text-sm">Spokely Administrator Login</p>
             <p className="text-gray-400 text-xs mt-1">
               Where voices meet and stories begin
             </p>

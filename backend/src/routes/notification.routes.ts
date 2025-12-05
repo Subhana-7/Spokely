@@ -9,7 +9,7 @@ const controller = container.get<INotificationController>(
   TYPES.INotificationController
 );
 
-router.get("/:userId", controller.getUserNotifications.bind(controller));
-router.patch("/:id/read", controller.markAsRead.bind(controller));
+router.get("/:userId",authMiddleware(["mentor","user"]), controller.getUserNotifications.bind(controller));
+router.patch("/:id/read",authMiddleware(["mentor","user"]), controller.markAsRead.bind(controller));
 
 export default router;

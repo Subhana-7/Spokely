@@ -4,14 +4,15 @@ import { SUBSCRIPTION_ROUTES as R } from "../constants/routes";
 export interface MentorPlan {
   type: string;
   price: number;
-  time: number; 
+  time: number;
 }
 
 export interface SubscriptionData {
   mentorId: string;
-  planId: string;
+  plan: string;
+  price: number;
   userId: string;
-  amount: number;
+  time: number;
 }
 
 // --- Mentor Plans ---
@@ -42,7 +43,6 @@ export const getUserSubscriptions = (
   return API.get(`${R.base}${R.mySubscriptions}/${userId}?${query.toString()}`);
 };
 
-
 export const getMentorStudents = (
   mentorId: string,
   search: string = "",
@@ -53,10 +53,22 @@ export const getMentorStudents = (
   if (search) query.append("search", search);
   query.append("page", page.toString());
   query.append("limit", limit.toString());
-  return API.get(`${R.base}${R.mentorStudents}/${mentorId}?${query.toString()}`);
+  return API.get(
+    `${R.base}${R.mentorStudents}/${mentorId}?${query.toString()}`
+  );
 };
 
-
-
-export const getSubscriptionHistory = (userId: string, page = 1, limit = 6) =>
-  API.get(`/subscription/history/${userId}?page=${page}&limit=${limit}`);
+export const getSubscriptionHistory = (
+  userId: string,
+  page = 1,
+  limit = 6,
+  search?: string,
+  status?: string
+) => {
+  const query = new URLSearchParams();
+  query.append("page", page.toString());
+  query.append("limit", limit.toString());
+  if (search && search.trim()) query.append("search", search.trim());
+  if (status && status !== "All") query.append("status", status);
+  return API.get(`/subscription/history/${userId}?${query.toString()}`);
+};

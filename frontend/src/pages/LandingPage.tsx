@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import SignupModal from "../modals/SignupModal";
 import LoginModal from "../modals/LoginModal";
-import OTPModal from "../modals/OTPModal";
-import RoleSelectionModal from "../modals/RoleSelectionModal";
 import ChangePasswordModal from "../modals/ChangePasswordModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
@@ -30,10 +28,10 @@ const LandingPage: React.FC = () => {
   const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
-    logoutService('user');
+    logoutService("user");
     logout();
-    navigate("/")
-  }
+    navigate("/");
+  };
 
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("auth-token");
@@ -43,8 +41,6 @@ const LandingPage: React.FC = () => {
 
   const openModal = (modalName: string) => setActiveModal(modalName);
   const closeModal = () => setActiveModal(null);
-
-  const showRoleModal = location.pathname === "/role-selection";
 
   useEffect(() => {
     if (token) {
@@ -79,23 +75,28 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              {user.user !== null ? ( 
+              {user.user !== null ? (
                 <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-red-300 hover:text-white font-medium transition-colors"
-                >Logout</button>
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-red-300 hover:text-white font-medium transition-colors"
+                >
+                  Logout
+                </button>
               ) : (
-                <><button
+                <>
+                  <button
                     onClick={() => openModal("login")}
                     className="px-4 py-2 text-gray-300 hover:text-white font-medium transition-colors"
                   >
                     Login
-                  </button><button
+                  </button>
+                  <button
                     onClick={() => openModal("signup")}
                     className="px-6 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 font-medium transition-colors shadow-sm"
                   >
-                      Sign Up
-                    </button></>
+                    Sign Up
+                  </button>
+                </>
               )}
             </div>
           </div>

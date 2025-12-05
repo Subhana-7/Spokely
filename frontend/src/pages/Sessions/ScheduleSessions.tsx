@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getAllConnections } from "../../services/connectionService";
 import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
 
 interface FormData {
   type: string;
@@ -68,18 +69,25 @@ const ScheduleSession = () => {
 
   useEffect(() => {
     connectedUsers().then((res) => {
-      const formatted = res.data.map((conn: any) => {
-        if (conn.user.id === user.id) {
+      const list = res.data?.connections || [];
+
+      const unblocked = list.filter((conn: any) => !conn.isBlocked);
+
+      const formatted = unblocked.map((conn: any) => {
+        if (conn.user.id === user?.id) {
           return { ...conn, otherUser: conn.connectedUser };
-        } else if (conn.connectedUser.id === user.id) {
+        } else if (conn.connectedUser.id === user?.id) {
           return { ...conn, otherUser: conn.user };
         } else {
           return conn;
         }
       });
+
       setUsers(formatted);
     });
   }, []);
+
+  console.log(users);
 
   const calculateEndTime = (startTime: string) => {
     if (!startTime) return "";
@@ -182,7 +190,8 @@ const ScheduleSession = () => {
     const filteredErrors: Partial<FormErrors> = {};
     Object.keys(formErrors).forEach((key) => {
       if (touched[key] || key === "form") {
-        filteredErrors[key as keyof FormErrors] = formErrors[key as keyof FormErrors];
+        filteredErrors[key as keyof FormErrors] =
+          formErrors[key as keyof FormErrors];
       }
     });
     setErrors((prev) => ({ ...prev, ...filteredErrors }));
@@ -200,7 +209,9 @@ const ScheduleSession = () => {
   };
 
   const addMember = (member: any) => {
-    if (!selectedMembers.find((m) => m.otherUser?.id === member.otherUser?.id)) {
+    if (
+      !selectedMembers.find((m) => m.otherUser?.id === member.otherUser?.id)
+    ) {
       setSelectedMembers((prev) => [...prev, member]);
     }
     setSearchTerm("");
@@ -264,9 +275,9 @@ const ScheduleSession = () => {
       if (key === "type") return true;
       return value.trim() !== "";
     });
-    const noFieldErrors = Object.values(validateForm(formData, selectedMembers)).every(
-      (err) => !err
-    );
+    const noFieldErrors = Object.values(
+      validateForm(formData, selectedMembers)
+    ).every((err) => !err);
     return hasRequiredFields && noFieldErrors;
   };
 
@@ -277,14 +288,15 @@ const ScheduleSession = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-20">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-6 flex items-center mb-12">
+      <Header />
+      <div className="max-w-7xl mx-auto px-6 flex items-center mb-12 py-10">
         <button
           onClick={() => navigate(-1)}
           className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
         >
           <ArrowLeft size={20} className="text-gray-300" />
         </button>
-        <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+        <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text tracking-tight text-white">
           Schedule Peer-to-Peer Session
         </h1>
       </div>
@@ -330,7 +342,9 @@ const ScheduleSession = () => {
                     className="bg-gray-900/60 text-white"
                   />
                   {errors.startTime && touched.startTime && (
-                    <p className="text-red-400 text-xs mt-1">{errors.startTime}</p>
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.startTime}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -345,7 +359,9 @@ const ScheduleSession = () => {
                     onChange={() => {}}
                   />
                   {errors.endTime && touched.endTime && (
-                    <p className="text-red-400 text-xs mt-1">{errors.endTime}</p>
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.endTime}
+                    </p>
                   )}
                 </div>
               </div>
@@ -373,14 +389,18 @@ const ScheduleSession = () => {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                   onBlur={() => handleBlur("description")}
                   className="w-full px-4 py-3 bg-gray-900/60 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-green-500"
                   rows={4}
                   placeholder="Describe session goals..."
                 />
                 {errors.description && touched.description && (
-                  <p className="text-red-400 text-xs mt-1">{errors.description}</p>
+                  <p className="text-red-400 text-xs mt-1">
+                    {errors.description}
+                  </p>
                 )}
               </div>
             </div>
@@ -414,8 +434,12 @@ const ScheduleSession = () => {
                         onClick={() => addMember(member)}
                         className="w-full text-left px-4 py-2 hover:bg-gray-800 flex items-center justify-between"
                       >
-                        <span className="text-sm">{member.otherUser?.name}</span>
-                        <span className="text-xs text-gray-400">Click to add</span>
+                        <span className="text-sm">
+                          {member.otherUser?.name}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Click to add
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -432,7 +456,9 @@ const ScheduleSession = () => {
                           key={member.id}
                           className="flex items-center justify-between bg-gray-800/60 px-3 py-2 rounded-lg"
                         >
-                          <span className="text-sm">{member.otherUser?.name}</span>
+                          <span className="text-sm">
+                            {member.otherUser?.name}
+                          </span>
                           <button
                             onClick={() => removeMember(member.otherUser?.id)}
                             className="text-red-400 hover:text-red-600 p-1"
@@ -446,7 +472,9 @@ const ScheduleSession = () => {
                 )}
 
                 {errors.participants && touched.participants && (
-                  <p className="text-red-400 text-xs mt-2">{errors.participants}</p>
+                  <p className="text-red-400 text-xs mt-2">
+                    {errors.participants}
+                  </p>
                 )}
               </div>
             </div>

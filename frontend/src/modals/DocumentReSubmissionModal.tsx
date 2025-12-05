@@ -22,7 +22,9 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
   const [documentLoading, setDocumentLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
 
   const handleDocumentResubmit = async () => {
     if (!documentUrl) {
@@ -31,7 +33,9 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
     }
 
     if (!textMessage.trim()) {
-      setErrors({ password: "Please provide a message explaining the resubmission" });
+      setErrors({
+        password: "Please provide a message explaining the resubmission",
+      });
       return;
     }
 
@@ -40,22 +44,22 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
 
     try {
       await resubmitDocument(email, documentUrl, textMessage);
-      
+
       setShowSuccessModal(true);
-      
     } catch (err: any) {
       console.error("Resubmit error:", err);
-      
+
       let errorMessage = "Failed to resubmit document";
-      
+
       if (err.response) {
-        errorMessage = err.response.data?.message || `Server error: ${err.response.status}`;
+        errorMessage =
+          err.response.data?.message || `Server error: ${err.response.status}`;
       } else if (err.request) {
         errorMessage = "No response from server. Please check your connection.";
       } else {
         errorMessage = err.message || "An unexpected error occurred";
       }
-      
+
       setErrors({ email: errorMessage });
     } finally {
       setDocumentLoading(false);
@@ -65,7 +69,7 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
   const handleFileUpload = async (file: File) => {
     setUploadLoading(true);
     setErrors({});
-    
+
     try {
       const url = await uploadImageToCloudinary(file);
       console.log("File uploaded successfully:", url);
@@ -122,8 +126,16 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg
+                className="h-5 w-5 text-orange-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -131,7 +143,10 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
                 Document Verification Rejected
               </h3>
               <div className="mt-2 text-sm text-orange-700">
-                <p>Your submitted document was rejected. Please upload a new document for verification.</p>
+                <p>
+                  Your submitted document was rejected. Please upload a new
+                  document for verification.
+                </p>
               </div>
             </div>
           </div>
@@ -145,7 +160,8 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
             value={textMessage}
             onChange={(e) => {
               setTextMessage(e.target.value);
-              if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+              if (errors.password)
+                setErrors((prev) => ({ ...prev, password: "" }));
             }}
             placeholder="Please explain why you're resubmitting this document..."
             rows={4}
@@ -173,8 +189,18 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
             ) : documentUrl ? (
               <div className="space-y-1 text-center">
                 <div className="mx-auto flex items-center justify-center h-12 w-12">
-                  <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="h-8 w-8 text-green-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
                 <div className="text-sm text-green-600">
@@ -222,7 +248,12 @@ const DocumentResubmissionModal: React.FC<DocumentResubmissionModalProps> = ({
         <Button
           variant="primary"
           onClick={handleDocumentResubmit}
-          disabled={documentLoading || !documentUrl || !textMessage.trim() || uploadLoading}
+          disabled={
+            documentLoading ||
+            !documentUrl ||
+            !textMessage.trim() ||
+            uploadLoading
+          }
           className="w-full"
         >
           {documentLoading ? "Submitting..." : "Resubmit Document"}

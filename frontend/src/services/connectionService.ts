@@ -21,7 +21,8 @@ export const getAllConnections = (params?: {
   const query = new URLSearchParams();
 
   if (params?.search) query.append("search", params.search);
-  if (params?.status && params.status !== "all") query.append("status", params.status);
+  if (params?.status && params.status !== "all")
+    query.append("status", params.status);
   if (params?.page) query.append("page", params.page.toString());
   if (params?.limit) query.append("limit", params.limit.toString());
 
@@ -29,14 +30,16 @@ export const getAllConnections = (params?: {
   return API.get(`${R.base}${R.list}${queryString}`);
 };
 
-export const getSentConnectionRequests = () => API.get(`${R.base}${R.sentRequests}`);
+export const getSentConnectionRequests = () =>
+  API.get(`${R.base}${R.sentRequests}`);
 
 export const blockUnblockUser = (connectionId: string, isBlocked: boolean) => {
   const endpoint = isBlocked
-    ? `/users/connections/${connectionId}/unblock`
-    : `/users/connections/${connectionId}/block`;
+    ? `${R.base}/${connectionId}${R.unBlock}`
+    : `${R.base}/${connectionId}${R.block}`;
 
   return API.patch(endpoint);
 };
 
-export const removeConnection = (connectionId:string) => API.delete(`/users/connections/remove/${connectionId}`);
+export const removeConnection = (connectionId: string) =>
+  API.delete(`${R.base}${R.remove}/${connectionId}`);

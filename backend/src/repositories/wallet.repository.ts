@@ -24,9 +24,7 @@ export class WalletRepository extends BaseRepository<IWallet> {
     sessionId?: string,
     subscriptionId?: string
   ): Promise<IWallet | null> {
-    console.log('credit repo hitting')
     const wallet = await this.getWallet(userId);
-    console.log('add trans',wallet)
     if (!wallet) return null;
 
     const newBalance =

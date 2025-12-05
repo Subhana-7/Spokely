@@ -26,7 +26,7 @@ export interface IMentorService {
     code: string
   ): Promise<{ message: string }>;
 
-  getHome(id: string): Promise<MentorResponseDTO | null>;
+  getHome(id: string,months:number): Promise<MentorResponseDTO | null>;
   updateMentor(id: string, data: any): Promise<MentorResponseDTO | null>;
 
   changePassword(data: ChangePasswordDTO): Promise<{ message: string }>;

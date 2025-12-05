@@ -4,7 +4,7 @@ import { IConnectionController } from "./interfaces/IConnectionsController";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IConnectionService } from "../services/interfaces/IConnectionsService";
-import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+import { STATUS_CODES, MESSAGES, CONNECTION_MESSAGES } from "../utilis/constants";
 
 @injectable()
 export class ConnectionController implements IConnectionController {
@@ -12,6 +12,10 @@ export class ConnectionController implements IConnectionController {
     @inject(TYPES.IConnectionService)
     private _connectionsService: IConnectionService
   ) {}
+
+  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+    return err instanceof Error ? err.message : fallback;
+  }
 
   async sendRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -25,8 +29,10 @@ export class ConnectionController implements IConnectionController {
         uniqueCode
       );
       res.status(STATUS_CODES.CREATED).json(connection);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
@@ -37,9 +43,12 @@ export class ConnectionController implements IConnectionController {
       const requests = await this._connectionsService.getIncomingRequests(
         req.id
       );
+
       res.status(STATUS_CODES.OK).json(requests);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
@@ -49,22 +58,24 @@ export class ConnectionController implements IConnectionController {
   ): Promise<void> {
     try {
       if (!req.id) throw new Error(MESSAGES.ERROR.UNAUTHORIZED);
-      console.log(req.body.requestId);
+
       const { requestId } = req.body;
       const userId = req.id;
 
-      console.log("contro", requestId, userId);
       const accepted = await this._connectionsService.acceptRequest(
         requestId,
         userId
       );
+
       res.status(STATUS_CODES.OK).json(accepted);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
-   async listConnections(
+  async listConnections(
     req: AuthenticatedRequest,
     res: Response
   ): Promise<void> {
@@ -85,13 +96,17 @@ export class ConnectionController implements IConnectionController {
       });
 
       if (!result) {
-        res.status(STATUS_CODES.NOT_FOUND).json({ message: "No connections found" });
+        res
+          .status(STATUS_CODES.NOT_FOUND)
+          .json({ message: CONNECTION_MESSAGES.REQUEST.EMPTY });
         return;
       }
 
       res.status(STATUS_CODES.OK).json(result);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
@@ -105,9 +120,12 @@ export class ConnectionController implements IConnectionController {
       const requests = await this._connectionsService.getOutgoingRequests(
         req.id
       );
+
       res.status(STATUS_CODES.OK).json(requests);
-    } catch (err: any) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ message: err.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
@@ -115,14 +133,17 @@ export class ConnectionController implements IConnectionController {
     try {
       const userId = req.id!;
       const connectionId = req.params.id;
-      console.log(connectionId);
+
       const updated = await this._connectionsService.blockConnection(
         connectionId,
         userId
       );
-      res.status(200).json(updated);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
+
+      res.status(STATUS_CODES.OK).json(updated);
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
@@ -130,25 +151,32 @@ export class ConnectionController implements IConnectionController {
     try {
       const userId = req.id!;
       const connectionId = req.params.id;
+
       const updated = await this._connectionsService.unblockConnection(
         connectionId,
         userId
       );
-      res.status(200).json(updated);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
+
+      res.status(STATUS_CODES.OK).json(updated);
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 
   async removeConnection(req: AuthenticatedRequest, res: Response) {
     try {
       const connectionId = req.params.id;
-      const result = await this._connectionsService.removeConnection(
-        connectionId
-      );
-      res.status(200).json(result);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
+
+      const result =
+        await this._connectionsService.removeConnection(connectionId);
+
+      res.status(STATUS_CODES.OK).json(result);
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        message: this.getErrorMessage(err),
+      });
     }
   }
 }

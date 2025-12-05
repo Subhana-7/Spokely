@@ -18,9 +18,9 @@ router.get(
   controller.getAll.bind(controller)
 );
 
-router.post("/logout", controller.logout.bind(controller));
+router.post("/logout",authMiddleware(["mentor"]), controller.logout.bind(controller));
 router.patch("/re-submit", controller.updateMentorDocument.bind(controller));
-router.post("/refresh-token", controller.refreshToken.bind(controller));
+router.post("/refresh-token",authMiddleware(["mentor"]), controller.refreshToken.bind(controller));
 
 router.post("/forgot-password", controller.forgotPassword.bind(controller));
 router.post(
@@ -34,7 +34,7 @@ router.post(
   controller.home.bind(controller)
 );
 
-router.get("/mentor-profile/:id", controller.profile.bind(controller));
+router.get("/mentor-profile/:id",authMiddleware(["mentor","user","admin"]), controller.profile.bind(controller));
 
 router.post(
   "/edit/:id",

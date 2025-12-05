@@ -4,6 +4,7 @@ import { injectable } from "inversify";
 import SessionModel from "../models/sessions.model";
 import MentorModel from "../models/mentor.model";
 import { BaseRepository } from "./base.repository";
+import { Types } from "mongoose";
 
 @injectable()
 export class SubscriptionRepository
@@ -201,48 +202,77 @@ export class SubscriptionRepository
     return SubscriptionModel.find({ status: "ACTIVE" });
   }
 
-  async findSubscriptionHistory(userId: string, page = 1, limit = 10) {
-  const skip = (page - 1) * limit;
+    async findSubscriptionHistory(
+    userId: string,
+    search: string = "",
+    status: string = "All",
+    page = 1,
+    limit = 10
+  ) {
+    const skip = (page - 1) * limit;
 
-  const subscriptions = await this.model
-    .find({ userId })
-    .populate({
-      path: "mentorId",
-      model: "Mentor",
-      select: "name email profilePicture",
-    })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+    const query: any = { userId: new Types.ObjectId(userId) };
+    if (status && status !== "All") {
+      query.status = status;
+    }
 
-  const total = await this.model.countDocuments({ userId });
-  const totalPages = Math.ceil(total / limit);
+    const subscriptions = await this.model
+      .find(query)
+      .populate({
+        path: "mentorId",
+        model: "Mentor",
+        select: "name email profilePicture",
+      })
+      .sort({ createdAt: -1 })
+      .lean();
 
-  const formatted = subscriptions.map((sub: any) => ({
-    id: sub._id,
-    planName: sub.plan,
-    price: sub.price,
-    startDate: sub.startDate,
-    endDate: sub.endDate,
-    status: sub.status,
-    sessions: sub.sessionsCount || 0,
-    mentor: sub.mentorId
-      ? {
-          id: sub.mentorId._id,
-          name: sub.mentorId.name,
-          profilePicture: sub.mentorId.profilePicture,
-        }
-      : null,
-  }));
+    let filtered = subscriptions;
+    if (search && search.trim()) {
+      const searchLower = search.toString().toLowerCase();
+      filtered = subscriptions.filter((sub: any) => {
+        const mentor = sub.mentorId;
+        const plan = (sub.plan || "").toString().toLowerCase();
+        const idStr = sub._id?.toString().toLowerCase() || "";
+        const mentorName = mentor?.name?.toString().toLowerCase() || "";
+        const mentorEmail = mentor?.email?.toString().toLowerCase() || "";
 
-  return {
-    data: formatted,
-    total,
-    page,
-    totalPages,
-  };
-}
+        return (
+          mentorName.includes(searchLower) ||
+          mentorEmail.includes(searchLower) ||
+          plan.includes(searchLower) ||
+          idStr.includes(searchLower)
+        );
+      });
+    }
+
+    const total = filtered.length;
+    const paginated = filtered.slice(skip, skip + limit);
+
+    const formatted = paginated.map((sub: any) => ({
+      id: sub._id,
+      planName: sub.plan,
+      price: sub.price,
+      startDate: sub.startDate,
+      endDate: sub.endDate,
+      status: sub.status,
+      sessions: sub.sessionsCount || 0,
+      mentor: sub.mentorId
+        ? {
+            id: sub.mentorId._id,
+            name: sub.mentorId.name,
+            profilePicture: sub.mentorId.profilePicture,
+          }
+        : null,
+    }));
+
+    return {
+      data: formatted,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
 
 
 async findByMentorPaginated(

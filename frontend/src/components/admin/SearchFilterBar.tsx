@@ -1,60 +1,78 @@
-import { Search } from "lucide-react";
-
 interface SearchFilterBarProps {
   searchPlaceholder?: string;
   filterOptions?: string[];
+  statusOptions?: { label: string; value: string }[];
   onSearch?: (value: string) => void;
   onFilter?: (value: string) => void;
   onStatusFilter?: (value: string) => void;
+
+  hideFilter?: boolean;
+  hideStatusFilter?: boolean;
+  hideMoreFilters?: boolean;
 }
 
 const SearchFilterBar = ({
   searchPlaceholder = "Search by name or email",
-  filterOptions = ["All Roles", "Top Rated", "Most Students"],
+  filterOptions = [],
+  statusOptions = [
+    { label: "All Status", value: "all" },
+    { label: "Active", value: "active" },
+    { label: "Blocked", value: "blocked" },
+  ],
   onSearch,
   onFilter,
   onStatusFilter,
+  hideFilter = false,
+  hideStatusFilter = false,
+  hideMoreFilters = false,
 }: SearchFilterBarProps) => {
   return (
     <div className="mb-6">
       <div className="flex flex-col lg:flex-row gap-4">
+        {/* SEARCH BAR */}
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
             placeholder={searchPlaceholder}
             onChange={(e) => onSearch?.(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg bg-white text-sm"
           />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 lg:flex-shrink-0">
-          <select
-            onChange={(e) => onFilter?.(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-w-[140px]"
-          >
-            {filterOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          {/* FILTER DROPDOWN */}
+          {!hideFilter && (
+            <select
+              onChange={(e) => onFilter?.(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+            >
+              {filterOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          )}
 
-          <select
-            onChange={(e) => onStatusFilter?.(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-w-[120px]"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-          </select>
+          {/* STATUS DROPDOWN */}
+          {!hideStatusFilter && (
+            <select
+              onChange={(e) => onStatusFilter?.(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
 
-          <button
-            type="button"
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 whitespace-nowrap"
-          >
-            More Filters
-          </button>
+          {!hideMoreFilters && (
+            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+              More Filters
+            </button>
+          )}
         </div>
       </div>
     </div>

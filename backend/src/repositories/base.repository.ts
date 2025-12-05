@@ -15,7 +15,7 @@ export abstract class BaseRepository<T extends Document>
   async findById(id: string): Promise<T | null> {
     try {
       return this.model.findById(id);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("findById error:", error);
       return null;
     }
@@ -25,7 +25,7 @@ export abstract class BaseRepository<T extends Document>
     try {
       console.log(query);
       return this.model.findOne(query);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("findOne error:", error);
       return null;
     }
@@ -44,7 +44,7 @@ export abstract class BaseRepository<T extends Document>
       const total = await this.model.countDocuments(query);
 
       return { results, total };
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("findAll error:", error);
       return { results: [], total: 0 };
     }
@@ -53,7 +53,7 @@ export abstract class BaseRepository<T extends Document>
   async create(data: Partial<T>): Promise<T | null> {
     try {
       return this.model.create(data);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("create error:", error);
       return null;
     }
@@ -62,7 +62,7 @@ export abstract class BaseRepository<T extends Document>
   async update(id: string, data: Partial<T>): Promise<T | null> {
     try {
       return this.model.findByIdAndUpdate(id, data, { new: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("update error:", error);
       return null;
     }
@@ -71,7 +71,7 @@ export abstract class BaseRepository<T extends Document>
   async delete(id: string): Promise<T | null> {
     try {
       return this.model.findByIdAndDelete(id);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("delete error:", error);
       return null;
     }

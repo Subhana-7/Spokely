@@ -18,7 +18,8 @@ export interface Feedback {
 }
 
 // --- User Sessions ---
-export const createSession = (data: any) => API.post(`${R.base}${R.schedule}`, data);
+export const createSession = (data: any) =>
+  API.post(`${R.base}${R.schedule}`, data);
 
 export const getSessions = (params?: {
   search?: string;
@@ -28,7 +29,8 @@ export const getSessions = (params?: {
   limit?: number;
 }) => API.get(`${R.base}${R.list}`, { params });
 
-export const getSessionById = (id: string) => API.get<Session>(`${R.base}${R.details}/${id}`);
+export const getSessionById = (id: string) =>
+  API.get<Session>(`${R.base}${R.details}/${id}`);
 
 export const updateSession = (id: string, updates: any) =>
   API.patch(`${R.base}/${id}`, updates);
@@ -39,13 +41,17 @@ export const respondToInvite = (id: string, status: "accepted" | "rejected") =>
 export const cancelParticipation = (id: string, reason: string) =>
   API.post(`${R.base}/${id}${R.cancelParticipation}`, { reason });
 
-export const cancelSession = (userId: string, sessionId: string, reason: string) =>
-  API.post(`${R.base}/${sessionId}${R.cancelSession}`, { userId, reason });
+export const cancelSession = (
+  userId: string,
+  sessionId: string,
+  reason: string
+) => API.post(`${R.base}/${sessionId}${R.cancelSession}`, { userId, reason });
 
 export const flagSession = (id: string, reason: string, againstUser: string) =>
   API.post(`${R.base}/${id}${R.flag}`, { reason, againstUser });
 
-export const getAgoraToken = (id: string) => API.get(`${R.base}/${id}${R.token}`);
+export const getAgoraToken = (id: string) =>
+  API.get(`${R.base}/${id}${R.token}`);
 
 export const getPublicSessions = (params?: {
   search?: string;
@@ -54,13 +60,13 @@ export const getPublicSessions = (params?: {
   limit?: number;
 }) => API.get(`${R.base}${R.publicSessions}`, { params });
 
-
 export const addFeedback = (id: string, data: Feedback) =>
   API.post(`${R.base}/${id}${R.feedback}`, data);
 
 // --- Admin Sessions ---
-export const adminSessionListing = (params: { page: number; limit: number; search: string; status: string }) =>
-  API.get(`${R.base}${R.adminList}`, { params });
-
-export const adminSessionDetails = (id: string) =>
-  API.get(`${R.base}/${id}${R.adminDetails}`);
+export const adminSessionListing = (params: {
+  page: number;
+  limit: number;
+  search: string;
+  status: string;
+}) => API.get(`${R.base}${R.adminList}`, { params });

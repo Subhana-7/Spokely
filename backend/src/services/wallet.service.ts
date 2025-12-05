@@ -3,6 +3,7 @@ import { TYPES } from "../types/types";
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IWallet } from "../models/wallet.model";
+import { PAYMENT_STATUS } from "../utilis/constants";
 
 @injectable()
 export class WalletService {
@@ -23,24 +24,7 @@ export class WalletService {
     return this._walletRepo.addTransaction(
       userId,
       amount,
-      "CREDIT",
-      reason,
-      sessionId,
-      subscriptionId
-    );
-  }
-
-  async debit(
-    userId: string,
-    amount: number,
-    reason: string,
-    sessionId?: string,
-    subscriptionId?: string
-  ): Promise<IWallet | null> {
-    return this._walletRepo.addTransaction(
-      userId,
-      amount,
-      "DEBIT",
+      PAYMENT_STATUS.CREDIT,
       reason,
       sessionId,
       subscriptionId
@@ -56,12 +40,18 @@ export class WalletService {
     userId: string,
     page = 1,
     limit = 10
-  ): Promise<{ transactions: any[]; total: number; totalPages: number; currentPage: number }> {
+  ): Promise<{
+    transactions: any[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
     const wallet = await this._walletRepo.getWallet(userId);
     const allTransactions = wallet?.transactions || [];
 
     const sorted = allTransactions.sort(
-      (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+      (a, b) =>
+        new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
 
     const total = sorted.length;
@@ -82,7 +72,7 @@ export class WalletService {
           }
         }
 
-        return { ...tx.toObject?.() ?? tx, reason: updatedReason };
+        return { ...(tx.toObject?.() ?? tx), reason: updatedReason };
       })
     );
 

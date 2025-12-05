@@ -14,10 +14,20 @@ import {
   mapToCreateSubscriptionDTO,
   mapToSetMentorPlansDTO,
 } from "../mappers/subscription.mapper";
-import { STATUS_CODES } from "../utilis/constants";
+
+import {
+  MESSAGES,
+  SUBSCRIPTION_STATUS,
+  PLAN_TYPES,
+  NOTIFICATION_TYPE,
+  SUBSCRIPTION_STRINGS,
+  SESSION_TYPE,
+  SESSION_STATUS,
+  SESSION_AUTO_CREATE_STRINGS,
+  CRON_STRINGS,
+} from "../utilis/constants";
+
 import { IChatRepository } from "../repositories/interfaces/IChatRepository";
-import { privateDecrypt } from "crypto";
-import session from "express-session";
 import { IWalletService } from "./interfaces/IWalletService";
 import { INotificationService } from "./interfaces/INotificationService";
 
@@ -30,10 +40,12 @@ export class SubscriptionService implements ISubscriptionService {
     private _sessionRepository: ISessionRepository,
     @inject(TYPES.IMentorPlanRepository)
     private _mentorPlanRepository: IMentorPlanRepository,
-    @inject(TYPES.IChatRepository) private _chatRepository: IChatRepository,
+    @inject(TYPES.IChatRepository)
+    private _chatRepository: IChatRepository,
     @inject(TYPES.IWalletService)
     private readonly _walletService: IWalletService,
-    @inject(TYPES.INotificationService) private _notificationService:INotificationService,
+    @inject(TYPES.INotificationService)
+    private _notificationService: INotificationService
   ) {}
 
   async subscribe(raw: any) {
@@ -48,62 +60,71 @@ export class SubscriptionService implements ISubscriptionService {
     });
 
     if (!subscription) {
-      throw new Error("Failed to create subscription");
+      throw new Error(SUBSCRIPTION_STRINGS.ERRORS.CREATE_FAILED);
     }
 
     if (dto.price === undefined) {
-      throw new Error("Subscription price is not defined");
+      throw new Error(SUBSCRIPTION_STRINGS.ERRORS.PRICE_MISSING);
     }
+
+     const userId = dto.userId.toString();
+  const mentorId = dto.mentorId.toString();
+
+  const participants = [userId, mentorId].sort();
+
+  const sessionId = participants.join("_");
+
+  await this._chatRepository.findOrCreateSession(sessionId, participants);
 
     await this._walletService.credit(
       dto.mentorId,
       dto.price,
-      `Subscription payment from user ${dto.userId}`,
+      SUBSCRIPTION_STRINGS.PAYMENT_DESCRIPTION(dto.userId),
       undefined,
       subscription._id?.toString()
     );
 
     await this._notificationService.send({
-      userId:dto.mentorId,
-      title:"New Student Subscription",
-      message:"A new student has subscribed to you. Congratulations.",
-      type:"success",
-    })
+      userId: dto.mentorId,
+      title: SUBSCRIPTION_STRINGS.NOTIFICATIONS.TITLE,
+      message: SUBSCRIPTION_STRINGS.NOTIFICATIONS.MESSAGE,
+      type: NOTIFICATION_TYPE.SUCCESS,
+    });
 
     return subscription;
   }
 
   getUserSubscriptions(
-  userId: string,
-  search: string,
-  status: string,
-  page: number,
-  limit: number
-) {
-  return this._subscriptionRepository.findByUser(userId, search, status, page, limit);
-}
+    userId: string,
+    search: string,
+    status: string,
+    page: number,
+    limit: number
+  ) {
+    return this._subscriptionRepository.findByUser(
+      userId,
+      search,
+      status,
+      page,
+      limit
+    );
+  }
 
-
- getMentorSubscriptions(mentorId: string, search = "", page = 1, limit = 9) {
-  return this._subscriptionRepository.findByMentorPaginated(
-    mentorId,
-    search,
-    page,
-    limit
-  );
-}
-
+  getMentorSubscriptions(mentorId: string, search = "", page = 1, limit = 9) {
+    return this._subscriptionRepository.findByMentorPaginated(
+      mentorId,
+      search,
+      page,
+      limit
+    );
+  }
 
   cancelSubscription(subscriptionId: string) {
     return this._subscriptionRepository.cancelSubscription(subscriptionId);
   }
 
   async saveMentorPlans(raw: any) {
-    // console.log(raw,'service')
     const dto: SetMentorPlansDTO = mapToSetMentorPlansDTO(raw);
-
-    // console.log(this.saveMentorPlans);
-
     return this._mentorPlanRepository.savePlans(dto.mentorId, dto.plans);
   }
 
@@ -124,29 +145,27 @@ export class SubscriptionService implements ISubscriptionService {
 
   scheduleCronJobs() {
     cron.schedule("0 0 * * *", async () => {
-      console.log("Running daily subscription cron...");
+      console.log(CRON_STRINGS.DAILY_SUBSCRIPTION_JOB);
 
       const subscriptions = await this._subscriptionRepository.findActive();
 
-      console.log(subscriptions);
-
       for (const sub of subscriptions) {
-        if (sub.status !== "ACTIVE") continue;
+        if (sub.status !== SUBSCRIPTION_STATUS.ACTIVE) continue;
 
         const today = new Date();
         let shouldCreate = false;
 
         switch (sub.plan) {
-          case "DAILY":
+          case PLAN_TYPES.DAILY:
             shouldCreate = true;
             break;
-          case "WEEKLY":
+          case PLAN_TYPES.WEEKLY:
             shouldCreate = today.getDay() === 1;
             break;
-          case "BIWEEKLY":
+          case PLAN_TYPES.BIWEEKLY:
             shouldCreate = today.getDate() % 14 === 0;
             break;
-          case "TRIWEEKLY":
+          case PLAN_TYPES.TRIWEEKLY:
             shouldCreate = today.getDate() % 7 === 0;
             break;
         }
@@ -158,24 +177,39 @@ export class SubscriptionService implements ISubscriptionService {
         const sessionStartTime = new Date(today);
         sessionStartTime.setHours(hour24, 0, 0, 0);
 
-        console.log(sessionStartTime);
-
         await this._sessionRepository.createSession({
           mentorId: sub.mentorId,
-          participants: [{ user: sub.userId, status: "accepted" }],
+          participants: [
+            {
+              user: sub.userId,
+              status: SESSION_STATUS.ACCEPTED,
+            },
+          ],
           startTime: sessionStartTime,
-          type: "private",
-          topic: "Subscription Session",
-          description: "Auto-scheduled session",
+          type: SESSION_TYPE.PRIVATE,
+          topic: SESSION_AUTO_CREATE_STRINGS.TOPIC,
+          description: SESSION_AUTO_CREATE_STRINGS.DESCRIPTION,
           createdBy: sub.mentorId,
-          createdByModel: "Mentor",
+          createdByModel: SESSION_AUTO_CREATE_STRINGS.CREATED_BY_MODEL,
         });
       }
     });
   }
 
-  async getSubscriptionHistory(userId: string, page: number, limit: number) {
-  return this._subscriptionRepository.findSubscriptionHistory(userId, page, limit);
-}
+   async getSubscriptionHistory(
+    userId: string,
+    search: string = "",
+    status: string = "All",
+    page: number = 1,
+    limit: number = 10
+  ) {
+    return this._subscriptionRepository.findSubscriptionHistory(
+      userId,
+      search,
+      status,
+      page,
+      limit
+    );
+  }
 
 }

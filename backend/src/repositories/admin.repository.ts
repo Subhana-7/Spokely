@@ -17,7 +17,7 @@ export class AdminRepository
   async findByEmail(email: string): Promise<IAdmin | null> {
     try {
       return Admin.findOne({ email });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -26,7 +26,7 @@ export class AdminRepository
   async findAllUsers(): Promise<IUser[] | null> {
     try {
       return User.find({ isVerified: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -35,7 +35,7 @@ export class AdminRepository
   async findAllMentors(): Promise<IMentor[] | null> {
     try {
       return Mentor.find({ isVerified: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -64,7 +64,7 @@ export class AdminRepository
         isVerified: true,
       });
       return result;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -78,7 +78,7 @@ export class AdminRepository
         { new: true }
       );
       return res;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -98,7 +98,7 @@ export class AdminRepository
         { new: true }
       );
       return res;
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }

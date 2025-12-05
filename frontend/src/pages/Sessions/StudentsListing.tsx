@@ -36,7 +36,6 @@ const MyStudents: React.FC = () => {
     try {
       const { data } = await getMentorStudents(mentorId, search, page, limit);
 
-      // Expected backend shape: { data: [...], total, page, totalPages }
       const list = data.data || data.students || [];
 
       const transformed: Student[] = list.map((item: any) => ({
@@ -68,7 +67,6 @@ const MyStudents: React.FC = () => {
 
   useEffect(() => {
     fetchStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, page]);
 
   const avgScore =
@@ -133,7 +131,7 @@ const MyStudents: React.FC = () => {
               placeholder="Search students by name or email..."
               value={search}
               onChange={(val) => {
-                setPage(1); // reset pagination when searching
+                setPage(1);
                 setSearch(val);
               }}
               rightIcon={<Search size={18} />}
@@ -146,7 +144,9 @@ const MyStudents: React.FC = () => {
         {loading ? (
           <div className="text-center text-gray-300 py-8">Loading...</div>
         ) : students.length === 0 ? (
-          <div className="text-center text-gray-400 py-12">No students found</div>
+          <div className="text-center text-gray-400 py-12">
+            No students found
+          </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {students.map((student) => (

@@ -37,12 +37,8 @@ const MentorSuccessModal: React.FC<MentorSuccessModalProps> = ({
             </div>
           </div>
         </div>
-        
-        <Button
-          variant="primary"
-          onClick={onClose}
-          className="w-full"
-        >
+
+        <Button variant="primary" onClick={onClose} className="w-full">
           Got it, thanks!
         </Button>
       </div>

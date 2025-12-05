@@ -56,8 +56,8 @@ const MentorVerification = () => {
   const handleReject = async (id: string) => {
     if (!rejectionReason) return alert("Please provide a rejection reason.");
     try {
-      await rejectMentor(id, { rejectionReason });
-      fetchMentor(); 
+      await rejectMentor(id, rejectionReason);
+      fetchMentor();
     } catch (err) {
       console.error("Error rejecting mentor:", err);
     }

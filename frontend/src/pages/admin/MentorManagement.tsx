@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 const MentorManagement = () => {
   const [mentors, setMentors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
@@ -17,44 +17,43 @@ const MentorManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortFilter, setSortFilter] = useState("All Mentors");
 
- useEffect(() => {
-  const fetchMentors = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        setLoading(true);
 
-      const params: any = {
-        page,
-        limit,
-        search,
-      };
+        const params: any = {
+          page,
+          limit,
+          search,
+        };
 
-      if (statusFilter === "active") params.isBlocked = false;
-      else if (statusFilter === "blocked") params.isBlocked = true;
+        if (statusFilter === "active") params.isBlocked = false;
+        else if (statusFilter === "blocked") params.isBlocked = true;
 
-      if (sortFilter === "Most Students") params.sortBy = "students";
-      else if (sortFilter === "Sessions") params.sortBy = "sessions";
-      else if (sortFilter === "Verification Pendings")
-        params.verificationStatus = "pending";
+        if (sortFilter === "Most Students") params.sortBy = "students";
+        else if (sortFilter === "Sessions") params.sortBy = "sessions";
+        else if (sortFilter === "Verification Pendings")
+          params.verificationStatus = "pending";
 
-      const res = await getAllMentors(params);
+        const res = await getAllMentors(params);
 
-      const { mentors, total } = res.data.result;
+        const { mentors, total } = res.data.result;
 
-      console.log(mentors, total);
+        console.log(mentors, total);
 
-      setMentors(mentors ?? []);
-      setTotal(total ?? 0);
-    } catch (err) {
-      console.error("Error fetching mentors:", err);
-      toast.error("Failed to fetch mentors.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        setMentors(mentors ?? []);
+        setTotal(total ?? 0);
+      } catch (err) {
+        console.error("Error fetching mentors:", err);
+        toast.error("Failed to fetch mentors.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchMentors();
-}, [page, search, statusFilter, sortFilter]);
-
+    fetchMentors();
+  }, [page, search, statusFilter, sortFilter]);
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -128,19 +127,20 @@ const MentorManagement = () => {
         </div>
       </div>
 
-<div className="text-black">
-      <SearchFilterBar
-        searchPlaceholder="Search mentors by name or email"
-        filterOptions={[
-          "All Mentors",
-          "Verification Pendings",
-          "Most Students",
-          "Sessions",
-        ]}
-        onSearch={handleSearch}
-        onFilter={handleFilter}
-        onStatusFilter={handleStatusFilter}
-      />
+      <div className="text-black">
+        <SearchFilterBar
+          searchPlaceholder="Search mentors by name or email"
+          filterOptions={[
+            "All Mentors",
+            "Verification Pendings",
+            "Most Students",
+            "Sessions",
+          ]}
+          onSearch={handleSearch}
+          onFilter={handleFilter}
+          onStatusFilter={handleStatusFilter}
+          hideMoreFilters={true}
+        />
       </div>
 
       <DataTable
@@ -148,11 +148,11 @@ const MentorManagement = () => {
         type="mentor"
         onBlock={handleBlock}
         onRowClick={handleMentorClick}
+        onDelete={(id) => (window.location.href = `/mentor-profile/${id}`)}
         page={page}
         setPage={setPage}
         total={total}
         limit={limit}
-        // loading={loading}
       />
     </div>
   );

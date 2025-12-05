@@ -14,6 +14,10 @@ export class PaymentController implements IPaymentController {
     @inject(TYPES.IWalletService) private _walletService: IWalletService
   ) {}
 
+  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+    return err instanceof Error ? err.message : fallback;
+  }
+
   createOrder = async (
     req: AuthenticatedRequest,
     res: Response
@@ -25,12 +29,14 @@ export class PaymentController implements IPaymentController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const result = await this._paymentService.createOrder(req.id, req.body);
+
       res.status(STATUS_CODES.OK).json(result);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -45,14 +51,17 @@ export class PaymentController implements IPaymentController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const result = await this._paymentService.captureOrder(req.id, req.body);
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SUCCESS.PAYMENT_CAPTURED, data: result });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SUCCESS.PAYMENT_CAPTURED,
+        data: result,
+      });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -72,11 +81,12 @@ export class PaymentController implements IPaymentController {
         req.id,
         req.body
       );
+
       res.status(STATUS_CODES.OK).json(result);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -91,18 +101,20 @@ export class PaymentController implements IPaymentController {
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
         return;
       }
+
       const result = await this._paymentService.captureSubscription(
         req.id,
         req.body
       );
+
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.SUBSCRIPTION_CAPTURED,
         data: result,
       });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 
@@ -117,13 +129,14 @@ export class PaymentController implements IPaymentController {
 
       const result = await this._walletService.getTransactions(req.id);
 
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: MESSAGES.SUCCESS.WALLET_FETCHED, data: result });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SUCCESS.WALLET_FETCHED,
+        data: result,
+      });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: this.getErrorMessage(err),
+      });
     }
   };
 }

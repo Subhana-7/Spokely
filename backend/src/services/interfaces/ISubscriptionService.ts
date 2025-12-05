@@ -25,5 +25,11 @@ export interface ISubscriptionService {
   getMentorPlans(mentorId: string): Promise<IMentorPlan["plans"]>;
   saveMentorPlans(dto: SetMentorPlansDTO): Promise<IMentorPlan | null>;
 
-  getSubscriptionHistory(userId: string, page: number, limit: number):Promise<any>;
+  getSubscriptionHistory(
+    userId: string,
+    search: string,
+    status: string,
+    page: number,
+    limit: number,
+  ):Promise<any>;
 }

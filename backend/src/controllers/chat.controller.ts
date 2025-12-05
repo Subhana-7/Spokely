@@ -21,7 +21,7 @@ export class ChatController {
       return res
         .status(STATUS_CODES.OK)
         .json({ messages, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
-    } catch (err) {
+    } catch (err:unknown) {
       return res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.ERROR.SERVER_ERROR });
@@ -51,7 +51,7 @@ export class ChatController {
       return res
         .status(STATUS_CODES.OK)
         .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });
-    } catch (err) {
+    } catch (err:unknown) {
       return res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.ERROR.SERVER_ERROR });
@@ -76,7 +76,7 @@ export class ChatController {
       res
         .status(STATUS_CODES.OK)
         .json({ chats, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
-    } catch (err) {
+    } catch (err:unknown) {
       console.error("Error fetching chats:", err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)

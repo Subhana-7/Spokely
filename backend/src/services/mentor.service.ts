@@ -9,19 +9,22 @@ import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
 import { ChangePasswordDTO, MentorResponseDTO } from "../dto/mentor.dto";
-import { MESSAGES } from "../utilis/constants";
+import { MESSAGES, MENTOR_MESSAGES,VERIFICATION_STATUS,ROLES } from "../utilis/constants";
 
 @injectable()
 export class MentorService implements IMentorService {
   constructor(
     @inject(TYPES.IMentorRepository)
     private _mentorRepository: IMentorRepository,
-    @inject(TYPES.IEmailService) private _emailService: IEmailService
+
+    @inject(TYPES.IEmailService)
+    private _emailService: IEmailService
   ) {}
 
   async generateUniqueCode(): Promise<string | null> {
     const generate = () =>
       Math.random().toString(36).substring(2, 8).toUpperCase();
+
     let code = generate();
     while (await this._mentorRepository.findByUniqueCode(code)) {
       code = generate();
@@ -32,8 +35,9 @@ export class MentorService implements IMentorService {
   private async passwordValidation(password: string): Promise<void> {
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
     if (!strongPasswordRegex.test(password)) {
-      throw new Error(MESSAGES.ERROR.INVALID_INPUT);
+      throw new Error(MENTOR_MESSAGES.ERROR.INVALID_PASSWORD);
     }
   }
 
@@ -47,6 +51,7 @@ export class MentorService implements IMentorService {
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
     await this._mentorRepository.updateOTP(email, otp, expiresAt);
     await this._emailService.sendOTP(email, otp);
   }
@@ -55,9 +60,9 @@ export class MentorService implements IMentorService {
     const isValid = await this._mentorRepository.verifyOTP(email, code);
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
-    await this._emailService.sendVerificationUpdateEmail(email, "pending");
+    await this._emailService.sendVerificationUpdateEmail(email, VERIFICATION_STATUS.PENDING);
 
-    return { message: MESSAGES.SUCCESS.USER_FETCHED };
+    return { message: MENTOR_MESSAGES.SUCCESS.OTP_VERIFICATION };
   }
 
   async signup(data: any): Promise<MentorResponseDTO | null> {
@@ -70,7 +75,7 @@ export class MentorService implements IMentorService {
     const document = {
       documentUrl: data.documentUrl,
       textMessage: data.textMessage,
-      verificationStatus: "pending",
+      verificationStatus: VERIFICATION_STATUS.PENDING,
     };
 
     const mentor = await this._mentorRepository.createMentor({
@@ -98,8 +103,8 @@ export class MentorService implements IMentorService {
 
     return {
       mentor: toMentorResponseDTO(mentor),
-      accessToken: generateAccessToken({ id: mentor._id, role: "mentor" }),
-      refreshToken: generateRefreshToken({ id: mentor._id, role: "mentor" }),
+      accessToken: generateAccessToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
+      refreshToken: generateRefreshToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
     };
   }
 
@@ -126,8 +131,8 @@ export class MentorService implements IMentorService {
     if (!mentor) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     await this.passwordValidation(newPassword);
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -137,6 +142,7 @@ export class MentorService implements IMentorService {
       expiresAt,
       hashedPassword
     );
+
     await this._emailService.sendOTPEmail(email, otp, true);
   }
 
@@ -148,34 +154,37 @@ export class MentorService implements IMentorService {
       email,
       code
     );
+
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
-    return { message: MESSAGES.SUCCESS.PASSWORD_RESET };
+    return { message: MENTOR_MESSAGES.SUCCESS.PASSWORD_UPDATED };
   }
 
-  async getHome(id: string): Promise<any | null> {
-    const mentor = await this._mentorRepository.findById(id);
-    if (!mentor) return null;
+  async getHome(id: string, months = 6): Promise<any | null> {
+  const mentor = await this._mentorRepository.findById(id);
+  if (!mentor) return null;
 
-    const dashboardData = await this._mentorRepository.getDashboardData(id);
-    if (!dashboardData) return null;
+  const dashboardData = await this._mentorRepository.getDashboardData(id, months);
 
-    return {
-      mentor: toMentorResponseDTO(mentor),
-      stats: {
-        totalStudents: dashboardData.totalStudents,
-        todaysSessionsCount: dashboardData.todaysSessionsCount,
-        avgProgress: dashboardData.avgProgress,
-        avgFeedback: dashboardData.avgFeedback,
-        avgFeedbackValue: dashboardData.avgFeedbackValue,
-      },
-      sessionsToday: dashboardData.sessionsToday,
-      recentActivities: dashboardData.recentActivities,
-    };
-  }
+  if (!dashboardData) return null;
+
+  return {
+    mentor: toMentorResponseDTO(mentor),
+    stats: {
+      totalStudents: dashboardData.totalStudents,
+      todaysSessionsCount: dashboardData.todaysSessionsCount,
+      avgProgress: dashboardData.avgProgress,
+      avgFeedback: dashboardData.avgFeedback,
+      avgFeedbackValue: dashboardData.avgFeedbackValue,
+    },
+    sessionsToday: dashboardData.sessionsToday,
+    recentActivities: dashboardData.recentActivities,
+    chartData: dashboardData.chartData, 
+  };
+}
+
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
-    console.log(data);
     const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
@@ -205,6 +214,7 @@ export class MentorService implements IMentorService {
       data.id,
       newHashedPassword
     );
+
     if (!updation) {
       throw new Error(MESSAGES.ERROR.PASSWORD_NOT_CHANGED);
     }
@@ -223,24 +233,28 @@ export class MentorService implements IMentorService {
         role: string;
       };
 
-      if (payload.role !== "mentor") {
+      if (payload.role !== ROLES.MENTOR) {
         throw new Error(MESSAGES.ERROR.FORBIDDEN);
       }
 
       const mentor = await this._mentorRepository.findById(payload.id);
-      if (!mentor) throw new Error("Mentor not found");
+
+      if (!mentor) {
+        throw new Error(MENTOR_MESSAGES.ERROR.MENTOR_NOT_FOUND);
+      }
 
       const newAccessToken = generateAccessToken({
         id: payload.id,
-        role: "mentor",
+        role: ROLES.MENTOR,
+        status:mentor.isBlocked
       });
 
       return {
         mentor: toMentorResponseDTO(mentor),
         accessToken: newAccessToken,
       };
-    } catch (err) {
-      throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
+    } catch (err:unknown) {
+      throw new Error(MENTOR_MESSAGES.ERROR.INVALID_REFRESH_TOKEN);
     }
   }
 }

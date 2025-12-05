@@ -15,6 +15,8 @@ import Input from "../../modals/Input";
 import { getSessionById, addFeedback } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
+import MentorHeader from "../mentor/DashboardComponents/Header";
 
 const SessionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +56,8 @@ const SessionDetail = () => {
     };
     fetchSession();
   }, [id]);
+
+  console.log(session);
 
   const handleSubmitFeedback = async () => {
     if (!feedbackComment.trim() || !feedbackRating || !feedbackModal.toUserId) {
@@ -116,24 +120,40 @@ const SessionDetail = () => {
     ongoing: "bg-blue-500/20 text-white border border-blue-500/30",
   };
 
+  const goToProfile = (user: any) => {
+    if (user.role === "mentor") {
+      navigate(`/mentor-profile/${user._id}`);
+    } else {
+      navigate(`/user-profile/${user._id}`);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-16">
-      {/* Header */}
-      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10">
+    <div
+      className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white ${
+        currentUser?.role === "user" ? "pt-13" : ""
+      }`}
+    >
+      {/* Headers */}
+      {currentUser?.role === "user" && <Header />}
+      {currentUser?.role === "mentor" && <MentorHeader />}
+      {/* admin → nothing shown */}
+
+      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10 py-8">
         <button
           onClick={() => navigate(-1)}
           className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors mr-4"
         >
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-white-400 to-emerald-500 bg-clip-text text-white">
           Session Details
         </h1>
       </div>
 
       {/* SINGLE COLUMN CLEAN LAYOUT */}
       <div className="max-w-4xl mx-auto px-6 flex flex-col gap-8">
-
         {/* SESSION DETAILS */}
         <Card className="backdrop-blur-lg bg-white/6 border border-yellow-400/20 rounded-2xl p-6 text-white">
           <div className="text-center mb-5">
@@ -185,10 +205,12 @@ const SessionDetail = () => {
           {/* Fee + Duration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-800/60 p-3 rounded-lg flex items-center gap-2">
-              <DollarSign className="text-green-400" /> Fee: ${session.sessionFee || 0}
+              <DollarSign className="text-green-400" /> Fee: $
+              {session.sessionFee || 0}
             </div>
             <div className="bg-gray-800/60 p-3 rounded-lg flex items-center gap-2">
-              <Clock className="text-pink-400" /> Duration: {session.durationMinutes || 60} mins
+              <Clock className="text-pink-400" /> Duration:{" "}
+              {session.durationMinutes || 60} mins
             </div>
           </div>
 
@@ -204,24 +226,30 @@ const SessionDetail = () => {
 
         {/* Created By */}
         {session.createdBy && (
-          <Card
-            onClick={() => navigate(`/user/mentor-profile/${session.createdBy._id}`)}
-            className="cursor-pointer bg-white/6 border border-white/8 hover:bg-white/8 rounded-2xl p-5 flex items-center gap-4 transition"
+          <div
+            onClick={() => goToProfile(session.createdBy)}
+            className="cursor-pointer"
           >
-            <img
-              src={
-                session.createdBy.profilePicture ||
-                "https://ui-avatars.com/api/?name=" + session.createdBy.name
-              }
-              className="w-12 h-12 rounded-full object-cover border border-white/10"
-              alt="creator"
-            />
-            <div>
-              <p className="text-sm text-gray-400">Created By</p>
-              <p className="font-semibold text-white text-lg">{session.createdBy.name}</p>
-              <p className="text-xs text-gray-400">{session.createdBy.email}</p>
-            </div>
-          </Card>
+            <Card className="cursor-pointer bg-white/6 border border-white/8 hover:bg-white/8 rounded-2xl p-5 flex items-center gap-4 transition">
+              <img
+                src={
+                  session.createdBy.profilePicture ||
+                  "https://ui-avatars.com/api/?name=" + session.createdBy.name
+                }
+                className="w-12 h-12 rounded-full object-cover border border-white/10"
+                alt="creator"
+              />
+              <div>
+                <p className="text-sm text-gray-400">Created By</p>
+                <p className="font-semibold text-white text-lg">
+                  {session.createdBy.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {session.createdBy.email}
+                </p>
+              </div>
+            </Card>
+          </div>
         )}
 
         {/* Participants */}
@@ -239,7 +267,8 @@ const SessionDetail = () => {
                 return (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-gray-800/55 p-3 rounded-xl hover:bg-gray-800/70"
+                    onClick={() => goToProfile(u)}
+                    className="flex items-center justify-between bg-gray-800/55 p-3 rounded-xl hover:bg-gray-800/70 cursor-pointer"
                   >
                     {/* Left */}
                     <div className="flex items-center gap-3">
@@ -252,37 +281,41 @@ const SessionDetail = () => {
                         alt={u.name}
                       />
                       <div>
-                        <p className="font-semibold">{u.name}</p>
+                        <p className="font-semibold text-white">{u.name}</p>
                         <p className="text-xs text-gray-400">{u.email}</p>
                       </div>
                     </div>
 
                     {/* Right Buttons */}
-                    {session.status === "completed" && u._id !== currentUserId && (
-                      <>
-                        {existingFeedback ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewFeedback(u._id);
-                            }}
-                            className="text-xs bg-blue-600 px-3 py-1 rounded-lg hover:bg-blue-700"
-                          >
-                            View Feedback
-                          </button>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFeedbackModal({ open: true, toUserId: u._id });
-                            }}
-                            className="text-xs bg-green-600 px-3 py-1 rounded-lg hover:bg-green-700"
-                          >
-                            Give Feedback
-                          </button>
-                        )}
-                      </>
-                    )}
+                    {session.status === "completed" &&
+                      u._id !== currentUserId && (
+                        <>
+                          {existingFeedback ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewFeedback(u._id);
+                              }}
+                              className="text-xs bg-blue-600 px-3 py-1 rounded-lg hover:bg-blue-700"
+                            >
+                              View Feedback
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFeedbackModal({
+                                  open: true,
+                                  toUserId: u._id,
+                                });
+                              }}
+                              className="text-xs bg-green-600 px-3 py-1 rounded-lg hover:bg-green-700"
+                            >
+                              Give Feedback
+                            </button>
+                          )}
+                        </>
+                      )}
                   </div>
                 );
               })}
@@ -291,14 +324,19 @@ const SessionDetail = () => {
         </Card>
 
         {/* FEEDBACK RECEIVED — MOVED TO BOTTOM */}
-        {session.feedback?.filter((f: any) => String(f.to) === String(currentUserId)).length > 0 && (
+        {session.feedback?.filter(
+          (f: any) => String(f.to) === String(currentUserId)
+        ).length > 0 && (
           <Card className="bg-white/6 border border-white/8 rounded-2xl p-6 mb-10">
-            <h3 className="text-2xl font-bold mb-4 text-emerald-400">Feedback Received</h3>
+            <h3 className="text-2xl font-bold mb-4 text-emerald-400">
+              Feedback Received
+            </h3>
 
             {session.feedback
               .filter((f: any) => String(f.to) === String(currentUserId))
               .map((f: any, idx: number) => {
-                const fromUser = participants.find((p: any) => p._id === f.from) || {};
+                const fromUser =
+                  participants.find((p: any) => p._id === f.from) || {};
 
                 return (
                   <div
@@ -306,7 +344,9 @@ const SessionDetail = () => {
                     className="p-4 mb-3 bg-gray-800/55 rounded-xl border border-gray-700"
                   >
                     <div className="flex justify-between mb-2">
-                      <span className="font-semibold">{fromUser.name || "Unknown"}</span>
+                      <span className="font-semibold">
+                        {fromUser.name || "Unknown"}
+                      </span>
                       <span className="flex items-center gap-1 text-yellow-400">
                         <Star className="w-4 h-4" /> {f.rating}
                       </span>
@@ -317,7 +357,6 @@ const SessionDetail = () => {
               })}
           </Card>
         )}
-
       </div>
 
       {/* FEEDBACK MODALS — unchanged */}
@@ -325,7 +364,9 @@ const SessionDetail = () => {
       {feedbackModal.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-lg font-semibold mb-4 text-emerald-400">Give Feedback</h2>
+            <h2 className="text-lg font-semibold mb-4 text-emerald-400">
+              Give Feedback
+            </h2>
 
             <Input
               type="text"
@@ -351,7 +392,10 @@ const SessionDetail = () => {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setFeedbackModal({ open: false })}>
+              <Button
+                variant="secondary"
+                onClick={() => setFeedbackModal({ open: false })}
+              >
                 Close
               </Button>
               <Button variant="primary" onClick={handleSubmitFeedback}>
@@ -365,7 +409,9 @@ const SessionDetail = () => {
       {viewFeedbackModal.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-lg font-semibold mb-4 text-emerald-400">Your Feedback</h2>
+            <h2 className="text-lg font-semibold mb-4 text-emerald-400">
+              Your Feedback
+            </h2>
 
             {viewFeedbackModal.feedback && (
               <>
@@ -390,14 +436,16 @@ const SessionDetail = () => {
             )}
 
             <div className="flex justify-end mt-4">
-              <Button variant="secondary" onClick={() => setViewFeedbackModal({ open: false })}>
+              <Button
+                variant="secondary"
+                onClick={() => setViewFeedbackModal({ open: false })}
+              >
                 Close
               </Button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };
