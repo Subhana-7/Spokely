@@ -1,5 +1,4 @@
 import React from 'react';
-import { X, LogIn, Eye, EyeOff } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
