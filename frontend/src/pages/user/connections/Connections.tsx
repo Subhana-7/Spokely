@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardHeader from "../DashBoardComponents/Header";
 import ConnectionsTable from "./ConnectionsTable";
 import Button from "../../../modals/Button";
@@ -43,8 +43,7 @@ const Connections = () => {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
   const [incomingCount, setIncomingCount] = useState(0);
-  
-  // Pagination state
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -52,9 +51,8 @@ const Connections = () => {
 
   const currentUserId = useAuthStore((state) => state.user?.id);
 
-  // Fetch connections from backend
-  const fetchConnections = async (params?: { 
-    search?: string; 
+  const fetchConnections = async (params?: {
+    search?: string;
     status?: string;
     page?: number;
     limit?: number;
@@ -62,22 +60,23 @@ const Connections = () => {
     try {
       setLoading(true);
       const res = await getAllConnections(params);
-      console.log("Fetched connections response:", res.data);
-      
-      // Handle both response formats
+
       const connectionsData = res.data.connections || res.data || [];
       const totalCount = res.data.total || connectionsData.length || 0;
-      const pagesCount = res.data.totalPages || Math.ceil(totalCount / (params?.limit || limit)) || 1;
-      
+      const pagesCount =
+        res.data.totalPages ||
+        Math.ceil(totalCount / (params?.limit || limit)) ||
+        1;
+
       setConnections(connectionsData);
       setTotal(totalCount);
       setTotalPages(pagesCount);
-      
-      console.log("Pagination state:", { 
-        connections: connectionsData.length, 
-        total: totalCount, 
+
+      console.log("Pagination state:", {
+        connections: connectionsData.length,
+        total: totalCount,
         totalPages: pagesCount,
-        currentPage: params?.page || 1
+        currentPage: params?.page || 1,
       });
     } catch (err: any) {
       toast.error("Failed to fetch connections");
@@ -90,32 +89,28 @@ const Connections = () => {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchConnections({ page: 1, limit });
   }, []);
 
-  // Refetch on search, filter, or page change
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchConnections({ 
-        search: searchTerm, 
+      fetchConnections({
+        search: searchTerm,
         status,
         page,
-        limit 
+        limit,
       });
     }, 400);
     return () => clearTimeout(timeout);
   }, [searchTerm, status, page]);
 
-  // Reset to page 1 when search or filter changes
   useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
   }, [searchTerm, status]);
 
-  // Transform backend data for table
   const formattedConnections = connections
     .map((c) => {
       const isCurrentUserUser = c.user?.id === currentUserId;
@@ -124,8 +119,9 @@ const Connections = () => {
 
       const displayUser = isCurrentUserUser ? c.connectedUser : c.user;
       if (!displayUser) return null;
-      
-      const blockedByCurrentUser = c.isBlocked && c.blockedBy?.id === currentUserId;
+
+      const blockedByCurrentUser =
+        c.isBlocked && c.blockedBy?.id === currentUserId;
 
       return {
         id: displayUser.id,
@@ -227,14 +223,16 @@ const Connections = () => {
               ) : (
                 <>
                   <ConnectionsTable connections={formattedConnections} />
-                  
+
                   {/* Pagination Controls - Always show if there's data */}
                   {total > 0 && (
                     <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-700 pt-4">
                       <div className="text-sm text-gray-400">
-                        Showing {Math.min(((page - 1) * limit) + 1, total)} to {Math.min(page * limit, total)} of {total} connection{total !== 1 ? 's' : ''}
+                        Showing {Math.min((page - 1) * limit + 1, total)} to{" "}
+                        {Math.min(page * limit, total)} of {total} connection
+                        {total !== 1 ? "s" : ""}
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handlePrevPage}
@@ -248,36 +246,39 @@ const Connections = () => {
                           <ChevronLeft size={16} />
                           Previous
                         </button>
-                        
+
                         <div className="flex items-center gap-1">
-                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (page <= 3) {
-                              pageNum = i + 1;
-                            } else if (page >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = page - 2 + i;
+                          {Array.from(
+                            { length: Math.min(5, totalPages) },
+                            (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (page <= 3) {
+                                pageNum = i + 1;
+                              } else if (page >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = page - 2 + i;
+                              }
+
+                              return (
+                                <button
+                                  key={pageNum}
+                                  onClick={() => setPage(pageNum)}
+                                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                                    page === pageNum
+                                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
+                                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                  }`}
+                                >
+                                  {pageNum}
+                                </button>
+                              );
                             }
-                            
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() => setPage(pageNum)}
-                                className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                                  page === pageNum
-                                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
-                                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          })}
+                          )}
                         </div>
-                        
+
                         <button
                           onClick={handleNextPage}
                           disabled={page === totalPages}

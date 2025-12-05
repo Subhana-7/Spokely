@@ -1,14 +1,4 @@
-import {
-  CheckCircle,
-  User,
-  Mail,
-  CreditCard,
-  DollarSign,
-  MapPin,
-  Tag,
-  Receipt,
-  ArrowLeft,
-} from "lucide-react";
+import { CheckCircle, DollarSign, Tag, Receipt, ArrowLeft } from "lucide-react";
 
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -52,12 +42,11 @@ const PaymentDetails = () => {
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Payment Details
   useEffect(() => {
     const fetchPayment = async () => {
       try {
         const res = await paymentDetails(id!);
-        console.log('check',res)
+        console.log("check", res);
         setPayment(res.data?.data || null);
       } catch (error: any) {
         console.error(error);
@@ -84,17 +73,11 @@ const PaymentDetails = () => {
       </div>
     );
 
-    console.log(payment)
-
-  const payer = payment.details?.payer;
-  const account = payment.details?.payment_source?.paypal;
-  const purchaseUnit = payment.details?.purchase_units?.[0];
-  const shipping = purchaseUnit?.shipping;
+  console.log(payment);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-14 px-6">
       <div className="max-w-4xl mx-auto">
-
         {/* PAGE HEADER */}
         <div className="flex items-center gap-3 mb-10">
           <button
@@ -231,9 +214,7 @@ const PaymentDetails = () => {
 
           <div>
             <p className="text-gray-400 text-sm mb-1">PayPal Order ID</p>
-            <p className="font-semibold break-all">
-              {payment.paypalOrderId}
-            </p>
+            <p className="font-semibold break-all">{payment.paypalOrderId}</p>
           </div>
         </div>
       </div>

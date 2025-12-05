@@ -103,8 +103,8 @@ export class MentorService implements IMentorService {
 
     return {
       mentor: toMentorResponseDTO(mentor),
-      accessToken: generateAccessToken({ id: mentor._id, role: ROLES.MENTOR }),
-      refreshToken: generateRefreshToken({ id: mentor._id, role: ROLES.MENTOR }),
+      accessToken: generateAccessToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
+      refreshToken: generateRefreshToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
     };
   }
 
@@ -246,6 +246,7 @@ export class MentorService implements IMentorService {
       const newAccessToken = generateAccessToken({
         id: payload.id,
         role: ROLES.MENTOR,
+        status:mentor.isBlocked
       });
 
       return {

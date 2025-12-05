@@ -22,7 +22,10 @@ const DashboardHeader = lazy(
 
 const Sessions = () => {
   const [sessions, setSessions] = useState<any[]>([]);
-  const [cancelModal, setCancelModal] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [cancelModal, setCancelModal] = useState<{
+    open: boolean;
+    id?: string;
+  }>({ open: false });
   const [cancelReason, setCancelReason] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -116,7 +119,6 @@ const Sessions = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
         <DashboardHeader />
         <div className="max-w-7xl mx-auto px-6 pt-6">
-
           {/* Header */}
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
@@ -135,7 +137,10 @@ const Sessions = () => {
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-10">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+                size={20}
+              />
               <Input
                 type="text"
                 placeholder="Search by topic..."
@@ -212,14 +217,21 @@ const Sessions = () => {
                           <div className="flex items-center gap-2">
                             <Badge
                               className={
-                                badgeClasses[session?.type] ||
-                                badgeClasses["peer-to-peer"]
+                                badgeClasses[
+                                  session?.type as keyof typeof badgeClasses
+                                ]
                               }
                             >
-                              {session?.type ?? "—"}
+                              {session?.type}
                             </Badge>
 
-                            <Badge className={badgeClasses[status]}>
+                            <Badge
+                              className={
+                                badgeClasses[
+                                  status as keyof typeof badgeClasses
+                                ]
+                              }
+                            >
                               {status}
                             </Badge>
                           </div>
@@ -241,7 +253,6 @@ const Sessions = () => {
 
                       {/* Buttons */}
                       <div className="flex flex-col gap-2">
-
                         {/* Details */}
                         <Button
                           onClick={() =>
@@ -273,7 +284,9 @@ const Sessions = () => {
                           session?.createdBy?._id === userId && (
                             <Button
                               variant="danger"
-                              onClick={() => id && setCancelModal({ open: true, id })}
+                              onClick={() =>
+                                id && setCancelModal({ open: true, id })
+                              }
                             >
                               Cancel Session
                             </Button>

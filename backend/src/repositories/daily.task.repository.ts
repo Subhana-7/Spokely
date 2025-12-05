@@ -12,11 +12,11 @@ export class DailyTaskRepository extends BaseRepository<IDailyTask> {
     userId: string,
     date: Date
   ): Promise<IDailyTask | null> {
-    return this.model.findOne({ userId, date });
+    return this.model.findOne({ userId, date,'writing.userResponse': { $exists: true, $ne: null } });
   }
 
   async findAllByDate(date: Date): Promise<IDailyTask[]> {
-    return this.model.find({ date });
+    return this.model.find({ date }).populate("userId","name email");
   }
 
   async findById(id: string): Promise<any> {

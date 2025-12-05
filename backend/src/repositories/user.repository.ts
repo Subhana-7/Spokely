@@ -19,7 +19,7 @@ export class UserRepository
 
   async findByEmail(email: String): Promise<IUser | null> {
     try {
-      return User.findOne({ email });
+      return User.findOne({ email ,isBlocked:false});
     } catch (error: unknown) {
       console.log("error", error);
       return null;
@@ -37,7 +37,7 @@ export class UserRepository
 
   async findByUniqueCode(code: String): Promise<IUser | null> {
     try {
-      return User.findOne({ uniqueCode: code });
+      return User.findOne({ uniqueCode: code,isBlocked:false });
     } catch (error: unknown) {
       console.log("error", error);
       return null;

@@ -6,17 +6,16 @@ import {
   User,
   MessageSquare,
   Calendar,
-  Phone,
   Mail,
   Tag,
+  ArrowLeft,
 } from "lucide-react";
-import Badge from "../../components/common/Badge";
 import {
   subscriptionStartPayment,
   subscriptionConfirmPayment,
 } from "../../services/paymentService";
 import { useAuthStore } from "../../store/userAuthStore";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getMentorPlans,
   subscribeMentor,
@@ -30,7 +29,7 @@ import toast from "react-hot-toast";
 // ─────────────────────────────────────────────
 
 interface Plan {
-  _id: string;
+  id: string;
   type: string;
   price: number;
   time: number;
@@ -79,7 +78,6 @@ const UserViewMentorProfile = () => {
   );
   const [loading, setLoading] = useState(true);
 
-  // SUBSCRIPTION FLOW STATES (unchanged)
   const [showPayPalModal, setShowPayPalModal] = useState(false);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -88,11 +86,11 @@ const UserViewMentorProfile = () => {
     message: string;
   } | null>(null);
 
-  // RATING STATES
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [feedback, setFeedback] = useState("");
 
+  const navigate = useNavigate();
 
   // ─────────────────────────────────────────────
   // Fetch Mentor, Plans, Subscriptions
@@ -107,13 +105,22 @@ const UserViewMentorProfile = () => {
         setMentor(res.data.mentor);
 
         const plansRes = await getMentorPlans(mentorId);
-        setPlans(plansRes.data || []);
+        setPlans(
+          (plansRes.data || []).map((p: any) => ({
+            id: p._id,
+            type: p.type,
+            price: p.price,
+            time: p.time,
+          }))
+        );
 
         if (user?.id) {
           const subsRes = await getUserSubscriptions(user.id);
           console.log(subsRes);
 
-          setUserSubscriptions(subsRes.data?.data || []);
+          setUserSubscriptions(
+            Array.isArray(subsRes.data?.data) ? subsRes.data.data : []
+          );
         }
       } catch (err) {
         console.error(err);
@@ -127,8 +134,14 @@ const UserViewMentorProfile = () => {
   }, [mentorId, user?.id]);
 
   // ─────────────────────────────────────────────
-  // Subscription Helpers (unchanged)
+  // Subscription Helpers
   // ─────────────────────────────────────────────
+
+  const formatSubscriptionTime = (hour: number) => {
+    const suffix = hour >= 12 ? "PM" : "AM";
+    const convertedHour = hour % 12 || 12;
+    return `${convertedHour} ${suffix}`;
+  };
 
   const isSubscribedToPlan = (plan: Plan) =>
     userSubscriptions.some(
@@ -143,7 +156,6 @@ const UserViewMentorProfile = () => {
     setShowPayPalModal(true);
   };
 
-  // PayPal logic (UNCHANGED)
   useEffect(() => {
     if (!showPayPalModal || !activePlan) return;
 
@@ -172,10 +184,17 @@ const UserViewMentorProfile = () => {
           createOrder: async () => {
             try {
               const resp = await subscriptionStartPayment(
-                activePlan._id,
+                activePlan.id,
                 activePlan.price
               );
-              return resp.data?.id || resp.orderId;
+
+              const orderId = resp.data?.id;
+
+              if (!orderId) {
+                throw new Error("Order ID missing from backend response.");
+              }
+
+              return orderId;
             } catch (err: any) {
               console.error("createOrder error:", err);
               setShowPayPalModal(false);
@@ -193,7 +212,7 @@ const UserViewMentorProfile = () => {
               const orderId = data.orderID;
               const verify = await subscriptionConfirmPayment(
                 orderId,
-                activePlan._id
+                activePlan.id
               );
 
               if (
@@ -280,16 +299,21 @@ const UserViewMentorProfile = () => {
       </div>
     );
 
-
   // =======================================================================
   // UI STARTS HERE — NEW THEME APPLIED
   // =======================================================================
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-10">
-      <DashboardHeader />
+      {user?.role === "user" ? <DashboardHeader /> : ""}
 
       <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col gap-12">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
+        >
+          <ArrowLeft size={20} className="text-gray-300" />
+        </button>
         {/* TOP: PROFILE CARD */}
         <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-xl p-8 flex flex-col md:flex-row gap-8">
           <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-800 border border-white/10 shadow-lg">
@@ -407,11 +431,11 @@ const UserViewMentorProfile = () => {
 
                   return (
                     <div
-                      key={plan._id}
+                      key={plan.id}
                       className="p-5 rounded-2xl bg-gray-800/40 border border-white/10 shadow-lg"
                     >
                       <h4 className="text-lg font-semibold text-green-400">
-                        {plan.type} ({plan.time} hrs)
+                        {plan.type} ({formatSubscriptionTime(plan.time)})
                       </h4>
                       <p className="text-gray-300 mt-1">
                         ₹{plan.price} / month

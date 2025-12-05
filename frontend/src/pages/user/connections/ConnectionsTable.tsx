@@ -88,7 +88,10 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
       </div>
     ) : null;
 
-  const handleBlockToggle = async (connectionId: string, isBlocked: boolean) => {
+  const handleBlockToggle = async (
+    connectionId: string,
+    isBlocked: boolean
+  ) => {
     setConfirmModal({
       isOpen: true,
       title: isBlocked ? "Unblock User?" : "Block User?",
@@ -102,7 +105,11 @@ const ConnectionsTable: React.FC<ConnectionsTableProps> = ({ connections }) => {
           setConnState((prev) =>
             prev.map((c) =>
               c.connectionId === connectionId
-                ? { ...c, isBlocked: !isBlocked, blockedByCurrentUser: !isBlocked }
+                ? {
+                    ...c,
+                    isBlocked: !isBlocked,
+                    blockedByCurrentUser: !isBlocked,
+                  }
                 : c
             )
           );

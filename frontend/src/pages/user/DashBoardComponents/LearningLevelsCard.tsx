@@ -9,7 +9,6 @@ const LearningLevelsCard = () => {
 
   const totalLevels = 7;
 
-  // 🔥 Fetch user stats from backend
   useEffect(() => {
     const loadStats = async () => {
       try {
@@ -32,14 +31,9 @@ const LearningLevelsCard = () => {
 
   const dailyTasks = stats.dailyTasksCompleted || 0;
 
-  // ✔ Level formula — every 5 tasks unlocks 1 level
   const currentLevel = Math.floor(dailyTasks / 5);
 
-  // ✔ Tasks toward current level
   const tasksIntoCurrentLevel = dailyTasks % 5;
-
-  // ✔ Remaining for next level
-  const tasksRemaining = 5 - tasksIntoCurrentLevel;
 
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
@@ -50,20 +44,6 @@ const LearningLevelsCard = () => {
         <span className="text-lime-400 font-semibold">5 daily tasks</span> to
         unlock the next level.
       </p>
-
-      {/* Progress toward next level */}
-      {/* <div className="mb-4 p-3 bg-gray-800/40 rounded-lg border border-gray-700 text-sm">
-        <p className="text-gray-300">
-          <span className="text-lime-400 font-bold">
-            {tasksIntoCurrentLevel}
-          </span>{" "}
-          completed —{" "}
-          <span className="text-yellow-300 font-bold">
-            {tasksRemaining}
-          </span>{" "}
-          more to unlock next level
-        </p>
-      </div> */}
 
       <div className="space-y-3">
         {[...Array(totalLevels)].map((_, i) => {

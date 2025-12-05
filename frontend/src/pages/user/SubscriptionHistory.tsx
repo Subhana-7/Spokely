@@ -28,7 +28,6 @@ const SubscriptionHistory = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // NEW: search & status
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [limit] = useState(6);
@@ -37,12 +36,17 @@ const SubscriptionHistory = () => {
     if (!userId) return;
     try {
       setLoading(true);
-      const res = await getSubscriptionHistory(userId, page, limit, search, status);
+      const res = await getSubscriptionHistory(
+        userId,
+        page,
+        limit,
+        search,
+        status
+      );
       if (res.data?.success) {
         setSubscriptions(res.data.data);
         setTotalPages(res.data.totalPages);
       } else if (res.data?.data) {
-        // support older responses or different shapes
         setSubscriptions(res.data.data);
         setTotalPages(res.data.totalPages ?? 1);
       }
@@ -55,7 +59,6 @@ const SubscriptionHistory = () => {
 
   useEffect(() => {
     fetchHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, page, search, status]);
 
   const statusColor = (status: string) => {
@@ -86,14 +89,8 @@ const SubscriptionHistory = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1); // reset to page 1 for new search
-    fetchHistory();
-  };
-
-  const clearFilters = () => {
-    setSearch("");
-    setStatus("All");
     setPage(1);
+    fetchHistory();
   };
 
   return (
@@ -108,7 +105,10 @@ const SubscriptionHistory = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Search & Filters */}
-        <form onSubmit={handleSearchSubmit} className="flex gap-3 items-center mb-6">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex gap-3 items-center mb-6"
+        >
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -117,13 +117,24 @@ const SubscriptionHistory = () => {
           />
           <select
             value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
             className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm"
           >
-            <option value="All" className="text-black" >All</option>
-            <option value="ACTIVE" className="text-black" >Active</option>
-            <option value="CANCELLED" className="text-black" >Cancelled</option>
-            <option value="EXPIRED" className="text-black" >Expired</option>
+            <option value="All" className="text-black">
+              All
+            </option>
+            <option value="ACTIVE" className="text-black">
+              Active
+            </option>
+            <option value="CANCELLED" className="text-black">
+              Cancelled
+            </option>
+            <option value="EXPIRED" className="text-black">
+              Expired
+            </option>
           </select>
         </form>
       </div>
@@ -180,8 +191,6 @@ const SubscriptionHistory = () => {
                       >
                         {sub.status}
                       </td>
-
-                      
                     </tr>
                   ))}
                 </tbody>

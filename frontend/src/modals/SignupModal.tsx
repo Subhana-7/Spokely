@@ -115,14 +115,13 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleGoogleSignup = () => {
-  const baseUrl = import.meta.env.VITE_SERVER_SIDE_URL;
-  if (!baseUrl) {
-    console.error("Missing VITE_SERVER_SIDE_URL in environment variables");
-    return;
-  }
-  window.location.href = `${baseUrl}/api/users/google`;
-};
-
+    const baseUrl = import.meta.env.VITE_SERVER_SIDE_URL;
+    if (!baseUrl) {
+      console.error("Missing VITE_SERVER_SIDE_URL in environment variables");
+      return;
+    }
+    window.location.href = `${baseUrl}/api/users/google`;
+  };
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -155,7 +154,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
       if (message.includes("Email already")) {
         setErrors((prev) => ({ ...prev, email: "Email already registered" }));
       }
-      
+
       console.log("Signup failed: " + message);
     }
   };
@@ -168,7 +167,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const handleOtpModalClose = () => {
     setShowOtpModal(false);
     resetFormData();
-    onClose(); 
+    onClose();
   };
 
   const handleSwitchToLogin = () => {

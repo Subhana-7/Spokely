@@ -8,7 +8,8 @@ import { IMentor } from "../models/mentor.model";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
 import { AdminResponseDto, UserSummaryDto } from "../dto/admin.dto";
-import { MESSAGES } from "../utilis/constants";
+import { MESSAGES, REPORT_TYPES, ReportType,REPORT_COLUMNS } from "../utilis/constants";
+import { toUserResponseDTO } from "../mappers/user.mapper";
 
 import {
   ACCOUNT_STATUS,
@@ -18,7 +19,7 @@ import {
   SUBSCRIPTION_STATUS,
   QUERY_STATUS,
   SORT_BY,
-  VERIFICATION_STATUS
+  VERIFICATION_STATUS,
 } from "../utilis/constants";
 
 import { ISessionRepository } from "../repositories/interfaces/ISessionsRepository";
@@ -33,13 +34,34 @@ import Subscription from "../models/subscription.modal";
 import { DailyTaskModel } from "../models/daily.task.model";
 import Connection from "../models/connections.model";
 
+import ExcelJS from "exceljs";
+import PDFDocument from "pdfkit";
+import { Writable } from "stream";
+
+type ExportParams = {
+  type?: string | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  status?: string | undefined;
+  mentorId?: string | undefined;
+};
+
+import { IPaymentRepository } from "../repositories/interfaces/IPaymentRepository";
+import { IDailyTaskRepository } from "../repositories/interfaces/IDailyTaskRepository";
+import { ISessionService } from "./interfaces/ISessionService";
+
 @injectable()
 export class AdminService implements IAdminService {
   constructor(
     @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository,
     @inject(TYPES.IEmailService) private _emailService: IEmailService,
     @inject(TYPES.ISessionRepository)
-    private _sessionRepository: ISessionRepository
+    private _sessionRepository: ISessionRepository,
+    @inject(TYPES.IPaymentRepository)
+    private _paymentRepository: IPaymentRepository,
+    @inject(TYPES.IDailyTaskRepository)
+    private _dailyTaskRepository: IDailyTaskRepository,
+    @inject(TYPES.ISessionService) private _sessionService: ISessionService
   ) {}
 
   /* ============================================================
@@ -71,7 +93,8 @@ export class AdminService implements IAdminService {
   ============================================================ */
   async updateUserStatus(userId: string, status: string) {
     const actions: Record<string, () => Promise<any>> = {
-      [ACCOUNT_STATUS.UNBLOCKED]: () => this._adminRepository.unblockUser(userId),
+      [ACCOUNT_STATUS.UNBLOCKED]: () =>
+        this._adminRepository.unblockUser(userId),
       [ACCOUNT_STATUS.BLOCKED]: () => this._adminRepository.blockUser(userId),
     };
 
@@ -98,7 +121,8 @@ export class AdminService implements IAdminService {
     const actions: Record<string, () => Promise<any>> = {
       [ACCOUNT_STATUS.UNBLOCKED]: () =>
         this._adminRepository.unblockMentor(mentorId),
-      [ACCOUNT_STATUS.BLOCKED]: () => this._adminRepository.blockMentor(mentorId),
+      [ACCOUNT_STATUS.BLOCKED]: () =>
+        this._adminRepository.blockMentor(mentorId),
     };
 
     const action = actions[status];
@@ -161,8 +185,9 @@ export class AdminService implements IAdminService {
     maxMentors?: number;
     isBlocked?: boolean;
   }): Promise<{ users: UserSummaryDto[]; total: number }> {
-    const { users, total } =
-      await this._adminRepository.findAllUsersWithQuery(params);
+    const { users, total } = await this._adminRepository.findAllUsersWithQuery(
+      params
+    );
 
     return { users: users.map(mapUserToSummaryDto), total };
   }
@@ -175,7 +200,7 @@ export class AdminService implements IAdminService {
     limit?: number;
     search?: string;
     sortBy?: string | (typeof SORT_BY)[keyof typeof SORT_BY];
-    verificationStatus?: typeof VERIFICATION_STATUS[keyof typeof VERIFICATION_STATUS];
+    verificationStatus?: (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS];
     isBlocked?: boolean;
   }): Promise<{ mentors: IMentor[]; total: number }> {
     return this._adminRepository.findAllMentorsWithQuery(params);
@@ -210,7 +235,9 @@ export class AdminService implements IAdminService {
       Connection.countDocuments({ status: CONNECTION_STATUS.ACCEPTED }),
       Subscription.countDocuments({ status: SUBSCRIPTION_STATUS.ACTIVE }),
       DailyTaskModel.countDocuments({}),
-      Wallet.aggregate([{ $group: { _id: null, total: { $sum: "$balance" } } }]),
+      Wallet.aggregate([
+        { $group: { _id: null, total: { $sum: "$balance" } } },
+      ]),
     ]);
 
     const walletBalance = wallets[0]?.total || 0;
@@ -240,14 +267,24 @@ export class AdminService implements IAdminService {
     limit?: number;
     search?: string;
     status?: string;
+    type?:string;
   }): Promise<{ sessions: ISession[]; total: number }> {
-    const { page = 1, limit = 10, search = "", status = QUERY_STATUS.ALL } =
-      params;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status = QUERY_STATUS.ALL,
+      type = QUERY_STATUS.ALL,
+    } = params;
 
     const query: any = {};
 
     if (status !== QUERY_STATUS.ALL) {
       query.status = status;
+    }
+
+    if (type !== QUERY_STATUS.ALL) {
+      query.type = type;
     }
 
     if (search) {
@@ -266,4 +303,199 @@ export class AdminService implements IAdminService {
 
     return { sessions, total };
   }
+
+  private async getReportData(params: ExportParams): Promise<any[]> {
+    const { type, startDate, endDate, status, mentorId } = params;
+    const reportType = type as ReportType;
+
+    let data: any[] = [];
+
+    const today = new Date();
+    const dayStart = new Date(today.setHours(0, 0, 0, 0));
+
+    switch (reportType) {
+      case REPORT_TYPES.SESSION:
+        const sessionsResult = await this._sessionService.getAllSessionsAdmin();
+        data = sessionsResult || [];
+        break;
+
+      case REPORT_TYPES.MENTOR:
+        data = (await this._adminRepository.findAllMentors()) || [];
+        break;
+
+      case REPORT_TYPES.USER: {
+        const users = await this._adminRepository.findAllUsers();
+        data = users ? users.map((u) => toUserResponseDTO(u)) : [];
+        break;
+      }
+
+      case REPORT_TYPES.DAILY_TASK:
+        data = (await this._dailyTaskRepository.findAllByDate(dayStart)) || [];
+        break;
+
+      case REPORT_TYPES.PAYMENT:
+        data = (await this._paymentRepository.findAllPayment()) || [];
+        break;
+
+      default:
+        data = [];
+    }
+
+
+    // apply date filters if provided
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+
+    if (start || end) {
+      data = data.filter((item: any) => {
+        const dateField =
+          item.createdAt || item.updatedAt || item.date || item.timestamp;
+        if (!dateField) return true;
+        const d = new Date(dateField);
+        if (start && d < start) return false;
+        if (end && d > end) return false;
+        return true;
+      });
+    }
+
+    return data;
+  }
+
+  /* ============================================================
+   Export: PDF (returns Buffer + filename)
+   ============================================================ */
+async exportReportPdf(
+  params: ExportParams
+): Promise<{ buffer: Buffer; filename: string; type: string }> {
+
+  const getValue = (obj: any, path: string) => {
+  return path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
+};
+
+
+  const data = await this.getReportData(params);
+  const reportType = params.type || "report";
+  const filename = `${reportType}-report.pdf`;
+
+  const doc = new PDFDocument({ margin: 35, size: "A4" });
+  const chunks: Buffer[] = [];
+
+  const writable = new Writable({
+    write(chunk, _enc, next) {
+      chunks.push(Buffer.from(chunk));
+      next();
+    }
+  });
+
+  doc.pipe(writable);
+
+  // Title
+  doc.fillColor("#000000");              // <-- ensure black
+  doc.fontSize(18).text(`${reportType.toUpperCase()} REPORT`, { align: "center" });
+  doc.moveDown();
+
+  if (!data || data.length === 0) {
+    doc.fillColor("#000000");            // <-- ensure black
+    doc.fontSize(12).text("No data available.");
+    doc.end();
+  } else {
+    const columns = REPORT_COLUMNS[reportType];
+    const tableStartX = 35;
+    let y = doc.y + 10;
+
+    const tableWidth = columns.reduce((sum, c) => sum + c.width, 0);
+
+    const line = (x1: number, y1: number, x2: number, y2: number) => {
+      doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+    };
+
+    const formatValue = (v: any): string => {
+      if (v == null) return "";
+      if (Array.isArray(v)) return v.join(", ");
+      if (v instanceof Date) return v.toISOString().split("T")[0];
+      if (typeof v === "object") return "";
+      return String(v);
+    };
+
+    // ===============================
+    //   HEADER ROW + VERTICAL LINES
+    // ===============================
+    doc.rect(tableStartX, y, tableWidth, 22).fill("#f0f0f0").stroke();
+
+    doc.fillColor("#000000");            // <-- black text after fill()
+    doc.font("Helvetica-Bold").fontSize(11);
+
+    let x = tableStartX;
+    for (const col of columns) {
+      doc.text(col.label, x + 4, y + 6, { width: col.width - 8 });
+
+      line(x, y, x, y + 22);
+      x += col.width;
+    }
+
+    line(tableStartX + tableWidth, y, tableStartX + tableWidth, y + 22);
+    line(tableStartX, y + 22, tableStartX + tableWidth, y + 22);
+
+    y += 22;
+
+    // ==========================
+    //   DATA ROWS (WITH BORDERS)
+    // ==========================
+    doc.fillColor("#000000");            // <-- ensure row text stays black
+    doc.font("Helvetica").fontSize(10);
+
+    for (const item of data) {
+      let rowHeight = 18;
+
+      columns.forEach(col => {
+        const rawValue = getValue(item, col.key);
+const text = formatValue(rawValue);
+
+        const h = doc.heightOfString(text, { width: col.width - 8 });
+        rowHeight = Math.max(rowHeight, h + 8);
+      });
+
+      doc.rect(tableStartX, y, tableWidth, rowHeight).stroke();
+
+      let colX = tableStartX;
+
+      for (const col of columns) {
+        const rawValue = getValue(item, col.key);
+const text = formatValue(rawValue);
+
+        doc.text(text, colX + 4, y + 4, { width: col.width - 8 });
+
+        line(colX, y, colX, y + rowHeight);
+        colX += col.width;
+      }
+
+      line(tableStartX + tableWidth, y, tableStartX + tableWidth, y + rowHeight);
+
+      y += rowHeight;
+
+      // Page break + reapply black
+      if (y > 760) {
+        doc.addPage();
+        doc.fillColor("#000000");        // <-- KEEP BLACK ON NEW PAGE
+        doc.font("Helvetica").fontSize(10);
+        y = doc.y + 10;
+      }
+    }
+
+    line(tableStartX, y, tableStartX + tableWidth, y);
+  }
+
+  doc.end();
+
+  await new Promise<void>((resolve, reject) => {
+    writable.on("finish", resolve);
+    writable.on("error", reject);
+  });
+
+  return { buffer: Buffer.concat(chunks), filename, type: reportType };
+}
+
+
+
+
 }

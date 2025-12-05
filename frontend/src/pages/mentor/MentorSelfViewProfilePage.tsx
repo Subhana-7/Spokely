@@ -7,9 +7,7 @@ import {
   Calendar,
   Camera,
   Edit,
-  MessageCircle,
   Star,
-  TrendingUp,
   User,
   Lock,
 } from "lucide-react";
@@ -37,7 +35,7 @@ const MentorProfile = () => {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [profilePic, setProfilePic] = useState(user?.profilePicture || "");
-   const [plans, setPlans] = useState<
+  const [plans, setPlans] = useState<
     { type: string; price: number; time: number; saved?: boolean }[]
   >([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
@@ -45,11 +43,11 @@ const MentorProfile = () => {
     show: boolean;
     message: string;
   }>({ show: false, message: "" });
-  const [loadingUpload, setLoadingUpload] = useState(false);
+  const [_loadingUpload, setLoadingUpload] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
- useEffect(() => {
+  useEffect(() => {
     if (user) {
       setMentorDetails({
         name: user.name || "",
@@ -69,7 +67,6 @@ const MentorProfile = () => {
       setLoadingPlans(true);
       try {
         const res = await getMentorPlans(user.id);
-        // mark backend-loaded plans as saved
         setPlans((res.data || []).map((p: any) => ({ ...p, saved: true })));
       } catch (err) {
         console.error("Failed to fetch mentor plans:", err);
@@ -162,7 +159,6 @@ const MentorProfile = () => {
         message: "Plans saved successfully!",
       });
       const res = await getMentorPlans(user.id);
-      // after saving, mark them locked
       setPlans((res.data || []).map((p: any) => ({ ...p, saved: true })));
     } catch (err) {
       console.error("Failed to save plans:", err);
@@ -186,7 +182,6 @@ const MentorProfile = () => {
   };
 
   const planTypes = ["DAILY", "WEEKLY", "BIWEEKLY", "TRIWEEKLY"];
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
@@ -232,7 +227,10 @@ const MentorProfile = () => {
                   label: "Sessions Done",
                   value: (user as any)?.sessionsDone || 0,
                 },
-                { label: "Experience", value: (user as any)?.experience || "0" },
+                {
+                  label: "Experience",
+                  value: (user as any)?.experience || "0",
+                },
                 { label: "Success Rate", value: "98%" },
               ].map((s, i) => (
                 <div
@@ -264,7 +262,9 @@ const MentorProfile = () => {
                   <Edit size={16} /> Edit
                 </button>
               </div>
-              <p className="text-gray-300 leading-relaxed">{mentorDetails.bio}</p>
+              <p className="text-gray-300 leading-relaxed">
+                {mentorDetails.bio}
+              </p>
 
               <h3 className="mt-8 mb-4 font-semibold">Skills & Expertise</h3>
               <div className="flex flex-wrap gap-3">
@@ -297,8 +297,6 @@ const MentorProfile = () => {
                 />
               </div>
             </SpokelyCard>
-
-          
           </div>
 
           {/* Right Column: Settings + Plans */}
@@ -320,240 +318,254 @@ const MentorProfile = () => {
             </SpokelyCard>
 
             {/* Subscription Plans */}
-        <SpokelyCard className="p-6 bg-white/10 border border-white/20">
-          <h2 className="font-bold mb-6 text-lg">Subscription Plans</h2>
-          {loadingPlans ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
-              <span className="ml-3 text-gray-300">Loading plans...</span>
-            </div>
-          ) : (
-            <>
-              {plans.length === 0 && (
-                <div className="text-center py-8">
-                  <Calendar size={48} className="mx-auto text-gray-500 mb-3" />
-                  <p className="text-gray-400 text-sm">No plans added yet.</p>
+            <SpokelyCard className="p-6 bg-white/10 border border-white/20">
+              <h2 className="font-bold mb-6 text-lg">Subscription Plans</h2>
+              {loadingPlans ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+                  <span className="ml-3 text-gray-300">Loading plans...</span>
                 </div>
-              )}
+              ) : (
+                <>
+                  {plans.length === 0 && (
+                    <div className="text-center py-8">
+                      <Calendar
+                        size={48}
+                        className="mx-auto text-gray-500 mb-3"
+                      />
+                      <p className="text-gray-400 text-sm">
+                        No plans added yet.
+                      </p>
+                    </div>
+                  )}
 
-              <div className="space-y-3">
-                {planTypes.map((type) => {
-                  const plan = plans.find((p) => p.type === type);
-                  const isActive = !!plan;
-                  const isSaved = plan?.saved;
+                  <div className="space-y-3">
+                    {planTypes.map((type) => {
+                      const plan = plans.find((p) => p.type === type);
+                      const isActive = !!plan;
+                      const isSaved = plan?.saved;
 
-                  return (
-                    <div
-                      key={type}
-                      className={`relative p-4 rounded-xl border transition-all duration-200 ${
-                        isActive
-                          ? "bg-green-900/20 border-green-500/40 shadow-sm"
-                          : "bg-white/5 border-white/10 hover:bg-white/10"
-                      }`}
-                    >
-                      {/* Plan Type Header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={isActive}
-                            disabled={isSaved}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setPlans([
-                                  ...plans,
-                                  { type, price: 0, time: 9, saved: false },
-                                ]);
-                              } else {
-                                setPlans(plans.filter((p) => p.type !== type));
-                              }
-                            }}
-                            className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                          />
-                          <span className="font-medium text-white capitalize">
-                            {type.toLowerCase()} Plan
-                          </span>
-                          {isSaved && (
-                            <span className="px-2 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
-                              Active
-                            </span>
+                      return (
+                        <div
+                          key={type}
+                          className={`relative p-4 rounded-xl border transition-all duration-200 ${
+                            isActive
+                              ? "bg-green-900/20 border-green-500/40 shadow-sm"
+                              : "bg-white/5 border-white/10 hover:bg-white/10"
+                          }`}
+                        >
+                          {/* Plan Type Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isActive}
+                                disabled={isSaved}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setPlans([
+                                      ...plans,
+                                      { type, price: 0, time: 9, saved: false },
+                                    ]);
+                                  } else {
+                                    setPlans(
+                                      plans.filter((p) => p.type !== type)
+                                    );
+                                  }
+                                }}
+                                className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                              />
+                              <span className="font-medium text-white capitalize">
+                                {type.toLowerCase()} Plan
+                              </span>
+                              {isSaved && (
+                                <span className="px-2 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+
+                            {isSaved && (
+                              <button
+                                onClick={() =>
+                                  setShowSaveModal({
+                                    show: true,
+                                    message:
+                                      "Cancelling subscription plan will refund the subscription fee to the respective students.",
+                                  })
+                                }
+                                className="px-3 py-1 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 rounded-lg text-sm font-medium text-red-300 transition-colors"
+                              >
+                                Cancel Plan
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Plan Details */}
+                          {isActive && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Price (₹)
+                                </label>
+                                <input
+                                  type="number"
+                                  placeholder="Enter price"
+                                  value={plan?.price ?? ""}
+                                  disabled={isSaved}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    setPlans(
+                                      plans.map((p) =>
+                                        p.type === type
+                                          ? { ...p, price: val }
+                                          : p
+                                      )
+                                    );
+                                  }}
+                                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                                    isSaved
+                                      ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
+                                      : "bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                  }`}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Session Time
+                                </label>
+                                <select
+                                  value={plan?.time ?? 9}
+                                  disabled={isSaved}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    setPlans(
+                                      plans.map((p) =>
+                                        p.type === type
+                                          ? { ...p, time: val }
+                                          : p
+                                      )
+                                    );
+                                  }}
+                                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                                    isSaved
+                                      ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
+                                      : "bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                  }`}
+                                >
+                                  {Array.from(
+                                    { length: 13 },
+                                    (_, i) => 9 + i
+                                  ).map((hour) => (
+                                    <option key={hour} value={hour}>
+                                      {hour <= 12
+                                        ? `${hour}:00 AM`
+                                        : `${hour - 12}:00 PM`}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
                           )}
                         </div>
+                      );
+                    })}
+                  </div>
 
-                        {isSaved && (
-                          <button
-                            onClick={() =>
-                              setShowSaveModal({
-                                show: true,
-                                message:
-                                  "Cancelling subscription plan will refund the subscription fee to the respective students.",
-                              })
-                            }
-                            className="px-3 py-1 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 rounded-lg text-sm font-medium text-red-300 transition-colors"
-                          >
-                            Cancel Plan
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Plan Details */}
-                      {isActive && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs text-gray-400 mb-1">
-                              Price (₹)
-                            </label>
-                            <input
-                              type="number"
-                              placeholder="Enter price"
-                              value={plan?.price ?? ""}
-                              disabled={isSaved}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                setPlans(
-                                  plans.map((p) =>
-                                    p.type === type ? { ...p, price: val } : p
-                                  )
-                                );
-                              }}
-                              className={`w-full px-3 py-2 rounded-lg text-sm ${
-                                isSaved
-                                  ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
-                                  : "bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                              }`}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-400 mb-1">
-                              Session Time
-                            </label>
-                            <select
-                              value={plan?.time ?? 9}
-                              disabled={isSaved}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                setPlans(
-                                  plans.map((p) =>
-                                    p.type === type ? { ...p, time: val } : p
-                                  )
-                                );
-                              }}
-                              className={`w-full px-3 py-2 rounded-lg text-sm ${
-                                isSaved
-                                  ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
-                                  : "bg-white text-gray-900 border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                              }`}
-                            >
-                              {Array.from({ length: 13 }, (_, i) => 9 + i).map(
-                                (hour) => (
-                                  <option key={hour} value={hour}>
-                                    {hour <= 12
-                                      ? `${hour}:00 AM`
-                                      : `${hour - 12}:00 PM`}
-                                  </option>
-                                )
-                              )}
-                            </select>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Save Button */}
-              <div className="mt-6 pt-4 border-t border-white/10">
-                <button
-                  className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
-                  onClick={handleSavePlans}
-                >
-                  <Award size={18} />
-                  Save Plans
-                </button>
-              </div>
-            </>
-          )}
-        </SpokelyCard>
+                  {/* Save Button */}
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <button
+                      className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+                      onClick={handleSavePlans}
+                    >
+                      <Award size={18} />
+                      Save Plans
+                    </button>
+                  </div>
+                </>
+              )}
+            </SpokelyCard>
           </div>
         </div>
       </div>
 
       {/* Edit Mentor Details Modal */}
-{showEditModal && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-    <div className="bg-gray-900 p-8 rounded-2xl max-w-lg w-full">
-      <h2 className="text-2xl font-bold mb-6">Edit Mentor Details</h2>
-      <form className="space-y-4" onSubmit={handleSaveDetails}>
-        <div>
-          <input
-            type="text"
-            value={mentorDetails.name}
-            onChange={(e) =>
-              setMentorDetails({ ...mentorDetails, name: e.target.value })
-            }
-            placeholder="Full Name"
-            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-          )}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-gray-900 p-8 rounded-2xl max-w-lg w-full">
+            <h2 className="text-2xl font-bold mb-6">Edit Mentor Details</h2>
+            <form className="space-y-4" onSubmit={handleSaveDetails}>
+              <div>
+                <input
+                  type="text"
+                  value={mentorDetails.name}
+                  onChange={(e) =>
+                    setMentorDetails({ ...mentorDetails, name: e.target.value })
+                  }
+                  placeholder="Full Name"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
+              </div>
+
+              <input
+                type="email"
+                value={mentorDetails.email}
+                readOnly
+                placeholder="Email"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
+              />
+
+              <div>
+                <input
+                  type="text"
+                  value={mentorDetails.phone}
+                  onChange={(e) =>
+                    setMentorDetails({
+                      ...mentorDetails,
+                      phone: e.target.value,
+                    })
+                  }
+                  placeholder="Phone"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                )}
+              </div>
+
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Bio"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
+              />
+              {errors.bio && (
+                <p className="text-red-500 text-sm mt-1">{errors.bio}</p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-700 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 rounded-xl"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <input
-          type="email"
-          value={mentorDetails.email}
-          readOnly
-          placeholder="Email"
-          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
-        />
-
-        <div>
-          <input
-            type="text"
-            value={mentorDetails.phone}
-            onChange={(e) =>
-              setMentorDetails({ ...mentorDetails, phone: e.target.value })
-            }
-            placeholder="Phone"
-            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-          />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-          )}
-        </div>
-
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="Bio"
-          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white"
-        />
-        {errors.bio && (
-          <p className="text-red-500 text-sm mt-1">{errors.bio}</p>
-        )}
-
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={() => setShowEditModal(false)}
-            className="px-4 py-2 bg-gray-700 rounded-xl"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-600 rounded-xl"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
+      )}
 
       {/* Modals */}
       {showSaveModal.show && (

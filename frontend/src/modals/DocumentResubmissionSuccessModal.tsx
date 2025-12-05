@@ -8,10 +8,9 @@ interface DocumentResubmissionSuccessModalProps {
   onClose: () => void;
 }
 
-const DocumentResubmissionSuccessModal: React.FC<DocumentResubmissionSuccessModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const DocumentResubmissionSuccessModal: React.FC<
+  DocumentResubmissionSuccessModalProps
+> = ({ isOpen, onClose }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -30,7 +29,10 @@ const DocumentResubmissionSuccessModal: React.FC<DocumentResubmissionSuccessModa
                 Document Successfully Submitted
               </h3>
               <div className="mt-2 text-sm text-green-700">
-                <p>Your document has been resubmitted for verification. Our team will review your submission and get back to you shortly.</p>
+                <p>
+                  Your document has been resubmitted for verification. Our team
+                  will review your submission and get back to you shortly.
+                </p>
               </div>
             </div>
           </div>
@@ -46,17 +48,17 @@ const DocumentResubmissionSuccessModal: React.FC<DocumentResubmissionSuccessModa
                 Stay Updated
               </h3>
               <div className="mt-2 text-sm text-blue-700">
-                <p>Keep an eye on your email for updates regarding your document verification status. We'll notify you once the review is complete.</p>
+                <p>
+                  Keep an eye on your email for updates regarding your document
+                  verification status. We'll notify you once the review is
+                  complete.
+                </p>
               </div>
             </div>
           </div>
         </div>
-        
-        <Button
-          variant="primary"
-          onClick={onClose}
-          className="w-full"
-        >
+
+        <Button variant="primary" onClick={onClose} className="w-full">
           Got it, thanks!
         </Button>
       </div>

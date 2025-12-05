@@ -23,4 +23,6 @@ export interface IAdminController {
   getReports(req: Request, res: Response): Promise<void>;
 
   getDailyTaskById(req:Request,res:Response):Promise<void>;
+
+  downloadReportPdf(req: Request, res: Response): Promise<void>;
 }

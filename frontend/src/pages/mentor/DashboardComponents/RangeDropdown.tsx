@@ -1,4 +1,3 @@
-// src/components/RangeDropdown.tsx
 import React from "react";
 
 const options = [
@@ -7,10 +6,10 @@ const options = [
   { label: "Last 24 months", value: 24 },
 ];
 
-const RangeDropdown: React.FC<{ months: number; setMonths: (m: number) => void }> = ({
-  months,
-  setMonths,
-}) => {
+const RangeDropdown: React.FC<{
+  months: number;
+  setMonths: (m: number) => void;
+}> = ({ months, setMonths }) => {
   return (
     <select
       value={months}

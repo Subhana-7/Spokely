@@ -68,6 +68,7 @@ export const MESSAGES = {
     INTERNAL_ERROR:"Internal Error",
     FETCH_MENTOR_STUDENT:"Failed to fetch mentor students",
     FETCH_SUBSCRIPTION_HISTORY:"Failed to fetch subscription history",
+    ACCOUNT_BLOCKED:"Your account has been blocked. Contact support.",
   },
   SESSION: {
     CREATED: "Session created",
@@ -298,7 +299,7 @@ export const DAILY_TASK_LEVEL_HINT = {
 export const DAILY_TASK_PROMPTS = {
   TRAINER_HEADER: "You are a Communication Trainer. Evaluate the student responses.",
   RETURN_JSON_ONLY: "Return JSON only.",
-  PARAGRAPH_SENTENCE_COUNT: "10–12 sentences",
+  PARAGRAPH_SENTENCE_COUNT: "10-12 sentences",
   QUESTIONS_COUNT: 5,
 } as const;
 
@@ -549,6 +550,7 @@ export const ADMIN_QUERY = {
   LIMIT: 10,
   SEARCH: "",
   STATUS_ALL: "all",
+  TYPE:"all",
 } as const;
 
 
@@ -595,3 +597,39 @@ export const USER_QUERY = {
   SEARCH: "",
 } as const;
 
+
+export const REPORT_COLUMNS: Record<string, { key: string; label: string; width: number }[]> = {
+  user: [
+    { key: "name", label: "Name", width: 120 },
+    { key: "email", label: "Email", width: 150 },
+    { key: "phone", label: "Phone", width: 90 },
+    { key: "isBlocked", label: "Blocked", width: 60 },
+    { key: "sessionsDone", label: "Sessions", width: 60 },
+    { key: "createdAt", label: "Created", width: 100 },
+  ],
+  mentor: [
+    { key: "name", label: "Name", width: 120 },
+    { key: "email", label: "Email", width: 150 },
+    { key: "document.verificationStatus", label: "Status", width: 70 },
+    { key: "isBlocked", label: "Blocked", width: 60 },
+    { key: "tags", label: "Tags", width: 150 }
+  ],
+  session: [
+    { key: "topic", label: "Topic", width: 160 },
+    { key: "type", label: "Type", width: 100 },
+    { key: "status", label: "Status", width: 140 },
+    { key: "createdAt", label: "Created", width: 100 },
+  ],
+  payment: [
+    { key: "userEmail", label: "User", width: 140 },
+    { key: "amount", label: "Amount", width: 80 },
+    { key: "status", label: "Status", width: 70 },
+    { key: "createdAt", label: "Created", width: 100 }
+  ],
+  dailyTask: [
+    { key: "user", label: "User", width: 100 },
+    { key: "level", label: "Level", width: 50 },
+    { key: "task", label: "Task", width: 200 },
+    { key: "completed", label: "Done", width: 40 }
+  ]
+};

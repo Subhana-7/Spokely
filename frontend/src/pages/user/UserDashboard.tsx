@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/userAuthStore";
 
 import DashboardHeader from "./DashBoardComponents/Header";
 import GreetingBanner from "./DashBoardComponents/GreetingsBanner";
@@ -21,7 +20,6 @@ interface QuickAccessCardProps {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const user = useAuthStore();
 
   const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
     icon: Icon,

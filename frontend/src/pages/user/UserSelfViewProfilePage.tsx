@@ -93,7 +93,7 @@ const UserProfile = () => {
 
     try {
       setLoading(true);
-      const updated = await editUserDetails(user.id, user.role, formData);
+      const updated = await editUserDetails(user.id, "user", formData);
       setUser(updated);
       toast.success("Profile updated successfully!");
       setIsEditing(false);
@@ -133,7 +133,7 @@ const UserProfile = () => {
     );
   }
 
-  console.log('stats',stats)
+  console.log("stats", stats);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
@@ -231,12 +231,36 @@ const UserProfile = () => {
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[
-                    { label: "Sessions Completed", value: stats?.sessionsDone ?? 0, icon: <BookOpen size={22} /> },
-                    { label: "Levels Achieved", value: stats?.levels ?? 0, icon: <Layers size={22} /> },
-                    { label: "Mentors Subscribed", value: stats?.mentorsSubscribed ?? 0, icon: <Award size={22} /> },
-                    { label: "Connections", value: stats?.totalConnections ?? 0, icon: <Users size={22} /> },
-                    { label: "Daily Tasks", value: stats?.dailyTasksCompleted ?? 0, icon: <Activity size={22} /> },
-                    { label: "Completion Rate", value: `${stats?.completionRate ?? 0}%`, icon: <TrendingUp size={22} /> },
+                    {
+                      label: "Sessions Completed",
+                      value: stats?.sessionsDone ?? 0,
+                      icon: <BookOpen size={22} />,
+                    },
+                    {
+                      label: "Levels Achieved",
+                      value: stats?.levels ?? 0,
+                      icon: <Layers size={22} />,
+                    },
+                    {
+                      label: "Mentors Subscribed",
+                      value: stats?.mentorsSubscribed ?? 0,
+                      icon: <Award size={22} />,
+                    },
+                    {
+                      label: "Connections",
+                      value: stats?.totalConnections ?? 0,
+                      icon: <Users size={22} />,
+                    },
+                    {
+                      label: "Daily Tasks",
+                      value: stats?.dailyTasksCompleted ?? 0,
+                      icon: <Activity size={22} />,
+                    },
+                    {
+                      label: "Completion Rate",
+                      value: `${stats?.completionRate ?? 0}%`,
+                      icon: <TrendingUp size={22} />,
+                    },
                   ].map((item, idx) => (
                     <SpokelyCard
                       key={idx}

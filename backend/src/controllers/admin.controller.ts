@@ -1,5 +1,3 @@
-// ⭐ UPDATED — NO “any” IN ANY CATCH BLOCK ⭐
-
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { IAdminController } from "./interfaces/IAdminController";
@@ -362,12 +360,16 @@ export class AdminController implements IAdminController {
       const search = (req.query.search as string) || ADMIN_QUERY.SEARCH;
       const status = (req.query.status as string) || ADMIN_QUERY.STATUS_ALL;
 
+      const type = (req.query.type as string) || ADMIN_QUERY.TYPE;
+
       const result = await this._adminService.getAllSessionsAdmin({
         page,
         limit,
         search,
         status,
+        type,
       });
+
 
       res.status(STATUS_CODES.OK).json({
         sessions: result.sessions,
@@ -375,6 +377,7 @@ export class AdminController implements IAdminController {
         page,
         limit,
         totalPages: Math.ceil(result.total / limit),
+        type,
       });
     } catch (err: unknown) {
       console.error(ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED, err);
@@ -406,7 +409,6 @@ export class AdminController implements IAdminController {
       PAYMENT BY ID
   ----------------------------------------------------- */
   getPaymentById = async (req: Request, res: Response): Promise<void> => {
-    console.log('hit')
     try {
       const { id } = req.params;
       const payment = await this._paymentService.getPaymentById(id);
@@ -443,7 +445,6 @@ export class AdminController implements IAdminController {
   async getDailyTaskById(req:Request,res:Response):Promise<void>{
     try {
       const dailyTaskId = req.params.id;
-      console.log(dailyTaskId)
     const task = await this._dailyTaskService.getDailyTaskById(dailyTaskId);
     res.status(STATUS_CODES.OK).json({ task });
     } catch (err:unknown) {
@@ -458,7 +459,7 @@ export class AdminController implements IAdminController {
   ----------------------------------------------------- */
   async getReports(req: Request, res: Response): Promise<void> {
     try {
-      const { type, startDate, endDate, status, mentorId } = req.query;
+      const { type, startDate, endDate} = req.query;
 
       const reportType = type as ReportType;
 
@@ -476,10 +477,7 @@ export class AdminController implements IAdminController {
       switch (reportType) {
         case REPORT_TYPES.SESSION:
           data =
-            (await this._sessionService.getAllSessionsAdmin({
-              status: status as string,
-              mentorId: mentorId as string,
-            })) || [];
+            (await this._sessionService.getAllSessionsAdmin()) || [];
           break;
 
         case REPORT_TYPES.MENTOR:
@@ -531,4 +529,31 @@ export class AdminController implements IAdminController {
       });
     }
   }
+
+
+async downloadReportPdf(req: Request, res: Response): Promise<void> {
+  try {
+    const params = {
+      type: req.query.type as string | undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      status: req.query.status as string | undefined,
+      mentorId: req.query.mentorId as string | undefined,
+    };
+
+    const { buffer, filename } = await this._adminService.exportReportPdf(params);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err: unknown) {
+    console.error("Export PDF error", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to export PDF report",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 }

@@ -4,11 +4,10 @@ import {
   Mic,
   Headphones,
   PenTool,
-  CheckCircle,
   X,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
-import { useAuthStore } from "../../../store/userAuthStore";
 import {
   latestSubmission,
   topicGenerate,
@@ -18,20 +17,57 @@ import {
 const DashboardHeader = lazy(() => import("../DashBoardComponents/Header"));
 const Button = lazy(() => import("../../../modals/Button"));
 
+interface TaskFeedback {
+  strengths: string;
+  weaknesses: string;
+  feedback: string;
+}
+
+type TaskType = "writing" | "speaking" | "listening" | "reading";
+
+interface Responses {
+  writing: string;
+  speaking: string | null;
+  listening: Record<string, string>;
+  reading: Record<string, string>;
+}
+
+interface TaskContent {
+  prompt?: string;
+  paragraph?: string;
+  questions?: string[];
+}
+
+interface DailyTask {
+  id: string;
+  topic: string;
+  writing: TaskContent;
+  speaking: TaskContent;
+  listening: TaskContent;
+  reading: TaskContent;
+  userResponses?: Responses;
+  feedback?: Record<string, TaskFeedback>;
+}
+
 const DailyTaskPage = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
-  const [taskData, setTaskData] = useState(null);
+  const [taskData, setTaskData] = useState<DailyTask | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
-  const [submittedTasks, setSubmittedTasks] = useState([]);
-  const [feedback, setFeedback] = useState(null);
+  const [activeModal, setActiveModal] = useState<TaskType | null>(null);
+  const [submittedTasks, setSubmittedTasks] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<Record<string, TaskFeedback> | null>(
+    null
+  );
+
   const [feedbackModal, setFeedbackModal] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [submitConfirmModal, setSubmitConfirmModal] = useState(false);
+  const [warningModal, setWarningModal] = useState({
+    open: false,
+    message: "",
+  });
 
-  const user = useAuthStore((s) => s.user);
-
-  const [responses, setResponses] = useState({
+  const [responses, setResponses] = useState<Responses>({
     writing: "",
     speaking: null,
     listening: {},
@@ -39,12 +75,14 @@ const DailyTaskPage = () => {
   });
 
   const [recording, setRecording] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
+  const [_paused, setPaused] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  const [listeningSpeaking, setListeningSpeaking] = useState(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const [listeningSpeaking, setListeningSpeaking] =
+    useState<SpeechSynthesisUtterance | null>(null);
   const [listeningPaused, setListeningPaused] = useState(false);
 
   const topics = [
@@ -85,8 +123,7 @@ const DailyTaskPage = () => {
       color: "from-orange-500 to-red-500",
       description: "Improve your reading skills",
     },
-  ];
-
+  ] as const;
 
   useEffect(() => {
     const fetchExistingTask = async () => {
@@ -107,7 +144,8 @@ const DailyTaskPage = () => {
           );
           setSubmittedTasks(taskCards.map((c) => c.id));
 
-          const normalizedFeedback = {};
+          const normalizedFeedback: Record<string, TaskFeedback> = {};
+
           for (const key of ["writing", "reading", "listening", "speaking"]) {
             const fb =
               data.task[key]?.feedback || data.task.feedback?.[key] || null;
@@ -136,7 +174,7 @@ const DailyTaskPage = () => {
     fetchExistingTask();
   }, []);
 
-  const handleTopicSelect = async (topic) => {
+  const handleTopicSelect = async (topic: string) => {
     setSelectedTopic(topic);
     setLoading(true);
     try {
@@ -162,11 +200,14 @@ const DailyTaskPage = () => {
     }
   };
 
-  const handleOpenModal = (taskType) => {
+  const handleOpenModal = (taskType: TaskType) => {
     setActiveModal(taskType);
-    setAudioUrl(
-      responses[taskType] || null
-    );
+
+    if (taskType === "speaking") {
+      setAudioUrl(responses.speaking || null);
+    } else {
+      setAudioUrl(null); // all other tasks don't use audio
+    }
   };
 
   const handleCloseModal = () => setActiveModal(null);
@@ -175,13 +216,22 @@ const DailyTaskPage = () => {
     if (!activeModal) return;
     const response = responses[activeModal];
 
-    const isValid =
-      typeof response === "string"
-        ? response.trim() !== ""
-        : response && Object.values(response).some((val) => val.trim() !== "");
+    let isValid = false;
+
+    if (typeof response === "string") {
+      isValid = response.trim() !== "";
+    } else if (response && typeof response === "object") {
+      isValid = Object.values(response).some(
+        (val) => typeof val === "string" && val.trim() !== ""
+      );
+    }
 
     if (!isValid) {
-      alert("Please provide a response first!");
+      setWarningModal({
+        open: true,
+        message:
+          "Please provide a response before marking the task as complete!",
+      });
       return;
     }
 
@@ -199,7 +249,7 @@ const DailyTaskPage = () => {
     }
 
     try {
-      const response = await submitResponse(taskData.id, responses);
+      const response = await submitResponse(taskData!.id, responses);
       const data = await response.data;
       setFeedback(data.feedback);
       localStorage.setItem("dailyTaskSubmitted", new Date().toISOString());
@@ -239,18 +289,8 @@ const DailyTaskPage = () => {
     setPaused(false);
   };
 
-  const pauseRecording = () => {
-    mediaRecorderRef.current?.pause();
-    setPaused(true);
-  };
-
-  const resumeRecording = () => {
-    mediaRecorderRef.current?.resume();
-    setPaused(false);
-  };
-
   const handlePlayAudio = () => {
-    if (!taskData.listening?.paragraph) return;
+    if (!taskData?.listening?.paragraph) return;
 
     speechSynthesis.cancel();
 
@@ -269,16 +309,6 @@ const DailyTaskPage = () => {
     setListeningPaused(false);
   };
 
-  const pauseListening = () => {
-    speechSynthesis.pause();
-    setListeningPaused(true);
-  };
-
-  const resumeListening = () => {
-    speechSynthesis.resume();
-    setListeningPaused(false);
-  };
-
   const stopListening = () => {
     speechSynthesis.cancel();
     setListeningSpeaking(null);
@@ -293,7 +323,7 @@ const DailyTaskPage = () => {
         <div className="max-w-7xl mx-auto px-6 pt-6">
           {!selectedTopic && !alreadySubmitted && (
             <div className="mb-16">
-              <h2 className="text-2xl font-semibold text-center mb-8 text-green-400">
+              <h2 className="text-2xl font-semibold text-center mb-8 text-white">
                 Choose Your Topic
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -318,7 +348,9 @@ const DailyTaskPage = () => {
           {loading && (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-500"></div>
-              <p className="mt-4 text-xl text-gray-300">Loading your tasks...</p>
+              <p className="mt-4 text-xl text-gray-300">
+                Loading your tasks...
+              </p>
             </div>
           )}
 
@@ -424,7 +456,8 @@ const DailyTaskPage = () => {
                 >
                   <div className="flex items-center gap-3">
                     {React.createElement(
-                      taskCards.find((t) => t.id === activeModal)?.icon || PenTool,
+                      taskCards.find((t) => t.id === activeModal)?.icon ||
+                        PenTool,
                       { size: 28 }
                     )}
                     <h3 className="text-2xl font-bold capitalize">
@@ -493,7 +526,7 @@ const DailyTaskPage = () => {
                         <Button
                           className="bg-purple-600 flex-1 py-3 px-6 rounded-xl"
                           onClick={handlePlayAudio}
-                          disabled={listeningSpeaking && !listeningPaused}
+                          disabled={!!listeningSpeaking && !listeningPaused}
                         >
                           🎧 {listeningSpeaking ? "Restart" : "Play Audio"}
                         </Button>
@@ -575,6 +608,31 @@ const DailyTaskPage = () => {
             </div>
           )}
 
+          {warningModal.open && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-white/20 p-6">
+                <div className="flex flex-col items-center text-center">
+                  <AlertTriangle size={48} className="text-yellow-400 mb-4" />
+
+                  <h3 className="text-xl font-bold text-yellow-400 mb-2">
+                    Warning
+                  </h3>
+
+                  <p className="text-gray-300 mb-6">{warningModal.message}</p>
+
+                  <Button
+                    onClick={() =>
+                      setWarningModal({ open: false, message: "" })
+                    }
+                    className="bg-gradient-to-r from-yellow-500 to-amber-600 w-full py-3 rounded-xl"
+                  >
+                    Okay
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Feedback Modal */}
           {feedbackModal && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -645,7 +703,8 @@ const DailyTaskPage = () => {
                   </h3>
 
                   <p className="text-gray-300 mb-6">
-                    Your responses have been submitted. You can now view your answers and AI feedback.
+                    Your responses have been submitted. You can now view your
+                    answers and AI feedback.
                   </p>
 
                   <div className="flex gap-3 w-full">

@@ -125,8 +125,8 @@ export class UserService implements IUserService {
 
     return {
       user: toUserResponseDTO(user),
-      accessToken: generateAccessToken({ id: user._id, role: user.role }),
-      refreshToken: generateRefreshToken({ id: user._id, role: user.role }),
+      accessToken: generateAccessToken({ id: user._id, role: user.role ,status:user.isBlocked}),
+      refreshToken: generateRefreshToken({ id: user._id, role: user.role,status:user.isBlocked }),
     };
   }
 
@@ -277,6 +277,7 @@ export class UserService implements IUserService {
       const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
         id: string;
         role: string;
+        status:boolean;
       };
 
       const user = await this._userRepository.findById(payload.id);
@@ -287,6 +288,7 @@ export class UserService implements IUserService {
         accessToken: generateAccessToken({
           id: payload.id,
           role: payload.role,
+          status:user.isBlocked,
         }),
       };
     } catch {

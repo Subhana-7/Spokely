@@ -38,7 +38,6 @@ interface DashboardStats {
   totalDailyTasks: number;
 }
 
-
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [sessionTrends, setSessionTrends] = useState<SessionTrend[]>([]);

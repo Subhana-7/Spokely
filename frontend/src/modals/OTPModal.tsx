@@ -10,8 +10,6 @@ import {
   verifyForgotPasswordOTP,
   sendForgotPasswordOTP,
 } from "../services/authServices";
-import { useNavigate } from "react-router-dom";
-import PasswordResetSuccessModal from "./PasswordResetSuccessModal";
 
 interface OTPModalProps {
   isOpen: boolean;
@@ -20,7 +18,7 @@ interface OTPModalProps {
   role: string;
   isForgotPassword?: boolean;
   onVerified?: () => void;
-  onSuccess?:() => void;
+  onSuccess?: () => void;
 }
 
 const OTPModal: React.FC<OTPModalProps> = ({
@@ -30,15 +28,12 @@ const OTPModal: React.FC<OTPModalProps> = ({
   role,
   isForgotPassword = false,
   onVerified,
-  onSuccess,
 }) => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(120);
   const [canInteract, setCanInteract] = useState(false);
   // const [showResetSuccess, setShowResetSuccess] = useState(false);
-
-  const navigate = useNavigate();
 
   const [showMentorSuccess, setShowMentorSuccess] = useState(false);
   const [mentorMessage, setMentorMessage] = useState("");
@@ -72,23 +67,26 @@ const OTPModal: React.FC<OTPModalProps> = ({
   };
 
   const handleVerify = async () => {
-  setError("");
-  try {
-    if (isForgotPassword) {
-      await verifyForgotPasswordOTP({ email, code: otp }, role as "user" | "mentor");
-      setIsVerified(true);
-      if (onVerified) onVerified();  // ✅ trigger parent step
-    } else {
-      await verifyOTP({ email, code: otp }, role as "user" | "mentor");
-      setIsVerified(true);
-      if (onVerified) onVerified();
+    setError("");
+    try {
+      if (isForgotPassword) {
+        await verifyForgotPasswordOTP(
+          { email, code: otp },
+          role as "user" | "mentor"
+        );
+        setIsVerified(true);
+        if (onVerified) onVerified(); // ✅ trigger parent step
+      } else {
+        await verifyOTP({ email, code: otp }, role as "user" | "mentor");
+        setIsVerified(true);
+        if (onVerified) onVerified();
+      }
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message || err.message || "Verification failed";
+      setError(msg);
     }
-  } catch (err: any) {
-    const msg = err.response?.data?.message || err.message || "Verification failed";
-    setError(msg);
-  }
-};
-
+  };
 
   const handleResend = async () => {
     try {
@@ -139,20 +137,19 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
   // const handleResetSuccessClose = () => {
   //   setShowResetSuccess(false);
-  //   onClose(); 
+  //   onClose();
   // };
 
   // console.log(showResetSuccess)
 
-// if (showResetSuccess) {
-//   return (
-//     <PasswordResetSuccessModal
-//       isOpen={true} 
-//       onClose={handleResetSuccessClose}
-//     />
-//   );
-// }
-
+  // if (showResetSuccess) {
+  //   return (
+  //     <PasswordResetSuccessModal
+  //       isOpen={true}
+  //       onClose={handleResetSuccessClose}
+  //     />
+  //   );
+  // }
 
   return (
     <Modal

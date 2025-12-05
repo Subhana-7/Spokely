@@ -39,9 +39,6 @@ const MentorScheduleSession = lazy(
   () => import("./pages/Sessions/MentorScheduleSession")
 );
 const SessionListing = lazy(() => import("./pages/admin/SessionListing"));
-const SessionDetailsPage = lazy(
-  () => import("./pages/admin/SessionDetailsPage")
-);
 const ChatPage = lazy(() => import("./pages/chat/ChatPage"));
 const MentorCard = lazy(() => import("./pages/user/mentorListing"));
 const StudentsPage = lazy(() => import("./pages/Sessions/StudentsListing"));
@@ -56,11 +53,17 @@ const DailyTaskManagement = lazy(
 );
 const Reports = lazy(() => import("./pages/admin/ReportsManagement"));
 
-const SubscriptionHistory = lazy(() => import("./pages/user/SubscriptionHistory"));
+const SubscriptionHistory = lazy(
+  () => import("./pages/user/SubscriptionHistory")
+);
 
 const Notification = lazy(() => import("./pages/Notification"));
 const PaymentDetails = lazy(() => import("./pages/PaymentDetails"));
-const AdminDailyTaskDetails = lazy(() => import("./pages/admin/DailyTaskDetails"))
+const AdminDailyTaskDetails = lazy(
+  () => import("./pages/admin/DailyTaskDetails")
+);
+
+const BlockedScreen = lazy(() => import("./pages/BlockedScreen"));
 
 export default function AppRoutes() {
   const routes: RouteObject[] = useMemo(
@@ -110,7 +113,7 @@ export default function AppRoutes() {
       {
         path: "/session/details/:id",
         element: (
-          <RoleProtectedRoute roles={["user", "mentor","admin"]}>
+          <RoleProtectedRoute roles={["user", "mentor", "admin"]}>
             <SessionDetail />
           </RoleProtectedRoute>
         ),
@@ -134,7 +137,7 @@ export default function AppRoutes() {
       {
         path: "/mentor-profile/:id",
         element: (
-          <RoleProtectedRoute roles={["user","mentor","admin"]}>
+          <RoleProtectedRoute roles={["user", "mentor", "admin"]}>
             <UserViewMentorProfile />
           </RoleProtectedRoute>
         ),
@@ -174,7 +177,7 @@ export default function AppRoutes() {
       {
         path: "/user-profile/:id",
         element: (
-          <RoleProtectedRoute roles={["mentor", "user","admin"]}>
+          <RoleProtectedRoute roles={["mentor", "user", "admin"]}>
             <MentorViewUserProfile />
           </RoleProtectedRoute>
         ),
@@ -198,7 +201,7 @@ export default function AppRoutes() {
       {
         path: "/notifications",
         element: (
-          <RoleProtectedRoute roles={["user","mentor"]}>
+          <RoleProtectedRoute roles={["user", "mentor"]}>
             <Notification />
           </RoleProtectedRoute>
         ),
@@ -276,6 +279,8 @@ export default function AppRoutes() {
         ),
       },
 
+      { path: "/blocked", element: <BlockedScreen /> },
+
       { path: "/admin/login", element: <AdminLogin /> },
       {
         path: "/admin",
@@ -290,7 +295,6 @@ export default function AppRoutes() {
           { path: "mentors", element: <MentorManagement /> },
           { path: "mentors/verification/:id", element: <MentorVerification /> },
           { path: "sessions", element: <SessionListing /> },
-          { path: "sessions/:id", element: <SessionDetailsPage /> },
           { path: "payment-management", element: <PaymentManagement /> },
           { path: "tasks", element: <DailyTaskManagement /> },
           { path: "reports", element: <Reports /> },

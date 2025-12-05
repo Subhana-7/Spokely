@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import SearchFilterBar from "../../components/admin/SearchFilterBar";
 import DataTable from "../../components/admin/DataTables";
 import toast from "react-hot-toast";
 import { getAdminTasks } from "../../services/adminService";
-import { useNavigate } from "react-router-dom";
 
 interface Feedback {
   feedback: string;
@@ -20,7 +18,11 @@ interface Section {
 
 interface DailyTask {
   id: string;
-  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
   topic: string;
   writing: Section;
   reading: Section;
@@ -38,8 +40,6 @@ const FeedbackModal = ({
   task: DailyTask | null;
 }) => {
   if (!open || !task) return null;
-
-  
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -83,12 +83,10 @@ const DailyTaskManagement = () => {
   const [filter, setFilter] = useState("All Topics");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
+  const [selectedTask, _setSelectedTask] = useState<DailyTask | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const limit = 10;
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -117,13 +115,16 @@ const DailyTaskManagement = () => {
 
   // Open feedback modal when a row is clicked
   const handleTaskClick = (id: string) => {
-    (window.location.href = `/admin/task/${id}`)
+    window.location.href = `/admin/task/${id}`;
   };
 
   const taskData = tasks.map((task) => ({
     id: task.id,
-    name: task.userId,
     dailyTask: task.topic,
+    user: {
+      name: task.user.name,
+      email: task.user.email,
+    },
     writing: task.writing.userResponse || "Pending",
     reading: task.reading.userResponse ? "Completed" : "Pending",
     speaking: task.speaking.userResponse ? "Completed" : "Pending",
@@ -135,9 +136,6 @@ const DailyTaskManagement = () => {
       task.listening.userResponse
         ? "Completed"
         : "Pending",
-    isBlocked: false,
-    sessions: 0,
-    mentors: 0,
   }));
 
   return (
@@ -158,6 +156,8 @@ const DailyTaskManagement = () => {
         <SearchFilterBar
           searchPlaceholder="Search by topic or user ID"
           filterOptions={["All Topics", "Environment", "Education"]}
+          hideMoreFilters={true}
+          hideStatusFilter={true}
           onSearch={setSearch}
           onFilter={setFilter}
         />
@@ -165,7 +165,7 @@ const DailyTaskManagement = () => {
 
       <DataTable
         data={taskData}
-        type="user"
+        type="dailyTask"
         onRowClick={handleTaskClick}
         page={page}
         setPage={setPage}

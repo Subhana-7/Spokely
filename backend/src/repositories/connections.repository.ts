@@ -20,7 +20,7 @@ export class ConnectionRepository
   ): Promise<IConnection | null> {
     try {
       return await ConnectionModel.create({ userId, connectedUserId });
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("createConnection error", error);
       return null;
     }
@@ -37,7 +37,7 @@ export class ConnectionRepository
           { userId: receiverId, connectedUserId: senderId },
         ],
       });
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("findByUniqueCode error", error);
       return null;
     }
@@ -56,7 +56,7 @@ export class ConnectionRepository
         "userId",
         "name email profilePicture"
       )) as unknown as PopulatedConnection[];
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("getReceivedRequests error", error);
       return null;
     }
@@ -76,7 +76,7 @@ export class ConnectionRepository
       connection.status = "accepted";
       await connection.save();
       return connection;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("acceptRequest error", error);
       return null;
     }
@@ -95,7 +95,7 @@ export class ConnectionRepository
       connection.status = "rejected";
       await connection.save();
       return connection;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("rejectRequest error", error);
       return null;
     }
@@ -132,7 +132,7 @@ export class ConnectionRepository
       const connections = await query.exec();
       console.log("repo", connections);
       return connections as unknown as PopulatedConnection[];
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("getAcceptedConnections error", error);
       return null;
     }
@@ -151,7 +151,7 @@ export class ConnectionRepository
         "connectedUserId",
         "name email profilePicture"
       )) as unknown as PopulatedConnection[];
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("getSentRequests error", error);
       return null;
     }
@@ -168,7 +168,7 @@ export class ConnectionRepository
         { new: true }
       );
       return connection;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("blockConnection error", error);
       return null;
     }
@@ -180,12 +180,12 @@ export class ConnectionRepository
         connectionId,
         {
           $set: { isBlocked: false },
-          $unset: { blockedBy: "" },
+          $unset: { blockedBy: 1 },
         },
         { new: true }
       );
       return connection;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("unblockConnection error", error);
       return null;
     }
@@ -195,198 +195,246 @@ export class ConnectionRepository
     try {
       const connection = await ConnectionModel.findByIdAndDelete(connectionId);
       return connection;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("connection deletion error", error);
       return null;
     }
   }
 
-
-
   async findWithFilters(
-  userId: string,
-  filters?: {
-    search?: string;
-    status?: string;
-    page?: number;
-    limit?: number;
-  }
-): Promise<PopulatedConnection[]> {
-  try {
-    const { search = "", status = "all", page = 1, limit = 10 } = filters || {};
-    const skip = (page - 1) * limit;
-
-    const userObjId = new Types.ObjectId(userId);
-
-    const baseQuery: any = {
-      isRemoved: false,
-      $or: [{ userId: userObjId }, { connectedUserId: userObjId }],
-    };
-
-    if (status === "accepted") {
-      baseQuery.status = "accepted";
-      baseQuery.isBlocked = false; 
-    } else if (status === "pending_sent") {
-      baseQuery.userId = userObjId;
-      baseQuery.status = "pending";
-    } else if (status === "pending_received") {
-      baseQuery.connectedUserId = userObjId;
-      baseQuery.status = "pending";
-    } else if (status === "blocked") {
-      baseQuery.isBlocked = true;
+    userId: string,
+    filters?: {
+      search?: string;
+      status?: string;
+      page?: number;
+      limit?: number;
     }
+  ): Promise<PopulatedConnection[]> {
+    try {
+      const {
+        search = "",
+        status = "all",
+        page = 1,
+        limit = 10,
+      } = filters || {};
+      const skip = (page - 1) * limit;
 
-    if (search && search.trim() !== "") {
-      const regex = new RegExp(search.trim(), "i");
+      const userObjId = new Types.ObjectId(userId);
 
-      const pipeline: any[] = [
-        { $match: baseQuery },
-        {
-          $lookup: {
-            from: "users",
-            localField: "blockedBy",
-            foreignField: "_id",
-            as: "blockedByUser",
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "userDoc",
-          },
-        },
-        { $unwind: { path: "$userDoc", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "connectedUserId",
-            foreignField: "_id",
-            as: "connectedUserDoc",
-          },
-        },
-        { $unwind: { path: "$connectedUserDoc", preserveNullAndEmptyArrays: true } },
-        {
-          $match: {
-            $or: [
-              { "userDoc.name": { $regex: regex } },
-              { "userDoc.email": { $regex: regex } },
-              { "connectedUserDoc.name": { $regex: regex } },
-              { "connectedUserDoc.email": { $regex: regex } },
-            ],
-          },
-        },
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-        {
-          $project: {
-            _id: 1,
-            userId: "$userDoc",
-            connectedUserId: "$connectedUserDoc",
-            status: 1,
-            isBlocked: 1,
-            blockedBy: { $arrayElemAt: ["$blockedByUser", 0] },
-            sessionCount: 1,
-            createdAt: 1,
-            updatedAt: 1,
-          },
-        },
-      ];
+      const baseQuery: any = {
+        isRemoved: false,
+        $or: [{ userId: userObjId }, { connectedUserId: userObjId }],
+      };
 
-      const results = await ConnectionModel.aggregate(pipeline);
+      if (status === "accepted") {
+        baseQuery.status = "accepted";
+        baseQuery.isBlocked = false;
+      } else if (status === "pending_sent") {
+        baseQuery.userId = userObjId;
+        baseQuery.status = "pending";
+      } else if (status === "pending_received") {
+        baseQuery.connectedUserId = userObjId;
+        baseQuery.status = "pending";
+      } else if (status === "blocked") {
+        baseQuery.isBlocked = true;
+      }
+
+      if (search && search.trim() !== "") {
+        const regex = new RegExp(search.trim(), "i");
+
+        const pipeline: any[] = [
+          { $match: baseQuery },
+          {
+            $lookup: {
+              from: "users",
+              let: { blockedById: "$blockedBy", isBlocked: "$isBlocked" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $cond: [
+                        { $eq: ["$$isBlocked", true] },
+                        { $eq: ["$_id", "$$blockedById"] },
+                        false,
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "blockedByUser",
+            },
+          },
+
+          {
+            $lookup: {
+              from: "users",
+              localField: "userId",
+              foreignField: "_id",
+              as: "userDoc",
+            },
+          },
+          { $unwind: { path: "$userDoc", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "connectedUserId",
+              foreignField: "_id",
+              as: "connectedUserDoc",
+            },
+          },
+          {
+            $unwind: {
+              path: "$connectedUserDoc",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $match: {
+              $or: [
+                { "userDoc.name": { $regex: regex } },
+                { "userDoc.email": { $regex: regex } },
+                { "connectedUserDoc.name": { $regex: regex } },
+                { "connectedUserDoc.email": { $regex: regex } },
+              ],
+            },
+          },
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              _id: 1,
+              userId: "$userDoc",
+              connectedUserId: "$connectedUserDoc",
+              status: 1,
+              isBlocked: 1,
+              blockedBy: {
+                $cond: [
+                  { $eq: ["$isBlocked", true] },
+                  { $arrayElemAt: ["$blockedByUser", 0] },
+                  "$$REMOVE",
+                ],
+              },
+
+              sessionCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          },
+        ];
+
+        const results = await ConnectionModel.aggregate(pipeline);
+        return results as PopulatedConnection[];
+      }
+
+      let results: any[] = await ConnectionModel.find(baseQuery)
+        .populate(
+          "userId",
+          "name email profilePicture role uniqueCode isBlocked"
+        )
+        .populate(
+          "connectedUserId",
+          "name email profilePicture role uniqueCode isBlocked"
+        )
+        .populate({
+          path: "blockedBy",
+          select: "name email role",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      // REMOVE blockedBy when isBlocked = false
+      results = results.map((conn: any) => {
+        if (!conn.isBlocked) delete conn.blockedBy;
+        return conn;
+      });
+
       return results as PopulatedConnection[];
+    } catch (error: unknown) {
+      console.log("findWithFilters error", error);
+      return [];
     }
-
-    const results = await ConnectionModel.find(baseQuery)
-      .populate("userId", "name email profilePicture role uniqueCode isBlocked")
-      .populate("connectedUserId", "name email profilePicture role uniqueCode isBlocked")
-      .populate("blockedBy", "name email role")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    return results as unknown as PopulatedConnection[];
-  } catch (error:unknown) {
-    console.log("findWithFilters error", error);
-    return [];
   }
-}
 
-async countWithFilters(
-  userId: string,
-  filters?: {
-    search?: string;
-    status?: string;
-  }
-): Promise<number> {
-  try {
-    const { search = "", status = "all" } = filters || {};
-    const userObjId = new Types.ObjectId(userId);
-
-    const baseQuery: any = {
-      isRemoved: false,
-      $or: [{ userId: userObjId }, { connectedUserId: userObjId }],
-    };
-
-    if (status === "accepted") {
-      baseQuery.status = "accepted";
-      baseQuery.isBlocked = false;
-    } else if (status === "pending_sent") {
-      baseQuery.userId = userObjId;
-      baseQuery.status = "pending";
-    } else if (status === "pending_received") {
-      baseQuery.connectedUserId = userObjId;
-      baseQuery.status = "pending";
-    } else if (status === "blocked") {
-      baseQuery.isBlocked = true;
+  async countWithFilters(
+    userId: string,
+    filters?: {
+      search?: string;
+      status?: string;
     }
+  ): Promise<number> {
+    try {
+      const { search = "", status = "all" } = filters || {};
+      const userObjId = new Types.ObjectId(userId);
 
-    if (search && search.trim() !== "") {
-      const regex = new RegExp(search.trim(), "i");
-      const pipeline: any[] = [
-        { $match: baseQuery },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "userDoc",
-          },
-        },
-        { $unwind: { path: "$userDoc", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "connectedUserId",
-            foreignField: "_id",
-            as: "connectedUserDoc",
-          },
-        },
-        { $unwind: { path: "$connectedUserDoc", preserveNullAndEmptyArrays: true } },
-        {
-          $match: {
-            $or: [
-              { "userDoc.name": { $regex: regex } },
-              { "userDoc.email": { $regex: regex } },
-              { "connectedUserDoc.name": { $regex: regex } },
-              { "connectedUserDoc.email": { $regex: regex } },
-            ],
-          },
-        },
-        { $count: "count" },
-      ];
+      const baseQuery: any = {
+        isRemoved: false,
+        $or: [{ userId: userObjId }, { connectedUserId: userObjId }],
+      };
 
-      const res = await ConnectionModel.aggregate(pipeline);
-      return res.length ? res[0].count : 0;
+      if (status === "accepted") {
+        baseQuery.status = "accepted";
+        baseQuery.isBlocked = false;
+      } else if (status === "pending_sent") {
+        baseQuery.userId = userObjId;
+        baseQuery.status = "pending";
+      } else if (status === "pending_received") {
+        baseQuery.connectedUserId = userObjId;
+        baseQuery.status = "pending";
+      } else if (status === "blocked") {
+        baseQuery.isBlocked = true;
+      }
+
+      if (search && search.trim() !== "") {
+        const regex = new RegExp(search.trim(), "i");
+        const pipeline: any[] = [
+          { $match: baseQuery },
+          {
+            $lookup: {
+              from: "users",
+              localField: "userId",
+              foreignField: "_id",
+              as: "userDoc",
+            },
+          },
+          { $unwind: { path: "$userDoc", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "connectedUserId",
+              foreignField: "_id",
+              as: "connectedUserDoc",
+            },
+          },
+          {
+            $unwind: {
+              path: "$connectedUserDoc",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $match: {
+              $or: [
+                { "userDoc.name": { $regex: regex } },
+                { "userDoc.email": { $regex: regex } },
+                { "connectedUserDoc.name": { $regex: regex } },
+                { "connectedUserDoc.email": { $regex: regex } },
+              ],
+            },
+          },
+          { $count: "count" },
+        ];
+
+        const res = await ConnectionModel.aggregate(pipeline);
+        return res.length ? res[0].count : 0;
+      }
+
+      return await ConnectionModel.countDocuments(baseQuery);
+    } catch (error: unknown) {
+      console.log("countWithFilters error", error);
+      return 0;
     }
-
-    return await ConnectionModel.countDocuments(baseQuery);
-  } catch (error:unknown) {
-    console.log("countWithFilters error", error);
-    return 0;
   }
-}
 }

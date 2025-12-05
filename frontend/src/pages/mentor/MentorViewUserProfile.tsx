@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { userProfiles } from "../../services/authServices";
 import toast from "react-hot-toast";
-import { User, TrendingUp, Book, Calendar, ArrowLeft } from "lucide-react";
+import { User, TrendingUp, Calendar, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
+import MentorHeader from "./DashboardComponents/Header";
 
 const MentorViewUserProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,23 +45,28 @@ const MentorViewUserProfile = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-14">
+    <div
+      className={
+        `min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white ` +
+        (currentUser?.role === "user" ? "pt-20" : "pt-0")
+      }
+    >
+      {currentUser?.role === "user" ? <Header /> : <MentorHeader />}
       {/* Header */}
-       <div className="flex items-center max-w-7xl mx-auto px-6 mb-10">
+      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10 py-4">
         <button
           onClick={() => navigate(-1)}
           className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors mr-4"
         >
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-white">
           User Details
         </h1>
       </div>
 
       {/* Layout */}
       <div className="max-w-4xl mx-auto px-6 flex flex-col gap-8">
-
         {/* PROFILE CARD */}
         <div className="bg-white/6 backdrop-blur-lg rounded-2xl border border-white/10 p-6 flex gap-6">
           {/* Avatar */}
@@ -108,7 +115,9 @@ const MentorViewUserProfile = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="bg-gray-800/40 p-4 rounded-xl border border-gray-700/40">
-              <p className="text-2xl font-bold text-green-400">{user.completionRate}%</p>
+              <p className="text-2xl font-bold text-green-400">
+                {user.completionRate}%
+              </p>
               <p className="text-gray-400 text-sm">Completion Rate</p>
             </div>
 

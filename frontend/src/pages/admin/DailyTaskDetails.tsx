@@ -8,11 +8,7 @@ import {
   ClipboardList,
   FileText,
   User,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
-import axios from "axios";
-import Button from "../../modals/Button";
 import { getAdminTaskById } from "../../services/adminService";
 
 interface Feedback {

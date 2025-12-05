@@ -39,21 +39,21 @@ router.get(
   controller.googleCallback.bind(controller)
 );
 
-router.post("/logout", controller.logout.bind(controller));
+router.post("/logout",authMiddleware(["user"]), controller.logout.bind(controller));
 router.get(
   "/all",
-  authMiddleware(["user"]),
+  authMiddleware(["admin"]),
   controller.getAllUsers.bind(controller)
 );
 
-router.post("/refresh-token", controller.refreshToken.bind(controller));
+router.post("/refresh-token", authMiddleware(["user"]),controller.refreshToken.bind(controller));
 
-router.get("/peer/profile/:id", controller.profile.bind(controller));
+router.get("/peer/profile/:id",authMiddleware(["user","mentor","admin"]), controller.profile.bind(controller));
 
-router.post("/edit/:id", controller.editUser.bind(controller));
+router.post("/edit/:id",authMiddleware(["user"]), controller.editUser.bind(controller));
 
-router.post("/change-password", controller.changePassword.bind(controller));
+router.post("/change-password",authMiddleware(["user"]), controller.changePassword.bind(controller));
 
-router.get("/mentor/listing", controller.mentorListing.bind(controller));
+router.get("/mentor/listing",authMiddleware(["user"]), controller.mentorListing.bind(controller));
 
 export default router;

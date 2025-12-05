@@ -10,7 +10,12 @@ import { getSessions } from "../../services/sessionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-type SessionStatus = "pending" | "upcoming" | "accepted" | "completed" | "cancelled";
+type SessionStatus =
+  | "pending"
+  | "upcoming"
+  | "accepted"
+  | "completed"
+  | "cancelled";
 
 const statusLabels: Record<SessionStatus, string> = {
   pending: "Pending Approval",
@@ -37,10 +42,10 @@ interface Session {
 
 const SessionsHub: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [filter, setFilter] = useState<string>("all"); // status filter
-  const [typeFilter, setTypeFilter] = useState<string>("all"); // session type filter
+  const [filter, setFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
-  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [_currentUserId, setCurrentUserId] = useState<string>("");
   const [stats, setStats] = useState({
     thisWeek: 0,
     today: 0,
@@ -48,9 +53,8 @@ const SessionsHub: React.FC = () => {
     completionRate: 0,
   });
 
-  // Pagination state returned from server
   const [page, setPage] = useState<number>(1);
-  const [limit] = useState<number>(9); // change per page if you want
+  const [limit] = useState<number>(9);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
@@ -62,7 +66,6 @@ const SessionsHub: React.FC = () => {
     setCurrentUserId(userId);
   }, []);
 
-  // Fetch sessions from backend with filters, search and pagination
   const fetchSessions = async (opts?: { page?: number }) => {
     setLoading(true);
     try {
@@ -75,22 +78,20 @@ const SessionsHub: React.FC = () => {
         limit,
       });
 
-      // many APIs return data differently; handle both shapes:
-      // { sessions, total, page, totalPages }  OR  res.data.sessions
       const payload = res.data || {};
       const serverSessions =
         (payload.sessions as any[]) ||
         (Array.isArray(payload) ? (payload as any[]) : payload.sessions);
 
-      // If API returned a wrapped object with pagination fields:
       if (payload.sessions && Array.isArray(payload.sessions)) {
         setSessions(payload.sessions);
         setTotalItems(Number(payload.total ?? payload.totalItems ?? 0));
         setPage(Number(payload.page ?? p));
-        setTotalPages(Number(payload.totalPages ?? Math.ceil((payload.total ?? 0) / limit)));
+        setTotalPages(
+          Number(payload.totalPages ?? Math.ceil((payload.total ?? 0) / limit))
+        );
         calculateStats(payload.sessions);
       } else if (Array.isArray(serverSessions)) {
-        // fallback
         setSessions(serverSessions as Session[]);
         calculateStats(serverSessions as Session[]);
         setTotalItems(serverSessions.length);
@@ -124,7 +125,9 @@ const SessionsHub: React.FC = () => {
 
     const completed = sessionsList.filter((s) => s.status === "completed");
     const completionRate =
-      sessionsList.length > 0 ? Math.round((completed.length / sessionsList.length) * 100) : 0;
+      sessionsList.length > 0
+        ? Math.round((completed.length / sessionsList.length) * 100)
+        : 0;
 
     setStats({
       thisWeek: thisWeekSessions.length,
@@ -134,18 +137,13 @@ const SessionsHub: React.FC = () => {
     });
   };
 
-  // initial fetch and whenever filters/search/page change
   useEffect(() => {
-    // reset to page 1 when filters/search change
     setPage(1);
     fetchSessions({ page: 1 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, typeFilter, search]);
 
-  // If only page changes (e.g., next/prev), fetch the new page
   useEffect(() => {
     fetchSessions({ page });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const handleScheduleButton = () => {
@@ -169,7 +167,10 @@ const SessionsHub: React.FC = () => {
     if (isCompleted) {
       return (
         <div className="flex flex-col gap-2 mt-3">
-          <Button onClick={() => navigate(`/session/details/${session._id}`)} variant="secondary">
+          <Button
+            onClick={() => navigate(`/session/details/${session._id}`)}
+            variant="secondary"
+          >
             View Details
           </Button>
           <p className="text-sm text-green-400 font-semibold">Completed</p>
@@ -180,27 +181,34 @@ const SessionsHub: React.FC = () => {
     if (isOngoing) {
       return (
         <div className="flex flex-col gap-2 mt-3">
-          <Button onClick={() => navigate(`/session/details/${session._id}`)} variant="secondary">
+          <Button
+            onClick={() => navigate(`/session/details/${session._id}`)}
+            variant="secondary"
+          >
             View Details
           </Button>
-          <Button onClick={() => navigate(`/session/${session._id}/video`)} variant="primary">
+          <Button
+            onClick={() => navigate(`/session/${session._id}/video`)}
+            variant="primary"
+          >
             Join Session
           </Button>
         </div>
       );
     }
 
-    // upcoming / default
     return (
       <div className="flex flex-col gap-2 mt-3">
-        <Button onClick={() => navigate(`/session/details/${session._id}`)} variant="secondary">
+        <Button
+          onClick={() => navigate(`/session/details/${session._id}`)}
+          variant="secondary"
+        >
           View Details
         </Button>
       </div>
     );
   }
 
-  // Pagination helpers
   const goPrev = () => {
     if (page > 1) setPage((p) => p - 1);
   };
@@ -226,7 +234,9 @@ const SessionsHub: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           <SpokelyCard className="bg-slate-800 text-center">
             <p className="text-gray-400">This Week</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.thisWeek}</p>
+            <p className="text-2xl font-bold text-emerald-400">
+              {stats.thisWeek}
+            </p>
           </SpokelyCard>
           <SpokelyCard className="bg-slate-800 text-center">
             <p className="text-gray-400">Today</p>
@@ -234,11 +244,15 @@ const SessionsHub: React.FC = () => {
           </SpokelyCard>
           <SpokelyCard className="bg-slate-800 text-center">
             <p className="text-gray-400">Total (page)</p>
-            <p className="text-2xl font-bold text-emerald-400">{sessions.length}</p>
+            <p className="text-2xl font-bold text-emerald-400">
+              {sessions.length}
+            </p>
           </SpokelyCard>
           <SpokelyCard className="bg-slate-800 text-center">
             <p className="text-gray-400">Completion Rate</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.completionRate}%</p>
+            <p className="text-2xl font-bold text-emerald-400">
+              {stats.completionRate}%
+            </p>
           </SpokelyCard>
         </div>
 
@@ -287,23 +301,40 @@ const SessionsHub: React.FC = () => {
         {/* Session Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <div className="col-span-full text-center py-12 text-gray-400">Loading...</div>
+            <div className="col-span-full text-center py-12 text-gray-400">
+              Loading...
+            </div>
           ) : sessions.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-gray-400">No sessions found</div>
+            <div className="col-span-full text-center py-12 text-gray-400">
+              No sessions found
+            </div>
           ) : (
             sessions.map((session) => (
-              <SpokelyCard key={session._id} className="bg-slate-800 text-white">
+              <SpokelyCard
+                key={session._id}
+                className="bg-slate-800 text-white"
+              >
                 <div className="flex justify-between items-center mb-3">
                   <Badge variant={session.status}>
-                    {session.startTime ? new Date(session.startTime).toLocaleString() : "No time set"}
+                    {session.startTime
+                      ? new Date(session.startTime).toLocaleString()
+                      : "No time set"}
                   </Badge>
-                  <Badge variant={session.status} size="sm" className="capitalize">
+                  <Badge
+                    variant={session.status}
+                    size="sm"
+                    className="capitalize"
+                  >
                     {statusLabels[session.status]}
                   </Badge>
                 </div>
                 <h3 className="font-bold text-black">{session.topic}</h3>
                 <p className="text-sm text-black">{session.type}</p>
-                {session.description && <p className="text-sm text-gray-400 mt-2">{session.description}</p>}
+                {session.description && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    {session.description}
+                  </p>
+                )}
                 {renderActionButtons(session)}
               </SpokelyCard>
             ))
@@ -324,17 +355,21 @@ const SessionsHub: React.FC = () => {
             {/* simple page buttons (show up to 5 centered) */}
             <div className="flex gap-2">
               {Array.from({ length: Math.min(totalPages, 7) }, (_, idx) => {
-                // calculate a centered window around current page
                 const windowSize = Math.min(totalPages, 7);
                 let start = Math.max(1, page - Math.floor(windowSize / 2));
-                if (start + windowSize - 1 > totalPages) start = Math.max(1, totalPages - windowSize + 1);
+                if (start + windowSize - 1 > totalPages)
+                  start = Math.max(1, totalPages - windowSize + 1);
                 const pNum = start + idx;
                 if (pNum > totalPages) return null;
                 return (
                   <button
                     key={pNum}
                     onClick={() => goTo(pNum)}
-                    className={`px-3 py-1 rounded ${pNum === page ? "bg-emerald-500 text-white" : "bg-slate-800 text-white"}`}
+                    className={`px-3 py-1 rounded ${
+                      pNum === page
+                        ? "bg-emerald-500 text-white"
+                        : "bg-slate-800 text-white"
+                    }`}
                   >
                     {pNum}
                   </button>
@@ -354,7 +389,8 @@ const SessionsHub: React.FC = () => {
 
         {/* small footer info */}
         <div className="mt-4 text-center text-gray-400">
-          Showing page {page} of {totalPages} • {totalItems} total sessions (server)
+          Showing page {page} of {totalPages} • {totalItems} total sessions
+          (server)
         </div>
       </div>
 

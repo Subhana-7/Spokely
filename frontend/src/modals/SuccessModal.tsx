@@ -7,9 +7,18 @@ interface SuccessModalProps {
   message: string;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message }) => {
+const SuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  onClose,
+  message,
+}) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Success" icon={<CheckCircle size={28} className="text-green-600" />}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Success"
+      icon={<CheckCircle size={28} className="text-green-600" />}
+    >
       <div className="text-center">
         <p className="text-gray-900 mb-6">{message}</p>
         <button

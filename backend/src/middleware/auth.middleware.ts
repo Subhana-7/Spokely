@@ -21,11 +21,19 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
         id: string;
         role: (typeof ROLES)[keyof typeof ROLES];
+        status:boolean;
       };
 
       if (!allowedRoles.includes(decoded.role)) {
         res.status(STATUS_CODES.FORBIDDEN).json({
           message: MESSAGES.ERROR.FORBIDDEN,
+        });
+        return;
+      }
+
+        if (decoded?.status === true) {
+        res.status(STATUS_CODES.FORBIDDEN).json({
+          message:MESSAGES.ERROR.ACCOUNT_BLOCKED,
         });
         return;
       }

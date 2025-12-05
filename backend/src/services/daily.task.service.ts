@@ -244,13 +244,11 @@ export class DailyTaskService {
 
     const tasks = await this._dailyTaskRepository.findAllByDate(dayStart);
 
-    console.log(tasks,'ser')
     return tasks.map(mapDailyTaskToDto);
   }
 
   async getDailyTaskById(dailyTaskId:string):Promise<any> {
     const task = await this._dailyTaskRepository.findById(dailyTaskId);
-    console.log('serv',task)
     return task;
   }
 

@@ -1,13 +1,11 @@
-// src/pages/MentorDashboard.tsx
-import React, { useEffect, useState } from "react";
-import MentorHeader from './DashboardComponents/Header';
-import MentorGreeting from './DashboardComponents/MentorGreeting';
-import StatsCards from './DashboardComponents/StatsCards';
-import TodaysSessionsCard from './DashboardComponents/TodaysSessionsCard';
-import QuickActionsCard from './DashboardComponents/QuickActionsCard';
-import RecentActivityCard from './DashboardComponents/RecentActivityCard';
+import { useEffect, useState } from "react";
+import MentorHeader from "./DashboardComponents/Header";
+import MentorGreeting from "./DashboardComponents/MentorGreeting";
+import StatsCards from "./DashboardComponents/StatsCards";
+import TodaysSessionsCard from "./DashboardComponents/TodaysSessionsCard";
+import QuickActionsCard from "./DashboardComponents/QuickActionsCard";
+import RecentActivityCard from "./DashboardComponents/RecentActivityCard";
 import { home } from "../../services/authServices";
-import { useAuthStore } from "../../store/userAuthStore";
 import ChartGrid from "./DashboardComponents/ChartGrid";
 import RangeDropdown from "./DashboardComponents/RangeDropdown";
 
@@ -26,12 +24,10 @@ type DashboardData = {
 };
 
 const MentorDashboard = () => {
-  const user = useAuthStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // global range months
   const [months, setMonths] = useState<number>(6);
 
   useEffect(() => {
@@ -39,7 +35,6 @@ const MentorDashboard = () => {
       try {
         setLoading(true);
         const res = await home(months);
-        // backend returns chartData and other keys — map to expected shape
         const mapped = {
           mentor: (res as any).mentor || null,
           stats: {
@@ -65,7 +60,7 @@ const MentorDashboard = () => {
     fetchHome();
   }, [months]);
 
-  console.log(data)
+  console.log(data);
 
   return (
     <div className="min-h-screen bg-slate-700">
@@ -85,9 +80,9 @@ const MentorDashboard = () => {
               <TodaysSessionsCard sessions={data.sessionsToday} />
               <RecentActivityCard activities={data.recentActivities} />
 
-<div className="flex items-center gap-4">
-            <RangeDropdown months={months} setMonths={setMonths} />
-          </div>
+              <div className="flex items-center gap-4">
+                <RangeDropdown months={months} setMonths={setMonths} />
+              </div>
               {/* Charts */}
               <ChartGrid chartData={data.chartData || []} />
             </div>

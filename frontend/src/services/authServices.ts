@@ -1,6 +1,10 @@
 import API from "../api/axios.instance";
 import Cookies from "js-cookie";
-import { USER_ROUTES as U, MENTOR_ROUTES as M, ADMIN_ROUTES as A } from "../constants/routes";
+import {
+  USER_ROUTES as U,
+  MENTOR_ROUTES as M,
+  ADMIN_ROUTES as A,
+} from "../constants/routes";
 
 // --------------------- TYPES ---------------------
 export type Role = "user" | "mentor" | "admin";
@@ -23,7 +27,8 @@ interface LoginData {
 // --------------------- AUTHENTICATION ---------------------
 export const signup = (data: SignupData) => {
   const { role, ...payload } = data;
-  const endpoint = role === "mentor" ? `${M.base}${M.signup}` : `${U.base}${U.signup}`;
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.signup}` : `${U.base}${U.signup}`;
   return API.post(endpoint, payload);
 };
 
@@ -38,7 +43,8 @@ export const login = (data: LoginData, role: Role) => {
 };
 
 export const logoutService = (role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.logout}` : `${U.base}${U.logout}`;
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.logout}` : `${U.base}${U.logout}`;
   return API.post(endpoint);
 };
 
@@ -60,39 +66,74 @@ export const refreshToken = async () => {
 };
 
 // --------------------- OTP & PASSWORD ---------------------
-export const sendOTP = (data: { email: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.sendOTP}` : `${U.base}${U.sendOTP}`;
+export const sendOTP = (
+  data: { email: string },
+  role: Exclude<Role, "admin">
+) => {
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.sendOTP}` : `${U.base}${U.sendOTP}`;
   return API.post(endpoint, data);
 };
 
-export const verifyOTP = (data: { email: string; code: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.verifyOTP}` : `${U.base}${U.verifyOTP}`;
+export const verifyOTP = (
+  data: { email: string; code: string },
+  role: Exclude<Role, "admin">
+) => {
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.verifyOTP}` : `${U.base}${U.verifyOTP}`;
   return API.post(endpoint, data);
 };
 
-export const sendForgotPasswordOTP = (data: { email: string }, role: string) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.sendForgotPasswordOTP}` : `${U.base}${U.sendForgotPasswordOTP}`;
+export const sendForgotPasswordOTP = (
+  data: { email: string },
+  role: string
+) => {
+  const endpoint =
+    role === "mentor"
+      ? `${M.base}${M.sendForgotPasswordOTP}`
+      : `${U.base}${U.sendForgotPasswordOTP}`;
   return API.post(endpoint, data);
 };
 
-export const verifyForgotPasswordOTP = (data: { email: string; code: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.verifyForgotPasswordOTP}` : `${U.base}${M.verifyForgotPasswordOTP}`;
+export const verifyForgotPasswordOTP = (
+  data: { email: string; code: string },
+  role: Exclude<Role, "admin">
+) => {
+  const endpoint =
+    role === "mentor"
+      ? `${M.base}${M.verifyForgotPasswordOTP}`
+      : `${U.base}${M.verifyForgotPasswordOTP}`;
   return API.post(endpoint, data);
 };
 
-export const resetPassword = (data: { email: string; newPassword: string }, role: Exclude<Role, "admin">) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.resetPassword}` : `${U.base}${U.resetPassword}`;
+export const resetPassword = (
+  data: { email: string; newPassword: string },
+  role: Exclude<Role, "admin">
+) => {
+  const endpoint =
+    role === "mentor"
+      ? `${M.base}${M.resetPassword}`
+      : `${U.base}${U.resetPassword}`;
   return API.post(endpoint, data);
 };
 
 // --------------------- MENTOR DOCUMENT ---------------------
-export const resubmitDocument = (email: string, documentUrl: string, textMessage: string) =>
-  API.patch(`${M.base}${M.resubmitDocument}`, { email, documentUrl, textMessage });
+export const resubmitDocument = (
+  email: string,
+  documentUrl: string,
+  textMessage: string
+) =>
+  API.patch(`${M.base}${M.resubmitDocument}`, {
+    email,
+    documentUrl,
+    textMessage,
+  });
 
 // --------------------- HOME & PROFILE ---------------------
 export const home = async (months?: number) => {
   const role = Cookies.get("role") as Exclude<Role, "admin"> | undefined;
-  const endpoint = role === "mentor" ? `${M.base}${M.home}` : `${U.base}${U.home}`;
+  const endpoint =
+    role === "mentor" ? `${M.base}${M.home}` : `${U.base}${U.home}`;
 
   // Only mentor home uses the months parameter
   if (role === "mentor") {
@@ -107,16 +148,16 @@ export const home = async (months?: number) => {
   return res.data;
 };
 
-
-export const userProfiles = (id: string) => API.get(`${U.base}${U.peerProfile}/${id}`);
-export const mentorProfile = (id: string) => API.get(`${M.base}${M.mentorProfile}/${id}`);
+export const userProfiles = (id: string) =>
+  API.get(`${U.base}${U.peerProfile}/${id}`);
+export const mentorProfile = (id: string) =>
+  API.get(`${M.base}${M.mentorProfile}/${id}`);
 
 export const editUserDetails = async (
   id: string,
   role: Exclude<Role, "admin">,
   data: Record<string, any>
 ) => {
-  console.log('hiting')
   const endpoint =
     role === "mentor" ? `${M.base}${M.edit}/${id}` : `${U.base}${U.edit}/${id}`;
 
@@ -124,12 +165,13 @@ export const editUserDetails = async (
   return res.data?.updatedMentor || res.data?.user || res.data;
 };
 
-
 export const changePassword = (role: Exclude<Role, "admin">, data: any) => {
-  const endpoint = role === "mentor" ? `${M.base}${M.changePassword}` : `${U.base}${U.changePassword}`;
+  const endpoint =
+    role === "mentor"
+      ? `${M.base}${M.changePassword}`
+      : `${U.base}${U.changePassword}`;
   return API.post(endpoint, data);
 };
-
 
 export const getUserStats = async () => {
   const res = await API.get("/users/home");

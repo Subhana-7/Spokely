@@ -10,6 +10,7 @@ import { sendForgotPasswordOTP, resetPassword } from "../services/authServices";
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onChangePassword:(email:string,password:string) => void;
 }
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
@@ -77,7 +78,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       setShowSuccessModal(true);
     } catch (err: any) {
       const msg =
-        err.response?.data?.message || err.message || "Failed to change password";
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to change password";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -95,7 +98,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     onClose();
   };
 
-  // Step 1 – OTP Modal
   if (showOTPModal) {
     return (
       <OTPModal
@@ -109,7 +111,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     );
   }
 
-  // Step 2 – Password Modal (after OTP verified)
   if (showPasswordModal) {
     return (
       <Modal
@@ -162,7 +163,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     );
   }
 
-  // Step 3 – Success Modal (after password reset)
   if (showSuccessModal) {
     return (
       <PasswordResetSuccessModal
@@ -175,7 +175,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     );
   }
 
-  // Step 0 – Email Entry
   return (
     <Modal
       isOpen={isOpen}
@@ -231,7 +230,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
         <div className="pt-2">
-          <Button variant="primary" onClick={handleSendOTP} disabled={isLoading}>
+          <Button
+            variant="primary"
+            onClick={handleSendOTP}
+            disabled={isLoading}
+          >
             {isLoading ? "Sending..." : "Send OTP"}
           </Button>
         </div>

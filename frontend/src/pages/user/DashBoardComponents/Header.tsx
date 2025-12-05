@@ -15,7 +15,6 @@ const DashboardHeader = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Fetch notifications count periodically (optional)
   useEffect(() => {
     if (user?.id) {
       const fetchNotifications = async () => {
@@ -36,7 +35,7 @@ const DashboardHeader = () => {
       };
 
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000); // refresh every minute
+      const interval = setInterval(fetchNotifications, 60000);
       return () => clearInterval(interval);
     }
   }, [user?.id]);
@@ -59,7 +58,7 @@ const DashboardHeader = () => {
     }`;
 
   return (
-    <header className="fixed top-0 w-full z-20 bg-black/30 backdrop-blur-md border-b border-white/20">
+    <header className="fixed top-0 w-full z-20 bg-black/30 backdrop-blur-md border-b border-white/20 mb-[60rem]">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div

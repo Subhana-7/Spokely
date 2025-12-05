@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
@@ -44,16 +44,14 @@ const SpokelyMentors = () => {
   const userId = useAuthStore((state) => state.user?.id!);
   const navigate = useNavigate();
 
-  // Debounce search term and reset page
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-      setPage(1); // Reset to page 1 when search changes
+      setPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch subscriptions
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -79,10 +77,6 @@ const SpokelyMentors = () => {
     };
     if (userId) fetchData();
   }, [userId, debouncedSearch, selectedStatus, page]);
-
-  const handlePublicSessions = () => {
-    navigate("/user/public/mentors");
-  };
 
   const MentorCard = ({ sub }: { sub: Subscription }) => {
     const mentor = sub.mentor;

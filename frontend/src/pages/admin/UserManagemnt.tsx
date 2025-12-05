@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 const UserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All Levels");
+  const [filter, _setFilter] = useState("All Levels");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 10;
@@ -43,6 +43,8 @@ const UserManagement = () => {
     fetchUsers();
   }, [search, filter, statusFilter, page, limit]);
 
+  console.log(users);
+
   const handleBlock = async (id: string) => {
     try {
       const user = users.find((u) => u.id === id);
@@ -72,7 +74,6 @@ const UserManagement = () => {
       console.error("Error updating user status:", err);
     }
   };
-
 
   const userData = users.map((user) => ({
     id: user.id,
@@ -105,10 +106,10 @@ const UserManagement = () => {
       <div className="text-black">
         <SearchFilterBar
           searchPlaceholder="Search users by name or email"
-          filterOptions={["All Levels", "Beginner", "Intermediate", "Advanced"]}
           onSearch={setSearch}
-          onFilter={setFilter}
           onStatusFilter={setStatusFilter}
+          hideFilter={true}
+          hideMoreFilters={true}
         />
       </div>
 

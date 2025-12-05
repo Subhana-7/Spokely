@@ -10,6 +10,7 @@ interface InputProps {
   rightIcon?: React.ReactNode;
   onRightIconClick?: () => void;
   disabled?: boolean;
+  onBlur?:any;
 }
 
 const Input: React.FC<InputProps> = ({

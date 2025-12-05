@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getAllConnections } from "../../services/connectionService";
 import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
 
 interface FormData {
   type: string;
@@ -66,12 +67,13 @@ const ScheduleSession = () => {
     }
   }
 
-
   useEffect(() => {
     connectedUsers().then((res) => {
       const list = res.data?.connections || [];
 
-      const formatted = list.map((conn: any) => {
+      const unblocked = list.filter((conn: any) => !conn.isBlocked);
+
+      const formatted = unblocked.map((conn: any) => {
         if (conn.user.id === user?.id) {
           return { ...conn, otherUser: conn.connectedUser };
         } else if (conn.connectedUser.id === user?.id) {
@@ -84,6 +86,8 @@ const ScheduleSession = () => {
       setUsers(formatted);
     });
   }, []);
+
+  console.log(users);
 
   const calculateEndTime = (startTime: string) => {
     if (!startTime) return "";
@@ -284,14 +288,15 @@ const ScheduleSession = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-20">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-6 flex items-center mb-12">
+      <Header />
+      <div className="max-w-7xl mx-auto px-6 flex items-center mb-12 py-10">
         <button
           onClick={() => navigate(-1)}
           className="p-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-700 shadow-md hover:scale-105 hover:shadow-lg transition-all"
         >
           <ArrowLeft size={20} className="text-gray-300" />
         </button>
-        <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
+        <h1 className="text-3xl font-bold ml-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text tracking-tight text-white">
           Schedule Peer-to-Peer Session
         </h1>
       </div>

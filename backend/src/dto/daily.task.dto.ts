@@ -7,7 +7,11 @@ export interface TaskDetailDto {
 
 export interface DailyTaskDto {
   id: string;
-  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
   topic: string;
   taskDate: Date;
   writing: TaskDetailDto;
@@ -16,6 +20,7 @@ export interface DailyTaskDto {
   listening: TaskDetailDto;
   createdAt: Date;
 }
+
 
 export interface CreateDailyTaskDto {
   userId: string;

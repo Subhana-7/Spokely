@@ -19,14 +19,19 @@ interface ChatBoxProps {
   profilePicture?: string;
 }
 
-export default function ChatBox({ socket, chatId, chatRole, chatName, profilePicture }: ChatBoxProps) {
+export default function ChatBox({
+  socket,
+  chatId,
+  chatRole,
+  chatName,
+  profilePicture,
+}: ChatBoxProps) {
   const currentUser = useAuthStore((s) => s.user);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatIdRef = useRef(chatId);
 
-  // Update ref when chatId changes
   useEffect(() => {
     chatIdRef.current = chatId;
   }, [chatId]);
@@ -36,43 +41,42 @@ export default function ChatBox({ socket, chatId, chatRole, chatName, profilePic
 
     let isMounted = true;
 
-    // Clear messages immediately
     setMessages([]);
 
-    // Join the new room
     socket.emit("join-room", chatId);
     console.log("Joined room:", chatId);
 
-    // Load messages from server
     const loadMessages = async () => {
       try {
         const res = await getMessages(chatId);
         if (!isMounted) return;
 
-        const msgs = res.data.messages.map((m: any) => ({
+        const msgs = (res.data || []).map((m: any) => ({
           id: m.id || m._id,
           sender: typeof m.sender === "object" ? m.sender : { id: m.sender },
           text: m.text,
           createdAt: m.createdAt,
         }));
-        
+
         console.log("Loaded messages for", chatId, ":", msgs.length);
         setMessages(msgs);
       } catch (error) {
         console.error("Failed to load messages:", error);
       }
     };
-    
+
     loadMessages();
 
-    // Mark messages as read
     socket.emit("mark-read", { sessionId: chatId, userId: currentUser.id });
 
-    // Listen for incoming messages - handle ALL messages, not just current chat
     const handleIncoming = (msg: any) => {
-      console.log("Received message:", msg.sessionId, "Current chat:", chatIdRef.current);
-      
-      // Only add message if it belongs to the CURRENT active chat
+      console.log(
+        "Received message:",
+        msg.sessionId,
+        "Current chat:",
+        chatIdRef.current
+      );
+
       if (msg.sessionId !== chatIdRef.current) {
         console.log("Ignoring message for different chat");
         return;
@@ -80,35 +84,38 @@ export default function ChatBox({ socket, chatId, chatRole, chatName, profilePic
 
       const newMessage = {
         id: msg.id || msg._id || `${Date.now()}-${Math.random()}`,
-        sender: typeof msg.sender === "object" ? msg.sender : { id: msg.sender },
+        sender:
+          typeof msg.sender === "object" ? msg.sender : { id: msg.sender },
         text: msg.text,
         createdAt: msg.createdAt,
       };
 
       setMessages((prev) => {
-        // Check for duplicates by ID
         if (prev.some((m) => m.id === newMessage.id)) {
           console.log("Duplicate message detected, ignoring");
           return prev;
         }
-        
-        // Also check for duplicate text + timestamp
+
         const isDuplicate = prev.some(
-          (m) => m.text === newMessage.text && 
-                 m.sender.id === newMessage.sender.id &&
-                 Math.abs(new Date(m.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 1000
+          (m) =>
+            m.text === newMessage.text &&
+            m.sender.id === newMessage.sender.id &&
+            Math.abs(
+              new Date(m.createdAt).getTime() -
+                new Date(newMessage.createdAt).getTime()
+            ) < 1000
         );
-        
+
         if (isDuplicate) {
           console.log("Duplicate message by content, ignoring");
           return prev;
         }
-        
+
         console.log("Adding new message:", newMessage.text);
         return [...prev, newMessage];
       });
     };
-    
+
     socket.on("chat-message", handleIncoming);
 
     return () => {
@@ -137,13 +144,17 @@ export default function ChatBox({ socket, chatId, chatRole, chatName, profilePic
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-800 text-white">
+    <div className="h-full flex flex-col bg-slate-800 text-white pt-18">
       {/* Header */}
       <div className="bg-slate-900 px-6 py-4 border-b border-slate-600 shadow-sm">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full overflow-hidden">
             {profilePicture ? (
-              <img src={profilePicture} alt={chatName} className="w-full h-full object-cover" />
+              <img
+                src={profilePicture}
+                alt={chatName}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="bg-emerald-500 w-full h-full flex items-center justify-center text-lg font-semibold">
                 {chatName.charAt(0)}
@@ -162,15 +173,29 @@ export default function ChatBox({ socket, chatId, chatRole, chatName, profilePic
         {messages.map((m) => {
           const isCurrentUser = m.sender.id === currentUser?.id;
           return (
-            <div key={m.id} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-xs md:max-w-md px-4 py-2 rounded-lg shadow-sm ${
-                isCurrentUser
-                  ? "bg-emerald-500 text-white rounded-br-none"
-                  : "bg-slate-700 text-gray-300 rounded-bl-none border border-slate-600"
-              }`}>
+            <div
+              key={m.id}
+              className={`flex ${
+                isCurrentUser ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-xs md:max-w-md px-4 py-2 rounded-lg shadow-sm ${
+                  isCurrentUser
+                    ? "bg-emerald-500 text-white rounded-br-none"
+                    : "bg-slate-700 text-gray-300 rounded-bl-none border border-slate-600"
+                }`}
+              >
                 <p className="text-sm leading-relaxed">{m.text}</p>
-                <div className={`text-xs mt-1 ${isCurrentUser ? "text-emerald-200" : "text-gray-400"}`}>
-                  {new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                <div
+                  className={`text-xs mt-1 ${
+                    isCurrentUser ? "text-emerald-200" : "text-gray-400"
+                  }`}
+                >
+                  {new Date(m.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
               </div>
             </div>
@@ -190,7 +215,10 @@ export default function ChatBox({ socket, chatId, chatRole, chatName, profilePic
             className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-400 text-white placeholder-gray-400"
           />
           {input.trim() ? (
-            <button onClick={sendMessage} className="p-2 bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors">
+            <button
+              onClick={sendMessage}
+              className="p-2 bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors"
+            >
               <Send size={20} className="text-white" />
             </button>
           ) : (

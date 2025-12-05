@@ -1,11 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  Calendar,
-  Search,
-  DollarSign,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import DashboardHeader from "../user/DashBoardComponents/Header";
 import SpokelyCard from "../../components/common/Cards";
@@ -56,21 +50,18 @@ const MentorPublicSessions = () => {
   const { user } = useAuthStore();
 
   const [showPayPalModal, setShowPayPalModal] = useState(false);
-  const [activeSession, setActiveSession] = useState<{ id: string; fee: number } | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<{
-    status: "success" | "error";
-    message: string;
+  const [activeSession, setActiveSession] = useState<{
+    id: string;
+    fee: number;
   } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  /** Debounce search */
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  /** Fetch public sessions */
   useEffect(() => {
     const fetchSessions = async () => {
       try {
@@ -81,7 +72,16 @@ const MentorPublicSessions = () => {
           page,
           limit,
         });
-        setSessions(data.sessions || []);
+        const now = new Date();
+        const FIFTEEN_MIN = 15 * 60 * 1000;
+
+        const filtered = (data.sessions || []).filter((session: any) => {
+          const start = new Date(session.startTime).getTime();
+          return start - now.getTime() >= FIFTEEN_MIN;
+        });
+
+        setSessions(filtered);
+
         setTotalPages(data.totalPages || 1);
       } catch (err: any) {
         toast.error("Failed to fetch public sessions");
@@ -92,7 +92,6 @@ const MentorPublicSessions = () => {
     fetchSessions();
   }, [debouncedSearch, selectedFilter, page]);
 
-  /** Payment handler */
   const handlePayToSchedule = (sessionId: string, sessionFee: number) => {
     if (!sessionFee || sessionFee <= 0)
       return toast.error("Invalid session fee");
@@ -116,13 +115,24 @@ const MentorPublicSessions = () => {
 
         const buttons = paypal?.Buttons?.({
           createOrder: async () => {
-            const resp = await startPayment(activeSession.id, activeSession.fee);
-            return resp.data?.id;
+            const resp = await startPayment(
+              activeSession.id,
+              activeSession.fee
+            );
+
+            const orderId = resp.data?.id;
+            if (!orderId)
+              throw new Error("Order ID missing from PayPal response");
+
+            return orderId;
           },
           onApprove: async (data: any) => {
             try {
               setIsProcessing(true);
-              const verify = await confirmPayment(data.orderID, activeSession.id);
+              const verify = await confirmPayment(
+                data.orderID,
+                activeSession.id
+              );
               if (
                 verify.data?.status === "COMPLETED" ||
                 verify.data?.message?.toLowerCase()?.includes("captured")
@@ -238,18 +248,14 @@ const MentorPublicSessions = () => {
         ) : sessions.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-400 mb-4">No public sessions found</p>
-            <Button
-              variant="success"
-              className="px-6 py-3 rounded-full"
-              onClick={() => navigate("/user/schedule-session")}
-            >
-              Schedule a Session
-            </Button>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sessions.map((session) => {
+                const totalParticipants = session.participants.length + 1;
+                const isFull = totalParticipants >= 24;
+
                 const isJoined = session.participants.some(
                   (p) => p.user === user?.id
                 );
@@ -276,6 +282,10 @@ const MentorPublicSessions = () => {
                       Fee: ₹{session.sessionFee} | Mentor:{" "}
                       {session.createdBy?.name || "Unknown"}
                     </p>
+                    <p className="text-sm text-gray-300 mb-2">
+                      Participants: {session.participants.length + 1} / 24
+                    </p>
+
                     <div className="flex flex-col gap-2">
                       <Button
                         variant="secondary"
@@ -288,6 +298,10 @@ const MentorPublicSessions = () => {
                       {isJoined ? (
                         <Button variant="secondary" disabled>
                           Joined
+                        </Button>
+                      ) : isFull ? (
+                        <Button variant="secondary" disabled>
+                          Session Full (24/24)
                         </Button>
                       ) : (
                         <Button
@@ -345,7 +359,10 @@ const MentorPublicSessions = () => {
               </div>
             )}
             <div className="flex justify-end mt-4">
-              <Button variant="secondary" onClick={() => setShowPayPalModal(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => setShowPayPalModal(false)}
+              >
                 Close
               </Button>
             </div>
