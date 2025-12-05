@@ -7,13 +7,7 @@ import AgoraRTC, {
   type IAgoraRTCRemoteUser,
 } from "agora-rtc-sdk-ng";
 import { getAgoraToken } from "../services/sessionService";
-import {
-  Video,
-  VideoOff,
-  Mic,
-  MicOff,
-  PhoneOff,
-} from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff } from "lucide-react";
 
 const VideoCall = () => {
   const { id: sessionId } = useParams<{ id: string }>();
@@ -28,9 +22,11 @@ const VideoCall = () => {
   const [joined, setJoined] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [remoteUsers, setRemoteUsers] = useState<Map<string, IAgoraRTCRemoteUser>>(new Map());
+  const [remoteUsers, setRemoteUsers] = useState<
+    Map<string, IAgoraRTCRemoteUser>
+  >(new Map());
 
   const localVideoRef = useRef<HTMLDivElement>(null);
   const localTracks = useRef<{
@@ -53,7 +49,10 @@ const VideoCall = () => {
         localTracks.current.videoTrack.close();
         localTracks.current.videoTrack = null;
       }
-      if (client.connectionState === "CONNECTED" || client.connectionState === "CONNECTING") {
+      if (
+        client.connectionState === "CONNECTED" ||
+        client.connectionState === "CONNECTING"
+      ) {
         await client.leave();
       }
       client.removeAllListeners();
@@ -85,15 +84,18 @@ const VideoCall = () => {
     [client]
   );
 
-  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
-    if (mediaType === "video") {
-      setRemoteUsers((prev) => {
-        const updated = new Map(prev);
-        updated.delete(user.uid.toString());
-        return updated;
-      });
-    }
-  }, []);
+  const handleUserUnpublished = useCallback(
+    (user: IAgoraRTCRemoteUser, mediaType: "video" | "audio") => {
+      if (mediaType === "video") {
+        setRemoteUsers((prev) => {
+          const updated = new Map(prev);
+          updated.delete(user.uid.toString());
+          return updated;
+        });
+      }
+    },
+    []
+  );
 
   const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
     setRemoteUsers((prev) => {
@@ -121,11 +123,19 @@ const VideoCall = () => {
           setError(null);
         }
 
-        if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") {
-          throw new Error("Camera/Microphone access requires HTTPS or localhost.");
+        if (
+          window.location.protocol !== "https:" &&
+          window.location.hostname !== "localhost"
+        ) {
+          throw new Error(
+            "Camera/Microphone access requires HTTPS or localhost."
+          );
         }
 
-        if (client.connectionState === "CONNECTED" || client.connectionState === "CONNECTING") {
+        if (
+          client.connectionState === "CONNECTED" ||
+          client.connectionState === "CONNECTING"
+        ) {
           await cleanup();
         }
 
@@ -147,7 +157,10 @@ const VideoCall = () => {
 
         const [audioTrack, videoTrack] = await Promise.all([
           AgoraRTC.createMicrophoneAudioTrack(),
-          AgoraRTC.createCameraVideoTrack({ encoderConfig: "720p_1", optimizationMode: "motion" }),
+          AgoraRTC.createCameraVideoTrack({
+            encoderConfig: "720p_1",
+            optimizationMode: "motion",
+          }),
         ]);
 
         if (!isMounted) return;
@@ -172,18 +185,48 @@ const VideoCall = () => {
       isMounted = false;
       cleanup();
     };
-  }, [sessionId, handleUserPublished, handleUserUnpublished, handleUserLeft, cleanup]);
+  }, [
+    sessionId,
+    handleUserPublished,
+    handleUserUnpublished,
+    handleUserLeft,
+    cleanup,
+  ]);
 
   const toggleVideo = useCallback(async () => {
-    if (!localTracks.current.videoTrack || !joined) return;
-    await localTracks.current.videoTrack.setEnabled(!isVideoOn);
-    setIsVideoOn(!isVideoOn);
+    const videoTrack = localTracks.current.videoTrack;
+    if (!videoTrack || !joined) return;
+
+    if (isVideoOn) {
+      await videoTrack.setEnabled(false);
+
+      // IMPORTANT: clear last frame
+      if (localVideoRef.current) {
+        localVideoRef.current.innerHTML = "";
+      }
+    } else {
+      await videoTrack.setEnabled(true);
+
+      // replay video
+      if (localVideoRef.current) {
+        videoTrack.play(localVideoRef.current);
+      }
+    }
+
+    setIsVideoOn((prev) => !prev);
   }, [isVideoOn, joined]);
 
   const toggleMic = useCallback(async () => {
-    if (!localTracks.current.audioTrack || !joined) return;
-    await localTracks.current.audioTrack.setEnabled(!isMicOn);
-    setIsMicOn(!isMicOn);
+    const audioTrack = localTracks.current.audioTrack;
+    if (!audioTrack || !joined) return;
+
+    if (isMicOn) {
+      await audioTrack.setMuted(true);
+    } else {
+      await audioTrack.setMuted(false);
+    }
+
+    setIsMicOn((prev) => !prev);
   }, [isMicOn, joined]);
 
   const endCall = useCallback(async () => {
@@ -211,7 +254,13 @@ const VideoCall = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
       {/* Video Grid */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
+      <div
+        className="flex-1 gap-2 p-2"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        }}
+      >
         {/* Local video */}
         <div className="relative bg-black rounded-lg overflow-hidden">
           <div ref={localVideoRef} className="w-full h-full" />
@@ -240,17 +289,33 @@ const VideoCall = () => {
       <div className="flex items-center justify-center gap-6 p-4 bg-gray-800">
         <button
           onClick={toggleVideo}
-          className={`p-4 rounded-full ${isVideoOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-500"}`}
+          className={`p-4 rounded-full ${
+            isVideoOn
+              ? "bg-gray-700 hover:bg-gray-600"
+              : "bg-red-600 hover:bg-red-500"
+          }`}
           title={isVideoOn ? "Turn Off Camera" : "Turn On Camera"}
         >
-          {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+          {isVideoOn ? (
+            <Video className="w-6 h-6" />
+          ) : (
+            <VideoOff className="w-6 h-6" />
+          )}
         </button>
         <button
           onClick={toggleMic}
-          className={`p-4 rounded-full ${isMicOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-500"}`}
+          className={`p-4 rounded-full ${
+            isMicOn
+              ? "bg-gray-700 hover:bg-gray-600"
+              : "bg-red-600 hover:bg-red-500"
+          }`}
           title={isMicOn ? "Mute Mic" : "Unmute Mic"}
         >
-          {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+          {isMicOn ? (
+            <Mic className="w-6 h-6" />
+          ) : (
+            <MicOff className="w-6 h-6" />
+          )}
         </button>
         <button
           onClick={endCall}

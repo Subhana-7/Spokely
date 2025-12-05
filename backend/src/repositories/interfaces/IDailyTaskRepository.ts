@@ -3,9 +3,11 @@ import { TaskDetailDto } from "../../dto/daily.task.dto";
 import { IDailyTask } from "../../models/daily.task.model";
 
 export interface IDailyTaskRepository {
-  findById(taskId: string): Promise<IDailyTask | null>;
+  findById(taskId: string): Promise<any>;
   create(data: Partial<IDailyTask>): Promise<IDailyTask | null>;
   findByUserAndDate(userId: string, taskDate: Date): Promise<IDailyTask | null>;
 
   findAllByDate(date: Date): Promise<IDailyTask[]>;
+
+  countByUser(userId: string): Promise<number>
 }

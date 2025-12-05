@@ -6,6 +6,9 @@ export const CONNECTION_ROUTES = {
   reject: "/reject",
   list: "/list",
   sentRequests: "/sent-requests",
+  block:"/block",
+  unBlock:"/unblock",
+  remove:"/remove",
 };
 
 export const ADMIN_ROUTES = {
@@ -20,8 +23,12 @@ export const ADMIN_ROUTES = {
   approve: "/approve",
   reject: "/reject",
   refreshToken: "/refresh-token",
-  home:"/home",
-  reports:"/home"
+  home: "/home",
+  reports: "/reports",
+  payment: "/payment",
+  payments: "/payments",
+  tasks: "/tasks",
+  task: "/task",
 };
 
 export const USER_ROUTES = {
@@ -39,7 +46,7 @@ export const USER_ROUTES = {
   edit: "/edit",
   changePassword: "/change-password",
   peerProfile: "/peer/profile",
-  mentorLising:"/mentor/listing"
+  mentorLising: "/mentor/listing",
 };
 
 export const MENTOR_ROUTES = {
@@ -72,7 +79,7 @@ export const PAYMENT_ROUTES = {
   capture: "/capture",
   createSubscription: "/create-subscription",
   captureSubscription: "/capture-subscription",
-  wallet:"/wallet",
+  wallet: "/wallet",
 };
 
 export const SESSION_ROUTES = {
@@ -102,6 +109,6 @@ export const SUBSCRIPTION_ROUTES = {
 };
 
 export const NOTIFICATION_ROUTES = {
-  base:"/notifications",
-  read:"/read",
-}
+  base: "/notifications",
+  read: "/read",
+};

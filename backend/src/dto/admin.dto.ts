@@ -15,4 +15,7 @@ export interface UserSummaryDto {
   email: string;
   role: string;
   isBlocked: boolean;
+  levels?:number;
+  profilePicture?:string;
+  sessionsDone:number;
 }

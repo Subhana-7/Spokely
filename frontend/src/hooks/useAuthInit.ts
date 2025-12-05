@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { refreshToken } from "../services/auth";
+import { refreshToken } from "../services/authServices";
 import { useAuthStore } from "../store/userAuthStore";
 
 export const useAuthInit = () => {
@@ -22,6 +22,12 @@ export const useAuthInit = () => {
           userData = res.admin;
         }
 
+        if (userData?.isBlocked) {
+          logout();
+          window.location.href = "/blocked";
+          return;
+        }
+
         if (userData) {
           setUser({
             id: userData._id,
@@ -30,10 +36,11 @@ export const useAuthInit = () => {
             role: userData.role,
             uniqueCode: userData.uniqueCode,
             profilePicture: userData.profilePicture,
-            phone:userData.phone,
-            bio:userData.bio,
-            level:userData.level,
+            phone: userData.phone,
+            bio: userData.bio,
+            level: userData.level,
             tags: userData.tags || [],
+            isBlocked: userData.isBlocked || false,
           });
           console.log("Normalized userData:", userData);
         } else {

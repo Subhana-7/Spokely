@@ -1,5 +1,3 @@
-import React from "react";
-
 const formatTime = (dateStrOrObj: any) => {
   if (!dateStrOrObj) return "";
   const d = new Date(dateStrOrObj);

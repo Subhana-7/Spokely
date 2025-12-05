@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
-import { useEffect, type JSX } from "react";
+import { type JSX } from "react";
 
 const RoleProtectedRoute = ({
   role,
@@ -10,11 +10,6 @@ const RoleProtectedRoute = ({
   children: JSX.Element;
 }) => {
   const { user, isAuthenticated } = useAuthStore();
-
-  // useEffect(() => {
-  //   console.log(user);
-  //   initializeAuth();
-  // }, [initializeAuth]);
 
   if (!isAuthenticated) return <Navigate to="/" />;
 

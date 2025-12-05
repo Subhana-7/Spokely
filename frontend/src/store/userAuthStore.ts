@@ -8,10 +8,11 @@ interface User {
   role: "user" | "mentor" | "admin";
   uniqueCode?: string;
   profilePicture?: string;
-  phone?:number;
-  bio?:string;
-  level?:number;
-  tags?:string[];
+  phone?: number;
+  bio?: string;
+  level?: number;
+  tags?: string[];
+  isBlocked?: boolean;
 }
 
 interface AuthState {
@@ -26,18 +27,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   setUser: (user) => {
-  console.log("Setting user in store:", user);
+    console.log("Setting user in store:", user);
 
-  const normalizedUser = {
-    ...user,
-    tags: Array.isArray(user.tags) ? user.tags : [],
-  };
+    const normalizedUser = {
+      ...user,
+      tags: Array.isArray(user.tags) ? user.tags : [],
+    };
 
-  Cookies.set("role", normalizedUser.role, { sameSite: "Lax" });
-  set({ user: normalizedUser, isAuthenticated: true });
+    Cookies.set("role", normalizedUser.role, { sameSite: "Lax" });
+    set({ user: normalizedUser, isAuthenticated: !normalizedUser.isBlocked });
 
-  console.log("User stored in Zustand:", normalizedUser);
-},
+    console.log("User stored in Zustand:", normalizedUser);
+  },
   logout: () => {
     Cookies.remove("role");
     set({ user: null, isAuthenticated: false });

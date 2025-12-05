@@ -20,11 +20,8 @@ export class NotificationService implements INotificationService {
   ) {}
 
   async send(data: CreateNotificationDTO): Promise<NotificationDTO> {
-    console.log("hit");
     const noti = await this._notificationRepository.create(data);
-    console.log("service noti", noti);
     const dto = NotificationMapper.toDTO(noti);
-    console.log("noti dto", dto);
     // this.io.to(data.userId).emit("notification", dto);
     console.log("after spcket", dto);
     return dto;

@@ -5,12 +5,29 @@ import { IAdminService } from "../services/interfaces/IAdminService";
 import { inject } from "inversify";
 import { TYPES } from "../types/types";
 import { generateAccessToken } from "../utilis/token";
-import { STATUS_CODES, MESSAGES } from "../utilis/constants";
+
+import {
+  STATUS_CODES,
+  MESSAGES,
+  ADMIN_MESSAGES,
+  COOKIE_KEYS,
+  ADMIN_QUERY,
+  REPORT_TYPES,
+  REPORT_TYPE_LIST,
+  ReportType,
+  LOG_STRINGS,
+  ROLES,
+  VERIFICATION_STATUS,
+} from "../utilis/constants";
+
 import { IPaymentService } from "../services/interfaces/IPaymentService";
 import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { ISessionService } from "../services/interfaces/ISessionService";
 import { IMentorService } from "../services/interfaces/IMentorService";
 import { IUserService } from "../services/interfaces/IUserService";
+
+const getErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
 
 export class AdminController implements IAdminController {
   constructor(
@@ -23,6 +40,9 @@ export class AdminController implements IAdminController {
     @inject(TYPES.IUserService) private _userService: IUserService
   ) {}
 
+  /* ----------------------------------------------------
+      ADMIN LOGIN
+  ----------------------------------------------------- */
   async adminLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
@@ -37,89 +57,108 @@ export class AdminController implements IAdminController {
 
       const { admin, accessToken, refreshToken } = result;
 
-      res.cookie("auth-token", accessToken, {
+      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
-      res.cookie("refresh-token", refreshToken, {
+
+      res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
-      res.cookie("role", admin.role, {
+
+      res.cookie(COOKIE_KEYS.ROLE, admin.role, {
         httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.LOGIN, admin });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.UNAUTHORIZED)
-        .json({ error: err.message || MESSAGES.ERROR.INVALID_CREDENTIALS });
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, MESSAGES.ERROR.INVALID_CREDENTIALS);
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ error: message });
     }
   }
 
+  /* ----------------------------------------------------
+      UPDATE USER STATUS
+  ----------------------------------------------------- */
   async updateUserStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id: userId } = req.params;
       const { status } = req.body;
+
       const result = await this._adminService.updateUserStatus(userId, status);
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.ROLE_UPDATED, result });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ error: error.message || MESSAGES.ERROR.INVALID_INPUT });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.INVALID_INPUT),
+      });
     }
   }
 
+  /* ----------------------------------------------------
+      UPDATE MENTOR STATUS
+  ----------------------------------------------------- */
   async updateMentorStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id: mentorId } = req.params;
       const { status } = req.body;
+
       const result = await this._adminService.updateMentorStatus(
         mentorId,
         status
       );
+
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.ROLE_UPDATED, result });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ error: error.message || MESSAGES.ERROR.INVALID_INPUT });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.INVALID_INPUT),
+      });
     }
   }
 
+  /* ----------------------------------------------------
+      MENTOR VERIFICATION
+  ----------------------------------------------------- */
   async mentorVerification(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const data = await this._adminService.getMentor(id);
+
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ error: error.message || MESSAGES.ERROR.SERVER_ERROR });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
+  /* ----------------------------------------------------
+      APPROVE / REJECT MENTOR
+  ----------------------------------------------------- */
   async approveMentor(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const data = await this._adminService.approveMentor(id);
+
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ error: error.message || MESSAGES.ERROR.SERVER_ERROR });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
@@ -127,21 +166,26 @@ export class AdminController implements IAdminController {
     try {
       const { id } = req.params;
       const { rejectionReason } = req.body;
+
       const data = await this._adminService.rejectMentor(id, rejectionReason);
+
       res.status(STATUS_CODES.OK).json(data);
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ error: error.message || MESSAGES.ERROR.SERVER_ERROR });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
+  /* ----------------------------------------------------
+      LIST USERS
+  ----------------------------------------------------- */
   async listUsers(req: Request, res: Response): Promise<void> {
     try {
       const result = await this._adminService.getAllUsersWithQuery({
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 10,
-        search: (req.query.search as string) || "",
+        page: parseInt(req.query.page as string) || ADMIN_QUERY.PAGE,
+        limit: parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT,
+        search: (req.query.search as string) || ADMIN_QUERY.SEARCH,
         level: req.query.level as string,
         minSessions: req.query.minSessions ? +req.query.minSessions : undefined,
         maxSessions: req.query.maxSessions ? +req.query.maxSessions : undefined,
@@ -158,24 +202,27 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.USER_FETCHED, result });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ error: err.message || MESSAGES.ERROR.SERVER_ERROR });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
+  /* ----------------------------------------------------
+      LIST MENTORS
+  ----------------------------------------------------- */
   async listMentors(req: Request, res: Response): Promise<void> {
     try {
       const result = await this._adminService.getAllMentorsWithQuery({
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 10,
-        search: (req.query.search as string) || "",
+        page: parseInt(req.query.page as string) || ADMIN_QUERY.PAGE,
+        limit: parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT,
+        search: (req.query.search as string) || ADMIN_QUERY.SEARCH,
         sortBy: req.query.sortBy as "students" | "sessions",
-        verificationStatus: req.query.verificationStatus as
-          | "pending"
-          | "approved"
-          | "rejected",
+        verificationStatus:
+          req.query.verificationStatus as
+            | (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS]
+            | undefined,
         isBlocked:
           req.query.isBlocked === "true"
             ? true
@@ -187,34 +234,43 @@ export class AdminController implements IAdminController {
       res
         .status(STATUS_CODES.OK)
         .json({ message: MESSAGES.SUCCESS.USER_FETCHED, result });
-    } catch (err: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ error: err.message || MESSAGES.ERROR.SERVER_ERROR });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
- async home(req: Request, res: Response): Promise<void> {
-  try {
-    const stats = await this._adminService.getDashboardStats();
+  /* ----------------------------------------------------
+      HOME DASHBOARD
+  ----------------------------------------------------- */
+  async home(req: Request, res: Response): Promise<void> {
+    try {
+      const stats = await this._adminService.getDashboardStats();
 
-    res.status(200).json({
-      success: true,
-      ...stats,
-    });
-  } catch (error: any) {
-    console.error("Error fetching admin dashboard stats:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to load admin dashboard stats",
-    });
+      res.status(STATUS_CODES.OK).json({
+        success: true,
+        ...stats,
+      });
+    } catch (err: unknown) {
+      console.error(LOG_STRINGS.DASHBOARD_ERROR, err);
+
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: getErrorMessage(
+          err,
+          ADMIN_MESSAGES.ERROR.DASHBOARD_LOAD_FAILED
+        ),
+      });
+    }
   }
-}
 
-
-
+  /* ----------------------------------------------------
+      REFRESH TOKEN
+  ----------------------------------------------------- */
   async refreshToken(req: Request, res: Response): Promise<void> {
-    const token = req.cookies["refresh-token"];
+    const token = req.cookies[COOKIE_KEYS.REFRESH];
+
     if (!token) {
       res
         .status(STATUS_CODES.UNAUTHORIZED)
@@ -225,10 +281,10 @@ export class AdminController implements IAdminController {
     try {
       const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
         id: string;
-        role: "user" | "mentor" | "admin";
+        role: (typeof ROLES)[keyof typeof ROLES];
       };
 
-      if (payload.role !== "admin") {
+      if (payload.role !== ROLES.ADMIN) {
         res
           .status(STATUS_CODES.FORBIDDEN)
           .json({ message: MESSAGES.ERROR.FORBIDDEN });
@@ -236,6 +292,7 @@ export class AdminController implements IAdminController {
       }
 
       const result = await this._adminService.getHome(payload.id);
+
       if (!result) {
         res
           .status(STATUS_CODES.NOT_FOUND)
@@ -248,119 +305,168 @@ export class AdminController implements IAdminController {
         role: payload.role,
       });
 
-      res.cookie("auth-token", newAccessToken, {
+      res.cookie(COOKIE_KEYS.AUTH, newAccessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
+        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
-      res
-        .status(STATUS_CODES.OK)
-        .json({ message: "Token refreshed", user: result });
-    } catch (error) {
+      res.status(STATUS_CODES.OK).json({
+        message: MESSAGES.SUCCESS.TOKEN_REFRESHED,
+        user: result,
+      });
+    } catch (_err: unknown) {
       res
         .status(STATUS_CODES.UNAUTHORIZED)
         .json({ message: MESSAGES.ERROR.INVALID_TOKEN });
     }
   }
 
+  /* ----------------------------------------------------
+      LOGOUT
+  ----------------------------------------------------- */
   async logout(req: Request, res: Response): Promise<void> {
-    res.clearCookie("auth-token", {
+    res.clearCookie(COOKIE_KEYS.AUTH, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      sameSite: COOKIE_KEYS.SAME_SITE,
     });
-    res.clearCookie("refresh-token", {
+
+    res.clearCookie(COOKIE_KEYS.REFRESH, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      sameSite: COOKIE_KEYS.SAME_SITE,
     });
-    res.clearCookie("role", {
+
+    res.clearCookie(COOKIE_KEYS.ROLE, {
       httpOnly: false,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      sameSite: COOKIE_KEYS.SAME_SITE,
     });
 
-    res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS.LOGOUT });
+    res.status(STATUS_CODES.OK).json({
+      message: MESSAGES.SUCCESS.LOGOUT,
+    });
   }
 
- getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = (req.query.search as string) || "";
-    const status = (req.query.status as string) || "all";
+  /* ----------------------------------------------------
+      ADMIN - GET ALL SESSIONS
+  ----------------------------------------------------- */
+  getAllSessionsAdmin = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const page = parseInt(req.query.page as string) || ADMIN_QUERY.PAGE;
+      const limit = parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT;
+      const search = (req.query.search as string) || ADMIN_QUERY.SEARCH;
+      const status = (req.query.status as string) || ADMIN_QUERY.STATUS_ALL;
 
-    const result = await this._adminService.getAllSessionsAdmin({
-      page,
-      limit,
-      search,
-      status,
-    });
+      const type = (req.query.type as string) || ADMIN_QUERY.TYPE;
 
-    res.status(200).json({
-      sessions: result.sessions,
-      total: result.total,
-      page,
-      limit,
-      totalPages: Math.ceil(result.total / limit),
-    });
-  } catch (err: any) {
-    console.error("Error fetching sessions:", err);
-    res.status(500).json({ message: err.message || "Server error" });
-  }
-};
+      const result = await this._adminService.getAllSessionsAdmin({
+        page,
+        limit,
+        search,
+        status,
+        type,
+      });
 
 
-  getAllPayments = async (req: any, res: Response) => {
+      res.status(STATUS_CODES.OK).json({
+        sessions: result.sessions,
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        type,
+      });
+    } catch (err: unknown) {
+      console.error(ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED, err);
+
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: getErrorMessage(
+          err,
+          ADMIN_MESSAGES.ERROR.SESSION_FETCH_FAILED
+        ),
+      });
+    }
+  };
+
+  /* ----------------------------------------------------
+      ADMIN - ALL PAYMENTS
+  ----------------------------------------------------- */
+  getAllPayments = async (req: Request, res: Response): Promise<void> => {
     try {
       const payments = await this._paymentService.getAllPayments();
       res.status(STATUS_CODES.OK).json({ data: payments });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   };
 
-  getPaymentById = async (req: any, res: Response) => {
+  /* ----------------------------------------------------
+      PAYMENT BY ID
+  ----------------------------------------------------- */
+  getPaymentById = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
       const payment = await this._paymentService.getPaymentById(id);
+
       if (!payment) {
-        res
-          .status(STATUS_CODES.NOT_FOUND)
-          .json({ message: MESSAGES.ERROR.NOT_FOUND });
+        res.status(STATUS_CODES.NOT_FOUND).json({
+          message: MESSAGES.ERROR.NOT_FOUND,
+        });
+        return;
       }
+
       res.status(STATUS_CODES.OK).json({ data: payment });
-    } catch (error: any) {
-      res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: error.message });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        message: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   };
 
-  async listAllDailyTasks(req: Request, res: Response) {
+  /* ----------------------------------------------------
+      ALL DAILY TASKS
+  ----------------------------------------------------- */
+  async listAllDailyTasks(req: Request, res: Response): Promise<void> {
     try {
       const tasks = await this._dailyTaskService.getAllUsersLatestTasks();
-      res.status(200).json({ tasks });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(STATUS_CODES.OK).json({ tasks });
+    } catch (err: unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
     }
   }
 
+  async getDailyTaskById(req:Request,res:Response):Promise<void>{
+    try {
+      const dailyTaskId = req.params.id;
+    const task = await this._dailyTaskService.getDailyTaskById(dailyTaskId);
+    res.status(STATUS_CODES.OK).json({ task });
+    } catch (err:unknown) {
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
+      });
+    }
+  }
+
+  /* ----------------------------------------------------
+      ADMIN REPORTS
+  ----------------------------------------------------- */
   async getReports(req: Request, res: Response): Promise<void> {
     try {
-      const { type, startDate, endDate, status, mentorId } = req.query;
+      const { type, startDate, endDate} = req.query;
 
-      const validTypes = ["session", "mentor", "user", "dailyTask", "payment"];
-      if (!type || !validTypes.includes(type as string)) {
-        res.status(400).json({
-          message:
-            "Invalid type. Must be one of: session, mentor, user, dailyTask, payment",
+      const reportType = type as ReportType;
+
+      if (!type || !REPORT_TYPE_LIST.includes(reportType)) {
+        res.status(STATUS_CODES.BAD_REQUEST).json({
+          message: ADMIN_MESSAGES.ERROR.INVALID_REPORT_TYPE,
         });
-        return;
       }
 
       const start = startDate ? new Date(startDate as string) : undefined;
@@ -368,28 +474,25 @@ export class AdminController implements IAdminController {
 
       let data: any[] = [];
 
-      switch (type) {
-        case "session":
+      switch (reportType) {
+        case REPORT_TYPES.SESSION:
           data =
-            (await this._sessionService.getAllSessionsAdmin({
-              status: status as string,
-              mentorId: mentorId as string,
-            })) || [];
+            (await this._sessionService.getAllSessionsAdmin()) || [];
           break;
 
-        case "mentor":
+        case REPORT_TYPES.MENTOR:
           data = (await this._mentorService.getAllMentors()) || [];
           break;
 
-        case "user":
+        case REPORT_TYPES.USER:
           data = (await this._userService.getAllUsers()) || [];
           break;
 
-        case "dailyTask":
+        case REPORT_TYPES.DAILY_TASK:
           data = (await this._dailyTaskService.getAllUsersLatestTasks()) || [];
           break;
 
-        case "payment":
+        case REPORT_TYPES.PAYMENT:
           data = (await this._paymentService.getAllPayments()) || [];
           break;
       }
@@ -398,27 +501,59 @@ export class AdminController implements IAdminController {
         data = data.filter((item: any) => {
           const dateField =
             item.createdAt || item.updatedAt || item.date || item.timestamp;
+
           if (!dateField) return true;
+
           const d = new Date(dateField);
+
           if (start && d < start) return false;
           if (end && d > end) return false;
+
           return true;
         });
       }
 
-      res.status(200).json({
+      res.status(STATUS_CODES.OK).json({
         success: true,
-        type,
+        type: reportType,
         count: data.length,
         data,
       });
-    } catch (error: any) {
-      console.error("Error in getReports:", error);
-      res.status(500).json({
+    } catch (err: unknown) {
+      console.error(LOG_STRINGS.REPORT_ERROR, err);
+
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to generate report",
-        error: error.message,
+        message: ADMIN_MESSAGES.ERROR.REPORT_GENERATION_FAILED,
+        error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
     }
   }
+
+
+async downloadReportPdf(req: Request, res: Response): Promise<void> {
+  try {
+    const params = {
+      type: req.query.type as string | undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      status: req.query.status as string | undefined,
+      mentorId: req.query.mentorId as string | undefined,
+    };
+
+    const { buffer, filename } = await this._adminService.exportReportPdf(params);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err: unknown) {
+    console.error("Export PDF error", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to export PDF report",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 }

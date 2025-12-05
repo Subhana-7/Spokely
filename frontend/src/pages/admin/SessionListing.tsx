@@ -25,8 +25,8 @@ const AdminSessionsPage = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const limit = 10;
+  const [sessionType, setSessionType] = useState("all");
 
-  // Fetch sessions from backend with pagination & search
   const fetchSessions = async () => {
     try {
       setLoading(true);
@@ -36,6 +36,7 @@ const AdminSessionsPage = () => {
         limit,
         search: searchTerm,
         status: statusFilter,
+        type: sessionType,
       });
 
       const rawSessions = data.sessions || [];
@@ -68,12 +69,6 @@ const AdminSessionsPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, searchTerm, statusFilter]);
-
-  // Handlers for search and filter
   const handleSearch = (val: string) => {
     setSearchTerm(val);
     setPage(1);
@@ -84,9 +79,20 @@ const AdminSessionsPage = () => {
     setPage(1);
   };
 
+  const handleTypeFilter = (val: string) => {
+    setSessionType(val);
+    setPage(1);
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, [page, searchTerm, statusFilter, sessionType]);
+
+  console.log(sessions);
+
   return (
     <div className="p-4 md:p-8">
-      {/* Header Section - matches mentor listing style */}
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <div className="w-16 h-1 bg-green-500 rounded-full mb-2"></div>
@@ -101,74 +107,49 @@ const AdminSessionsPage = () => {
 
       {/* Search + Filter Bar */}
       <div className="text-black">
-      <SearchFilterBar
-        searchPlaceholder="Search sessions by topic or mentor"
-        onSearch={handleSearch}
-        onStatusFilter={handleStatus}
-      />
+        <SearchFilterBar
+          searchPlaceholder="Search sessions by topic or mentor"
+          onSearch={handleSearch}
+          onStatusFilter={handleStatus}
+          onFilter={handleTypeFilter}
+          hideMoreFilters={true}
+          filterOptions={["all", "public", "private", "peer-to-peer"]}
+          statusOptions={[
+            { label: "All Sessions", value: "all" },
+            { label: "Upcoming", value: "upcoming" },
+            { label: "Ongoing", value: "ongoing" },
+            { label: "Completed", value: "completed" },
+            { label: "Cancelled", value: "cancelled" },
+          ]}
+        />
       </div>
 
       {/* Data Table Section */}
-      <div className="mt-6  rounded-2xl shadow-md border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="p-10 text-center text-gray-500">Loading sessions...</div>
-        ) : sessions.length === 0 ? (
-          <div className="p-10 text-center text-gray-500">No sessions found</div>
-        ) : (
-          <DataTable
-            data={sessions.map((s) => ({
-              id: s.id,
-              topic: s.topic,
-              type: s.type,
-              status: s.status,
-              feedbackCount: s.feedbackCount || 0,
-            }))}
-            type="session"
-            page={page}
-            setPage={setPage}
-            total={total}
-            limit={limit}
-            onRowClick={(id) => (window.location.href = `/session/details/${id}`)}
-            onDelete={(id) => {
-              toast("Delete session feature coming soon", { icon: "🗑️" });
-            }}
-          />
-        )}
-      </div>
-
-      {/* Pagination (Mentor-style) */}
-      {total > limit && (
-        <div className="flex justify-between items-center mt-6">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className={`px-4 py-2 text-sm border rounded-lg transition ${
-              page === 1
-                ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
-                : "border-gray-300 hover:bg-gray-100 text-gray-700"
-            }`}
-          >
-            Prev
-          </button>
-
-          <span className="text-gray-600 text-sm">
-            Page {page} of {Math.ceil(total / limit)}
-          </span>
-
-          <button
-            disabled={page >= Math.ceil(total / limit)}
-            onClick={() =>
-              setPage((p) => Math.min(p + 1, Math.ceil(total / limit)))
-            }
-            className={`px-4 py-2 text-sm border rounded-lg transition ${
-              page >= Math.ceil(total / limit)
-                ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
-                : "border-gray-300 hover:bg-gray-100 text-gray-700"
-            }`}
-          >
-            Next
-          </button>
+      {loading ? (
+        <div className="p-10 text-center text-gray-500">
+          Loading sessions...
         </div>
+      ) : sessions.length === 0 ? (
+        <div className="p-10 text-center text-gray-500">No sessions found</div>
+      ) : (
+        <DataTable
+          data={sessions.map((s) => ({
+            id: s.id,
+            topic: s.topic,
+            type: s.type,
+            status: s.status,
+            feedbackCount: s.feedbackCount || 0,
+          }))}
+          type="session"
+          page={page}
+          setPage={setPage}
+          total={total}
+          limit={limit}
+          onRowClick={(id) => (window.location.href = `/session/details/${id}`)}
+          onDelete={() => {
+            toast("Delete session feature coming soon", { icon: "🗑️" });
+          }}
+        />
       )}
     </div>
   );

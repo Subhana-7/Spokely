@@ -19,7 +19,7 @@ router.get(
 );
 router.get(
   "/details/:id",
-  authMiddleware(["user", "mentor"]),
+  authMiddleware(["user", "mentor","admin"]),
   controller.getSessionById
 );
 router.patch(
@@ -66,11 +66,6 @@ router.get(
   "/list-session",
   authMiddleware(["admin"]),
   controller.getAllSessionsAdmin
-);
-router.get(
-  "/details/:id/admin",
-  authMiddleware(["admin"]),
-  controller.getSessionDetailsAdmin
 );
 
 export default router;

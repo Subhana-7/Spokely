@@ -1,4 +1,4 @@
-import { Bell, MessageCircle, Moon, User, Wallet } from "lucide-react";
+import { Bell, MessageCircle, User, Wallet } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../../store/userAuthStore";
 import { logoutService } from "../../../services/authServices";
@@ -9,36 +9,35 @@ const MentorHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   const [notifications, setNotifications] = useState<any[]>([]);
-    const unreadCount = notifications.filter((n) => !n.read).length;
-  
-    // Fetch notifications count periodically (optional)
-    useEffect(() => {
-      if (user?.id) {
-        const fetchNotifications = async () => {
-          try {
-            const data = await getNotifications(user.id);
-            setNotifications(
-              data.map((n: any) => ({
-                id: n._id,
-                title: n.title,
-                message: n.message,
-                time: new Date(n.createdAt).toLocaleString(),
-                read: n.isRead,
-              }))
-            );
-          } catch (err) {
-            console.error("Error fetching notifications:", err);
-          }
-        };
-  
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000); // refresh every minute
-        return () => clearInterval(interval);
-      }
-    }, [user?.id]);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (user?.id) {
+      const fetchNotifications = async () => {
+        try {
+          const data = await getNotifications(user.id);
+          setNotifications(
+            data.map((n: any) => ({
+              id: n._id,
+              title: n.title,
+              message: n.message,
+              time: new Date(n.createdAt).toLocaleString(),
+              read: n.isRead,
+            }))
+          );
+        } catch (err) {
+          console.error("Error fetching notifications:", err);
+        }
+      };
+
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
 
   const handleLogout = () => {
     logoutService("mentor");
@@ -46,7 +45,6 @@ const MentorHeader = () => {
     navigate("/");
   };
 
-  // Helper for nav button styling
   const navButtonClass = (path: string) =>
     `text-gray-300 font-medium px-4 py-2 rounded-lg transition-colors ${
       location.pathname === path
@@ -101,16 +99,16 @@ const MentorHeader = () => {
           </button>
 
           <button
-              onClick={() => navigate("/notifications")}
-              className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors relative"
-            >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-500 text-xs w-4 h-4 flex items-center justify-center rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+            onClick={() => navigate("/notifications")}
+            className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors relative"
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-green-500 text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </button>
 
           <button
             onClick={() => navigate("/mentor/profile")}

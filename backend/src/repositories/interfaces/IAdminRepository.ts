@@ -1,6 +1,7 @@
 import { IAdmin } from "../../models/admin.model";
 import { IUser } from "../../models/user.model";
 import { IMentor } from "../../models/mentor.model";
+import { SORT_BY } from "../../utilis/constants";
 
 export interface IAdminRepository {
   findByEmail(email: string): Promise<IAdmin | null>;
@@ -31,7 +32,7 @@ export interface IAdminRepository {
     page?: number;
     limit?: number;
     search?: string;
-    sortBy?: "students" | "sessions";
+    sortBy?: string | (typeof SORT_BY)[keyof typeof SORT_BY];
     verificationStatus?: "pending" | "approved" | "rejected";
     isBlocked?: boolean;
   }): Promise<{ mentors: IMentor[]; total: number }>;

@@ -1,6 +1,7 @@
 import { IMentor } from "../../models/mentor.model";
 import { AdminResponseDto, UserSummaryDto } from "../../dto/admin.dto";
 import { ISession } from "../../models/sessions.model";
+import { promises } from "dns";
 
 export interface IAdminService {
   login(
@@ -57,5 +58,8 @@ export interface IAdminService {
   limit?: number;
   search?: string;
   status?: string;
+  type?:string;
 }): Promise<{ sessions: ISession[]; total: number }>;
+ 
+exportReportPdf(params: any): Promise<{ buffer: Buffer; filename: string; type: string }>
 }

@@ -16,7 +16,7 @@ export class SessionRepository
   async createSession(data: Partial<ISession>): Promise<ISession | null> {
     try {
       return await SessionModel.create(data);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -35,7 +35,7 @@ export class SessionRepository
         .populate({ path: "createdBy", select: "name email profilePicture" });
 
       return res;
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("Error fetching sessions:", error);
       return null;
     }
@@ -49,7 +49,7 @@ export class SessionRepository
           path: "createdBy",
           select: "name email profilePicture role",
         });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -61,7 +61,7 @@ export class SessionRepository
   ): Promise<ISession | null> {
     try {
       return await SessionModel.findByIdAndUpdate(id, data, { new: true });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -86,7 +86,7 @@ export class SessionRepository
         },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -119,7 +119,7 @@ export class SessionRepository
         status: "accepted",
       });
       return await session.save();
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error adding participant:", error);
       return null;
     }
@@ -142,7 +142,7 @@ export class SessionRepository
         },
         { new: true }
       );
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -151,7 +151,7 @@ export class SessionRepository
   async getPublicSessions(): Promise<ISession[] | null> {
     try {
       return await SessionModel.find({ type: "public" });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -171,7 +171,7 @@ export class SessionRepository
         .populate("createdBy")
         .populate("feedback.from", "name profilePicture")
         .populate("feedback.to", "name profilePicture");
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -180,7 +180,7 @@ export class SessionRepository
   async findSessions(query: any): Promise<ISession[] | null> {
     try {
       return await SessionModel.find(query);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error(error);
       return null;
     }
@@ -198,7 +198,7 @@ export class SessionRepository
         "participants.user": userId,
         startTime: date,
       });
-    } catch (error) {
+    } catch (error:unknown) {
       console.error(error);
       return null;
     }
@@ -219,7 +219,7 @@ export class SessionRepository
         .skip(skip)
         .limit(limit)
         .lean();
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("Error in findWithFilters:", error);
       return [];
     }
@@ -228,7 +228,7 @@ export class SessionRepository
   async countSessions(query: any) {
     try {
       return await SessionModel.countDocuments(query);
-    } catch (error) {
+    } catch (error:unknown) {
       console.error("Error in countSessions:", error);
       return 0;
     }

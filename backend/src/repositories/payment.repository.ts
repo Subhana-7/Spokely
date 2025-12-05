@@ -17,7 +17,7 @@ export class PaymentRepository
   async create(data: Partial<IPayment>): Promise<IPayment | null> {
     try {
       return Payment.create(data);
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }
@@ -31,7 +31,7 @@ export class PaymentRepository
       return Payment.findOneAndUpdate({ paypalOrderId: orderId }, update, {
         new: true,
       });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }

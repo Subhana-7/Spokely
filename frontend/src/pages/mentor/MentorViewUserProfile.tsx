@@ -1,205 +1,162 @@
-import { useEffect, useState } from 'react'
-import MentorHeader from './DashboardComponents/Header';
-import SpokelyCard from '../../components/common/Cards';
-import { Book, Calendar, TrendingUp, User } from 'lucide-react';
-import Badge from '../../components/common/Badge';
-import { userProfiles } from '../../services/authServices';
-import toast from 'react-hot-toast';
-import { useParams } from 'react-router-dom';
-import { useAuthStore } from '../../store/userAuthStore';
-import Header from "../user/DashBoardComponents/Header"
-
-interface UserType {
-  name: string;
-  email: string;
-  profilePicture?: string;
-  createdAt?: string;
-  uniqueCode?: string;
-  levels?: number;
-  completionRate?: number;
-  streak?: number;
-  sessionsDone: number;
-}
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { userProfiles } from "../../services/authServices";
+import toast from "react-hot-toast";
+import { User, TrendingUp, Calendar, ArrowLeft } from "lucide-react";
+import { useAuthStore } from "../../store/userAuthStore";
+import Header from "../user/DashBoardComponents/Header";
+import MentorHeader from "./DashboardComponents/Header";
 
 const MentorViewUserProfile = () => {
-  const { id: userId } = useParams<{ id: string }>();
-  const [userDetails, setUserDetails] = useState<UserType | null>(null);
+  const { id } = useParams<{ id: string }>();
   const currentUser = useAuthStore((state) => state.user);
-  console.log(currentUser)
 
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await userProfiles(userId);
-        setUserDetails(res);
-      } catch (error) {
-        toast.error("Failed to fetch user profile");
+        const res = await userProfiles(id!);
+        setUser(res.data);
+      } catch (e) {
+        toast.error("Failed to load user profile");
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
-  }, [userId]);
+  }, [id]);
 
-  if (!userDetails) {
+  if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading profile...</p>
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading user profile...
       </div>
     );
-  }
+
+  if (!user)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-400">
+        User not found.
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {currentUser?.role === "user" ? (
-        <Header/>
-      ):(
-        <MentorHeader />
-      )} 
-      
+    <div
+      className={
+        `min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white ` +
+        (currentUser?.role === "user" ? "pt-20" : "pt-0")
+      }
+    >
+      {currentUser?.role === "user" ? <Header /> : <MentorHeader />}
+      {/* Header */}
+      <div className="flex items-center max-w-7xl mx-auto px-6 mb-10 py-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors mr-4"
+        >
+          <ArrowLeft size={22} />
+        </button>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-white">
+          User Details
+        </h1>
+      </div>
 
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - User Info */}
-          <div className="lg:col-span-1">
-            <SpokelyCard variant="secondary">
-              <div className="text-center mb-6">
-                <div className="w-32 h-32 bg-purple-200 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
-                  {userDetails.profilePicture ? (
-                    <img
-                      src={userDetails.profilePicture}
-                      alt={userDetails.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User size={48} className="text-purple-600" />
-                  )}
+      {/* Layout */}
+      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-8">
+        {/* PROFILE CARD */}
+        <div className="bg-white/6 backdrop-blur-lg rounded-2xl border border-white/10 p-6 flex gap-6">
+          {/* Avatar */}
+          <div className="flex-shrink-0">
+            <div className="w-32 h-32 rounded-full overflow-hidden border border-white/10">
+              {user.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  className="w-full h-full object-cover"
+                  alt={user.name}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                  <User className="text-gray-400 w-12 h-12" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {userDetails.name}
-                </h2>
-                <Badge variant="peer" className="mb-2">
-                  {userDetails.levels && userDetails.levels > 0
-                    ? `Level ${userDetails.levels}`
-                    : "Beginner"}
-                </Badge>
-                <p className="text-sm text-gray-600 mb-4">
-                  {userDetails.role === "user" ? "Your Student" : userDetails.role}
-                </p>
-
-                <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium mb-6 inline-block">
-                  {userDetails.streak ?? 0}-Day Streak
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-purple-600">
-                      {userDetails.sessionsDone}
-                    </div>
-                    <div className="text-xs text-gray-600">Sessions Done</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-purple-600">
-                      {userDetails.completionRate ?? 0}%
-                    </div>
-                    <div className="text-xs text-gray-600">Progress Rate</div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <button className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
-                    Schedule Session
-                  </button>
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                    Send Message
-                  </button>
-                  <button className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                    View Session History
-                  </button>
-                </div>
-              </div>
-            </SpokelyCard>
+              )}
+            </div>
           </div>
 
-          {/* Right Column - Student Progress & Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Progress Overview */}
-            <SpokelyCard>
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <TrendingUp size={20} className="mr-2" />
-                Learning Progress
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {userDetails.completionRate ?? 0}%
-                  </div>
-                  <div className="text-sm text-gray-600">Completion Rate</div>
-                </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {userDetails.sessionsDone}
-                  </div>
-                  <div className="text-sm text-gray-600">Sessions Completed</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {userDetails.levels ?? 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Levels Unlocked</div>
-                </div>
-              </div>
+          {/* Info */}
+          <div className="flex flex-col justify-center space-y-2">
+            <h2 className="text-3xl font-bold">{user.name}</h2>
+            <p className="text-gray-400">{user.email}</p>
 
-              <div className="mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Overall Progress</span>
-                  <span className="text-sm text-gray-600">{userDetails.completionRate ?? 0}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full"
-                    style={{ width: `${userDetails.completionRate ?? 0}%` }}
-                  ></div>
-                </div>
+            <div className="flex gap-3 mt-2">
+              <div className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-500/30">
+                Unique Code: {user.uniqueCode}
               </div>
-            </SpokelyCard>
-
-            {/* Recent Sessions (dummy for now since not in API) */}
-            <SpokelyCard>
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Calendar size={20} className="mr-2" />
-                Recent Sessions
-              </h3>
-              <p className="text-gray-500">No session history available.</p>
-            </SpokelyCard>
-
-            {/* Student Notes */}
-            <SpokelyCard>
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Book size={20} className="mr-2" />
-                Student Notes & Goals
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Current Goals</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>• Improve public speaking confidence</li>
-                    <li>• Master presentation delivery techniques</li>
-                    <li>• Overcome stage anxiety</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Mentor Notes</h4>
-                  <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={`Add notes about ${userDetails.name}'s progress, areas for improvement, or session feedback...`}
-                  ></textarea>
-                </div>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                  Save Notes
-                </button>
+              <div className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm border border-purple-500/30">
+                Level: {user.levels ?? 0}
               </div>
-            </SpokelyCard>
+            </div>
+
+            <div className="bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm border border-yellow-500/30 w-max mt-3">
+              {user.streak ?? 0}-Day Streak
+            </div>
           </div>
+        </div>
+
+        {/* PROGRESS CARD */}
+        <div className="bg-white/6 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+          <h3 className="text-xl font-semibold flex items-center gap-2 mb-6 text-emerald-400">
+            <TrendingUp /> Learning Progress
+          </h3>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="bg-gray-800/40 p-4 rounded-xl border border-gray-700/40">
+              <p className="text-2xl font-bold text-green-400">
+                {user.completionRate}%
+              </p>
+              <p className="text-gray-400 text-sm">Completion Rate</p>
+            </div>
+
+            <div className="bg-gray-800/40 p-4 rounded-xl border border-gray-700/40">
+              <p className="text-2xl font-bold text-blue-400">
+                {user.sessionsDone}
+              </p>
+              <p className="text-gray-400 text-sm">Sessions Done</p>
+            </div>
+
+            <div className="bg-gray-800/40 p-4 rounded-xl border border-gray-700/40">
+              <p className="text-2xl font-bold text-purple-400">
+                {user.totalConnections}
+              </p>
+              <p className="text-gray-400 text-sm">Connections</p>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-6">
+            <div className="flex justify-between mb-2 text-sm">
+              <span>Overall Progress</span>
+              <span>{user.completionRate}%</span>
+            </div>
+            <div className="w-full bg-gray-700 h-3 rounded-full">
+              <div
+                className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full"
+                style={{ width: `${user.completionRate}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* SESSIONS CARD */}
+        <div className="bg-white/6 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+          <h3 className="text-xl font-semibold flex items-center gap-2 mb-4 text-blue-400">
+            <Calendar /> Session Activity
+          </h3>
+          <p className="text-gray-400">No session history available.</p>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../../modals/Button";
 import Input from "../../modals/Input";
@@ -92,7 +92,7 @@ const PublicMentorListing = () => {
 
       <Button
         variant="primary"
-        onClick={() => navigate(`/user/mentor-profile/${mentor.id}`)}
+        onClick={() => navigate(`/mentor-profile/${mentor.id}`)}
         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:shadow-lg transition-all"
       >
         View Profile

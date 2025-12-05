@@ -4,25 +4,31 @@ interface DataItem {
   email?: string;
   avatar?: string;
   level?: string;
+  levels?: string;
   students?: number;
   mentors?: number;
   dailyTask?: string;
   sessions?: number;
+  sessionsDone?: number;
   topic?: string;
   type?: string;
   status?: string;
   feedbackCount?: number;
-  sender?: string;
-  receiver?: string;
+  paypalOrderId?: string;
+  currency?: string;
   amount?: number;
   completedAt?: string;
   isBlocked?: boolean;
+  user?: {
+    name: string;
+    email: string;
+  };
   verificationStatus?: "pending" | "approved" | "rejected";
 }
 
 interface DataTableProps {
   data: DataItem[];
-  type: "user" | "mentor" | "session" | "dailyTask" | "payment"; 
+  type: "user" | "mentor" | "session" | "dailyTask" | "payment";
   onBlock?: (id: string) => void;
   onDelete?: (id: string) => void;
   onRowClick?: (id: string) => void;
@@ -43,7 +49,6 @@ const DataTable = ({
   total,
   limit,
 }: DataTableProps) => {
-
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "active":
@@ -65,7 +70,6 @@ const DataTable = ({
       ? "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
       : "bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs";
 
-  // Dynamic column headers based on type
   const renderHeaders = () => {
     switch (type) {
       case "session":
@@ -81,18 +85,17 @@ const DataTable = ({
       case "dailyTask":
         return (
           <>
-            <th className="px-6 py-3">Task</th>
+            <th className="px-6 py-3">Topic</th>
             <th className="px-6 py-3">Assigned To</th>
             <th className="px-6 py-3">Status</th>
-            <th className="px-6 py-3">Completed At</th>
             <th className="px-6 py-3">Actions</th>
           </>
         );
       case "payment":
         return (
           <>
-            <th className="px-6 py-3">Sender</th>
-            <th className="px-6 py-3">Receiver</th>
+            <th className="px-6 py-3">Paypal Order Id</th>
+            <th className="px-6 py-3">Currency</th>
             <th className="px-6 py-3">Amount</th>
             <th className="px-6 py-3">Status</th>
             <th className="px-6 py-3">Actions</th>
@@ -101,28 +104,30 @@ const DataTable = ({
       case "mentor":
         return (
           <>
-            <th className="px-6 py-3">Mentor Info</th>
-            <th className="px-6 py-3">Verification Status</th>
-            <th className="px-6 py-3">Blocked</th>
-            <th className="px-6 py-3">Actions</th>
+            <th className="px-6 py-3">Mentor</th>
+            <th className="px-6 py-3">Email</th>
+            <th className="px-6 py-3">Sessions Done</th>
+            <th className="px-6 py-3">Approval</th>
+            <th className="px-6 py-3">Verfication</th>
+            <th className="px-6 py-3">Status</th>
+            <th className="px-6 py-3">Details</th>
           </>
         );
       case "user":
       default:
         return (
           <>
-            <th className="px-6 py-3">User Info</th>
+            <th className="px-6 py-3">User Name</th>
+            <th className="px-6 py-3">Email</th>
             <th className="px-6 py-3">Level</th>
-            <th className="px-6 py-3">Daily Task</th>
             <th className="px-6 py-3">Sessions</th>
-            <th className="px-6 py-3">Mentors</th>
             <th className="px-6 py-3">Actions</th>
+            <th className="px-6 py-3">Details</th>
           </>
         );
     }
   };
 
-  // Dynamic row render
   const renderRows = (item: DataItem) => {
     switch (type) {
       case "session":
@@ -131,13 +136,22 @@ const DataTable = ({
             <td className="px-6 py-4">{item.topic}</td>
             <td className="px-6 py-4">{item.type}</td>
             <td className="px-6 py-4">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  item.status
+                )}`}
+              >
                 {item.status}
               </span>
             </td>
             <td className="px-6 py-4">{item.feedbackCount}</td>
             <td className="px-6 py-4">
-              <button onClick={() => onRowClick?.(item.id)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">View</button>
+              <button
+                onClick={() => onRowClick?.(item.id)}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
+              >
+                View
+              </button>
             </td>
           </>
         );
@@ -145,80 +159,125 @@ const DataTable = ({
         return (
           <>
             <td className="px-6 py-4">{item.dailyTask}</td>
-            <td className="px-6 py-4">{item.name}</td>
             <td className="px-6 py-4">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                {item.status}
+              {item.user?.name ?? "-"} ({item.user?.email ?? "-"})
+            </td>
+            <td className="px-6 py-4">
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  item.status
+                )}`}
+              >
+                {item.status ?? "completed"}
               </span>
             </td>
-            <td className="px-6 py-4">{item.completedAt}</td>
             <td className="px-6 py-4">
-              <button onClick={() => onRowClick?.(item.id)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">View</button>
+              <button
+                onClick={() => onRowClick?.(item.id)}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
+              >
+                View
+              </button>
             </td>
           </>
         );
       case "payment":
         return (
           <>
-            <td className="px-6 py-4">{item.sender}</td>
-            <td className="px-6 py-4">{item.receiver}</td>
+            <td className="px-6 py-4">{item.paypalOrderId}</td>
+            <td className="px-6 py-4">{item.currency}</td>
             <td className="px-6 py-4">₹{item.amount}</td>
             <td className="px-6 py-4">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  item.status
+                )}`}
+              >
                 {item.status}
               </span>
             </td>
             <td className="px-6 py-4">
-              <button onClick={() => onRowClick?.(item.id)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">View</button>
+              <button
+                onClick={() => onRowClick?.(item.id)}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
+              >
+                View
+              </button>
             </td>
           </>
         );
       case "mentor":
-  return (
-    <>
-      <td className="px-6 py-4">
-        {item.name} <span className="text-gray-500 text-sm">({item.email})</span>
-      </td>
+        return (
+          <>
+            <td className="px-6 py-4">{item.name}</td>
 
-      <td className="px-6 py-4 capitalize">
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.verificationStatus)}`}
-        >
-          {item.verificationStatus}
-        </span>
-      </td>
+            <td className="px-6 py-4">{item.email}</td>
 
-      <td className="px-6 py-4">{item.isBlocked ? "Blocked" : "Active"}</td>
+            <td className="px-6 py-4">{item.sessions}</td>
 
-      <td className="px-6 py-4 flex gap-2">
-        <button
-          onClick={() => onRowClick?.(item.id)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
-        >
-          View Verification
-        </button>
+            <td className="px-10 py-4 m-4 capitalize">
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  item.verificationStatus
+                )}`}
+              >
+                {item.verificationStatus}
+              </span>
+            </td>
 
-        <button
-          onClick={() => onBlock?.(item.id)}
-          className={getBlockButtonStyles(item.isBlocked)}
-        >
-          Toggle Block
-        </button>
-      </td>
-    </>
-  );
+            <td className="px-6 py-4">
+              <button
+                onClick={() => onRowClick?.(item.id)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+              >
+                View Verification
+              </button>
+            </td>
+
+            <td>
+              <button
+                onClick={() => onBlock?.(item.id)}
+                className={getBlockButtonStyles(item.isBlocked)}
+              >
+                {item.isBlocked === true ? "UNBLOCK" : "BLOCK"}
+              </button>
+            </td>
+
+            <td>
+              <button
+                onClick={() => onDelete?.(item.id)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+              >
+                View
+              </button>
+            </td>
+          </>
+        );
 
       case "user":
       default:
         return (
           <>
-            <td className="px-6 py-4">{item.name} ({item.email})</td>
-            <td className="px-6 py-4">{item.level}</td>
-            <td className="px-6 py-4">{item.dailyTask}</td>
-            <td className="px-6 py-4">{item.sessions}</td>
-            <td className="px-6 py-4">{item.mentors}</td>
+            <td className="px-6 py-4">{item.name ? item.name : "-"}</td>
+            <td className="px-6 py-4">{item.email}</td>
             <td className="px-6 py-4">
-              <button onClick={() => onBlock?.(item.id)} className={getBlockButtonStyles(item.isBlocked)}>Toggle Block</button>
+              {item.level ? item.level : item?.levels}
+            </td>
+            <td className="px-6 py-4">
+              {item.sessions ? item.sessions : item.sessionsDone}
+            </td>
+            <td className="px-6 py-4">
+              <button
+                onClick={() => onBlock?.(item.id)}
+                className={getBlockButtonStyles(item.isBlocked)}
+              >
+                {item.isBlocked === true ? "UNBLOCK" : "BLOCK"}
+              </button>
+            </td>
+            <td className="px-6 py-4 text-blue-500 text-xl">
+              <button onClick={() => onRowClick?.(item.id)}>
+                View Details
+              </button>
             </td>
           </>
         );
@@ -234,7 +293,7 @@ const DataTable = ({
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 border-t">
+              <tr key={item.id} className="hover:bg-gray-700 border-t">
                 {renderRows(item)}
               </tr>
             ))}
@@ -243,9 +302,25 @@ const DataTable = ({
       </div>
 
       <div className="flex justify-between items-center mt-4">
-        <button onClick={() => setPage((prev) => Math.max(prev - 1, 1))} disabled={page === 1} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">Previous</button>
-        <span className="text-sm text-gray-600">Page {page} of {Math.ceil(total / limit)}</span>
-        <button onClick={() => setPage((prev) => (prev * limit < total ? prev + 1 : prev))} disabled={page * limit >= total} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">Next</button>
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 text-gray-950"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-gray-300">
+          Page {page} of {Math.ceil(total / limit)}
+        </span>
+        <button
+          onClick={() =>
+            setPage((prev) => (prev * limit < total ? prev + 1 : prev))
+          }
+          disabled={page * limit >= total}
+          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 text-gray-900"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

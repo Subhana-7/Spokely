@@ -15,10 +15,5 @@ export interface ISessionController {
   flagSession(req: AuthenticatedRequest, res: Response): Promise<void>;
 
   addFeedback(req: AuthenticatedRequest, res: Response): Promise<void>;
-
-  getSessionDetailsAdmin(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void>;
   getAllSessionsAdmin(req: AuthenticatedRequest, res: Response): Promise<void>;
 }

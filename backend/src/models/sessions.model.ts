@@ -32,6 +32,7 @@ export interface ISession extends Document {
     | "upcoming"
     | "accepted"
     | "completed"
+    | "ongoing"
     | "cancelled"
     | "flagged";
   createdBy: Types.ObjectId;

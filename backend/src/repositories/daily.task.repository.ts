@@ -12,23 +12,19 @@ export class DailyTaskRepository extends BaseRepository<IDailyTask> {
     userId: string,
     date: Date
   ): Promise<IDailyTask | null> {
-    return this.model.findOne({ userId, date });
-  }
-
-  async create(data: Partial<IDailyTask>): Promise<IDailyTask | null> {
-    return this.model.create(data);
-  }
-
-  async findById(id: string): Promise<IDailyTask | null> {
-    console.log("repo findbyid", id);
-    let res = this.model.findById(id).exec();
-    console.log("res", res);
-    return res;
+    return this.model.findOne({ userId, date,'writing.userResponse': { $exists: true, $ne: null } });
   }
 
   async findAllByDate(date: Date): Promise<IDailyTask[]> {
-    // return this.model.find({ date }).populate("userId", "name email").exec();
-
-    return this.model.find();
+    return this.model.find({ date }).populate("userId","name email");
   }
+
+  async findById(id: string): Promise<any> {
+      return this.model.findById({_id:id})
+  }
+
+  async countByUser(userId: string): Promise<number> {
+  return this.model.countDocuments({ userId });
+}
+
 }

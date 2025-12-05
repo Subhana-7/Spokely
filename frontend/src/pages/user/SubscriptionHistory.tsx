@@ -28,14 +28,27 @@ const SubscriptionHistory = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [limit] = useState(6);
+
   const fetchHistory = async () => {
     if (!userId) return;
     try {
       setLoading(true);
-      const res = await getSubscriptionHistory(userId, page, 6);
+      const res = await getSubscriptionHistory(
+        userId,
+        page,
+        limit,
+        search,
+        status
+      );
       if (res.data?.success) {
         setSubscriptions(res.data.data);
         setTotalPages(res.data.totalPages);
+      } else if (res.data?.data) {
+        setSubscriptions(res.data.data);
+        setTotalPages(res.data.totalPages ?? 1);
       }
     } catch (err) {
       console.error("Error fetching subscription history:", err);
@@ -46,7 +59,7 @@ const SubscriptionHistory = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [userId, page]);
+  }, [userId, page, search, status]);
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -69,6 +82,17 @@ const SubscriptionHistory = () => {
     if (page > 1) setPage((p) => p - 1);
   };
 
+  const getEndOfMonth = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    fetchHistory();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24 transition-all duration-300">
       <DashboardHeader />
@@ -77,6 +101,42 @@ const SubscriptionHistory = () => {
         <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent tracking-tight">
           Subscription History
         </h2>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Search & Filters */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex gap-3 items-center mb-6"
+        >
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by mentor, plan or id..."
+            className="bg-white/5 border border-white/10 rounded px-5 py-2 text-sm w-72"
+          />
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm"
+          >
+            <option value="All" className="text-black">
+              All
+            </option>
+            <option value="ACTIVE" className="text-black">
+              Active
+            </option>
+            <option value="CANCELLED" className="text-black">
+              Cancelled
+            </option>
+            <option value="EXPIRED" className="text-black">
+              Expired
+            </option>
+          </select>
+        </form>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
@@ -98,7 +158,6 @@ const SubscriptionHistory = () => {
                     <th className="px-6 py-4">End Date</th>
                     <th className="px-6 py-4">Price</th>
                     <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -110,32 +169,27 @@ const SubscriptionHistory = () => {
                       <td className="px-6 py-4 font-medium text-white">
                         {sub.planName}
                       </td>
-                      <td className="px-6 py-4">
-                        {sub.mentor?.name || "—"}
-                      </td>
+
+                      <td className="px-6 py-4">{sub.mentor?.name || "—"}</td>
+
                       <td className="px-6 py-4">
                         {new Date(sub.startDate).toLocaleDateString()}
                       </td>
+
                       <td className="px-6 py-4">
-                        {new Date(sub.endDate).toLocaleDateString()}
+                        {getEndOfMonth(sub.startDate).toLocaleDateString()}
                       </td>
+
                       <td className="px-6 py-4 text-emerald-400 font-medium">
                         ₹{sub.price}
                       </td>
+
                       <td
                         className={`px-6 py-4 font-semibold ${statusColor(
                           sub.status
                         )}`}
                       >
                         {sub.status}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <Button
-                          variant="primary"
-                          className="px-4 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-md hover:shadow-lg hover:scale-105 transform transition-all"
-                        >
-                          View
-                        </Button>
                       </td>
                     </tr>
                   ))}

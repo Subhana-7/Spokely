@@ -1,6 +1,13 @@
 import nodemailer from "nodemailer";
 import { injectable } from "inversify";
 import { IEmailService } from "./interfaces/IEmailService";
+import {
+  EMAIL_MESSAGES,
+  VERIFICATION_STATUS,
+  EMAIL_ERRORS,
+  EMAIL_PROVIDER,
+  DEFAULT_VALUES,
+} from "../utilis/constants";
 
 @injectable()
 export class EmailService implements IEmailService {
@@ -8,7 +15,7 @@ export class EmailService implements IEmailService {
 
   constructor() {
     this._transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: EMAIL_PROVIDER.GMAIL, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -18,24 +25,29 @@ export class EmailService implements IEmailService {
 
   async sendVerificationUpdateEmail(
     to: string,
-    status: "approved" | "rejected" | "pending",
+    status: (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS],
     reason?: string
   ): Promise<void> {
-    let subject = "Spokely Mentor Verification Status";
+    const subject = EMAIL_MESSAGES.VERIFICATION.SUBJECT;
     let text = "";
 
     switch (status) {
-      case "approved":
-        text = `Hi,\n\nYour mentor profile has been approved! You can now start using Spokely as a mentor.\n\nWelcome aboard!\n\n- Team Spokely`;
+      case VERIFICATION_STATUS.APPROVED:
+        text = EMAIL_MESSAGES.VERIFICATION.APPROVED;
         break;
-      case "rejected":
-        text = `Hi,\n\nWe're sorry to inform you that your mentor profile was rejected.\nReason: ${
-          reason ?? "Not specified"
-        }\n\nYou may reapply with updated details.\n\n- Team Spokely`;
+
+      case VERIFICATION_STATUS.REJECTED:
+        text = EMAIL_MESSAGES.VERIFICATION.REJECTED(
+          reason ?? DEFAULT_VALUES.NOT_SPECIFIED 
+        );
         break;
-      case "pending":
-        text = `Hi,\n\nThank you for applying to be a mentor on Spokely. Your application is under review.\nWe will notify you once it’s processed.\n\n- Team Spokely`;
+
+      case VERIFICATION_STATUS.PENDING:
+        text = EMAIL_MESSAGES.VERIFICATION.PENDING;
         break;
+
+      default:
+        throw new Error(EMAIL_ERRORS.INVALID_VERIFICATION_STATUS); 
     }
 
     await this._transporter.sendMail({
@@ -47,8 +59,8 @@ export class EmailService implements IEmailService {
   }
 
   async sendOTP(to: string, otp: string): Promise<void> {
-    const subject = "Spokely OTP Verification Code";
-    const text = `Hi,\n\nYour OTP code is: ${otp}\nIt is valid for 10 minutes.\n\n- Team Spokely`;
+    const subject = EMAIL_MESSAGES.OTP.SUBJECT;
+    const text = EMAIL_MESSAGES.OTP.TEXT(otp);
 
     await this._transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -65,7 +77,7 @@ export class EmailService implements IEmailService {
   ): Promise<void | null> {
     try {
       const transporter = nodemailer.createTransport({
-        service: "gmail",
+        service: EMAIL_PROVIDER.GMAIL,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
@@ -73,11 +85,12 @@ export class EmailService implements IEmailService {
       });
 
       const subject = isForgotPassword
-        ? "Password Reset Code"
-        : "Your OTP Code";
+        ? EMAIL_MESSAGES.OTP_FORGOT_PASSWORD.SUBJECT
+        : EMAIL_MESSAGES.OTP.SUBJECT;
+
       const text = isForgotPassword
-        ? `Your password reset verification code is ${otp}. It expires in 10 minutes.`
-        : `Your verification code is ${otp}. It expires in 10 minutes.`;
+        ? EMAIL_MESSAGES.OTP_FORGOT_PASSWORD.TEXT(otp)
+        : EMAIL_MESSAGES.OTP.TEXT(otp);
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -85,7 +98,7 @@ export class EmailService implements IEmailService {
         subject,
         text,
       });
-    } catch (error) {
+    } catch (error:unknown) {
       console.log("error", error);
       return null;
     }

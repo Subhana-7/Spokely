@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  role: 'user' | 'mentor' | 'admin';
+  role: "user" | "mentor" | "admin";
 }
 export interface UserProfile {
   id: string;

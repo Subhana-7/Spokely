@@ -18,7 +18,7 @@ export class MentorRepository
   async findByEmail(email: string): Promise<IMentor | null> {
     try {
       return Mentor.findOne({ email });
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -27,7 +27,7 @@ export class MentorRepository
   async createMentor(data: Partial<IMentor>): Promise<IMentor | null> {
     try {
       return Mentor.create(data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -36,7 +36,7 @@ export class MentorRepository
   async findByUniqueCode(code: string): Promise<IMentor | null> {
     try {
       return Mentor.findOne({ uniqueCode: code });
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -53,7 +53,7 @@ export class MentorRepository
         { otp: { code, expiresAt } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -68,7 +68,7 @@ export class MentorRepository
       mentor.otp = undefined;
       await mentor.save();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -90,7 +90,7 @@ export class MentorRepository
       const total = await Mentor.countDocuments(query);
 
       return { results, total };
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return { results: [], total: 0 };
     }
@@ -118,7 +118,7 @@ export class MentorRepository
           runValidators: true,
         }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -136,7 +136,7 @@ export class MentorRepository
         { forgotPasswordOtp: { code, expiresAt, newPassword } },
         { new: true }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -165,7 +165,7 @@ export class MentorRepository
       mentor.forgotPasswordOtp = undefined;
       await mentor.save();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -177,7 +177,7 @@ export class MentorRepository
   ): Promise<IMentor | null> {
     try {
       return Mentor.findByIdAndUpdate(id, { newPassword }, { new: true });
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
@@ -187,13 +187,12 @@ export class MentorRepository
     return Mentor.findByIdAndUpdate(id, { $set: data }, { new: true });
   }
 
-  async getDashboardData(mentorId: string): Promise<any> {
+  async getDashboardData(mentorId: string, months = 6): Promise<any> {
     try {
-      const totalSubscriptions = await subscriptionModal.countDocuments({
+      const totalStudents = await subscriptionModal.countDocuments({
         mentorId,
         status: "ACTIVE",
       });
-      const totalStudents = Math.min(totalSubscriptions, 25);
 
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
@@ -278,6 +277,112 @@ export class MentorRepository
         })
         .slice(0, 6);
 
+      const now = new Date();
+      now.setDate(1);
+      now.setHours(0, 0, 0, 0);
+
+      const monthsArr: { label: string; year: number; month: number }[] = [];
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      for (let i = months - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthsArr.push({
+          label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
+          year: d.getFullYear(),
+          month: d.getMonth() + 1, // 1-based month
+        });
+      }
+
+      const rangeStart = new Date(
+        monthsArr[0].year,
+        monthsArr[0].month - 1,
+        1,
+        0,
+        0,
+        0,
+        0
+      );
+      const rangeEnd = new Date(
+        monthsArr[monthsArr.length - 1].year,
+        monthsArr[monthsArr.length - 1].month,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
+
+      const sessionsRaw = await sessionsModel
+        .find({
+          mentorId,
+          createdAt: { $gte: rangeStart, $lte: rangeEnd },
+        })
+        .lean();
+
+      const subscriptionsRaw = await subscriptionModal
+        .find({
+          mentorId,
+          createdAt: { $gte: rangeStart, $lte: rangeEnd },
+        })
+        .lean();
+
+      const paymentsRaw = await subscriptionModal
+        .find({
+          mentorId,
+          createdAt: { $gte: rangeStart, $lte: rangeEnd },
+          status: "ACTIVE",
+        })
+        .lean();
+
+      const bucketKey = (d: Date) => {
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        return `${y}-${String(m).padStart(2, "0")}`;
+      };
+
+      const sessionsMap: Record<string, number> = {};
+      sessionsRaw.forEach((s: any) => {
+        const key = bucketKey(new Date(s.createdAt));
+        sessionsMap[key] = (sessionsMap[key] || 0) + 1;
+      });
+
+      const subsMap: Record<string, number> = {};
+      subscriptionsRaw.forEach((s: any) => {
+        const key = bucketKey(new Date(s.createdAt));
+        subsMap[key] = (subsMap[key] || 0) + 1;
+      });
+
+      const paymentsMap: Record<string, number> = {};
+      paymentsRaw.forEach((p: any) => {
+        const key = bucketKey(new Date(p.createdAt));
+        const amt = Number(p.amount || 0);
+        paymentsMap[key] = (paymentsMap[key] || 0) + amt;
+      });
+
+      const chartData = monthsArr.map((m) => {
+        const key = `${m.year}-${String(m.month).padStart(2, "0")}`;
+        return {
+          label: m.label,
+          year: m.year,
+          month: m.month,
+          sessionsCount: sessionsMap[key] || 0,
+          subscriptionsCount: subsMap[key] || 0,
+          paymentsTotal: paymentsMap[key] || 0,
+        };
+      });
+
       return {
         totalStudents,
         todaysSessionsCount: sessionsToday.length,
@@ -289,10 +394,12 @@ export class MentorRepository
             : null,
         sessionsToday,
         recentActivities,
+        chartData,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.log("error in getDashboardData", error);
       return null;
     }
   }
 }
+export default MentorRepository;

@@ -14,4 +14,7 @@ export const mapUserToSummaryDto = (user: IUser): UserSummaryDto => ({
   email: user.email,
   role: user.role ?? "user",
   isBlocked: user.isBlocked ?? false,
+  levels:user.levels ?? 0,
+  profilePicture:user.profilePicture,
+  sessionsDone:user.sessionsDone ?? 0,
 });

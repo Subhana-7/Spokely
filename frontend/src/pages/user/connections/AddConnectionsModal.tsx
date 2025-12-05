@@ -42,7 +42,9 @@ const AddConnectionModal: React.FC<AddConnectionModalProps> = ({
 }) => {
   const [uniqueCode, setUniqueCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<IncomingRequest[]>(
+    []
+  );
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
 
   const fetchRequests = async () => {
