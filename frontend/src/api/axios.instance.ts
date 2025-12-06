@@ -28,7 +28,7 @@ API.interceptors.response.use(
       }
     }
 
-    // General error logging
+    // General error logging //
     if (err.response) {
       console.error("API Error:", err.response.data);
       return Promise.reject(err.response.data);
