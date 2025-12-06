@@ -52,7 +52,7 @@ app.use(
       secure: true,
       httpOnly: true,
       sameSite: "none",
-      domain: ".spokely.live",
+      domain: ".spokely.vercel.app",
       maxAge: Number(process.env.SESSION_MAX_AGE),
     },
   })
