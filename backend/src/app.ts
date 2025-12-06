@@ -32,9 +32,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_SIDE_URL,
+    origin: "https://spokely.vercel.app",
     credentials: true,
-    optionsSuccessStatus: 200,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
 
@@ -48,8 +49,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: Number(process.env.SESSION_MAX_AGE) 
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+      domain: ".spokely.live",
+      maxAge: Number(process.env.SESSION_MAX_AGE),
     },
   })
 );

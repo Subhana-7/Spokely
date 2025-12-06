@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IUserService } from "../services/interfaces/IUserService";
+import type { CookieOptions } from "express";
 
 import {
   SignupDTO,
@@ -27,16 +28,16 @@ import {
   USER_QUERY,
 } from "../utilis/constants";
 
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../utilis/token";
+import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 
 @injectable()
 export class UserController implements IUserController {
   constructor(@inject(TYPES.IUserService) private _userService: IUserService) {}
 
-  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+  private getErrorMessage(
+    err: unknown,
+    fallback = MESSAGES.ERROR.SERVER_ERROR
+  ) {
     return err instanceof Error ? err.message : fallback;
   }
 
@@ -61,9 +62,20 @@ export class UserController implements IUserController {
     try {
       const result = await this._userService.login(req.body);
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, { httpOnly: true,secure:true,sameSite:'none' });
-      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, { httpOnly: true,secure:true,sameSite:'none' });
-      res.cookie(COOKIE_KEYS.ROLE, result.user.role,{sameSite:'none'});
+      const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        domain: ".spokely.live",
+      };
+
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);
+      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, cookieOptions);
+      res.cookie(COOKIE_KEYS.ROLE, result.user.role, {
+        secure: true,
+        sameSite: "none" as const,
+        domain: ".spokely.live",
+      });
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
     } catch (err: unknown) {
@@ -98,7 +110,9 @@ export class UserController implements IUserController {
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: "none",
+        domain: ".spokely.live",
+        path: "/",
       });
 
       return res.status(STATUS_CODES.OK).json({
@@ -116,7 +130,11 @@ export class UserController implements IUserController {
   /* ----------------------------------------------------
       GOOGLE OAUTH START
   ----------------------------------------------------- */
-  handleGoogleAccounts = async (_req: Request, _res: Response, next: Function) => {
+  handleGoogleAccounts = async (
+    _req: Request,
+    _res: Response,
+    next: Function
+  ) => {
     console.log(GOOGLE_AUTH_MESSAGES.ERROR_NO_USER);
     next();
   };
@@ -135,8 +153,14 @@ export class UserController implements IUserController {
         );
       }
 
-      const accessToken = generateAccessToken({ id: user._id, role: user.role });
-      const refreshToken = generateRefreshToken({ id: user._id, role: user.role });
+      const accessToken = generateAccessToken({
+        id: user._id,
+        role: user.role,
+      });
+      const refreshToken = generateRefreshToken({
+        id: user._id,
+        role: user.role,
+      });
 
       res
         .cookie(COOKIE_KEYS.AUTH, accessToken, { httpOnly: true })
@@ -306,7 +330,7 @@ export class UserController implements IUserController {
   profile = async (req: Request, res: Response) => {
     try {
       const userId = req.params.id;
-      console.log(userId)
+      console.log(userId);
       const data = await this._userService.getHome(userId);
 
       return res.status(STATUS_CODES.OK).json(data);
