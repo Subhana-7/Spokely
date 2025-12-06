@@ -61,9 +61,9 @@ export class UserController implements IUserController {
     try {
       const result = await this._userService.login(req.body);
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, { httpOnly: true });
-      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, { httpOnly: true });
-      res.cookie(COOKIE_KEYS.ROLE, result.user.role);
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, { httpOnly: true,secure:true,sameSite:'none' });
+      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, { httpOnly: true,secure:true,sameSite:'none' });
+      res.cookie(COOKIE_KEYS.ROLE, result.user.role,{sameSite:'none'});
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
     } catch (err: unknown) {
@@ -98,7 +98,7 @@ export class UserController implements IUserController {
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: 'none',
       });
 
       return res.status(STATUS_CODES.OK).json({
