@@ -66,7 +66,7 @@ export class UserController implements IUserController {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        domain: ".spokely.live",
+        domain: ".spokely.vercel.app",
       };
 
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);
@@ -74,7 +74,7 @@ export class UserController implements IUserController {
       res.cookie(COOKIE_KEYS.ROLE, result.user.role, {
         secure: true,
         sameSite: "none" as const,
-        domain: ".spokely.live",
+        domain: ".spokely.vercel.app",
       });
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
@@ -111,7 +111,7 @@ export class UserController implements IUserController {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        domain: ".spokely.live",
+        domain: ".spokely.vercel.app",
         path: "/",
       });
 
