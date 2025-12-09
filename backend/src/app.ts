@@ -30,6 +30,8 @@ import { initSocket } from "./config/socket";
 dotenv.config();
 const app = express();
 
+app.set("trust proxy", 1);
+
 //for hosting run
 app.use(
   cors({
@@ -55,18 +57,21 @@ app.use(cookieParser());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "session-secret",
+    secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       secure: true,
       httpOnly: true,
       sameSite: "none",
-      // domain: ".spokely.vercel.app",
+      path: "/",
+      domain: "spokely.live",
       maxAge: Number(process.env.SESSION_MAX_AGE),
     },
   })
 );
+
 
 app.use(passport.initialize());
 app.use(passport.session());

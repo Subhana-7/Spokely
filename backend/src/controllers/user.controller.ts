@@ -63,10 +63,10 @@ export class UserController implements IUserController {
       const result = await this._userService.login(req.body);
 
       const cookieOptions: CookieOptions = {
-        httpOnly: true,
+        httpOnly: false,
         secure: true,
         sameSite: "none",
-        path:"/",
+        path:"/", 
         domain: "spokely.live",
       };
 
@@ -76,6 +76,7 @@ export class UserController implements IUserController {
         secure: true,
         sameSite: "none" as const,
         path:"/",
+         httpOnly: false, 
         domain: "spokely.live",
       });
 
