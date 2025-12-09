@@ -75,6 +75,7 @@ export class UserController implements IUserController {
       res.cookie(COOKIE_KEYS.ROLE, result.user.role, {
         secure: true,
         sameSite: "none" as const,
+        path:"/",
         domain: "spokely.live",
       });
 
