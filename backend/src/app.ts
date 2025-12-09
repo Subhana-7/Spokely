@@ -30,6 +30,7 @@ import { initSocket } from "./config/socket";
 dotenv.config();
 const app = express();
 
+//for hosting run
 app.use(
   cors({
     origin: "https://spokely.vercel.app",
@@ -38,6 +39,15 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
+
+//for system run
+// app.use(
+//   cors({
+//     origin: process.env.CLIENT_SIDE_URL,
+//     credentials: true,
+//     optionsSuccessStatus: 200,
+//   })
+// );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
