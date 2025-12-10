@@ -1,6 +1,14 @@
+# ingress:
+#   - hostname: spokely-frontend.trycloudflare.com
+#     service: http://localhost:5173
+#   - hostname: spokely-api.trycloudflare.com
+#     service: http://localhost:5000
+#   - service: http_status:404
+
+
 ingress:
   - hostname: spokely-frontend.trycloudflare.com
-    service: http://localhost:5173
+    service: https://api.spokely.live/
   - hostname: spokely-api.trycloudflare.com
-    service: http://localhost:5000
+    service: https://api.spokely.live/
   - service: http_status:404

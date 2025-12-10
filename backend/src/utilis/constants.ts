@@ -580,7 +580,7 @@ export const GOOGLE_AUTH_MESSAGES = {
 
 export const REDIRECT_URLS = {
   DEFAULT_CLIENT:
-    process.env.CLIENT_SIDE_URL || "http://localhost:5173",
+    process.env.CLIENT_SIDE_URL,
   GOOGLE_AUTH_FAILED: "error=google_auth_failed",
   USER_HOME: "/user/home",
 } as const;
