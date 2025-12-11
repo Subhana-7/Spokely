@@ -35,7 +35,7 @@ app.set("trust proxy", 1);
 //for hosting run
 app.use(
   cors({
-    origin: "https://spokely.vercel.app",
+    // origin: "https://spokely.vercel.app",
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],

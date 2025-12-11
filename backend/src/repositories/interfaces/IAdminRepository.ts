@@ -2,8 +2,9 @@ import { IAdmin } from "../../models/admin.model";
 import { IUser } from "../../models/user.model";
 import { IMentor } from "../../models/mentor.model";
 import { SORT_BY } from "../../utilis/constants";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IAdminRepository {
+export interface IAdminRepository extends IBaseRepository<IAdmin> {
   findByEmail(email: string): Promise<IAdmin | null>;
   findAllUsers(): Promise<IUser[] | null>;
   findAllMentors(): Promise<IMentor[] | null>;

@@ -5,11 +5,11 @@ export interface IChatService {
     sessionId: string,
     sender: string,
     text: string
-  ): Promise<MessageDto>;
+  ): Promise<MessageDto | null>;
 
   getMessages(sessionId: string): Promise<MessageDto[] | null>;
 
-  getChats(userId: string): Promise<IChatPreview[]>;
+  getChats(userId: string): Promise<IChatPreview[] | null>;
 
   markMessagesRead(sessionId: string, userId: string): Promise<void>;
 }

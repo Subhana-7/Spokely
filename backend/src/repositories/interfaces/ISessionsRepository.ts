@@ -1,6 +1,7 @@
 import { ISession } from "../../models/sessions.model";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface ISessionRepository {
+export interface ISessionRepository extends IBaseRepository<ISession> {
   createSession(data: Partial<ISession>): Promise<ISession | null>;
   getAllSessions(userId: string): Promise<ISession[] | null>;
   getSessionById(id: string): Promise<ISession | null>;

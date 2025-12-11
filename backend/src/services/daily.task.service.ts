@@ -19,9 +19,10 @@ import {
   DAILY_TASK_GENERATION,
   DailyTaskType,
 } from "../utilis/constants";
+import { IDailyTaskService } from "./interfaces/IDailyTaskService";
 
 @injectable()
-export class DailyTaskService {
+export class DailyTaskService implements IDailyTaskService {
   constructor(
     @inject(TYPES.IDailyTaskRepository)
     private readonly _dailyTaskRepository: IDailyTaskRepository

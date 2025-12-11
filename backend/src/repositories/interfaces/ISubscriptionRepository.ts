@@ -1,6 +1,7 @@
 import { ISubscription } from "../../models/subscription.modal";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface ISubscriptionRepository {
+export interface ISubscriptionRepository extends IBaseRepository<ISubscription> {
   createSubscription(
     data: Partial<ISubscription>
   ): Promise<ISubscription | null>;

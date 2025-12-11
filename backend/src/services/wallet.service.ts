@@ -4,9 +4,10 @@ import { IWalletRepository } from "../repositories/interfaces/IWalletRepository"
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IWallet } from "../models/wallet.model";
 import { PAYMENT_STATUS } from "../utilis/constants";
+import { IWalletService } from "./interfaces/IWalletService";
 
 @injectable()
-export class WalletService {
+export class WalletService implements IWalletService {
   constructor(
     @inject(TYPES.IWalletRepository)
     private readonly _walletRepo: IWalletRepository,

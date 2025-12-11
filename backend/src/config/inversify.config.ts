@@ -132,7 +132,7 @@ container
   .bind<IDailyTaskRepository>(TYPES.IDailyTaskRepository)
   .to(DailyTaskRepository);
 
-container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository);
+// container.bind<IBaseRepository>(TYPES.IBaseRepository).to(BaseRepository);
 
 container
   .bind<IPaymentController>(TYPES.IPaymentController)

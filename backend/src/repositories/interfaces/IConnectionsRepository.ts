@@ -1,8 +1,9 @@
 import { Types } from "mongoose";
 import { IConnection } from "../../models/connections.model";
 import { PopulatedConnection } from "../../types/populated";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IConnectionRepository {
+export interface IConnectionRepository extends IBaseRepository<IConnection> {
   createConnection(
     userId: Types.ObjectId,
     connectedUserId: Types.ObjectId

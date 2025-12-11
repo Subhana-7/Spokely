@@ -108,7 +108,7 @@ export class SessionService {
     return session;
   }
 
-  async getSessions(userId: string, filters?: any) {
+  async getSessions(userId: string, filters?: any):Promise<unknown> {
     const {
       search = "",
       status = "all",

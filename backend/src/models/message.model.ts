@@ -26,6 +26,7 @@ export interface IChatSession extends Document {
   _id: string;
   participants: Types.ObjectId[];
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const chatSessionSchema = new Schema<IChatSession>(
@@ -35,7 +36,7 @@ const chatSessionSchema = new Schema<IChatSession>(
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  { timestamps: true }
 );
 
 export const ChatSessionModel = model<IChatSession>(

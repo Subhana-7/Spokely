@@ -14,15 +14,15 @@ export class ChatController {
   getMessages = async (
     req: AuthenticatedRequest,
     res: Response
-  ): Promise<Response | void> => {
+  ): Promise<void> => {
     try {
       const { sessionId } = req.params;
       const messages = await this._chatService.getMessages(sessionId);
-      return res
+       res
         .status(STATUS_CODES.OK)
         .json({ messages, message: MESSAGES.SUCCESS.SESSIONS_FETCHED });
     } catch (err:unknown) {
-      return res
+       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
@@ -31,14 +31,14 @@ export class ChatController {
   sendMessage = async (
     req: AuthenticatedRequest,
     res: Response
-  ): Promise<Response | void> => {
+  ): Promise<void> => {
     try {
       const { sessionId } = req.params;
       const { text } = req.body;
       const sender = req.id!;
 
       if (!sender) {
-        return res
+         res
           .status(STATUS_CODES.UNAUTHORIZED)
           .json({ message: MESSAGES.ERROR.UNAUTHORIZED });
       }
@@ -48,11 +48,11 @@ export class ChatController {
         sender,
         text
       );
-      return res
+       res
         .status(STATUS_CODES.OK)
         .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });
     } catch (err:unknown) {
-      return res
+       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: MESSAGES.ERROR.SERVER_ERROR });
     }
