@@ -11,6 +11,7 @@ interface TaskDetail {
 }
 
 export interface IDailyTask extends Document {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   topic: string;
   date: Date;
@@ -19,6 +20,8 @@ export interface IDailyTask extends Document {
   speaking: TaskDetail;
   listening: TaskDetail;
   userResponses: Record<string, any>;
+  createdAt: Date; // <-- add
+  updatedAt: Date; // <-- add
 }
 
 const TaskDetailSchema = new Schema<TaskDetail>(
@@ -36,14 +39,17 @@ const TaskDetailSchema = new Schema<TaskDetail>(
   { _id: false }
 );
 
-const DailyTaskSchema = new Schema<IDailyTask>({
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  topic: { type: String, required: true },
-  date: { type: Date, default: Date.now },
-  writing: { type: TaskDetailSchema, required: true },
-  reading: { type: TaskDetailSchema, required: true },
-  speaking: { type: TaskDetailSchema, required: true },
-  listening: { type: TaskDetailSchema, required: true },
-});
+const DailyTaskSchema = new Schema<IDailyTask>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    topic: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+    writing: { type: TaskDetailSchema, required: true },
+    reading: { type: TaskDetailSchema, required: true },
+    speaking: { type: TaskDetailSchema, required: true },
+    listening: { type: TaskDetailSchema, required: true },
+  },
+  { timestamps: true }
+);
 
 export const DailyTaskModel = model<IDailyTask>("DailyTask", DailyTaskSchema);

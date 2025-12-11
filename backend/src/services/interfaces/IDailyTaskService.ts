@@ -10,6 +10,7 @@ export interface IDailyTaskService {
   submitAll(
     taskId: string,
     responses: any,
+    userId?:string
   ): Promise<any>;
   getUserLatestTask(userId: string): Promise<DailyTaskDto | null>;
 

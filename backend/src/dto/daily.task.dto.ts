@@ -2,8 +2,9 @@ export interface TaskDetailDto {
   prompt: string;
   paragraph?: string;
   questions?: string[];
-  userResponse?: string;
+  userResponse?: string | string[] | Record<number, string>;
 }
+
 
 export interface DailyTaskDto {
   id: string;

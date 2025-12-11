@@ -6,6 +6,7 @@ export function mapMessageToDto(message: any): MessageDto {
   }
 
   return {
+     _id: message._id.toString(),
     id: message._id.toString(),
     sessionId: message.sessionId,
     text: message.text,

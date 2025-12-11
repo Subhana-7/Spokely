@@ -63,18 +63,18 @@ export class DailyTaskController {
     }
   };
 
-  getUserLatestTask = async (req: AuthenticatedRequest, res: Response) => {
+  getUserLatestTask = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
     try {
       const userId = req.id!;
       const task = await this._dailyTaskService.getUserLatestTask(userId);
 
       if (!task) {
-        return res
+         res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: DAILY_TASK_MESSAGES.ERROR.TODAYS_TASK_NOT_FOUND });
       }
 
-      return res.status(STATUS_CODES.OK).json({ task });
+       res.status(STATUS_CODES.OK).json({ task });
     } catch (err:unknown) {
       console.error(err);
       res
