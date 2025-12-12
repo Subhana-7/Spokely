@@ -33,14 +33,13 @@ const app = express();
 app.set("trust proxy", 1);
 
 //for hosting run
-app.use(
-  cors({
-    // origin: "https://spokely.vercel.app",
+app.use(cors({
+    origin: "https://spokely.live",
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  })
-);
+    methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
+}));
+
 
 //for system run
 // app.use(
@@ -77,6 +76,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(logger);
 app.use(helmet());
+
+app.options("*", cors({
+    origin: "https://spokely.live",
+    credentials: true
+}));
+
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
