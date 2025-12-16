@@ -23,7 +23,6 @@ export const MessageModel = model<IMessage>("Message", messageSchema);
 /* -------------------- CHAT SESSION MODEL -------------------- */
 
 export interface IChatSession extends Document {
-  _id: string;
   participants: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -31,7 +30,6 @@ export interface IChatSession extends Document {
 
 const chatSessionSchema = new Schema<IChatSession>(
   {
-    _id: { type: String, required: true },
     participants: [
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
