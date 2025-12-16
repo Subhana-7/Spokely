@@ -1,21 +1,17 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model, Types, Document } from "mongoose";
 
 /* -------------------- MESSAGE MODEL -------------------- */
-
-export interface IMessage {
-  sessionId: Types.ObjectId;
+export interface IMessage extends Document {
+  sessionId: string;
   sender: Types.ObjectId;
   text: string;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 const messageSchema = new Schema<IMessage>(
   {
-    sessionId: {
-      type: Schema.Types.ObjectId,
-      ref: "ChatSession",
-      required: true,
-    },
+    sessionId: { type: String, ref: "ChatSession", required: true },
     sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
     text: { type: String, required: true },
   },
@@ -26,7 +22,8 @@ export const MessageModel = model<IMessage>("Message", messageSchema);
 
 /* -------------------- CHAT SESSION MODEL -------------------- */
 
-export interface IChatSession {
+export interface IChatSession extends Document {
+  _id: string;
   participants: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +31,7 @@ export interface IChatSession {
 
 const chatSessionSchema = new Schema<IChatSession>(
   {
+    _id: { type: String, required: true },
     participants: [
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
