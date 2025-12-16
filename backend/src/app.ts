@@ -32,23 +32,6 @@ const app = express();
 app.set("trust proxy", 1);
 
 
-const allowCors: RequestHandler = (req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://spokely.live");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  if (req.method === "OPTIONS") {
-    res.sendStatus(200);
-    return; 
-  }
-
-  next();
-};
-
-app.use(allowCors);
-
-
 //for hosting run
 app.use(
   cors({
@@ -88,8 +71,6 @@ app.use(
     },
   })
 );
-
-
 
 app.use(passport.initialize());
 app.use(passport.session());
