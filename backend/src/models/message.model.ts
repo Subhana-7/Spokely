@@ -1,12 +1,12 @@
-import { Schema, model, Types, Document } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 /* -------------------- MESSAGE MODEL -------------------- */
-export interface IMessage extends Document {
+
+export interface IMessage {
   sessionId: string;
   sender: Types.ObjectId;
   text: string;
   createdAt: Date;
-  updatedAt?: Date;
 }
 
 const messageSchema = new Schema<IMessage>(
@@ -22,7 +22,7 @@ export const MessageModel = model<IMessage>("Message", messageSchema);
 
 /* -------------------- CHAT SESSION MODEL -------------------- */
 
-export interface IChatSession extends Document {
+export interface IChatSession {
   participants: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
