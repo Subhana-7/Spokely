@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/db";
@@ -22,7 +22,6 @@ import { ISubscriptionService } from "./services/interfaces/ISubscriptionService
 import chatRoutes from "./routes/chat.routes";
 import dailyTask from "./routes/daily.task.routes";
 import notificationRoutes from "./routes/notification.routes";
-
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initSocket } from "./config/socket";
@@ -32,13 +31,33 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+
+// const allowCors = (req: Request, res: Response, next: NextFunction) => {
+//   res.setHeader("Access-Control-Allow-Origin", "https://spokely.live");
+//   res.setHeader("Access-Control-Allow-Credentials", "true");
+//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+//   if (req.method === "OPTIONS") {
+//     return res.sendStatus(200);
+//   }
+
+//   next();
+// };
+
+// app.use(allowCors);
+
+
 //for hosting run
-app.use(cors({
+app.use(
+  cors({
     origin: "https://spokely.live",
     credentials: true,
-    methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-    allowedHeaders: "Content-Type, Authorization",
-}));
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 
 
 //for system run
@@ -56,7 +75,7 @@ app.use(cookieParser());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'secret',
+    secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: false,
     proxy: true,
@@ -64,12 +83,11 @@ app.use(
       secure: true,
       httpOnly: true,
       sameSite: "none",
-      path: "/",
-      domain: "spokely.live",
       maxAge: Number(process.env.SESSION_MAX_AGE),
     },
   })
 );
+
 
 
 app.use(passport.initialize());
@@ -77,10 +95,11 @@ app.use(passport.session());
 app.use(logger);
 app.use(helmet());
 
-app.options("*", cors({
-    origin: "https://spokely.live",
-    credentials: true
-}));
+
+// app.options("*", cors({
+//     origin: "https://spokely.live",
+//     credentials: true
+// }));
 
 
 app.use("/api/payment", paymentRoutes);
@@ -96,8 +115,12 @@ app.use("/api/notifications", notificationRoutes);
 
 const server = createServer(app);
 const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_SIDE_URL },
+  cors: {
+    origin: "https://spokely.live",
+    credentials: true,
+  },
 });
+
 
 if (!container.isBound(TYPES.SocketIO)) {
   container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
