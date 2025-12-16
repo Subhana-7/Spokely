@@ -3,7 +3,7 @@ import { Schema, model, Types } from "mongoose";
 /* -------------------- MESSAGE MODEL -------------------- */
 
 export interface IMessage {
-  sessionId: string;
+  sessionId: Types.ObjectId;
   sender: Types.ObjectId;
   text: string;
   createdAt: Date;
@@ -11,7 +11,11 @@ export interface IMessage {
 
 const messageSchema = new Schema<IMessage>(
   {
-    sessionId: { type: String, ref: "ChatSession", required: true },
+    sessionId: {
+      type: Schema.Types.ObjectId,
+      ref: "ChatSession",
+      required: true,
+    },
     sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
     text: { type: String, required: true },
   },
