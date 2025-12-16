@@ -33,14 +33,20 @@ app.set("trust proxy", 1);
 
 
 //for hosting run
-// app.use(
-//   cors({
-//     origin: "https://spokely.live",
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
+app.use(
+  cors({
+    origin: "https://spokely.live",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.options("*", cors({
+  origin: "https://spokely.live",
+  credentials: true
+}));
+
 
 
 
@@ -96,15 +102,13 @@ app.use("/api/daily/task", dailyTask);
 app.use("/api/notifications", notificationRoutes);
 
 const server = createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: "https://spokely.live",
-//     credentials: true,
-//   },
-// });
+const io = new Server(server, {
+  cors: {
+    origin: "https://spokely.live",
+    credentials: true,
+  },
+});
 
-
-const io = new Server(server);
 
 if (!container.isBound(TYPES.SocketIO)) {
   container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
