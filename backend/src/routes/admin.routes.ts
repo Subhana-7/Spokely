@@ -39,12 +39,6 @@ router.patch(
   controller.updateMentorStatus.bind(controller)
 );
 
-// router.delete("/users/:id", controller.deleteUser.bind(controller));
-
-// router.patch("/mentors/:id/block", controller.blockUser.bind(controller)); // uncommment
-
-// router.delete("/mentors/:id", controller.deleteUser.bind(controller));
-
 router.get(
   "/mentors/verification/:id",authMiddleware(["admin"]),
   controller.mentorVerification.bind(controller)
