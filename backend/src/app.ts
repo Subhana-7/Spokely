@@ -81,7 +81,8 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(logger);
-app.use(helmet());
+
+
 
 
 // app.options("*", cors({
@@ -115,6 +116,14 @@ if (!container.isBound(TYPES.SocketIO)) {
 }
 
 initSocket(io);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+  })
+);
 
 connectDB()
   .then(async () => {
