@@ -1,61 +1,64 @@
-import express, { Request, Response, NextFunction, RequestHandler } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import passport from "passport";
+import helmet from "helmet";
+import "reflect-metadata";
+
 import { connectDB } from "./config/db";
+import "./config/passport";
+import { logger } from "./middleware/logger";
+
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
-import passport from "passport";
-import session from "express-session";
-import cookieParser from "cookie-parser";
-import "./config/passport";
-import connectionsRoutes from "./routes/connections.route";
-import sessionRoutes from "./routes/session.route";
-import "reflect-metadata";
-import { logger } from "./middleware/logger";
-import helmet from "helmet";
 import mentorRoutes from "./routes/mentor.routes";
 import paymentRoutes from "./routes/payment.routes";
 import subscriptionRouter from "./routes/subscription.routes";
-import container from "./config/inversify.config";
-import { TYPES } from "./types/types";
-import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
+import connectionsRoutes from "./routes/connections.route";
+import sessionRoutes from "./routes/session.route";
 import chatRoutes from "./routes/chat.routes";
 import dailyTask from "./routes/daily.task.routes";
 import notificationRoutes from "./routes/notification.routes";
+
+import container from "./config/inversify.config";
+import { TYPES } from "./types/types";
+import { ISubscriptionService } from "./services/interfaces/ISubscriptionService";
+
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initSocket } from "./config/socket";
 
 dotenv.config();
-const app = express();
 
+const app = express();
 app.set("trust proxy", 1);
 
-
-//for hosting run
+/* =========================
+   ✅ CORS — SINGLE SOURCE
+   ========================= */
 app.use(
   cors({
-    origin: "https://spokely.live",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // curl / postman
+      if (origin === "https://spokely.live") return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-
-//for system run
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_SIDE_URL,
-//     credentials: true,
-//     optionsSuccessStatus: 200,
-//   })
-// );
-
+/* =========================
+   ✅ BODY & COOKIE PARSING
+   ========================= */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+/* =========================
+   ✅ SESSION (cookies)
+   ========================= */
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "secret",
@@ -63,28 +66,29 @@ app.use(
     saveUninitialized: false,
     proxy: true,
     cookie: {
+      domain: ".spokely.live",
       secure: true,
       httpOnly: true,
       sameSite: "none",
       maxAge: Number(process.env.SESSION_MAX_AGE),
-      domain: ".spokely.live",
     },
   })
 );
 
+/* =========================
+   ✅ PASSPORT
+   ========================= */
 app.use(passport.initialize());
 app.use(passport.session());
+
+/* =========================
+   ✅ LOGGING
+   ========================= */
 app.use(logger);
 
-
-
-
-// app.options("*", cors({
-//     origin: "https://spokely.live",
-//     credentials: true
-// }));
-
-
+/* =========================
+   ✅ ROUTES
+   ========================= */
 app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
@@ -96,21 +100,9 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/daily/task", dailyTask);
 app.use("/api/notifications", notificationRoutes);
 
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "https://spokely.live",
-    credentials: true,
-  },
-});
-
-
-if (!container.isBound(TYPES.SocketIO)) {
-  container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
-}
-
-initSocket(io);
-
+/* =========================
+   ✅ HELMET (AFTER ROUTES)
+   ========================= */
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -119,9 +111,31 @@ app.use(
   })
 );
 
+/* =========================
+   ✅ HTTP + SOCKET.IO
+   ========================= */
+const server = createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "https://spokely.live",
+    credentials: true,
+  },
+});
+
+if (!container.isBound(TYPES.SocketIO)) {
+  container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
+}
+
+initSocket(io);
+
+/* =========================
+   ✅ START SERVER
+   ========================= */
 connectDB()
-  .then(async () => {
+  .then(() => {
     const PORT = process.env.PORT || 5000;
+
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
