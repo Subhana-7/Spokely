@@ -42,13 +42,6 @@ app.use(
   })
 );
 
-app.options("*", cors({
-  origin: "https://spokely.live",
-  credentials: true
-}));
-
-
-
 
 //for system run
 // app.use(
@@ -74,6 +67,7 @@ app.use(
       httpOnly: true,
       sameSite: "none",
       maxAge: Number(process.env.SESSION_MAX_AGE),
+      domain: ".spokely.live",
     },
   })
 );

@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       tags: Array.isArray(user.tags) ? user.tags : [],
     };
 
-    Cookies.set("role", normalizedUser.role, { sameSite: "Lax" });
+    Cookies.set("role", normalizedUser.role, { sameSite: "none" });
     set({ user: normalizedUser, isAuthenticated: !normalizedUser.isBlocked });
 
     console.log("User stored in Zustand:", normalizedUser);
