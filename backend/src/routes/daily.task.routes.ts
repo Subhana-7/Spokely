@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { DailyTaskController } from "../controllers/daily.task.controller";
 import { IDailyTaskController } from "../controllers/interfaces/IDailyTaskController";
+import express from "express"
 import container from "../config/inversify.config";
 import { TYPES } from "../types/types";
 import { authMiddleware } from "../middleware/auth.middleware";
 
-const controller = container.get<DailyTaskController>(
+const router = express.Router();
+
+const controller = container.get<IDailyTaskController>(
   TYPES.IDailyTaskController
 );
-const router = Router();
 
 router.post(
   "/daily-task",
