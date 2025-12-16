@@ -96,13 +96,15 @@ app.use("/api/daily/task", dailyTask);
 app.use("/api/notifications", notificationRoutes);
 
 const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "https://spokely.live",
-    credentials: true,
-  },
-});
+// const io = new Server(server, {
+//   cors: {
+//     origin: "https://spokely.live",
+//     credentials: true,
+//   },
+// });
 
+
+const io = new Server(server);
 
 if (!container.isBound(TYPES.SocketIO)) {
   container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
