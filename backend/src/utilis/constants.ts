@@ -541,7 +541,9 @@ export const COOKIE_KEYS = {
   REFRESH: "refresh-token",
   ROLE: "role",
   NODE_ENV:"production",
-  SAME_SITE:"lax"
+  SAME_SITE:"none",
+  path:"/",
+  domain:"spokely.live"
 } as const;
 
 

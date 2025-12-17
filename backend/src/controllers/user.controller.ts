@@ -68,6 +68,7 @@ export class UserController implements IUserController {
         sameSite: "none",
         path:"/", 
         domain: "spokely.live",
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE)
       };
 
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);

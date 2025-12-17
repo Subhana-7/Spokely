@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { IAdminController } from "./interfaces/IAdminController";
 import { IAdminService } from "../services/interfaces/IAdminService";
@@ -57,24 +57,27 @@ export class AdminController implements IAdminController {
 
       const { admin, accessToken, refreshToken } = result;
 
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
+        secure: true,
+        sameSite: "none",
+        path: "/",
+        domain: "spokely.live",
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
+      };
+
       res.cookie(COOKIE_KEYS.AUTH, accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        ...cookieOptions,
         maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        ...cookieOptions,
         maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res.cookie(COOKIE_KEYS.ROLE, admin.role, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        ...cookieOptions,
         maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
@@ -219,10 +222,9 @@ export class AdminController implements IAdminController {
         limit: parseInt(req.query.limit as string) || ADMIN_QUERY.LIMIT,
         search: (req.query.search as string) || ADMIN_QUERY.SEARCH,
         sortBy: req.query.sortBy as "students" | "sessions",
-        verificationStatus:
-          req.query.verificationStatus as
-            | (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS]
-            | undefined,
+        verificationStatus: req.query.verificationStatus as
+          | (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS]
+          | undefined,
         isBlocked:
           req.query.isBlocked === "true"
             ? true
@@ -370,7 +372,6 @@ export class AdminController implements IAdminController {
         type,
       });
 
-
       res.status(STATUS_CODES.OK).json({
         sessions: result.sessions,
         total: result.total,
@@ -442,12 +443,12 @@ export class AdminController implements IAdminController {
     }
   }
 
-  async getDailyTaskById(req:Request,res:Response):Promise<void>{
+  async getDailyTaskById(req: Request, res: Response): Promise<void> {
     try {
       const dailyTaskId = req.params.id;
-    const task = await this._dailyTaskService.getDailyTaskById(dailyTaskId);
-    res.status(STATUS_CODES.OK).json({ task });
-    } catch (err:unknown) {
+      const task = await this._dailyTaskService.getDailyTaskById(dailyTaskId);
+      res.status(STATUS_CODES.OK).json({ task });
+    } catch (err: unknown) {
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         error: getErrorMessage(err, MESSAGES.ERROR.SERVER_ERROR),
       });
@@ -459,7 +460,7 @@ export class AdminController implements IAdminController {
   ----------------------------------------------------- */
   async getReports(req: Request, res: Response): Promise<void> {
     try {
-      const { type, startDate, endDate} = req.query;
+      const { type, startDate, endDate } = req.query;
 
       const reportType = type as ReportType;
 
@@ -476,8 +477,7 @@ export class AdminController implements IAdminController {
 
       switch (reportType) {
         case REPORT_TYPES.SESSION:
-          data =
-            (await this._sessionService.getAllSessionsAdmin()) || [];
+          data = (await this._sessionService.getAllSessionsAdmin()) || [];
           break;
 
         case REPORT_TYPES.MENTOR:
@@ -530,30 +530,33 @@ export class AdminController implements IAdminController {
     }
   }
 
+  async downloadReportPdf(req: Request, res: Response): Promise<void> {
+    try {
+      const params = {
+        type: req.query.type as string | undefined,
+        startDate: req.query.startDate as string | undefined,
+        endDate: req.query.endDate as string | undefined,
+        status: req.query.status as string | undefined,
+        mentorId: req.query.mentorId as string | undefined,
+      };
 
-async downloadReportPdf(req: Request, res: Response): Promise<void> {
-  try {
-    const params = {
-      type: req.query.type as string | undefined,
-      startDate: req.query.startDate as string | undefined,
-      endDate: req.query.endDate as string | undefined,
-      status: req.query.status as string | undefined,
-      mentorId: req.query.mentorId as string | undefined,
-    };
+      const { buffer, filename } = await this._adminService.exportReportPdf(
+        params
+      );
 
-    const { buffer, filename } = await this._adminService.exportReportPdf(params);
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(buffer);
-  } catch (err: unknown) {
-    console.error("Export PDF error", err);
-    res.status(500).json({
-      success: false,
-      message: "Failed to export PDF report",
-      error: err instanceof Error ? err.message : String(err),
-    });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.send(buffer);
+    } catch (err: unknown) {
+      console.error("Export PDF error", err);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export PDF report",
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
-}
-
 }
