@@ -542,8 +542,8 @@ export const COOKIE_KEYS = {
   ROLE: "role",
   NODE_ENV:"production",
   SAME_SITE:"none",
-  path:"/",
-  domain:"spokely.live"
+  PATH:"/",
+  DOMAIN:"spokely.live"
 } as const;
 
 

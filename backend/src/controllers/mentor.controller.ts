@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../types/types";
 import { IMentorService } from "../services/interfaces/IMentorService";
@@ -14,7 +14,10 @@ export class MentorController implements IMentorController {
     @inject(TYPES.IMentorService) private _mentorService: IMentorService
   ) {}
 
-  private getErrorMessage(err: unknown, fallback = MESSAGES.ERROR.SERVER_ERROR) {
+  private getErrorMessage(
+    err: unknown,
+    fallback = MESSAGES.ERROR.SERVER_ERROR
+  ) {
     return err instanceof Error ? err.message : fallback;
   }
 
@@ -50,25 +53,27 @@ export class MentorController implements IMentorController {
 
       const { mentor, accessToken, refreshToken } = result;
 
-      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
+        secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
+      };
+
+      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
+        ...cookieOptions,
         maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        ...cookieOptions,
         maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res.cookie(COOKIE_KEYS.ROLE, mentor.role, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
-        sameSite: COOKIE_KEYS.SAME_SITE,
-        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
+        ...cookieOptions,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       res.status(STATUS_CODES.OK).json({ mentor });
@@ -161,10 +166,16 @@ export class MentorController implements IMentorController {
 
       const result = await this._mentorService.refreshToken(refresh);
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
+        secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
+      };
+
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
+        ...cookieOptions,
         maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
@@ -223,9 +234,6 @@ export class MentorController implements IMentorController {
       const mentorId = (req as any).id;
       const months = Number(req.query.months) || 6;
 
-
-
-
       if (!mentorId) {
         res
           .status(STATUS_CODES.UNAUTHORIZED)
@@ -233,7 +241,7 @@ export class MentorController implements IMentorController {
         return;
       }
 
-     const dashboard = await this._mentorService.getHome(mentorId, months);
+      const dashboard = await this._mentorService.getHome(mentorId, months);
 
       if (!dashboard) {
         res
@@ -253,9 +261,9 @@ export class MentorController implements IMentorController {
   profile = async (req: Request, res: Response): Promise<void> => {
     try {
       const mentorId = req.params.id;
-      const months = 12
+      const months = 12;
 
-      const mentor = await this._mentorService.getHome(mentorId,months);
+      const mentor = await this._mentorService.getHome(mentorId, months);
 
       if (!mentor) {
         res

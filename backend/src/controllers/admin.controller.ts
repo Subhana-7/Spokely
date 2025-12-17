@@ -60,10 +60,9 @@ export class AdminController implements IAdminController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: "none",
-        path: "/",
-        domain: "spokely.live",
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
       res.cookie(COOKIE_KEYS.AUTH, accessToken, {
@@ -307,10 +306,16 @@ export class AdminController implements IAdminController {
         role: payload.role,
       });
 
-      res.cookie(COOKIE_KEYS.AUTH, newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === COOKIE_KEYS.NODE_ENV,
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
+        secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
+      };
+
+      res.cookie(COOKIE_KEYS.AUTH, newAccessToken, {
+        ...cookieOptions,
         maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 

@@ -65,20 +65,22 @@ export class UserController implements IUserController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: "none",
-        path:"/", 
-        domain: "spokely.live",
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE)
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);
-      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, cookieOptions);
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
+        ...cookieOptions,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
+      });
+      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, {
+        ...cookieOptions,
+        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
+      });
       res.cookie(COOKIE_KEYS.ROLE, result.user.role, {
-        secure: true,
-        sameSite: "none" as const,
-        path:"/",
-         httpOnly: false, 
-        domain: "spokely.live",
+        ...cookieOptions,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
@@ -111,12 +113,17 @@ export class UserController implements IUserController {
 
       const result = await this._userService.refreshToken(refresh);
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
-        httpOnly: true,
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
         secure: true,
-        sameSite: "none",
-        domain: "spokely.live",
-        path: "/",
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
+      };
+
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
+        ...cookieOptions,
+        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
       });
 
       return res.status(STATUS_CODES.OK).json({
