@@ -2,12 +2,18 @@ import mongoose, { Document, model, Schema } from "mongoose";
 
 type UserResponse = string | string[] | Record<number, string>;
 
+interface Feedback {
+  strengths?: string;
+  weaknesses?: string;
+  feedback?: string;
+}
+
 interface TaskDetail {
   prompt: string;
   paragraph?: string;
   questions?: string[];
   userResponse?: UserResponse;
-  feedback?: string;
+  feedback?: Feedback;
 }
 
 export interface IDailyTask extends Document {

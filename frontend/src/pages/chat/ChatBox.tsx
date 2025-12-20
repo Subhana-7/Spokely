@@ -51,14 +51,13 @@ export default function ChatBox({
         const res = await getMessages(chatId);
         if (!isMounted) return;
 
-        const msgs = (res.data || []).map((m: any) => ({
+        const msgs = (res.data?.messages ?? []).map((m: any) => ({
           id: m.id || m._id,
           sender: typeof m.sender === "object" ? m.sender : { id: m.sender },
           text: m.text,
           createdAt: m.createdAt,
         }));
 
-        console.log("Loaded messages for", chatId, ":", msgs.length);
         setMessages(msgs);
       } catch (error) {
         console.error("Failed to load messages:", error);

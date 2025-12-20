@@ -131,6 +131,7 @@ const DailyTaskPage = () => {
       try {
         const response = await latestSubmission();
         const data = response.data;
+        console.log(data);
         if (data.task) {
           setSelectedTopic(data.task.topic);
           setTaskData(data.task);
@@ -173,6 +174,8 @@ const DailyTaskPage = () => {
 
     fetchExistingTask();
   }, []);
+
+  console.log(feedback);
 
   const handleTopicSelect = async (topic: string) => {
     setSelectedTopic(topic);
@@ -713,16 +716,6 @@ const DailyTaskPage = () => {
                       className="flex-1 bg-white/10 py-3 rounded-xl"
                     >
                       Close
-                    </Button>
-
-                    <Button
-                      onClick={() => {
-                        setSubmitConfirmModal(false);
-                        setFeedbackModal(true);
-                      }}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 py-3 rounded-xl"
-                    >
-                      View Feedback
                     </Button>
                   </div>
                 </div>

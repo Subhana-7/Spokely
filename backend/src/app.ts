@@ -38,14 +38,26 @@ app.set("trust proxy", 1);
 /* =========================
    ✅ CORS — SINGLE SOURCE
    ========================= */
+
+//for production
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin) return callback(null, true); // curl / postman
+//       if (origin === "https://spokely.live") return callback(null, true);
+//       return callback(new Error("Not allowed by CORS"));
+//     },
+//     credentials: true,
+//   })
+// );
+
+//for system run
+
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // curl / postman
-      if (origin === "https://spokely.live") return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: process.env.CLIENT_SIDE_URL,
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 
@@ -116,16 +128,26 @@ app.use(
    ========================= */
 const server = createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "https://spokely.live",
-    credentials: true,
-  },
-});
+//server run
 
-if (!container.isBound(TYPES.SocketIO)) {
-  container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
-}
+// const io = new Server(server, {
+//   cors: {
+//     origin: "https://spokely.live",
+//     credentials: true,
+//   },
+// });
+
+// if (!container.isBound(TYPES.SocketIO)) {
+//   container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
+// }
+
+// initSocket(io);
+
+//machine run
+
+const io = new Server(server, {
+  cors: { origin: process.env.CLIENT_SIDE_URL },
+});
 
 initSocket(io);
 

@@ -97,13 +97,13 @@ const Sessions = () => {
   /** Badge styles */
   const badgeClasses = useMemo(
     () => ({
-      public: "bg-green-500/20 text-green-300 border border-green-500/30",
-      private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
-      "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30",
-      completed: "bg-green-500/20 text-green-300 border border-green-500/30",
-      "on-going": "bg-blue-500/20 text-white border border-blue-500/30",
-      cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
-      upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+      public: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+      private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-2xl",
+      "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+      completed: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+      "on-going": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+      cancelled: "bg-red-500/20 text-red-300 border border-red-500/30 rounded-2xl",
+      upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30 rounded-2xl",
     }),
     []
   );

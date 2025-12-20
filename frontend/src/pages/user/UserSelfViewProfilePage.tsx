@@ -199,12 +199,11 @@ const UserProfile = () => {
                   <h2 className="text-2xl font-bold mb-2 text-white">
                     {formData.name}
                   </h2>
-                  <Badge
-                    variant="peer"
-                    className="mb-4 bg-green-500/20 text-green-300 border border-green-500/30"
+                  <button
+                    className="text-xl p-1 text-blue-100"
                   >
-                    <Star size={14} className="mr-1" /> {user.email}
-                  </Badge>
+                     {user.email}
+                  </button>
 
                   {statsLoading ? (
                     <div className="text-gray-400 text-sm">

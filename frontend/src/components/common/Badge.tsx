@@ -27,13 +27,13 @@ const Badge: React.FC<BadgeProps> = ({
   className = "",
 }) => {
   const badgeClasses: Record<SessionType | SessionStatus, string> = {
-    public: "bg-green-500/20 text-green-300 border border-green-500/30",
-    private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
-    "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30",
-    completed: "bg-green-500/20 text-green-300 border border-green-500/30",
-    "on-going": "bg-blue-500/20 text-white border border-blue-500/30",
-    cancelled: "bg-red-500/20 text-red-300 border border-red-500/30",
-    upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+    public: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+    private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-2xl",
+    "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+    completed: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+    "on-going": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+    cancelled: "bg-red-500/20 text-red-300 border border-red-500/30 rounded-2xl",
+    upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30 rounded-2xl",
   };
 
   const variantClasses: Record<NonNullable<BadgeProps["variant"]>, string> = {
@@ -41,7 +41,7 @@ const Badge: React.FC<BadgeProps> = ({
     completed: "bg-green-100 text-green-800",
     private: "bg-orange-100 text-orange-800",
     public: "bg-purple-100 text-purple-800",
-    peer: "bg-lime-100 text-lime-800",
+    peer: "text-lime-800 ",
     mentor: "bg-indigo-100 text-indigo-800",
     pending: "bg-yellow-100 text-yellow-800",
     accepted: "bg-blue-100 text-blue-800",

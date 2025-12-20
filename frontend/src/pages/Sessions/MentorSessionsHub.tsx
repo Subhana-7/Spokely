@@ -321,9 +321,10 @@ const SessionsHub: React.FC = () => {
                       : "No time set"}
                   </Badge>
                   <Badge
-                    variant={session.status}
+                    variant={session.
+                      status}
                     size="sm"
-                    className="capitalize"
+                    className="capitalize rounded-2xl"
                   >
                     {statusLabels[session.status]}
                   </Badge>

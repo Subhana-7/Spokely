@@ -67,19 +67,19 @@ export class SubscriptionService implements ISubscriptionService {
       throw new Error(SUBSCRIPTION_STRINGS.ERRORS.PRICE_MISSING);
     }
 
-     const userId = dto.userId.toString();
-  const mentorId = dto.mentorId.toString();
+    const userId = dto.userId.toString();
+    const mentorId = dto.mentorId.toString();
 
-  const participants = [userId, mentorId].sort();
+    const participants = [userId, mentorId].sort();
 
-  const sessionId = participants.join("_");
+    const sessionId = participants.join("_");
 
-  await this._chatRepository.findOrCreateSession(sessionId, participants);
+    await this._chatRepository.findOrCreateSession(sessionId, participants);
 
     await this._walletService.credit(
       dto.mentorId,
       dto.price,
-      SUBSCRIPTION_STRINGS.PAYMENT_DESCRIPTION(dto.userId),
+      SUBSCRIPTION_STRINGS.PAYMENT_DESCRIPTION,
       undefined,
       subscription._id?.toString()
     );
@@ -196,7 +196,7 @@ export class SubscriptionService implements ISubscriptionService {
     });
   }
 
-   async getSubscriptionHistory(
+  async getSubscriptionHistory(
     userId: string,
     search: string = "",
     status: string = "All",
@@ -211,5 +211,4 @@ export class SubscriptionService implements ISubscriptionService {
       limit
     );
   }
-
 }

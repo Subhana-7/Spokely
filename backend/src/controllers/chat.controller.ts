@@ -48,6 +48,7 @@ export class ChatController {
         sender,
         text
       );
+      console.log(message)
        res
         .status(STATUS_CODES.OK)
         .json({ message, info: MESSAGES.SUCCESS.USER_FETCHED });

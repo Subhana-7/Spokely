@@ -10,8 +10,13 @@ export interface Message {
   readBy: string[];
 }
 
+export interface GetMessagesResponse {
+  message: string;
+  messages: Message[];
+}
+
 export const getMessages = (sessionId: string) =>
-  API.get<Message[]>(`${R.base}${R.messages}/${sessionId}`);
+  API.get<GetMessagesResponse>(`${R.base}${R.messages}/${sessionId}`);
 
 export const sendMessage = (sessionId: string, text: string) =>
   API.post(`${R.base}${R.messages}/${sessionId}`, { text });

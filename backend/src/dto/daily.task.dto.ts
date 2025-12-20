@@ -1,10 +1,16 @@
+export interface FeedbackDto {
+  strengths?: string;
+  weaknesses?: string;
+  feedback?: string;
+}
+
 export interface TaskDetailDto {
   prompt: string;
   paragraph?: string;
   questions?: string[];
   userResponse?: string | string[] | Record<number, string>;
+  feedback?: FeedbackDto;
 }
-
 
 export interface DailyTaskDto {
   id: string;
@@ -21,7 +27,6 @@ export interface DailyTaskDto {
   listening: TaskDetailDto;
   createdAt: Date;
 }
-
 
 export interface CreateDailyTaskDto {
   userId: string;

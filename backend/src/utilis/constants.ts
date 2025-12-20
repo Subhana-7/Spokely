@@ -1,7 +1,7 @@
 export const ROLES = {
   USER: "user",
   MENTOR: "mentor",
-  ADMIN:"admin"
+  ADMIN: "admin",
 } as const;
 
 export const STATUS_CODES = {
@@ -40,7 +40,7 @@ export const MESSAGES = {
     USER_UNBLOCKED: "User successfully unblocked",
     MENTOR_BLOCKED: "Mentor successfully blocked",
     MENTOR_UNBLOCKED: "Mentor successfully unblocked",
-    MENTOR_FETCHED:"Mentor listing fetched successfully",
+    MENTOR_FETCHED: "Mentor listing fetched successfully",
     PAYMENT_CREATED: "Payment order created successfully",
     WALLET_FETCHED: "Wallet fetched successfully",
     MENTOR_LISTING: "Mentors fetched successfully",
@@ -65,10 +65,10 @@ export const MESSAGES = {
     PASSWORD_NOT_CHANGED: "Password is not changed",
     NOT_FOUND: "Data not found",
     SUBSCRIPTION_FAILED: "Subscription failed",
-    INTERNAL_ERROR:"Internal Error",
-    FETCH_MENTOR_STUDENT:"Failed to fetch mentor students",
-    FETCH_SUBSCRIPTION_HISTORY:"Failed to fetch subscription history",
-    ACCOUNT_BLOCKED:"Your account has been blocked. Contact support.",
+    INTERNAL_ERROR: "Internal Error",
+    FETCH_MENTOR_STUDENT: "Failed to fetch mentor students",
+    FETCH_SUBSCRIPTION_HISTORY: "Failed to fetch subscription history",
+    ACCOUNT_BLOCKED: "Your account has been blocked. Contact support.",
   },
   SESSION: {
     CREATED: "Session created",
@@ -121,10 +121,9 @@ export const PAYMENT_STATUS = {
   FAILED: "FAILED",
   PENDING: "PENDING",
   CREATED: "CREATED",
-  CREDIT:"CREDIT",
-  DEBIT:"DEBIT"
+  CREDIT: "CREDIT",
+  DEBIT: "DEBIT",
 } as const;
-
 
 // Subscription
 export const SUBSCRIPTION_STATUS = {
@@ -158,7 +157,7 @@ export const CONNECTION_MESSAGES = {
     SELF: "You cannot connect with yourself",
     ACCEPTED: "Connection request accepted",
     REJECTED: "Connection request rejected",
-    EMPTY:"No Connections found"
+    EMPTY: "No Connections found",
   },
   ERROR: {
     NOT_FOUND: "Connection not found",
@@ -171,7 +170,6 @@ export const NOTIFICATION_TYPE = {
   ERROR: "error",
   INFO: "info",
 } as const;
-
 
 export const NOTIFICATION_MESSAGES = {
   CONNECTION_REQUEST: {
@@ -188,14 +186,12 @@ export const NOTIFICATION_MESSAGES = {
   },
 };
 
-
-
 export const DAILY_TASK_MESSAGES = {
   ERROR: {
     EMPTY_FEEDBACK: "AI returned an empty feedback response",
     PARSE_FAILED: "Failed to parse AI feedback",
     TASK_NOT_FOUND: "Daily task not found",
-    TODAYS_TASK_NOT_FOUND:"No daily task found for today",
+    TODAYS_TASK_NOT_FOUND: "No daily task found for today",
   },
   SUCCESS: {
     FEEDBACK_GENERATED: "Feedback generated successfully",
@@ -248,11 +244,10 @@ It is valid for 10 minutes.
   },
 };
 
-
-
 export const MENTOR_MESSAGES = {
   ERROR: {
-    INVALID_PASSWORD: "Password must contain uppercase, lowercase, number, symbol, and be at least 8 characters",
+    INVALID_PASSWORD:
+      "Password must contain uppercase, lowercase, number, symbol, and be at least 8 characters",
     MENTOR_NOT_FOUND: "Mentor not found",
     INVALID_REFRESH_TOKEN: "Invalid refresh token",
   },
@@ -261,7 +256,6 @@ export const MENTOR_MESSAGES = {
     PASSWORD_UPDATED: "Password reset successful",
   },
 };
-
 
 export const VERIFICATION_STATUS = {
   APPROVED: "approved",
@@ -273,7 +267,6 @@ export const EMAIL_ERRORS = {
   INVALID_VERIFICATION_STATUS: "Invalid verification status",
 } as const;
 
-
 export const EMAIL_PROVIDER = {
   GMAIL: "gmail",
 } as const;
@@ -281,7 +274,6 @@ export const EMAIL_PROVIDER = {
 export const DEFAULT_VALUES = {
   NOT_SPECIFIED: "Not specified",
 } as const;
-
 
 export const TASK_TYPES = {
   WRITING: "writing",
@@ -297,7 +289,8 @@ export const DAILY_TASK_LEVEL_HINT = {
 } as const;
 
 export const DAILY_TASK_PROMPTS = {
-  TRAINER_HEADER: "You are a Communication Trainer. Evaluate the student responses.",
+  TRAINER_HEADER:
+    "You are a Communication Trainer. Evaluate the student responses.",
   RETURN_JSON_ONLY: "Return JSON only.",
   PARAGRAPH_SENTENCE_COUNT: "10-12 sentences",
   QUESTIONS_COUNT: 5,
@@ -308,7 +301,7 @@ export const DAILY_TASK_GENERATION = {
   READING_INSTRUCTION: "instruction",
 } as const;
 
-export type DailyTaskType = typeof TASK_TYPES[keyof typeof TASK_TYPES];
+export type DailyTaskType = (typeof TASK_TYPES)[keyof typeof TASK_TYPES];
 
 export const CONNECTION_ERRORS = {
   NOT_FOUND: "Connection not found",
@@ -318,12 +311,10 @@ export const PAYPAL_INTENT = {
   CAPTURE: "CAPTURE",
 } as const;
 
-
 export const CURRENCY = {
   USD: "USD",
   INR: "INR",
 } as const;
-
 
 export const SUBSCRIPTION_MESSAGES = {
   SUCCESS: {
@@ -333,14 +324,12 @@ export const SUBSCRIPTION_MESSAGES = {
   },
   FAILED: {
     TITLE: "Subscription Request Failed",
-    MESSAGE:
-      "Your subscription request failed due to payment failure.",
+    MESSAGE: "Your subscription request failed due to payment failure.",
   },
-  ERROR:{
-    FAILED_TO_FETCH:"Failed to fetch subscriptions",
-  }
+  ERROR: {
+    FAILED_TO_FETCH: "Failed to fetch subscriptions",
+  },
 } as const;
-
 
 export const PAYMENT_CONSTANTS = {
   OAUTH_GRANT_TYPE: "grant_type=client_credentials",
@@ -352,7 +341,6 @@ export const PAYMENT_CONSTANTS = {
   LOG_SESSION: "Session Type / Fee / CreatedBy:",
   LOG_PAYMENT: "Payment wallet credit:",
 } as const;
-
 
 export const SESSION_STRINGS = {
   DEFAULTS: {
@@ -374,7 +362,8 @@ export const SESSION_STRINGS = {
         `You've been invited to a private session: "${topic}" by your mentor.`,
       PEER_INVITE: (topic: string) =>
         `You’ve been invited to join a session: "${topic}".`,
-      SESSION_CREATED: (topic: string) => `Your session "${topic}" has been created.`,
+      SESSION_CREATED: (topic: string) =>
+        `Your session "${topic}" has been created.`,
     },
   },
   WALLET: {
@@ -387,7 +376,6 @@ export const SESSION_STRINGS = {
   },
 } as const;
 
-
 export const PLAN_TYPES = {
   DAILY: "DAILY",
   WEEKLY: "WEEKLY",
@@ -396,8 +384,7 @@ export const PLAN_TYPES = {
 } as const;
 
 export const SUBSCRIPTION_STRINGS = {
-  PAYMENT_DESCRIPTION: (userId: string) =>
-    `Subscription payment from user ${userId}`,
+  PAYMENT_DESCRIPTION: `Subscription payment from student`,
 
   NOTIFICATIONS: {
     TITLE: "New Student Subscription",
@@ -409,19 +396,15 @@ export const SUBSCRIPTION_STRINGS = {
   },
 } as const;
 
-
 export const SESSION_AUTO_CREATE_STRINGS = {
   TOPIC: "Subscription Session",
   DESCRIPTION: "Auto-scheduled session",
   CREATED_BY_MODEL: "Mentor",
 } as const;
 
-
 export const CRON_STRINGS = {
   DAILY_SUBSCRIPTION_JOB: "Running daily subscription cron...",
 } as const;
-
-
 
 /* ===============================
    USER MODULE CONSTANTS
@@ -516,11 +499,9 @@ export const EMAIL_PROVIDER_CONSTANTS = {
   GMAIL: "gmail",
 } as const;
 
-
 /* ===============================
    ADMIN MODULE CONSTANTS
    =============================== */
-
 
 export const ADMIN_MESSAGES = {
   ERROR: {
@@ -535,26 +516,23 @@ export const ADMIN_MESSAGES = {
   },
 } as const;
 
-
 export const COOKIE_KEYS = {
   AUTH: "auth-token",
   REFRESH: "refresh-token",
   ROLE: "role",
-  NODE_ENV:"production",
-  SAME_SITE:"none",
-  PATH:"/",
-  DOMAIN:"spokely.live"
+  NODE_ENV: "production",
+  SAME_SITE: "none",
+  PATH: "/",
+  DOMAIN: "spokely.live",
 } as const;
-
 
 export const ADMIN_QUERY = {
   PAGE: 1,
   LIMIT: 10,
   SEARCH: "",
   STATUS_ALL: "all",
-  TYPE:"all",
+  TYPE: "all",
 } as const;
-
 
 export const REPORT_TYPES = {
   SESSION: "session",
@@ -566,8 +544,7 @@ export const REPORT_TYPES = {
 
 export const REPORT_TYPE_LIST = Object.values(REPORT_TYPES);
 
-export type ReportType = typeof REPORT_TYPES[keyof typeof REPORT_TYPES];
-
+export type ReportType = (typeof REPORT_TYPES)[keyof typeof REPORT_TYPES];
 
 export const LOG_STRINGS = {
   REPORT_ERROR: "Error in getReports:",
@@ -579,19 +556,15 @@ export const GOOGLE_AUTH_MESSAGES = {
   ERROR_AUTH_FAILED: "Google authentication failed",
 } as const;
 
-
 export const REDIRECT_URLS = {
-  DEFAULT_CLIENT:
-    process.env.CLIENT_SIDE_URL,
+  DEFAULT_CLIENT: process.env.CLIENT_SIDE_URL,
   GOOGLE_AUTH_FAILED: "error=google_auth_failed",
   USER_HOME: "/user/home",
 } as const;
 
-
 export const USER_MESSAGES = {
   TOKEN_REFRESHED: "Access token refreshed",
 } as const;
-
 
 export const USER_QUERY = {
   PAGE: 1,
@@ -599,8 +572,10 @@ export const USER_QUERY = {
   SEARCH: "",
 } as const;
 
-
-export const REPORT_COLUMNS: Record<string, { key: string; label: string; width: number }[]> = {
+export const REPORT_COLUMNS: Record<
+  string,
+  { key: string; label: string; width: number }[]
+> = {
   user: [
     { key: "name", label: "Name", width: 120 },
     { key: "email", label: "Email", width: 150 },
@@ -614,7 +589,7 @@ export const REPORT_COLUMNS: Record<string, { key: string; label: string; width:
     { key: "email", label: "Email", width: 150 },
     { key: "document.verificationStatus", label: "Status", width: 70 },
     { key: "isBlocked", label: "Blocked", width: 60 },
-    { key: "tags", label: "Tags", width: 150 }
+    { key: "tags", label: "Tags", width: 150 },
   ],
   session: [
     { key: "topic", label: "Topic", width: 160 },
@@ -626,12 +601,12 @@ export const REPORT_COLUMNS: Record<string, { key: string; label: string; width:
     { key: "userEmail", label: "User", width: 140 },
     { key: "amount", label: "Amount", width: 80 },
     { key: "status", label: "Status", width: 70 },
-    { key: "createdAt", label: "Created", width: 100 }
+    { key: "createdAt", label: "Created", width: 100 },
   ],
   dailyTask: [
     { key: "user", label: "User", width: 100 },
     { key: "level", label: "Level", width: 50 },
     { key: "task", label: "Task", width: 200 },
-    { key: "completed", label: "Done", width: 40 }
-  ]
+    { key: "completed", label: "Done", width: 40 },
+  ],
 };

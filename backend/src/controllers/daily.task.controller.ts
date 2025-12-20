@@ -3,7 +3,11 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../types/types";
 import { IDailyTaskService } from "../services/interfaces/IDailyTaskService";
 import { AuthenticatedRequest } from "../types/authenticatedRequest";
-import { MESSAGES, STATUS_CODES,DAILY_TASK_MESSAGES } from "../utilis/constants";
+import {
+  MESSAGES,
+  STATUS_CODES,
+  DAILY_TASK_MESSAGES,
+} from "../utilis/constants";
 
 @injectable()
 export class DailyTaskController {
@@ -21,7 +25,7 @@ export class DailyTaskController {
         topic,
       });
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -38,7 +42,7 @@ export class DailyTaskController {
         userResponse
       );
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -55,7 +59,7 @@ export class DailyTaskController {
         req.id!
       );
       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -63,19 +67,22 @@ export class DailyTaskController {
     }
   };
 
-  getUserLatestTask = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+  getUserLatestTask = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
       const userId = req.id!;
       const task = await this._dailyTaskService.getUserLatestTask(userId);
 
       if (!task) {
-         res
+        res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ message: DAILY_TASK_MESSAGES.ERROR.TODAYS_TASK_NOT_FOUND });
       }
 
-       res.status(STATUS_CODES.OK).json({ task });
-    } catch (err:unknown) {
+      res.status(STATUS_CODES.OK).json({ task });
+    } catch (err: unknown) {
       console.error(err);
       res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)

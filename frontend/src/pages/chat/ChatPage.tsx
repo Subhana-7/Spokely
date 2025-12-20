@@ -6,6 +6,7 @@ import { ArrowLeft, MoreVertical, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import Header from "../user/DashBoardComponents/Header";
+import MentorHeader from "../mentor/DashboardComponents/Header";
 
 const socket = io(import.meta.env.VITE_SERVER_SIDE_URL, { autoConnect: true });
 
@@ -95,12 +96,11 @@ export default function ChatPage() {
   );
 
   return (
-    <div
-  className={`h-screen flex bg-slate-700 text-white ${
-    currentUser?.role === "user" ? "pt-20" : "pt-0"
-  }`}
->
-  {currentUser?.role === "user" ? <Header /> : ''}
+    <div className="h-screen flex flex-col bg-slate-700 text-white">
+
+    {currentUser?.role === "user" ? <Header /> : <MentorHeader />}
+
+    <div className="flex flex-1 overflow-hidden">
 
       {/* Sidebar */}
       <div className="w-96 bg-slate-800 border-r border-slate-600 flex flex-col py-18">
@@ -215,6 +215,7 @@ export default function ChatPage() {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
