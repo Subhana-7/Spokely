@@ -56,10 +56,10 @@ export class MentorController implements IMentorController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        // sameSite: COOKIE_KEYS.SAME_SITE,
-        sameSite: "lax",
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        // domain: COOKIE_KEYS.DOMAIN,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
       res.cookie(COOKIE_KEYS.AUTH, accessToken, {
@@ -170,10 +170,10 @@ export class MentorController implements IMentorController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        // sameSite: COOKIE_KEYS.SAME_SITE,
-        sameSite: "lax",
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        // domain: COOKIE_KEYS.DOMAIN,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
