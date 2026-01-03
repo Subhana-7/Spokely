@@ -175,7 +175,7 @@ export class UserController implements IUserController {
       res
         .cookie(COOKIE_KEYS.AUTH, accessToken, cookieOptions)
         .cookie(COOKIE_KEYS.REFRESH, refreshToken,cookieOptions)
-        .cookie(COOKIE_KEYS.ROLE, user.role,cookieOptions)
+        .cookie(COOKIE_KEYS.ROLE, 'user',cookieOptions)
         .redirect(`${REDIRECT_URLS.DEFAULT_CLIENT}${REDIRECT_URLS.USER_HOME}`);
     } catch (err: unknown) {
       console.error(GOOGLE_AUTH_MESSAGES.ERROR_AUTH_FAILED, err);
