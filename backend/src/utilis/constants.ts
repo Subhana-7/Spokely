@@ -69,6 +69,7 @@ export const MESSAGES = {
     FETCH_MENTOR_STUDENT: "Failed to fetch mentor students",
     FETCH_SUBSCRIPTION_HISTORY: "Failed to fetch subscription history",
     ACCOUNT_BLOCKED: "Your account has been blocked. Contact support.",
+    ADMIN_APPROVE_PENDING:"Your application is under review. Kindly wait for a response, Thank You."
   },
   SESSION: {
     CREATED: "Session created",
@@ -96,6 +97,7 @@ export const MESSAGES = {
 export const ACCOUNT_STATUS = {
   BLOCKED: "blocked",
   UNBLOCKED: "unBlocked",
+  PENDING:"pending"
 };
 
 // Session statuses
@@ -130,6 +132,7 @@ export const SUBSCRIPTION_STATUS = {
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
   CANCELLED: "CANCELLED",
+  EXPIRED:"EXPIRED",
 };
 
 // Connection statuses
@@ -328,6 +331,7 @@ export const SUBSCRIPTION_MESSAGES = {
   },
   ERROR: {
     FAILED_TO_FETCH: "Failed to fetch subscriptions",
+    RENEW_FAILED:"Failed to renew subscription"
   },
 } as const;
 

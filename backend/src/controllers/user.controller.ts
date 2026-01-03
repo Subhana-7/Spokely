@@ -71,18 +71,9 @@ export class UserController implements IUserController {
         domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
-      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
-      });
-      res.cookie(COOKIE_KEYS.ROLE, result.user.role, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);
+      res.cookie(COOKIE_KEYS.REFRESH, result.refreshToken, cookieOptions);
+      res.cookie(COOKIE_KEYS.ROLE, result.user.role, cookieOptions);
 
       res.status(STATUS_CODES.OK).json({ user: result.user });
     } catch (err: unknown) {
@@ -123,10 +114,7 @@ export class UserController implements IUserController {
         domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, cookieOptions);
 
       return res.status(STATUS_CODES.OK).json({
         message: USER_MESSAGES.TOKEN_REFRESHED,

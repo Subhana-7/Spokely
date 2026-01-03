@@ -16,7 +16,6 @@ export const confirmPayment = (orderId: string, sessionId: string) =>
   API.post<PaymentResponse>(`${R.base}${R.capture}`, { orderId, sessionId });
 
 export const subscriptionStartPayment = (sessionId: string, amount: number) => {
-  console.log("subscriptionStartPayment payload:", { sessionId, amount });
   return API.post<PaymentResponse>(`${R.base}${R.createSubscription}`, {
     sessionId,
     amount,
@@ -25,7 +24,7 @@ export const subscriptionStartPayment = (sessionId: string, amount: number) => {
 
 export const subscriptionConfirmPayment = (
   orderId: string,
-  sessionId: string
+  sessionId?: string
 ) =>
   API.post<PaymentResponse>(`${R.base}${R.captureSubscription}`, {
     orderId,

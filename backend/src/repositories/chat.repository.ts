@@ -7,7 +7,11 @@ import {
 } from "../models/message.model";
 import { BaseRepository } from "./base.repository";
 import { IUser } from "../models/user.model";
+import mentorModel from "../models/mentor.model";
+import userModel from "../models/user.model";
 import { IChatPreview, MessageDto } from "../dto/chat.dto";
+import { Types } from "mongoose";
+import { IMentor } from "../models/mentor.model";
 
 @injectable()
 export class ChatRepository extends BaseRepository<IMessage> {
@@ -17,47 +21,66 @@ export class ChatRepository extends BaseRepository<IMessage> {
 
   async saveMessage(data: Partial<IMessage>): Promise<IMessage | null> {
     try {
-      const msg = await MessageModel.create(data);
+      const msg = await MessageModel.create({
+        sessionId: data.sessionId,
+        sender: data.sender,
+        senderModel: data.senderModel,
+        text: data.text,
+      });
+
       await ChatSessionModel.findByIdAndUpdate(data.sessionId, {
         $set: { updatedAt: new Date() },
       });
+
       return msg;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
   }
 
-  async getMessages(
-    sessionId: string,
-    limit = 50
-  ): Promise<MessageDto[] | null> {
+  async getMessages(sessionId: string): Promise<MessageDto[] | null> {
     try {
       const res = await MessageModel.find({ sessionId })
-        .populate("sender", "name profilePicture role")
+        .populate({
+          path: "sender",
+          select: "name profilePicture role",
+        })
         .sort({ createdAt: 1 })
-        .limit(limit)
         .lean();
 
-      const messages: MessageDto[] = res
-        .filter((msg: any) => msg.sender && msg.sender._id)
-        .map((msg: any) => ({
-          _id: msg._id.toString(),
-          id: msg._id.toString(),
-          sessionId: msg.sessionId,
-          text: msg.text,
-          createdAt: msg.createdAt,
-          sender: {
-            _id: msg.sender._id.toString(),
-            id: msg.sender._id.toString(),
-            name: msg.sender.name || "Unknown User",
-            profilePicture: msg.sender.profilePicture || null,
-            role: msg.sender.role || "user",
-          },
-        }));
+      console.log(
+        res.map((m) => ({
+          text: m.text,
+          sender: m.sender,
+        }))
+      );
+
+      const messages: MessageDto[] = res.map((msg: any) => ({
+        _id: msg._id.toString(),
+        id: msg._id.toString(),
+        sessionId: msg.sessionId,
+        text: msg.text,
+        createdAt: msg.createdAt,
+        sender: msg.sender
+          ? {
+              _id: msg.sender._id.toString(),
+              id: msg.sender._id.toString(),
+              name: msg.sender.name,
+              profilePicture: msg.sender.profilePicture || null,
+              role: msg.sender.role || "user",
+            }
+          : {
+              _id: "unknown",
+              id: "unknown",
+              name: "Unknown Sender",
+              profilePicture: null,
+              role: "mentor",
+            },
+      }));
 
       return messages;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("Repository error:", error);
       return null;
     }
@@ -76,39 +99,50 @@ export class ChatRepository extends BaseRepository<IMessage> {
         });
       }
       return session;
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       console.log("error", error);
       return null;
     }
   }
 
-  async getUserChats(userId: string): Promise<IChatPreview[] | null> {
+  async getUserChats(id: string): Promise<IChatPreview[] | null> {
     try {
       const sessions = await ChatSessionModel.find({
-        participants: userId,
-      })
-        .populate<{ participants: IUser[] }>({
-          path: "participants",
-          select: "name role profilePicture",
-        })
-        .sort({ updatedAt: -1 });
+        participants: new Types.ObjectId(id),
+      }).sort({ updatedAt: -1 });
 
       const chats = await Promise.all(
         sessions.map(async (session) => {
-          const [lastMessage, unreadCount] = await Promise.all([
-            MessageModel.findOne({ sessionId: session._id })
-              .sort({ createdAt: -1 })
-              .populate("sender", "name"),
-            MessageModel.countDocuments({
-              sessionId: session._id,
-              sender: { $ne: userId },
-              readBy: { $ne: userId },
-            }),
-          ]);
+          const otherParticipantId = session.participants.find(
+            (p) => p.toString() !== id
+          );
 
-          const otherUser = session.participants.find(
-            (p) => p._id.toString() !== userId.toString()
-          ) as IUser | undefined;
+          let otherUser: IUser | IMentor | null = null;
+
+          otherUser = await userModel
+            .findById(otherParticipantId)
+            .select("name role profilePicture")
+            .lean();
+
+          if (!otherUser) {
+            otherUser = await mentorModel
+              .findById(otherParticipantId)
+              .select("name role profilePicture")
+              .lean();
+          }
+
+          const lastMessage = await MessageModel.findOne({
+            sessionId: session._id,
+          })
+            .sort({ createdAt: -1 })
+            .populate("sender", "name")
+            .lean();
+
+          const unreadCount = await MessageModel.countDocuments({
+            sessionId: session._id,
+            sender: { $ne: id },
+            readBy: { $ne: id },
+          });
 
           return {
             id: session._id,
@@ -116,16 +150,15 @@ export class ChatRepository extends BaseRepository<IMessage> {
             role: otherUser?.role || "user",
             profilePicture: otherUser?.profilePicture || null,
             lastMessage: lastMessage?.text || null,
-            lastMessageSender:
-              (lastMessage?.sender as unknown as IUser)?.name || null,
+            lastMessageSender: (lastMessage?.sender as any)?.name || null,
             createdAt: lastMessage?.createdAt || session.updatedAt,
-            unread: unreadCount || 0,
+            unread: unreadCount,
           };
         })
       );
 
       return chats;
-    } catch (err:unknown) {
+    } catch (err) {
       console.error("Error fetching user chats:", err);
       return [];
     }
@@ -137,7 +170,7 @@ export class ChatRepository extends BaseRepository<IMessage> {
         { sessionId, readBy: { $ne: userId } },
         { $addToSet: { readBy: userId } }
       );
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.error("Error marking messages as read:", err);
     }
   }

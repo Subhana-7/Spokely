@@ -10,7 +10,7 @@ import { sendForgotPasswordOTP, resetPassword } from "../services/authServices";
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onChangePassword:(email:string,password:string) => void;
+  onChangePassword: (email: string, password: string) => void;
 }
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({

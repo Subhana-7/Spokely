@@ -32,4 +32,6 @@ export interface ISubscriptionService {
     page: number,
     limit: number,
   ):Promise<any>;
+
+  renewSubscription(subscriptionId: string):Promise<unknown>
 }

@@ -11,4 +11,5 @@ export interface IPaymentRepository extends IBaseRepository<IPayment> {
   findAllPayment(): Promise<IPayment[]>;
 
   findById(id: string): Promise<IPayment | null>;
+  renewSubscription(subscriptionId: string):Promise<unknown>
 }

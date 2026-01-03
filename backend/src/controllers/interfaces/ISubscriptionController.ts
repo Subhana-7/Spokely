@@ -8,4 +8,5 @@ export interface ISubscriptionController {
   getMentorPlans(req: Request, res: Response): Promise<void>;
   setMentorPlans(req: Request, res: Response): Promise<void>;
   getSubscriptionHistory(req: Request, res: Response): Promise<void>;
+  renewSubscription(req: Request, res: Response): Promise<void>;
 }

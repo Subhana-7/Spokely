@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/userAuthStore";
 import Toggle from "./Toggle";
 import PasswordResetSuccessModal from "./PasswordResetSuccessModal";
+import VerificationPendingModal from "./VerificationPendingModal";
+import DocumentResubmissionModal from "./DocumentReSubmissionModal";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -34,8 +36,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const [_showDocumentResubmission, setShowDocumentResubmission] =
-    useState(false);
+  // const [_showDocumentResubmission, setShowDocumentResubmission] =
+  //   useState(false);
   const [_verificationPendingMessage, setVerificationPendingMessage] =
     useState("");
   const [_blockedMessage, setBlockedMessage] = useState("");
@@ -44,6 +46,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
   const [_passwordResetEmail, setPasswordResetEmail] = useState("");
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
+
+  const [showVerificationPending, setShowVerificationPending] = useState(false);
+  const [showDocumentResubmission, setShowDocumentResubmission] =
+    useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
 
   const validate = () => {
     const err: typeof errors = {};
@@ -65,41 +72,61 @@ const LoginModal: React.FC<LoginModalProps> = ({
       const selectedRole: "user" | "mentor" = role;
       const res = await login(formData, selectedRole);
       const user = res.data[selectedRole];
-      useAuthStore.getState().setUser({
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: selectedRole,
-        profilePicture: user.profilePicture,
-        uniqueCode: user.uniqueCode,
-      });
+
       if (user.isBlocked) {
-        const roleText = selectedRole === "user" ? "user" : "mentor";
-        setBlockedMessage(
-          `Your ${roleText} account has been blocked. Please contact support for assistance.`
-        );
+        setBlockedMessage("Your mentor account has been blocked.");
         return;
       }
+
       if (!user.isVerified) {
         setRole(user.role);
         setEmail(user.email);
         setShowOtpModal(true);
-      } else if (
-        selectedRole === "mentor" &&
-        user.document?.verificationStatus === "rejected"
-      ) {
-        setShowDocumentResubmission(true);
-      } else if (
-        selectedRole === "mentor" &&
-        user.document?.verificationStatus === "pending"
-      ) {
-        setVerificationPendingMessage(
-          "Your mentor application is under review, Kindly monitor emails for updation"
-        );
-      } else {
-        if (selectedRole === "user") navigate("/user/home");
-        else navigate("/mentor/home");
+        return;
       }
+
+      if (selectedRole === "mentor") {
+        const status = user.document?.verificationStatus;
+
+        if (status === "pending") {
+          setVerificationMessage(
+            "Your mentor application is under review. Please wait for approval."
+          );
+          setShowVerificationPending(true);
+          return;
+        }
+
+        if (status === "rejected") {
+          setEmail(user.email);
+          setShowDocumentResubmission(true);
+          return;
+        }
+
+        if (status === "success") {
+          useAuthStore.getState().setUser({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: "mentor",
+            profilePicture: user.profilePicture,
+            uniqueCode: user.uniqueCode,
+          });
+
+          navigate("/mentor/home");
+          return;
+        }
+      }
+
+      useAuthStore.getState().setUser({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: "user",
+        profilePicture: user.profilePicture,
+        uniqueCode: user.uniqueCode,
+      });
+
+      navigate("/user/home");
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;
       setErrors({ password: message });
@@ -128,16 +155,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
     setEmail(email);
     setRole("user");
   };
-  
-const handlePasswordResetOTPSuccess = () => {
-  setShowOtpModal(false); 
-  setIsPasswordResetMode(false);
-  
-  setTimeout(() => {
-    setPasswordResetSuccess(true); 
-  }, 0);
-};
 
+  const handlePasswordResetOTPSuccess = () => {
+    setShowOtpModal(false);
+    setIsPasswordResetMode(false);
+
+    setTimeout(() => {
+      setPasswordResetSuccess(true);
+    }, 0);
+  };
 
   const handleCloseModal = () => {
     setShowOtpModal(false);
@@ -278,7 +304,19 @@ const handlePasswordResetOTPSuccess = () => {
         email={email}
         role={role}
         isForgotPassword={isPasswordResetMode}
-        onSuccess={handlePasswordResetOTPSuccess}
+        onVerified={handlePasswordResetOTPSuccess}
+      />
+
+      <VerificationPendingModal
+        isOpen={showVerificationPending}
+        message={verificationMessage}
+        onClose={() => setShowVerificationPending(false)}
+      />
+
+      <DocumentResubmissionModal
+        isOpen={showDocumentResubmission}
+        email={email}
+        onClose={() => setShowDocumentResubmission(false)}
       />
 
       {passwordResetSuccess && (
