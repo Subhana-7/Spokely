@@ -122,11 +122,14 @@ const SignupModal: React.FC<SignupModalProps> = ({
     }
     window.location.href = `${baseUrl}/api/users/google`;
   };
-
   const handleFileUpload = async (file: File) => {
     try {
       const url = await uploadImageToCloudinary(file);
-      setMentorData({ ...mentorData, documentUrl: url });
+      setMentorData((prev) => ({
+        ...prev,
+        documentUrl: url,
+      }));
+
       setErrors((prev) => ({ ...prev, mentorDocument: "" }));
     } catch (error) {
       console.error("File upload failed", error);
@@ -272,7 +275,10 @@ const SignupModal: React.FC<SignupModalProps> = ({
                   placeholder="Write your message to the Spokely team..."
                   value={mentorData.textMessage}
                   onChange={(val) => {
-                    setMentorData({ ...mentorData, textMessage: val });
+                    setMentorData((prev) => ({
+                      ...prev,
+                      textMessage: val,
+                    }));
 
                     const trimmedVal = val.trim();
                     if (errors.mentorMessage && trimmedVal.length >= 10) {

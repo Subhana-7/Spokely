@@ -35,4 +35,12 @@ export interface ISubscriptionRepository extends IBaseRepository<ISubscription> 
   page: number,
   limit: number,
 ):Promise<any>;
+
+expireEndedSubscriptions(): Promise<number>;
+
+ renewSubscription(
+  subscriptionId: string,
+  startDate?: Date,
+  endDate?: Date
+):Promise<unknown>
 }

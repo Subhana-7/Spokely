@@ -137,13 +137,22 @@ export default function ChatBox({
 
     socket.emit("chat-message", {
       sessionId: chatId,
-      sender: currentUser.id,
+      sender: {
+        id: currentUser.id,
+        name: currentUser.name,
+        profilePicture: currentUser.profilePicture,
+        role: currentUser.role,
+      },
       text: messageText,
     });
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-800 text-white pt-18">
+    <div
+      className={`h-full flex flex-col bg-slate-800 text-white ${
+        currentUser?.role === "user" ? "pt-18" : ""
+      } `}
+    >
       {/* Header */}
       <div className="bg-slate-900 px-6 py-4 border-b border-slate-600 shadow-sm">
         <div className="flex items-center space-x-3">

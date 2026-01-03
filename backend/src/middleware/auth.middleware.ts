@@ -24,8 +24,6 @@ export const authMiddleware = (allowedRoles: string[]): RequestHandler => {
         status:boolean;
       };
 
-      console.log(decoded)
-
       if (!allowedRoles.includes(decoded.role)) {
         res.status(STATUS_CODES.FORBIDDEN).json({
           message: MESSAGES.ERROR.FORBIDDEN,

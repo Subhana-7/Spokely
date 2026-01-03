@@ -31,14 +31,21 @@ export const initSocket = (io: Server) => {
       async ({
         sessionId,
         sender,
+        role,
         text,
       }: {
         sessionId: string;
         sender: string;
+        role: "user" | "mentor";
         text: string;
       }) => {
         try {
-          const msg = await chatService.sendMessage(sessionId, sender, text);
+          const msg = await chatService.sendMessage(
+            sessionId,
+            sender,
+            role,
+            text
+          );
 
           if (!msg) {
             throw new Error("Failed to save message");

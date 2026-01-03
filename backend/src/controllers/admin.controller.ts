@@ -60,25 +60,17 @@ export class AdminController implements IAdminController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        // sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: 'lax',
         path: COOKIE_KEYS.PATH,
-        domain: COOKIE_KEYS.DOMAIN,
+        // domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, accessToken, cookieOptions);
 
-      res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.REFRESH, refreshToken,cookieOptions);
 
-      res.cookie(COOKIE_KEYS.ROLE, admin.role, {
-        ...cookieOptions,
-        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.ROLE, admin.role, cookieOptions);
 
       res
         .status(STATUS_CODES.OK)
@@ -309,15 +301,13 @@ export class AdminController implements IAdminController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        // sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: 'lax',
         path: COOKIE_KEYS.PATH,
-        domain: COOKIE_KEYS.DOMAIN,
+        // domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, newAccessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, newAccessToken, cookieOptions);
 
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.TOKEN_REFRESHED,

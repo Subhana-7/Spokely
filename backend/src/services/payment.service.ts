@@ -22,6 +22,7 @@ import {
 } from "../utilis/constants";
 import { IWalletService } from "./interfaces/IWalletService";
 import { INotificationService } from "./interfaces/INotificationService";
+import { ISubscriptionRepository } from "../repositories/interfaces/ISubscriptionRepository";
 
 export const PAYMENT_CONSTANTS = {
   OAUTH_GRANT_TYPE: "grant_type=client_credentials",
@@ -46,7 +47,8 @@ export class PaymentService implements IPaymentService {
     @inject(TYPES.IWalletService)
     private readonly _walletService: IWalletService,
     @inject(TYPES.INotificationService)
-    private readonly _notificationService: INotificationService
+    private readonly _notificationService: INotificationService,
+    @inject(TYPES.ISubscriptionRepository) private readonly _subscriptionRepository:ISubscriptionRepository
   ) {}
 
   private async getAccessToken(): Promise<string> {
@@ -152,39 +154,51 @@ export class PaymentService implements IPaymentService {
   }
 
   async createSubscription(
-    userId: string,
-    dto: PaymentRequestDTO
-  ): Promise<{ id: string }> {
-    return this.createOrder(userId, dto);
+  userId: string,
+  dto: PaymentRequestDTO
+): Promise<{ id: string }> {
+
+  const order = await this.createOrder(userId, dto);
+
+  await this._paymentRepository.updateByPaypalId(order.id, {
+    subscriptionId: dto.subscriptionId,
+  });
+  return order;
+}
+
+
+ async captureSubscription(
+  userId: string,
+  dto: PaymentRequestDTO
+): Promise<PaymentResponseDTO> {
+
+  // 1️⃣ Capture PayPal payment
+  const payment = await this.captureOrder(userId, dto);
+  if (!payment) throw new Error(MESSAGES.ERROR.NOT_FOUND);
+
+  // 2️⃣ If payment success AND linked to subscription → renew it
+  if (
+    payment.status === PAYMENT_STATUS.COMPLETED &&
+    payment.subscriptionId
+  ) {
+    await this._subscriptionRepository.renewSubscription(
+      payment.subscriptionId.toString()
+    );
   }
 
-  async captureSubscription(
-    userId: string,
-    dto: PaymentRequestDTO
-  ): Promise<PaymentResponseDTO> {
-    const payment = await this.captureOrder(userId, dto);
-    if (!payment) throw new Error(MESSAGES.ERROR.NOT_FOUND);
-
-    console.log("PAYMENT: Subscription Capture", payment);
-
-    if (payment.status === PAYMENT_STATUS.COMPLETED) {
-      await this._notificationService.send({
-        userId,
-        title: SUBSCRIPTION_MESSAGES.SUCCESS.TITLE,
-        message: SUBSCRIPTION_MESSAGES.SUCCESS.MESSAGE,
-        type: NOTIFICATION_TYPE.SUCCESS,
-      });
-    } else {
-      await this._notificationService.send({
-        userId,
-        title: SUBSCRIPTION_MESSAGES.FAILED.TITLE,
-        message: SUBSCRIPTION_MESSAGES.FAILED.MESSAGE,
-        type: NOTIFICATION_TYPE.SUCCESS,
-      });
-    }
-
-    return payment;
+  // 3️⃣ Notifications (already correct)
+  if (payment.status === PAYMENT_STATUS.COMPLETED) {
+    await this._notificationService.send({
+      userId,
+      title: SUBSCRIPTION_MESSAGES.SUCCESS.TITLE,
+      message: SUBSCRIPTION_MESSAGES.SUCCESS.MESSAGE,
+      type: NOTIFICATION_TYPE.SUCCESS,
+    });
   }
+
+  return payment;
+}
+
 
   async getAllPayments(): Promise<PaymentResponseDTO[]> {
     const payments = await this._paymentRepository.findAllPayment();

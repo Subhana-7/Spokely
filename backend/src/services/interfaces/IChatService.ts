@@ -4,6 +4,7 @@ export interface IChatService {
   sendMessage(
     sessionId: string,
     sender: string,
+    role: "user" | "mentor",
     text: string
   ): Promise<MessageDto | null>;
 

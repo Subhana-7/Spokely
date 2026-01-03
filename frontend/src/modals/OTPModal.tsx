@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import Modal from "./Modal";
 import Input from "./Input";
 import Button from "./Button";
+import SuccessModal from "./SuccessModal";
 import MentorSuccessModal from "./MentorSuccessModal";
 import {
   verifyOTP,
@@ -18,8 +19,9 @@ interface OTPModalProps {
   role: string;
   isForgotPassword?: boolean;
   onVerified?: () => void;
-  onSuccess?: () => void;
 }
+
+const MAX_RESEND_ATTEMPTS = 5;
 
 const OTPModal: React.FC<OTPModalProps> = ({
   isOpen,
@@ -32,187 +34,191 @@ const OTPModal: React.FC<OTPModalProps> = ({
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(120);
-  const [canInteract, setCanInteract] = useState(false);
-  // const [showResetSuccess, setShowResetSuccess] = useState(false);
+  const [canResend, setCanResend] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // success states
+  const [showUserSuccess, setShowUserSuccess] = useState(false);
   const [showMentorSuccess, setShowMentorSuccess] = useState(false);
-  const [mentorMessage, setMentorMessage] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
 
+  // resend control
+  const [resendCount, setResendCount] = useState(0);
+  const [timerKey, setTimerKey] = useState(0);
+
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    if (!isOpen) return;
 
-    if (!canInteract) {
-      interval = setInterval(() => {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            setCanInteract(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    setSecondsLeft(120);
+    setCanResend(false);
+    setOtp("");
+    setError("");
+    setResendCount(0);
+
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [canInteract]);
+  }, [isOpen, timerKey]);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60)
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
       .toString()
       .padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
+    const s = (sec % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
+  /* ---------------- VERIFY OTP ---------------- */
   const handleVerify = async () => {
+    if (otp.length < 6) {
+      setError("OTP must be exactly 6 digits");
+      return;
+    }
+
+    if (otp.length > 6) {
+      setError("OTP cannot be more than 6 digits");
+      return;
+    }
+
+    setLoading(true);
     setError("");
+
     try {
       if (isForgotPassword) {
         await verifyForgotPasswordOTP(
           { email, code: otp },
           role as "user" | "mentor"
         );
-        setIsVerified(true);
-        if (onVerified) onVerified(); // ✅ trigger parent step
+
+        onVerified?.();
+        return;
       } else {
         await verifyOTP({ email, code: otp }, role as "user" | "mentor");
-        setIsVerified(true);
-        if (onVerified) onVerified();
+
+        if (role === "mentor") {
+          setShowMentorSuccess(true);
+        } else {
+          setShowUserSuccess(true);
+        }
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message || err.message || "Verification failed";
-      setError(msg);
+      setError(
+        err.response?.data?.message || err.message || "Verification failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ---------------- RESEND OTP ---------------- */
   const handleResend = async () => {
+    if (!canResend) return;
+
+    if (resendCount >= MAX_RESEND_ATTEMPTS) {
+      setError("You have reached the maximum resend limit. Please try later.");
+      return;
+    }
+
+    setError("");
+
     try {
       if (isForgotPassword) {
-        await sendForgotPasswordOTP(
-          { email: email },
-          role as "user" | "mentor"
-        );
+        await sendForgotPasswordOTP({ email }, role as "user" | "mentor");
       } else {
-        await sendOTP({ email: email }, role as "user" | "mentor");
+        await sendOTP({ email }, role as "user" | "mentor");
       }
 
       setOtp("");
-      setSecondsLeft(120);
-      setCanInteract(false);
-      setError("");
+      setResendCount((prev) => prev + 1);
+      setTimerKey((prev) => prev + 1); // restart timer
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message || err.message || "Failed to resend OTP";
-      setError(msg);
+      setError(
+        err.response?.data?.message || err.message || "Failed to resend OTP"
+      );
     }
   };
 
-  const handleMentorSuccessClose = () => {
-    setShowMentorSuccess(false);
-    setMentorMessage("");
-    onClose();
-  };
-
-  const handleCloseModal = () => {
-    setShowMentorSuccess(false);
-    setMentorMessage("");
-    setIsVerified(false);
-    setOtp("");
-    setError("");
-    onClose();
-  };
-
-  if (showMentorSuccess) {
+  /* ---------------- SUCCESS MODALS ---------------- */
+  if (showUserSuccess) {
     return (
-      <MentorSuccessModal
-        isOpen={isOpen}
-        onClose={handleMentorSuccessClose}
-        message={mentorMessage}
+      <SuccessModal
+        isOpen={true}
+        message={
+          isForgotPassword
+            ? "Password reset verified successfully. Please login with your new password."
+            : "Email verified successfully. Please login to continue."
+        }
+        onClose={() => {
+          setShowUserSuccess(false);
+          onClose();
+        }}
       />
     );
   }
 
-  // const handleResetSuccessClose = () => {
-  //   setShowResetSuccess(false);
-  //   onClose();
-  // };
+  if (showMentorSuccess) {
+    return (
+      <MentorSuccessModal
+        isOpen={true}
+        message="Your mentor application has been submitted and is under admin review."
+        onClose={() => {
+          setShowMentorSuccess(false);
+          onClose();
+        }}
+      />
+    );
+  }
 
-  // console.log(showResetSuccess)
-
-  // if (showResetSuccess) {
-  //   return (
-  //     <PasswordResetSuccessModal
-  //       isOpen={true}
-  //       onClose={handleResetSuccessClose}
-  //     />
-  //   );
-  // }
-
+  /* ---------------- OTP MODAL ---------------- */
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCloseModal}
-      title={
-        isForgotPassword ? "Verify Password Reset" : "Kindly verify your email"
-      }
+      onClose={onClose}
+      title={isForgotPassword ? "Verify Password Reset" : "Verify Your Email"}
       icon={<Shield className="h-6 w-6 text-gray-800" />}
     >
       <div className="space-y-4">
-        <div className="text-center">
-          <p className="text-gray-800 mb-2">
-            {isForgotPassword
-              ? "We've sent a verification code to reset your password."
-              : "We've sent a verification code to your email address."}
-          </p>
-          <p className="text-sm text-gray-600">
-            {canInteract ? (
-              <span className="text-green-600 font-semibold">
-                You can now resend the code
-              </span>
-            ) : (
-              <>
-                You can resend in{" "}
-                <span className="font-semibold">{formatTime(secondsLeft)}</span>
-              </>
-            )}
-          </p>
-        </div>
+        <p className="text-center text-gray-700">
+          We’ve sent a 6-digit code to <b>{email}</b>
+        </p>
 
         <Input
           type="text"
           placeholder="Enter OTP"
           value={otp}
           onChange={setOtp}
-          className="text-center text-lg tracking-widest"
           error={error}
-          disabled={canInteract || isVerified}
+          className="text-center tracking-widest text-lg"
         />
 
-        <div className="pt-2">
-          <Button
-            variant="primary"
-            onClick={handleVerify}
-            disabled={canInteract}
-          >
-            {isForgotPassword ? "Reset Password" : "Verify & Continue"}
-          </Button>
-        </div>
+        <Button variant="primary" onClick={handleVerify} disabled={loading}>
+          {loading ? "Verifying..." : "Verify"}
+        </Button>
 
-        <div className="text-center pt-2">
-          <button
-            onClick={handleResend}
-            disabled={!canInteract || isVerified}
-            className={`font-medium transition-colors ${
-              canInteract
-                ? "text-blue-600 hover:text-blue-700"
-                : "text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            Didn't receive code? Resend
-          </button>
+        <div className="text-center text-sm">
+          {canResend && resendCount < MAX_RESEND_ATTEMPTS ? (
+            <button
+              onClick={handleResend}
+              className="text-blue-600 hover:underline"
+            >
+              Resend OTP ({MAX_RESEND_ATTEMPTS - resendCount} left)
+            </button>
+          ) : resendCount >= MAX_RESEND_ATTEMPTS ? (
+            <span className="text-red-500">Resend limit reached</span>
+          ) : (
+            <span className="text-gray-500">
+              Resend in {formatTime(secondsLeft)}
+            </span>
+          )}
         </div>
       </div>
     </Modal>

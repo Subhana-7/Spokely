@@ -56,26 +56,17 @@ export class MentorController implements IMentorController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: "lax",
+        // sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        domain: COOKIE_KEYS.DOMAIN,
+        // domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, accessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, accessToken, cookieOptions);
 
-      res.cookie(COOKIE_KEYS.REFRESH, refreshToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.REFRESH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.REFRESH, refreshToken,cookieOptions);
 
-      res.cookie(COOKIE_KEYS.ROLE, mentor.role, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.ROLE, mentor.role, cookieOptions);
 
       res.status(STATUS_CODES.OK).json({ mentor });
     } catch (err: unknown) {
@@ -170,16 +161,13 @@ export class MentorController implements IMentorController {
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: "lax",
+        // sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        domain: COOKIE_KEYS.DOMAIN,
+        // domain: COOKIE_KEYS.DOMAIN,
       };
 
-      res.cookie(COOKIE_KEYS.AUTH, result.accessToken, {
-        ...cookieOptions,
-        maxAge: Number(process.env.AUTH_TOKEN_MAX_AGE),
-      });
+      res.cookie(COOKIE_KEYS.AUTH, result.accessToken,cookieOptions);
 
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.TOKEN_REFRESHED,

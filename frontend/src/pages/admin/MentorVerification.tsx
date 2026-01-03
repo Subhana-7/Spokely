@@ -65,7 +65,7 @@ const MentorVerification = () => {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+      <h2 className="text-2xl font-bold mb-6 text-gray-200">
         🧾 Mentor Document Verifications
       </h2>
 
@@ -160,7 +160,7 @@ const MentorVerification = () => {
                       <Button
                         variant="primary"
                         onClick={() => handleReject(mentor._id)}
-                        className="mt-2"
+                        className="mt-2 bg-red-600 rounded-4xl"
                       >
                         Confirm Reject
                       </Button>

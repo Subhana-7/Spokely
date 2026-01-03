@@ -20,7 +20,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
       icon={<CheckCircle size={28} className="text-green-600" />}
     >
       <div className="text-center">
-        <p className="text-gray-900 mb-6">{message}</p>
+        <p className="text-gray-200 mb-6">{message}</p>
         <button
           onClick={onClose}
           className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-200"

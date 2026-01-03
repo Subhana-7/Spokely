@@ -194,6 +194,16 @@ export class SubscriptionService implements ISubscriptionService {
         });
       }
     });
+
+    // "5 0 * * *"
+    cron.schedule("* * * * *", async () => {
+      const expiredCount =
+        await this._subscriptionRepository.expireEndedSubscriptions();
+
+      if (expiredCount > 0) {
+        console.log(`Expired ${expiredCount} subscriptions`);
+      }
+    });
   }
 
   async getSubscriptionHistory(
@@ -210,5 +220,52 @@ export class SubscriptionService implements ISubscriptionService {
       page,
       limit
     );
+  }
+
+  async renewSubscription(subscriptionId: string) {
+    const subscription = await this._subscriptionRepository.findById(
+      subscriptionId
+    );
+
+    if (!subscription) {
+      throw new Error("Subscription not found");
+    }
+
+    if (subscription.status !== SUBSCRIPTION_STATUS.EXPIRED) {
+      throw new Error("Only expired subscriptions can be renewed");
+    }
+
+    const startDate = new Date();
+    let endDate = new Date(startDate);
+
+    switch (subscription.plan) {
+      case PLAN_TYPES.DAILY:
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      case PLAN_TYPES.WEEKLY:
+        endDate.setDate(endDate.getDate() + 7);
+        break;
+      case PLAN_TYPES.BIWEEKLY:
+        endDate.setDate(endDate.getDate() + 14);
+        break;
+      case PLAN_TYPES.TRIWEEKLY:
+        endDate.setDate(endDate.getDate() + 21);
+        break;
+    }
+
+    const updated = await this._subscriptionRepository.renewSubscription(
+      subscriptionId,
+      startDate,
+      endDate
+    );
+
+    await this._notificationService.send({
+      userId: subscription.userId.toString(),
+      title: "Subscription Renewed",
+      message: "Your subscription is active again 🎉",
+      type: NOTIFICATION_TYPE.SUCCESS,
+    });
+
+    return updated;
   }
 }

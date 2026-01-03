@@ -4,6 +4,7 @@ import { Schema, model, Types, Document } from "mongoose";
 export interface IMessage extends Document {
   sessionId: string;
   sender: Types.ObjectId;
+  senderModel: string;
   text: string;
   createdAt: Date;
   updatedAt?: Date;
@@ -12,8 +13,17 @@ export interface IMessage extends Document {
 const messageSchema = new Schema<IMessage>(
   {
     sessionId: { type: String, ref: "ChatSession", required: true },
-    sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    sender: {
+      type: Schema.Types.ObjectId,
+      refPath: "senderModel",
+      required: true,
+    },
     text: { type: String, required: true },
+    senderModel: {
+      type: String,
+      required: true,
+      enum: ["User", "Mentor"],
+    },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
@@ -27,14 +37,20 @@ export interface IChatSession extends Document {
   participants: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  senderModel: string;
 }
 
 const chatSessionSchema = new Schema<IChatSession>(
   {
     _id: { type: String, required: true },
     participants: [
-      { type: Schema.Types.ObjectId, ref: "User", required: true },
+      { type: Schema.Types.ObjectId, refPath: "senderModel", required: true },
     ],
+    senderModel: {
+      type: String,
+      required: true,
+      enum: ["User", "Mentor"],
+    },
   },
   { timestamps: true }
 );

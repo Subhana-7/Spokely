@@ -9,7 +9,13 @@ import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
 import { ChangePasswordDTO, MentorResponseDTO } from "../dto/mentor.dto";
-import { MESSAGES, MENTOR_MESSAGES,VERIFICATION_STATUS,ROLES } from "../utilis/constants";
+import {
+  MESSAGES,
+  MENTOR_MESSAGES,
+  VERIFICATION_STATUS,
+  ROLES,
+  ACCOUNT_STATUS
+} from "../utilis/constants";
 
 @injectable()
 export class MentorService implements IMentorService {
@@ -60,7 +66,10 @@ export class MentorService implements IMentorService {
     const isValid = await this._mentorRepository.verifyOTP(email, code);
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
-    await this._emailService.sendVerificationUpdateEmail(email, VERIFICATION_STATUS.PENDING);
+    await this._emailService.sendVerificationUpdateEmail(
+      email,
+      VERIFICATION_STATUS.PENDING
+    );
 
     return { message: MENTOR_MESSAGES.SUCCESS.OTP_VERIFICATION };
   }
@@ -94,6 +103,7 @@ export class MentorService implements IMentorService {
     refreshToken: string;
   } | null> {
     const mentor = await this._mentorRepository.findByEmail(data.email);
+
     if (!mentor) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
     if (!mentor.password) throw new Error(MESSAGES.ERROR.INVALID_INPUT);
@@ -101,10 +111,22 @@ export class MentorService implements IMentorService {
     const match = await bcrypt.compare(data.password, mentor.password);
     if (!match) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
+    if (mentor.document.verificationStatus === ACCOUNT_STATUS.PENDING) {
+      throw new Error(MESSAGES.ERROR.ADMIN_APPROVE_PENDING);
+    }
+
     return {
       mentor: toMentorResponseDTO(mentor),
-      accessToken: generateAccessToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
-      refreshToken: generateRefreshToken({ id: mentor._id, role: ROLES.MENTOR,status:mentor.isBlocked }),
+      accessToken: generateAccessToken({
+        id: mentor._id,
+        role: ROLES.MENTOR,
+        status: mentor.isBlocked,
+      }),
+      refreshToken: generateRefreshToken({
+        id: mentor._id,
+        role: ROLES.MENTOR,
+        status: mentor.isBlocked,
+      }),
     };
   }
 
@@ -161,28 +183,30 @@ export class MentorService implements IMentorService {
   }
 
   async getHome(id: string, months = 6): Promise<any | null> {
-  const mentor = await this._mentorRepository.findById(id);
-  if (!mentor) return null;
+    const mentor = await this._mentorRepository.findById(id);
+    if (!mentor) return null;
 
-  const dashboardData = await this._mentorRepository.getDashboardData(id, months);
+    const dashboardData = await this._mentorRepository.getDashboardData(
+      id,
+      months
+    );
 
-  if (!dashboardData) return null;
+    if (!dashboardData) return null;
 
-  return {
-    mentor: toMentorResponseDTO(mentor),
-    stats: {
-      totalStudents: dashboardData.totalStudents,
-      todaysSessionsCount: dashboardData.todaysSessionsCount,
-      avgProgress: dashboardData.avgProgress,
-      avgFeedback: dashboardData.avgFeedback,
-      avgFeedbackValue: dashboardData.avgFeedbackValue,
-    },
-    sessionsToday: dashboardData.sessionsToday,
-    recentActivities: dashboardData.recentActivities,
-    chartData: dashboardData.chartData, 
-  };
-}
-
+    return {
+      mentor: toMentorResponseDTO(mentor),
+      stats: {
+        totalStudents: dashboardData.totalStudents,
+        todaysSessionsCount: dashboardData.todaysSessionsCount,
+        avgProgress: dashboardData.avgProgress,
+        avgFeedback: dashboardData.avgFeedback,
+        avgFeedbackValue: dashboardData.avgFeedbackValue,
+      },
+      sessionsToday: dashboardData.sessionsToday,
+      recentActivities: dashboardData.recentActivities,
+      chartData: dashboardData.chartData,
+    };
+  }
 
   async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
     const mentor = await this._mentorRepository.updateMentor(id, data);
@@ -243,17 +267,19 @@ export class MentorService implements IMentorService {
         throw new Error(MENTOR_MESSAGES.ERROR.MENTOR_NOT_FOUND);
       }
 
+      console.log(mentor);
+
       const newAccessToken = generateAccessToken({
         id: payload.id,
         role: ROLES.MENTOR,
-        status:mentor.isBlocked
+        status: mentor.isBlocked,
       });
 
       return {
         mentor: toMentorResponseDTO(mentor),
         accessToken: newAccessToken,
       };
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       throw new Error(MENTOR_MESSAGES.ERROR.INVALID_REFRESH_TOKEN);
     }
   }

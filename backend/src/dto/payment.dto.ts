@@ -1,4 +1,5 @@
 export interface PaymentRequestDTO {
+  subscriptionId: ObjectId | undefined;
   sessionId?: string;
   amount: number;
   orderId?: string;
@@ -17,6 +18,7 @@ export interface PaymentEntityDTO {
 }
 
 export interface PaymentResponseDTO {
+  subscriptionId: boolean;
   id?: string;
   paypalOrderId: string;
   status: string;

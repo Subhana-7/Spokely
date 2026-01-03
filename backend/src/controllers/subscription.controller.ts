@@ -159,4 +159,24 @@ export class SubscriptionController implements ISubscriptionController {
     }
   }
 
+  async renewSubscription(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const result = await this._subscriptionService.renewSubscription(id);
+
+    res.status(STATUS_CODES.OK).json({
+      success: true,
+      subscription: result,
+    });
+  } catch (err: unknown) {
+    res.status(STATUS_CODES.BAD_REQUEST).json({
+      success: false,
+      message: this.getErrorMessage(
+        err,
+        SUBSCRIPTION_MESSAGES.ERROR.RENEW_FAILED
+      ),
+    });
+  }
+}
+
 }

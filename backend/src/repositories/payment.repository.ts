@@ -44,4 +44,21 @@ export class PaymentRepository
   async findById(id: string): Promise<IPayment | null> {
     return Payment.findById(id).populate("userId sessionId subscriptionId");
   }
+
+  async renewSubscription(subscriptionId: string) {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 30); 
+
+  return Payment.findByIdAndUpdate(
+    subscriptionId,
+    {
+      status: "ACTIVE",
+      startDate,
+      endDate,
+    },
+    { new: true }
+  );
+}
+
 }
