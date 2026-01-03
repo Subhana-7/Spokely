@@ -163,10 +163,19 @@ export class UserController implements IUserController {
         role: user.role,
       });
 
+      const cookieOptions: CookieOptions = {
+        httpOnly: false,
+        secure: true,
+        sameSite: COOKIE_KEYS.SAME_SITE,
+        // sameSite: 'lax',
+        path: COOKIE_KEYS.PATH,
+        domain: COOKIE_KEYS.DOMAIN,
+      };
+
       res
-        .cookie(COOKIE_KEYS.AUTH, accessToken, { httpOnly: true })
-        .cookie(COOKIE_KEYS.REFRESH, refreshToken, { httpOnly: true })
-        .cookie(COOKIE_KEYS.ROLE, user.role)
+        .cookie(COOKIE_KEYS.AUTH, accessToken, cookieOptions)
+        .cookie(COOKIE_KEYS.REFRESH, refreshToken,cookieOptions)
+        .cookie(COOKIE_KEYS.ROLE, user.role,cookieOptions)
         .redirect(`${REDIRECT_URLS.DEFAULT_CLIENT}${REDIRECT_URLS.USER_HOME}`);
     } catch (err: unknown) {
       console.error(GOOGLE_AUTH_MESSAGES.ERROR_AUTH_FAILED, err);

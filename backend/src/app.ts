@@ -101,13 +101,13 @@ app.use(logger);
 /* =========================
    ✅ ROUTES
    ========================= */
-app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users/connections", connectionsRoutes);
 app.use("/api/users/session", sessionRoutes);
 app.use("/api/subscription", subscriptionRouter);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/daily/task", dailyTask);
 app.use("/api/notifications", notificationRoutes);

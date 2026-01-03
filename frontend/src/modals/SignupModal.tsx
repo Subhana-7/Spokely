@@ -7,6 +7,7 @@ import Toggle from "./Toggle";
 import { signup, sendOTP } from "../services/authServices";
 import OTPModal from "./OTPModal";
 import { uploadImageToCloudinary } from "../utilis/cloudinary ";
+import { useNavigate } from "react-router-dom";
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -43,6 +44,8 @@ const SignupModal: React.FC<SignupModalProps> = ({
 
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate()
 
   const roleOptions = [
     { value: "user", label: "User" },
@@ -121,6 +124,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
       return;
     }
     window.location.href = `${baseUrl}/api/users/google`;
+    navigate("/user/home")
   };
   const handleFileUpload = async (file: File) => {
     try {
