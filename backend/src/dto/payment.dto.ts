@@ -1,7 +1,7 @@
-import { ObjectId } from "mongoose";
+import { ObjectId, Types } from "mongoose";
 
 export interface PaymentRequestDTO {
-  subscriptionId: ObjectId | undefined;
+  subscriptionId?: string;
   sessionId?: string;
   amount: number;
   orderId?: string;
@@ -20,7 +20,7 @@ export interface PaymentEntityDTO {
 }
 
 export interface PaymentResponseDTO {
-  subscriptionId?: string; 
+  subscriptionId?: Types.ObjectId;
   id?: string;
   paypalOrderId: string;
   status: string;
