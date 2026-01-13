@@ -59,7 +59,7 @@ const UserManagement = () => {
 
       setUsers((prev) =>
         prev.map((u) => {
-          if (u._id === id) {
+          if (u.id === id) {
             return { ...u, isBlocked: !u.isBlocked };
           }
           return u;

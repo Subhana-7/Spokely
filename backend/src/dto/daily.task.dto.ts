@@ -32,3 +32,15 @@ export interface CreateDailyTaskDto {
   userId: string;
   topic: string;
 }
+
+export interface DailyTaskResponses  {
+  writing?: WritingResponse;
+  reading?: ReadingResponse;
+  listening?: ListeningResponse;
+  speaking?: SpeakingResponse;
+};
+
+type WritingResponse = string;
+type SpeakingResponse = string; 
+type ReadingResponse = Record<number, string>;
+type ListeningResponse = Record<number, string>;

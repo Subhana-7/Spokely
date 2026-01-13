@@ -1,13 +1,19 @@
-import { ChangePasswordDTO, MentorResponseDTO } from "../../dto/mentor.dto";
+import {
+  ChangePasswordDTO,
+  MentorResponseDTO,
+  MentorSignupDTO,
+  MentorUpdateDTO,
+} from "../../dto/mentor.dto";
+import { LoginDTO } from "../../dto/user.dto";
 
 export interface IMentorService {
-  generateUniqueCode(): Promise<string | null>;
+  generateUniqueCode(): Promise<string>;
 
   sendOtp(email: string): Promise<void>;
   verifyOtp(email: string, code: string): Promise<{ message: string }>;
 
-  signup(data: any): Promise<MentorResponseDTO | null>;
-  login(data: any): Promise<{
+  signup(data: MentorSignupDTO): Promise<MentorResponseDTO | null>;
+  login(data: LoginDTO): Promise<{
     mentor: MentorResponseDTO;
     accessToken: string;
     refreshToken: string;
@@ -26,12 +32,15 @@ export interface IMentorService {
     code: string
   ): Promise<{ message: string }>;
 
-  getHome(id: string,months:number): Promise<MentorResponseDTO | null>;
-  updateMentor(id: string, data: any): Promise<MentorResponseDTO | null>;
+  getHome(id: string, months: number): Promise<unknown | null>;
+  updateMentor(
+    id: string,
+    data: MentorUpdateDTO
+  ): Promise<MentorResponseDTO | null>;
 
   changePassword(data: ChangePasswordDTO): Promise<{ message: string }>;
 
   refreshToken(
-  token: string
-): Promise<{ mentor: MentorResponseDTO; accessToken: string }>;
+    token: string
+  ): Promise<{ mentor: MentorResponseDTO; accessToken: string }>;
 }

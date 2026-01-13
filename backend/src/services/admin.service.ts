@@ -8,7 +8,12 @@ import { IMentor } from "../models/mentor.model";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { mapAdminToDto, mapUserToSummaryDto } from "../mappers/admin.mapper";
 import { AdminResponseDto, UserSummaryDto } from "../dto/admin.dto";
-import { MESSAGES, REPORT_TYPES, ReportType,REPORT_COLUMNS } from "../utilis/constants";
+import {
+  MESSAGES,
+  REPORT_TYPES,
+  ReportType,
+  REPORT_COLUMNS,
+} from "../utilis/constants";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 
 import {
@@ -33,8 +38,6 @@ import Wallet from "../models/wallet.model";
 import Subscription from "../models/subscription.modal";
 import { DailyTaskModel } from "../models/daily.task.model";
 import Connection from "../models/connections.model";
-
-import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 import { Writable } from "stream";
 
@@ -267,7 +270,7 @@ export class AdminService implements IAdminService {
     limit?: number;
     search?: string;
     status?: string;
-    type?:string;
+    type?: string;
   }): Promise<{ sessions: ISession[]; total: number }> {
     const {
       page = 1,
@@ -304,7 +307,7 @@ export class AdminService implements IAdminService {
     return { sessions, total };
   }
 
-  private async getReportData(params: ExportParams): Promise<any[]> {
+  private async getReportData(params: ExportParams): Promise<unknown[]> {
     const { type, startDate, endDate, status, mentorId } = params;
     const reportType = type as ReportType;
 
@@ -341,8 +344,6 @@ export class AdminService implements IAdminService {
         data = [];
     }
 
-
-    // apply date filters if provided
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
 
@@ -364,138 +365,137 @@ export class AdminService implements IAdminService {
   /* ============================================================
    Export: PDF (returns Buffer + filename)
    ============================================================ */
-async exportReportPdf(
-  params: ExportParams
-): Promise<{ buffer: Buffer; filename: string; type: string }> {
-
-  const getValue = (obj: any, path: string) => {
-  return path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
-};
-
-
-  const data = await this.getReportData(params);
-  const reportType = params.type || "report";
-  const filename = `${reportType}-report.pdf`;
-
-  const doc = new PDFDocument({ margin: 35, size: "A4" });
-  const chunks: Buffer[] = [];
-
-  const writable = new Writable({
-    write(chunk, _enc, next) {
-      chunks.push(Buffer.from(chunk));
-      next();
-    }
-  });
-
-  doc.pipe(writable);
-
-  // Title
-  doc.fillColor("#000000");              // <-- ensure black
-  doc.fontSize(18).text(`${reportType.toUpperCase()} REPORT`, { align: "center" });
-  doc.moveDown();
-
-  if (!data || data.length === 0) {
-    doc.fillColor("#000000");            // <-- ensure black
-    doc.fontSize(12).text("No data available.");
-    doc.end();
-  } else {
-    const columns = REPORT_COLUMNS[reportType];
-    const tableStartX = 35;
-    let y = doc.y + 10;
-
-    const tableWidth = columns.reduce((sum, c) => sum + c.width, 0);
-
-    const line = (x1: number, y1: number, x2: number, y2: number) => {
-      doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+  async exportReportPdf(
+    params: ExportParams
+  ): Promise<{ buffer: Buffer; filename: string; type: string }> {
+    const getValue = (obj: any, path: string) => {
+      return path.split(".").reduce((o, k) => (o ? o[k] : undefined), obj);
     };
 
-    const formatValue = (v: any): string => {
-      if (v == null) return "";
-      if (Array.isArray(v)) return v.join(", ");
-      if (v instanceof Date) return v.toISOString().split("T")[0];
-      if (typeof v === "object") return "";
-      return String(v);
-    };
+    const data = await this.getReportData(params);
+    const reportType = params.type || "report";
+    const filename = `${reportType}-report.pdf`;
 
-    // ===============================
-    //   HEADER ROW + VERTICAL LINES
-    // ===============================
-    doc.rect(tableStartX, y, tableWidth, 22).fill("#f0f0f0").stroke();
+    const doc = new PDFDocument({ margin: 35, size: "A4" });
+    const chunks: Buffer[] = [];
 
-    doc.fillColor("#000000");            // <-- black text after fill()
-    doc.font("Helvetica-Bold").fontSize(11);
+    const writable = new Writable({
+      write(chunk, _enc, next) {
+        chunks.push(Buffer.from(chunk));
+        next();
+      },
+    });
 
-    let x = tableStartX;
-    for (const col of columns) {
-      doc.text(col.label, x + 4, y + 6, { width: col.width - 8 });
+    doc.pipe(writable);
 
-      line(x, y, x, y + 22);
-      x += col.width;
-    }
+    doc.fillColor("#000000");
+    doc
+      .fontSize(18)
+      .text(`${reportType.toUpperCase()} REPORT`, { align: "center" });
+    doc.moveDown();
 
-    line(tableStartX + tableWidth, y, tableStartX + tableWidth, y + 22);
-    line(tableStartX, y + 22, tableStartX + tableWidth, y + 22);
+    if (!data || data.length === 0) {
+      doc.fillColor("#000000");
+      doc.fontSize(12).text("No data available.");
+      doc.end();
+    } else {
+      const columns = REPORT_COLUMNS[reportType];
+      const tableStartX = 35;
+      let y = doc.y + 10;
 
-    y += 22;
+      const tableWidth = columns.reduce((sum, c) => sum + c.width, 0);
 
-    // ==========================
-    //   DATA ROWS (WITH BORDERS)
-    // ==========================
-    doc.fillColor("#000000");            // <-- ensure row text stays black
-    doc.font("Helvetica").fontSize(10);
+      const line = (x1: number, y1: number, x2: number, y2: number) => {
+        doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+      };
 
-    for (const item of data) {
-      let rowHeight = 18;
+      const formatValue = (v: any): string => {
+        if (v == null) return "";
+        if (Array.isArray(v)) return v.join(", ");
+        if (v instanceof Date) return v.toISOString().split("T")[0];
+        if (typeof v === "object") return "";
+        return String(v);
+      };
 
-      columns.forEach(col => {
-        const rawValue = getValue(item, col.key);
-const text = formatValue(rawValue);
+      // ===============================
+      //   HEADER ROW + VERTICAL LINES
+      // ===============================
+      doc.rect(tableStartX, y, tableWidth, 22).fill("#f0f0f0").stroke();
 
-        const h = doc.heightOfString(text, { width: col.width - 8 });
-        rowHeight = Math.max(rowHeight, h + 8);
-      });
+      doc.fillColor("#000000");
+      doc.font("Helvetica-Bold").fontSize(11);
 
-      doc.rect(tableStartX, y, tableWidth, rowHeight).stroke();
-
-      let colX = tableStartX;
-
+      let x = tableStartX;
       for (const col of columns) {
-        const rawValue = getValue(item, col.key);
-const text = formatValue(rawValue);
+        doc.text(col.label, x + 4, y + 6, { width: col.width - 8 });
 
-        doc.text(text, colX + 4, y + 4, { width: col.width - 8 });
-
-        line(colX, y, colX, y + rowHeight);
-        colX += col.width;
+        line(x, y, x, y + 22);
+        x += col.width;
       }
 
-      line(tableStartX + tableWidth, y, tableStartX + tableWidth, y + rowHeight);
+      line(tableStartX + tableWidth, y, tableStartX + tableWidth, y + 22);
+      line(tableStartX, y + 22, tableStartX + tableWidth, y + 22);
 
-      y += rowHeight;
+      y += 22;
 
-      // Page break + reapply black
-      if (y > 760) {
-        doc.addPage();
-        doc.fillColor("#000000");        // <-- KEEP BLACK ON NEW PAGE
-        doc.font("Helvetica").fontSize(10);
-        y = doc.y + 10;
+      // ==========================
+      //   DATA ROWS (WITH BORDERS)
+      // ==========================
+      doc.fillColor("#000000");
+      doc.font("Helvetica").fontSize(10);
+
+      for (const item of data) {
+        let rowHeight = 18;
+
+        columns.forEach((col) => {
+          const rawValue = getValue(item, col.key);
+          const text = formatValue(rawValue);
+
+          const h = doc.heightOfString(text, { width: col.width - 8 });
+          rowHeight = Math.max(rowHeight, h + 8);
+        });
+
+        doc.rect(tableStartX, y, tableWidth, rowHeight).stroke();
+
+        let colX = tableStartX;
+
+        for (const col of columns) {
+          const rawValue = getValue(item, col.key);
+          const text = formatValue(rawValue);
+
+          doc.text(text, colX + 4, y + 4, { width: col.width - 8 });
+
+          line(colX, y, colX, y + rowHeight);
+          colX += col.width;
+        }
+
+        line(
+          tableStartX + tableWidth,
+          y,
+          tableStartX + tableWidth,
+          y + rowHeight
+        );
+
+        y += rowHeight;
+
+        if (y > 760) {
+          doc.addPage();
+          doc.fillColor("#000000");
+          doc.font("Helvetica").fontSize(10);
+          y = doc.y + 10;
+        }
       }
+
+      line(tableStartX, y, tableStartX + tableWidth, y);
     }
 
-    line(tableStartX, y, tableStartX + tableWidth, y);
+    doc.end();
+
+    await new Promise<void>((resolve, reject) => {
+      writable.on("finish", resolve);
+      writable.on("error", reject);
+    });
+
+    return { buffer: Buffer.concat(chunks), filename, type: reportType };
   }
-
-  doc.end();
-
-  await new Promise<void>((resolve, reject) => {
-    writable.on("finish", resolve);
-    writable.on("error", reject);
-  });
-
-  return { buffer: Buffer.concat(chunks), filename, type: reportType };
-}
-
-
-
-
 }

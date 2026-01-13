@@ -1,7 +1,9 @@
 import {
   CreateSubscriptionDTO,
   SetMentorPlansDTO,
+  SubscriptionDTO,
 } from "../dto/subscription.dto";
+import { ISubscription } from "../models/subscription.modal";
 
 export function mapToCreateSubscriptionDTO(body: any): CreateSubscriptionDTO {
   if (
@@ -36,4 +38,18 @@ export function mapToSetMentorPlansDTO(body: any): SetMentorPlansDTO {
       time: Number(p.time),
     })),
   };
+}
+
+export function mapSubscriptionDTO(data:ISubscription) {
+  return {
+    _id:data._id,
+  userId:data.userId,
+  mentorId:data.mentorId,
+  plan:data.plan,
+  status:data.status,
+  time:data.time,
+  startDate:data.startDate,
+  createAt:data.createdAt,
+  updateAt:data.updatedAt,
+  }
 }

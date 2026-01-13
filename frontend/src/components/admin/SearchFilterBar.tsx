@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
+
 interface SearchFilterBarProps {
   searchPlaceholder?: string;
   filterOptions?: string[];
@@ -26,6 +29,14 @@ const SearchFilterBar = ({
   hideStatusFilter = false,
   hideMoreFilters = false,
 }: SearchFilterBarProps) => {
+  const [searchInput, setSearchInput] = useState("");
+
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    onSearch?.(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
+
   return (
     <div className="mb-6">
       <div className="flex flex-col lg:flex-row gap-4">
@@ -34,7 +45,8 @@ const SearchFilterBar = ({
           <input
             type="text"
             placeholder={searchPlaceholder}
-            onChange={(e) => onSearch?.(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg bg-white text-sm"
           />
         </div>

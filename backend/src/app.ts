@@ -40,26 +40,26 @@ app.set("trust proxy", 1);
    ========================= */
 
 //for production
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); 
-      if (origin === "https://spokely.live") return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin) return callback(null, true); 
+//       if (origin === "https://spokely.live") return callback(null, true);
+//       return callback(new Error("Not allowed by CORS"));
+//     },
+//     credentials: true,
+//   })
+// );
 
 //for system run
 
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_SIDE_URL,
-//     credentials: true,
-//     optionsSuccessStatus: 200,
-//   })
-// );
+app.use(
+  cors({
+    origin: process.env.CLIENT_SIDE_URL,
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 
 /* =========================
    ✅ BODY & COOKIE PARSING

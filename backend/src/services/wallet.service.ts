@@ -42,7 +42,7 @@ export class WalletService implements IWalletService {
     page = 1,
     limit = 10
   ): Promise<{
-    transactions: any[];
+    transactions: unknown[];
     total: number;
     totalPages: number;
     currentPage: number;

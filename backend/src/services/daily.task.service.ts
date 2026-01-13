@@ -20,6 +20,7 @@ import {
   DailyTaskType,
 } from "../utilis/constants";
 import { IDailyTaskService } from "./interfaces/IDailyTaskService";
+import { DailyTaskResponses } from "../dto/daily.task.dto";
 
 @injectable()
 export class DailyTaskService implements IDailyTaskService {
@@ -138,7 +139,7 @@ export class DailyTaskService implements IDailyTaskService {
     return mapDailyTaskToDto(task!);
   }
 
-  async submitAll(taskId: string, responses: any) {
+  async submitAll(taskId: string, responses: DailyTaskResponses):Promise<DailyTaskDto | null> {
     const task = await this._dailyTaskRepository.findById(taskId);
     if (!task) return null;
 
@@ -208,10 +209,10 @@ export class DailyTaskService implements IDailyTaskService {
 
     await this.updateUserLevel(task.userId.toString());
 
-    return { task, feedback };
+    return mapDailyTaskToDto(task);
   }
 
-  async addUserResponse(taskId: string, type: string, userResponse: any) {
+  async addUserResponse(taskId: string, type: string, userResponse: DailyTaskResponses):Promise<DailyTaskDto | null> {
     const task = await this._dailyTaskRepository.findById(taskId);
     if (!task) return null;
 
@@ -248,12 +249,12 @@ export class DailyTaskService implements IDailyTaskService {
     return tasks.map(mapDailyTaskToDto);
   }
 
-  async getDailyTaskById(dailyTaskId:string):Promise<any> {
+  async getDailyTaskById(dailyTaskId:string):Promise<DailyTaskDto> {
     const task = await this._dailyTaskRepository.findById(dailyTaskId);
-    return task;
+    return mapDailyTaskToDto(task);
   }
 
-  private async updateUserLevel(userId: string) {
+  private async updateUserLevel(userId: string):Promise<void> {
   const completedTasks = await this._dailyTaskRepository.countByUser(userId);
 
   const level = Math.floor(completedTasks / 5);

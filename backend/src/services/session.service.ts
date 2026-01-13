@@ -30,16 +30,12 @@ export class SessionService {
     private readonly _notificationService: INotificationService
   ) {}
 
-  async createSession(body: any, userId: string): Promise<ISession | null> {
-    console.log(SESSION_STRINGS.LOGS.CREATE_SESSION);
-
+  async createSession(body: CreateSessionDTO, userId: string): Promise<CreateSessionDTO | null> {
     const dto = mapToCreateSessionDTO(body, userId);
 
     if (!dto.mentorId) {
       dto.mentorId = new Types.ObjectId(userId);
     }
-
-    console.log(SESSION_STRINGS.LOGS.MENTOR_ID, dto.mentorId);
 
     let maxParticipants: number = SESSION_STRINGS.DEFAULTS.MAX_PARTICIPANTS;
 
@@ -61,7 +57,6 @@ export class SessionService {
     else dto.status = SESSION_STATUS.UPCOMING;
 
     const session = await this._sessionRepository.createSession(dto);
-    console.log("session", session);
 
     if (!session) throw new Error(MESSAGES.SESSION.NOT_FOUND);
 
@@ -105,10 +100,10 @@ export class SessionService {
       type: NOTIFICATION_TYPE.SUCCESS,
     });
 
-    return session;
+    return mapToCreateSessionDTO(session);
   }
 
-  async getSessions(userId: string, filters?: any):Promise<unknown> {
+  async getSessions(userId: string, filters?: {search?:string,status?:string,type?:string,page?:number,limit?:number}):Promise<unknown> {
     const {
       search = "",
       status = "all",
@@ -181,13 +176,12 @@ export class SessionService {
     return await this._sessionRepository.getSessionById(sessionId);
   }
 
-  async updateSession(sessionId: string, body: any): Promise<ISession | null> {
-    console.log("update session", body);
+  async updateSession(sessionId: string, body: UpdateSessionDTO): Promise<ISession | null> {
     const dto: UpdateSessionDTO = mapToUpdateSessionDTO(body);
     return await this._sessionRepository.updateSession(sessionId, dto);
   }
 
-  async respondToInvite(sessionId: string, userId: string, status: any) {
+  async respondToInvite(sessionId: string, userId: string, status: "accepted" | "rejected") {
     const session = await this._sessionRepository.getSessionById(sessionId);
     if (!session) throw new Error(MESSAGES.SESSION.NOT_FOUND);
 

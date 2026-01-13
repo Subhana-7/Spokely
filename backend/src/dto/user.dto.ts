@@ -26,7 +26,8 @@ export interface LoginDTO {
 }
 
 export interface UserResponseDTO {
-  _id: string;
+  _id?: string;
+  id?:string;
   name: string;
   email: string;
   phone?: number;
@@ -42,6 +43,9 @@ export interface UserResponseDTO {
   isGoogleUser?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  mentorsSubscribed?:unknown;
+  totalConnections?:unknown;
+  dailyTasksCompleted?:unknown;
 }
 
 export interface SendOtpDTO {
@@ -82,3 +86,16 @@ export interface MentorDTO {
   tags: string;
   createdAt: Date;
 }
+
+export interface GoogleProfile {
+  id: string;
+  displayName?: string;
+  emails?: Array<{
+    value: string;
+    verified?: boolean;
+  }>;
+  photos?: Array<{
+    value: string;
+  }>;
+}
+

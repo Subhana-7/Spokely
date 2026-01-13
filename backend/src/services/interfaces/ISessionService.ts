@@ -1,10 +1,11 @@
+import { CreateSessionDTO, UpdateSessionDTO } from "../../dto/session.dto";
 import { ISession } from "../../models/sessions.model";
 
 export interface ISessionService {
-  createSession(body: any, userId: string): Promise<ISession | null>;
-  getSessions(userId: string,filters:any): Promise<unknown>;
+  createSession(body: CreateSessionDTO, userId: string): Promise<CreateSessionDTO | null>;
+  getSessions(userId: string,filters?: {search?:string,status?:string,type?:string,page?:number,limit?:number}): Promise<unknown>;
   getSessionById(sessionId: string): Promise<ISession | null>;
-  updateSession(sessionId: string, body: any): Promise<ISession | null>;
+  updateSession(sessionId: string, body: UpdateSessionDTO): Promise<ISession | null>;
   publicSessions(): Promise<ISession[] | null>;
 
   respondToInvite(

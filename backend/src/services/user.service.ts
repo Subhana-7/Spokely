@@ -11,6 +11,7 @@ import {
   LoginDTO,
   UserResponseDTO,
   changePasswordDTO,
+  GoogleProfile,
 } from "../dto/user.dto";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
@@ -28,6 +29,7 @@ import {
 
 import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
 import { toPublicMentorResponseDTO } from "../mappers/mentor.mapper";
+import { MentorResponseDTO } from "../dto/mentor.dto";
 
 @injectable()
 export class UserService implements IUserService {
@@ -114,7 +116,11 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * LOGIN
    * ---------------------------------------- */
-  async login(data: LoginDTO) {
+  async login(data: LoginDTO): Promise<{
+    user: UserResponseDTO;
+    accessToken: string;
+    refreshToken: string;
+  }> {
     const user = await this._userRepository.findByEmail(data.email);
     if (!user) throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
 
@@ -125,8 +131,16 @@ export class UserService implements IUserService {
 
     return {
       user: toUserResponseDTO(user),
-      accessToken: generateAccessToken({ id: user._id, role: user.role ,status:user.isBlocked}),
-      refreshToken: generateRefreshToken({ id: user._id, role: user.role,status:user.isBlocked }),
+      accessToken: generateAccessToken({
+        id: user._id,
+        role: user.role,
+        status: user.isBlocked,
+      }),
+      refreshToken: generateRefreshToken({
+        id: user._id,
+        role: user.role,
+        status: user.isBlocked,
+      }),
     };
   }
 
@@ -147,7 +161,7 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * VERIFY OTP
    * ---------------------------------------- */
-  async verifyOtp(email: string, code: string) {
+  async verifyOtp(email: string, code: string): Promise<{ message: string }> {
     const isValid = await this._userRepository.verifyOTP(email, code);
     if (!isValid) throw new Error(MESSAGES.ERROR.OTP_INVALID);
 
@@ -157,7 +171,7 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * FORGOT PASSWORD OTP
    * ---------------------------------------- */
-  async sendForgotPasswordOtp(email: string) {
+  async sendForgotPasswordOtp(email: string): Promise<void> {
     const user = await this._userRepository.findByEmail(email);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -168,7 +182,10 @@ export class UserService implements IUserService {
     await this.sendOTPEmail(email, otp, true);
   }
 
-  async verifyForgotPasswordOtp(email: string, code: string) {
+  async verifyForgotPasswordOtp(
+    email: string,
+    code: string
+  ): Promise<{ message: string }> {
     const isValid = await this._userRepository.verifyForgotPasswordOTP(
       email,
       code
@@ -181,7 +198,7 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * RESET PASSWORD
    * ---------------------------------------- */
-  async resetPassword(email: string, newPassword: string) {
+  async resetPassword(email: string, newPassword: string): Promise<void> {
     const user = await this._userRepository.findByEmail(email);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -198,7 +215,10 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * UPDATE ROLE
    * ---------------------------------------- */
-  async updateRole(userId: string, role: "user" | "mentor") {
+  async updateRole(
+    userId: string,
+    role: "user" | "mentor"
+  ): Promise<UserResponseDTO> {
     if (![USER_STRINGS.ROLE.USER, USER_STRINGS.ROLE.MENTOR].includes(role)) {
       throw new Error(MESSAGES.ERROR.INVALID_ROLE);
     }
@@ -212,9 +232,9 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * DASHBOARD HOME
    * ---------------------------------------- */
-  async getHome(userId: string):Promise<any> {
+  async getHome(userId: string): Promise<UserResponseDTO> {
     const user = await this._userRepository.findById(userId);
-    console.log(user)
+    console.log(user);
     if (!user) throw new Error(HOME_STATS_STRINGS.NOT_FOUND);
 
     const stats = await this._userRepository.getUserStats(userId);
@@ -225,7 +245,7 @@ export class UserService implements IUserService {
         : 0;
 
     return {
-      id: user._id,
+      id: user._id.toString(),
       name: user.name,
       email: user.email,
       uniqueCode: user.uniqueCode,
@@ -233,6 +253,8 @@ export class UserService implements IUserService {
       sessionsDone: stats.sessionsDone,
       levels: user.levels,
       streak: user.streak,
+      isBlocked: user.isBlocked,
+      isVerified: user.isVerified,
       completionRate,
       mentorsSubscribed: stats.mentorsSubscribed,
       totalConnections: stats.totalConnections,
@@ -240,8 +262,7 @@ export class UserService implements IUserService {
     };
   }
 
-
-   async getAllUsers(): Promise<UserResponseDTO[]> {
+  async getAllUsers(): Promise<UserResponseDTO[]> {
     const { results } = await this._userRepository.findAll();
     return results.length ? results.map(toUserResponseDTO) : [];
   }
@@ -249,7 +270,10 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * UPDATE USER PROFILE
    * ---------------------------------------- */
-  async updateUser(userId: string, data: Partial<IUser>) {
+  async updateUser(
+    userId: string,
+    data: Partial<UserResponseDTO>
+  ): Promise<UserResponseDTO> {
     const updated = await this._userRepository.updateUser(userId, data);
     if (!updated) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -270,14 +294,16 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * REFRESH TOKEN
    * ---------------------------------------- */
-  async refreshToken(token: string) {
+  async refreshToken(
+    token: string
+  ): Promise<{ user: UserResponseDTO; accessToken: string }> {
     if (!token) throw new Error(MESSAGES.ERROR.INVALID_TOKEN);
 
     try {
       const payload = jwt.verify(token, process.env.REFRESH_SECRET!) as {
         id: string;
         role: string;
-        status:boolean;
+        status: boolean;
       };
 
       const user = await this._userRepository.findById(payload.id);
@@ -288,7 +314,7 @@ export class UserService implements IUserService {
         accessToken: generateAccessToken({
           id: payload.id,
           role: payload.role,
-          status:user.isBlocked,
+          status: user.isBlocked,
         }),
       };
     } catch {
@@ -299,7 +325,7 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * CHANGE PASSWORD
    * ---------------------------------------- */
-  async changePassword(data: changePasswordDTO) {
+  async changePassword(data: changePasswordDTO): Promise<{ message: string }> {
     const user = await this._userRepository.findById(data.id);
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
@@ -323,7 +349,9 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * GOOGLE AUTH
    * ---------------------------------------- */
-  async processGoogleAuth(profile: any) {
+  async processGoogleAuth(
+    profile: GoogleProfile
+  ): Promise<{ user: any; accessToken: string; refreshToken: string }> {
     try {
       const email = profile?.emails?.[0]?.value;
       if (!email) throw new Error(USER_STRINGS.ERRORS.GOOGLE_EMAIL_MISSING);
@@ -332,8 +360,7 @@ export class UserService implements IUserService {
 
       if (!user) {
         const newUser = {
-          name:
-            profile.displayName || GOOGLE_AUTH_STRINGS.DEFAULT_PROFILE_NAME,
+          name: profile.displayName || GOOGLE_AUTH_STRINGS.DEFAULT_PROFILE_NAME,
           email,
           googleId: profile.id,
           role: GOOGLE_AUTH_STRINGS.ROLE,
@@ -359,8 +386,8 @@ export class UserService implements IUserService {
         }
       }
 
-      if(!user){
-        throw Error(MESSAGES.ERROR.INTERNAL_ERROR)
+      if (!user) {
+        throw Error(MESSAGES.ERROR.INTERNAL_ERROR);
       }
 
       const accessToken = generateAccessToken({
@@ -378,7 +405,7 @@ export class UserService implements IUserService {
         accessToken,
         refreshToken,
       };
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.error("processGoogleAuth error:", err);
       throw err;
     }
@@ -387,7 +414,17 @@ export class UserService implements IUserService {
   /* ----------------------------------------
    * GET ALL MENTORS LISTING
    * ---------------------------------------- */
-  async listMentors({ page = 1, limit = 6, search = "" }) {
+  async listMentors({
+    page = 1,
+    limit = 6,
+    search = "",
+  }): Promise<{
+    mentors: MentorResponseDTO;
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const query: any = {
       "document.verificationStatus": MENTOR_FILTER_STRINGS.VERIFIED,
       isBlocked: MENTOR_FILTER_STRINGS.NOT_BLOCKED,

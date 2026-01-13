@@ -85,8 +85,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
+      console.log(selectedRole)
+
       if (selectedRole === "mentor") {
         const status = user.document?.verificationStatus;
+        console.log(status)
 
         if (status === "pending") {
           setVerificationMessage(
@@ -102,7 +105,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           return;
         }
 
-        if (status === "success") {
+        if (status === "approved") {
           useAuthStore.getState().setUser({
             id: user._id,
             name: user.name,

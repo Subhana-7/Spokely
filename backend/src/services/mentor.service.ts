@@ -8,14 +8,20 @@ import jwt from "jsonwebtoken";
 import { TYPES } from "../types/types";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
 import { toMentorResponseDTO } from "../mappers/mentor.mapper";
-import { ChangePasswordDTO, MentorResponseDTO } from "../dto/mentor.dto";
+import {
+  ChangePasswordDTO,
+  MentorResponseDTO,
+  MentorSignupDTO,
+  MentorUpdateDTO,
+} from "../dto/mentor.dto";
 import {
   MESSAGES,
   MENTOR_MESSAGES,
   VERIFICATION_STATUS,
   ROLES,
-  ACCOUNT_STATUS
+  ACCOUNT_STATUS,
 } from "../utilis/constants";
+import { LoginDTO } from "../dto/user.dto";
 
 @injectable()
 export class MentorService implements IMentorService {
@@ -27,7 +33,7 @@ export class MentorService implements IMentorService {
     private _emailService: IEmailService
   ) {}
 
-  async generateUniqueCode(): Promise<string | null> {
+  async generateUniqueCode(): Promise<string> {
     const generate = () =>
       Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -74,7 +80,7 @@ export class MentorService implements IMentorService {
     return { message: MENTOR_MESSAGES.SUCCESS.OTP_VERIFICATION };
   }
 
-  async signup(data: any): Promise<MentorResponseDTO | null> {
+  async signup(data: MentorSignupDTO): Promise<MentorResponseDTO | null> {
     const existing = await this._mentorRepository.findByEmail(data.email);
     if (existing) throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
 
@@ -88,7 +94,9 @@ export class MentorService implements IMentorService {
     };
 
     const mentor = await this._mentorRepository.createMentor({
-      ...data,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
       password: hashed,
       uniqueCode,
       document,
@@ -97,7 +105,7 @@ export class MentorService implements IMentorService {
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
 
-  async login(data: any): Promise<{
+  async login(data: LoginDTO): Promise<{
     mentor: MentorResponseDTO;
     accessToken: string;
     refreshToken: string;
@@ -182,7 +190,7 @@ export class MentorService implements IMentorService {
     return { message: MENTOR_MESSAGES.SUCCESS.PASSWORD_UPDATED };
   }
 
-  async getHome(id: string, months = 6): Promise<any | null> {
+  async getHome(id: string, months = 6): Promise<unknown | null> {
     const mentor = await this._mentorRepository.findById(id);
     if (!mentor) return null;
 
@@ -208,7 +216,10 @@ export class MentorService implements IMentorService {
     };
   }
 
-  async updateMentor(id: string, data: any): Promise<MentorResponseDTO | null> {
+  async updateMentor(
+    id: string,
+    data: MentorUpdateDTO
+  ): Promise<MentorResponseDTO | null> {
     const mentor = await this._mentorRepository.updateMentor(id, data);
     return mentor ? toMentorResponseDTO(mentor) : null;
   }
@@ -266,8 +277,6 @@ export class MentorService implements IMentorService {
       if (!mentor) {
         throw new Error(MENTOR_MESSAGES.ERROR.MENTOR_NOT_FOUND);
       }
-
-      console.log(mentor);
 
       const newAccessToken = generateAccessToken({
         id: payload.id,

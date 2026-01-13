@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 
 export const mapToCreateSessionDTO = (
   body: any,
-  userId: string
+  userId?: string
 ): CreateSessionDTO => {
   const participants: ParticipantDTO[] = body.participants?.map((p: any) => ({
     user: new Types.ObjectId(p.user || p),

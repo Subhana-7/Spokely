@@ -21,7 +21,7 @@ export interface CreateSessionDTO {
   startTime: Date;
   endTime?: Date;
   createdBy: Types.ObjectId;
-  createdByModel: string;
+  createdByModel?: string;
   participants?: ParticipantDTO[];
   sessionFee?: number;
 }
@@ -52,3 +52,5 @@ export interface FlagSessionDTO {
   reason: string;
   flaggedUserId?: string;
 }
+
+

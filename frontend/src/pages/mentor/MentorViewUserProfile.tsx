@@ -51,7 +51,8 @@ const MentorViewUserProfile = () => {
         (currentUser?.role === "user" ? "pt-20" : "pt-0")
       }
     >
-      {currentUser?.role === "user" ? <Header /> : <MentorHeader />}
+      {currentUser?.role === "user" && <Header />}
+      {currentUser?.role === "mentor" && <MentorHeader/>}
       {/* Header */}
       <div className="flex items-center max-w-7xl mx-auto px-6 mb-10 py-4">
         <button

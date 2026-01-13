@@ -7,9 +7,6 @@ import {
 
 export interface ISubscriptionService {
   subscribe(dto: CreateSubscriptionDTO): Promise<ISubscription | null>;
-
-  // getUserSubscriptions(userId: string): Promise<ISubscription[]>;
-
   getUserSubscriptions(
   userId: string,
   search: string,

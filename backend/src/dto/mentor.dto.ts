@@ -12,6 +12,16 @@ export interface SignupDTO {
   };
 }
 
+export interface MentorSignupDTO {
+  name: string;
+  email: string;
+  phone: number;
+  password: string;
+  documentUrl: string;
+  textMessage: string;
+  uniqueCode?: string;
+}
+
 export interface LoginDTO {
   email: string;
   password: string;
@@ -80,4 +90,13 @@ export interface MentorDTO {
   bio?: string;
   tags?: string;
   sessionsDone?: number;
+}
+
+export interface MentorUpdateDTO {
+  name: string;
+  email: string;
+  phone: number;
+  bio: string;
+  tags: string[];
+  profilePicture: string;
 }

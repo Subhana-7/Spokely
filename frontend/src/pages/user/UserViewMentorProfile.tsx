@@ -309,7 +309,7 @@ const UserViewMentorProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-10">
-      {user?.role === "user" ? <DashboardHeader /> : ""}
+      {user?.role !== "admin" && <DashboardHeader />}
 
       <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col gap-12">
         <button

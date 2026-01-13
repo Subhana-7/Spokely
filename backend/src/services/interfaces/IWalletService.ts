@@ -9,5 +9,10 @@ export interface IWalletService {
     subscriptionId?: string
   ): Promise<IWallet | null>;
   getBalance(userId: string): Promise<number | null>;
-  getTransactions(userId: string): Promise<unknown>;
+  getTransactions(userId: string): Promise<{
+    transactions: unknown[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
 }

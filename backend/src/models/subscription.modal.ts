@@ -9,6 +9,9 @@ export interface ISubscription extends Document {
   endDate: Date;
   status: "ACTIVE" | "CANCELLED" | "EXPIRED";
   time: number;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const subscriptionSchema = new Schema<ISubscription>(

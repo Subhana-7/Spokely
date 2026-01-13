@@ -1,3 +1,5 @@
+import { Date, Types } from "mongoose";
+
 export interface CreateSubscriptionDTO {
   userId: string;
   mentorId: string;
@@ -14,3 +16,16 @@ export interface SetMentorPlansDTO {
     time: number;
   }[];
 }
+
+export interface SubscriptionDTO {
+  id: string;
+  userId: string;
+  mentorId: string;
+  plan: string;
+  status: string;
+  time: number;
+  startDate: Date;     
+  createdAt: Date;  
+  updatedAt: Date; 
+}
+

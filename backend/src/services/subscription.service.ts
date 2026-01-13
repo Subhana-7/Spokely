@@ -9,8 +9,10 @@ import { IMentorPlanRepository } from "../repositories/interfaces/IMentorPlanRep
 import {
   CreateSubscriptionDTO,
   SetMentorPlansDTO,
+  SubscriptionDTO,
 } from "../dto/subscription.dto";
 import {
+  mapSubscriptionDTO,
   mapToCreateSubscriptionDTO,
   mapToSetMentorPlansDTO,
 } from "../mappers/subscription.mapper";
@@ -48,7 +50,7 @@ export class SubscriptionService implements ISubscriptionService {
     private _notificationService: INotificationService
   ) {}
 
-  async subscribe(raw: any) {
+  async subscribe(raw: CreateSubscriptionDTO) {
     const dto: CreateSubscriptionDTO = mapToCreateSubscriptionDTO(raw);
 
     const subscription = await this._subscriptionRepository.createSubscription({
@@ -90,6 +92,8 @@ export class SubscriptionService implements ISubscriptionService {
       message: SUBSCRIPTION_STRINGS.NOTIFICATIONS.MESSAGE,
       type: NOTIFICATION_TYPE.SUCCESS,
     });
+
+    console.log('&&',subscription)
 
     return subscription;
   }

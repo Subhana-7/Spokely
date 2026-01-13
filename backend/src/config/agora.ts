@@ -8,7 +8,7 @@ export const generateAgoraToken = (
   userAccount: string
 ) => {
   try {
-    const expirationTimeInSeconds = 3600; // 1 hour
+    const expirationTimeInSeconds = Number(process.env.AGORA_EXPIRATION_TIME!); 
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
