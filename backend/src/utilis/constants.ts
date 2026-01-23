@@ -527,7 +527,7 @@ export const COOKIE_KEYS = {
   NODE_ENV: "production",
   SAME_SITE: "none",
   PATH: "/",
-  DOMAIN: "spokely.live",
+  DOMAIN: "spokely-frontend.onrender.com",
 } as const;
 
 export const ADMIN_QUERY = {
