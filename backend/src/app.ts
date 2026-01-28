@@ -78,7 +78,6 @@ app.use(
     saveUninitialized: false,
     proxy: true,
     cookie: {
-      domain: ".spokely-frontend.onrender.com",
       secure: true,
       httpOnly: true,
       sameSite: "none",

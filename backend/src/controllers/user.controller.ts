@@ -63,7 +63,7 @@ export class UserController implements IUserController {
       const result = await this._userService.login(req.body);
 
       const cookieOptions: CookieOptions = {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
         // sameSite: 'lax',
@@ -106,7 +106,7 @@ export class UserController implements IUserController {
       const result = await this._userService.refreshToken(refresh);
 
       const cookieOptions: CookieOptions = {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
         // sameSite: "lax",
@@ -164,7 +164,7 @@ export class UserController implements IUserController {
       });
 
       const cookieOptions: CookieOptions = {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
         // sameSite: 'lax',
