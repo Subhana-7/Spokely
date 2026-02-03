@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import Cookies from "js-cookie";
 
 interface User {
   id: string;
@@ -34,13 +33,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       tags: Array.isArray(user.tags) ? user.tags : [],
     };
 
-    Cookies.set("role", normalizedUser.role, { sameSite: "none" });
     set({ user: normalizedUser, isAuthenticated: !normalizedUser.isBlocked });
 
     console.log("User stored in Zustand:", normalizedUser);
   },
   logout: () => {
-    Cookies.remove("role");
     set({ user: null, isAuthenticated: false });
   },
 }));
