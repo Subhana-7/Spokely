@@ -71,20 +71,20 @@ app.use(cookieParser());
 /* =========================
    ✅ SESSION (cookies)
    ========================= */
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET || "secret",
-//     resave: false,
-//     saveUninitialized: false,
-//     proxy: true,
-//     cookie: {
-//       secure: true,
-//       httpOnly: true,
-//       sameSite: "none",
-//       maxAge: Number(process.env.SESSION_MAX_AGE),
-//     },
-//   })
-// );
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    cookie: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+      maxAge: Number(process.env.SESSION_MAX_AGE),
+    },
+  })
+);
 
 /* =========================
    ✅ PASSPORT
