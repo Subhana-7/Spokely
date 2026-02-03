@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import session from "express-session";
 import passport from "passport";
 import helmet from "helmet";
 import "reflect-metadata";
@@ -57,7 +56,7 @@ app.use(
   cors({
     origin: process.env.CLIENT_SIDE_URL,
     credentials: true,
-    optionsSuccessStatus: 200,
+    // optionsSuccessStatus: 200,
   })
 );
 
@@ -71,26 +70,26 @@ app.use(cookieParser());
 /* =========================
    ✅ SESSION (cookies)
    ========================= */
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-      secure: true,
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: Number(process.env.SESSION_MAX_AGE),
-    },
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET || "secret",
+//     resave: false,
+//     saveUninitialized: false,
+//     proxy: true,
+//     cookie: {
+//       secure: true,
+//       httpOnly: true,
+//       sameSite: "none",
+//       maxAge: Number(process.env.SESSION_MAX_AGE),
+//     },
+//   })
+// );
 
 /* =========================
    ✅ PASSPORT
    ========================= */
 app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.session());
 
 /* =========================
    ✅ LOGGING

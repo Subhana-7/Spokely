@@ -65,9 +65,9 @@ export class UserController implements IUserController {
       const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: "none",
         // sameSite: 'lax',
-        path: COOKIE_KEYS.PATH,
+        path: "/",
         // domain: COOKIE_KEYS.DOMAIN,
       };
 
@@ -108,9 +108,9 @@ export class UserController implements IUserController {
       const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: "none",
         // sameSite: "lax",
-        path: COOKIE_KEYS.PATH,
+        path: "/",
         // domain: COOKIE_KEYS.DOMAIN,
       };
 
@@ -166,9 +166,9 @@ export class UserController implements IUserController {
       const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: COOKIE_KEYS.SAME_SITE,
+        sameSite: "none",
         // sameSite: 'lax',
-        path: COOKIE_KEYS.PATH,
+        path: "/",
         // domain: COOKIE_KEYS.DOMAIN,
       };
 
