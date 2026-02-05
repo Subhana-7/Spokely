@@ -42,14 +42,19 @@ app.set("trust proxy", 1);
 // for production
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); 
-      if (origin === "https://spokely.live") return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: [
+      "https://spokely.live",
+      "https://www.spokely.live",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// IMPORTANT: handle preflight
+app.options("*", cors());
+
 
 //for system run
 
@@ -67,6 +72,17 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+/* =========================
+   ✅ HELMET (AFTER ROUTES)
+   ========================= */
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+  })
+);
 
 /* =========================
    ✅ SESSION (cookies)
@@ -112,17 +128,6 @@ app.use("/api/daily/task", dailyTask);
 app.use("/api/notifications", notificationRoutes);
 
 /* =========================
-   ✅ HELMET (AFTER ROUTES)
-   ========================= */
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: false,
-  })
-);
-
-/* =========================
    ✅ HTTP + SOCKET.IO
    ========================= */
 const server = createServer(app);
@@ -131,7 +136,10 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://spokely.live",
+    origin: [
+      "https://spokely.live",
+      "https://www.spokely.live",
+    ],
     credentials: true,
   },
 });
@@ -142,13 +150,13 @@ if (!container.isBound(TYPES.SocketIO)) {
 
 initSocket(io);
 
+
 //machine run
 
 // const io = new Server(server, {
 //   cors: { origin: process.env.CLIENT_SIDE_URL },
 // });
-
-initSocket(io);
+// initSocket(io);
 
 /* =========================
    ✅ START SERVER
