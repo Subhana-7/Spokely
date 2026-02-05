@@ -42,18 +42,12 @@ app.set("trust proxy", 1);
 // for production
 app.use(
   cors({
-    origin: [
-      "https://spokely.live",
-      "https://www.spokely.live",
-    ],
+    origin: ["https://spokely.live", "https://www.spokely.live"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
-
-// IMPORTANT: handle preflight
-app.options("*", cors());
 
 
 //for system run
@@ -81,7 +75,7 @@ app.use(
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
-  })
+  }),
 );
 
 /* =========================
@@ -97,9 +91,10 @@ app.use(
       secure: true,
       httpOnly: true,
       sameSite: "none",
+      domain: ".spokely.live",
       maxAge: Number(process.env.SESSION_MAX_AGE),
     },
-  })
+  }),
 );
 
 /* =========================
@@ -136,10 +131,7 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://spokely.live",
-      "https://www.spokely.live",
-    ],
+    origin: ["https://spokely.live", "https://www.spokely.live"],
     credentials: true,
   },
 });
@@ -149,7 +141,6 @@ if (!container.isBound(TYPES.SocketIO)) {
 }
 
 initSocket(io);
-
 
 //machine run
 
@@ -170,7 +161,7 @@ connectDB()
     });
 
     const subscriptionService = container.get<ISubscriptionService>(
-      TYPES.ISubscriptionService
+      TYPES.ISubscriptionService,
     );
     subscriptionService.scheduleCronJobs();
     console.log("Subscription cron job scheduled.");
