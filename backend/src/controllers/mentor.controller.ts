@@ -59,7 +59,7 @@ export class MentorController implements IMentorController {
         sameSite: COOKIE_KEYS.SAME_SITE,
         // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        // domain: COOKIE_KEYS.DOMAIN,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
       res.cookie(COOKIE_KEYS.AUTH, accessToken, cookieOptions);
@@ -164,7 +164,7 @@ export class MentorController implements IMentorController {
         sameSite: COOKIE_KEYS.SAME_SITE,
         // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
-        // domain: COOKIE_KEYS.DOMAIN,
+        domain: COOKIE_KEYS.DOMAIN,
       };
 
       res.cookie(COOKIE_KEYS.AUTH, result.accessToken,cookieOptions);
