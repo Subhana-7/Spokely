@@ -47,7 +47,7 @@ export const useAuthInit = () => {
           logout();
         }
       } catch (err) {
-        
+        logout()
       } finally {
         setLoading(false);
       }
