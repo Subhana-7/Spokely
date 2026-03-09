@@ -145,11 +145,12 @@ const SignupModal: React.FC<SignupModalProps> = ({
     if (!validate()) return;
 
     try {
-      await signup({
+      let ress = await signup({
         ...formData,
         ...mentorData,
         role: formData.role as "user" | "mentor",
       });
+      console.log(ress)
       let res = await sendOTP(
         { email: formData.email },
         formData.role as "user" | "mentor"
