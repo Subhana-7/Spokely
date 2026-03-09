@@ -142,6 +142,8 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleCreateAccount = async () => {
+    console.log("what's happeining monu")
+    console.log("validate issue ano",!validate)
     if (!validate()) return;
 
     try {
