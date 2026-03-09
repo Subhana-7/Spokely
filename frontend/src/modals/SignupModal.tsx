@@ -150,10 +150,11 @@ const SignupModal: React.FC<SignupModalProps> = ({
         ...mentorData,
         role: formData.role as "user" | "mentor",
       });
-      await sendOTP(
+      let res = await sendOTP(
         { email: formData.email },
         formData.role as "user" | "mentor"
       );
+      console.log(res)
       setShowOtpModal(true);
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;

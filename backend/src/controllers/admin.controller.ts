@@ -57,11 +57,19 @@ export class AdminController implements IAdminController {
 
       const { admin, accessToken, refreshToken } = result;
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: 'lax',
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: 'lax',
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };
@@ -298,11 +306,19 @@ export class AdminController implements IAdminController {
         role: payload.role,
       });
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: 'lax',
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: 'lax',
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };

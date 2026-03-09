@@ -40,25 +40,25 @@ app.set("trust proxy", 1);
    ========================= */
 
 // for production
-app.use(
-  cors({
-    origin: ["https://spokely.live", "https://www.spokely.live"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+// app.use(
+//   cors({
+//     origin: ["https://spokely.live", "https://www.spokely.live"],
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   }),
+// );
 
 
 //for system run
 
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_SIDE_URL,
-//     credentials: true,
-//     // optionsSuccessStatus: 200,
-//   })
-// );
+app.use(
+  cors({
+    origin: process.env.CLIENT_SIDE_URL,
+    credentials: true,
+    // optionsSuccessStatus: 200,
+  })
+);
 
 /* =========================
    ✅ BODY & COOKIE PARSING
@@ -129,25 +129,25 @@ const server = createServer(app);
 
 //server run
 
-const io = new Server(server, {
-  cors: {
-    origin: ["https://spokely.live", "https://www.spokely.live"],
-    credentials: true,
-  },
-});
+// const io = new Server(server, {
+//   cors: {
+//     origin: ["https://spokely.live", "https://www.spokely.live"],
+//     credentials: true,
+//   },
+// });
 
-if (!container.isBound(TYPES.SocketIO)) {
-  container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
-}
+// if (!container.isBound(TYPES.SocketIO)) {
+//   container.bind<Server>(TYPES.SocketIO).toConstantValue(io);
+// }
 
-initSocket(io);
+// initSocket(io);
 
 //machine run
 
-// const io = new Server(server, {
-//   cors: { origin: process.env.CLIENT_SIDE_URL },
-// });
-// initSocket(io);
+const io = new Server(server, {
+  cors: { origin: process.env.CLIENT_SIDE_URL },
+});
+initSocket(io);
 
 /* =========================
    ✅ START SERVER

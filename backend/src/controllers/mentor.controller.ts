@@ -53,11 +53,19 @@ export class MentorController implements IMentorController {
 
       const { mentor, accessToken, refreshToken } = result;
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: "lax",
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };
@@ -158,11 +166,19 @@ export class MentorController implements IMentorController {
 
       const result = await this._mentorService.refreshToken(refresh);
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: "lax",
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };

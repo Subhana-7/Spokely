@@ -62,11 +62,19 @@ export class UserController implements IUserController {
     try {
       const result = await this._userService.login(req.body);
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: 'lax',
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: 'lax',
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };
@@ -105,11 +113,19 @@ export class UserController implements IUserController {
 
       const result = await this._userService.refreshToken(refresh);
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite: COOKIE_KEYS.SAME_SITE,
+      //   sameSite: "lax",
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
         sameSite: COOKIE_KEYS.SAME_SITE,
-        // sameSite: "lax",
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };
@@ -163,11 +179,19 @@ export class UserController implements IUserController {
         role: user.role,
       });
 
+      // const cookieOptions: CookieOptions = {
+      //   httpOnly: false,
+      //   secure: true,
+      //   // sameSite:COOKIE_KEYS.SAME_SITE,
+      //   sameSite: 'lax',
+      //   // path: COOKIE_KEYS.PATH,
+      //   // domain: COOKIE_KEYS.DOMAIN,
+      // };
+
       const cookieOptions: CookieOptions = {
         httpOnly: false,
         secure: true,
-        sameSite:COOKIE_KEYS.SAME_SITE,
-        // sameSite: 'lax',
+        sameSite: COOKIE_KEYS.SAME_SITE,
         path: COOKIE_KEYS.PATH,
         domain: COOKIE_KEYS.DOMAIN,
       };
