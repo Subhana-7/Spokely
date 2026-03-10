@@ -48,7 +48,7 @@ export class EmailService implements IEmailService {
     }
 
      await this.resend.emails.send({
-      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "Spokely <no-reply@spokely.live>",
       to,
       subject,
       text
@@ -62,7 +62,7 @@ export class EmailService implements IEmailService {
     const text = EMAIL_MESSAGES.OTP.TEXT(otp);
 
      await this.resend.emails.send({
-      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "Spokely <no-reply@spokely.live>",
       to,
       subject,
       text
@@ -88,7 +88,7 @@ export class EmailService implements IEmailService {
         : EMAIL_MESSAGES.OTP.TEXT(otp);
 
       let res = await this.resend.emails.send({
-      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "Spokely <no-reply@spokely.live>",
       to,
       subject,
       text
