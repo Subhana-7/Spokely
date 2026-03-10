@@ -15,6 +15,7 @@ import {
 } from "../dto/user.dto";
 import { toUserResponseDTO } from "../mappers/user.mapper";
 import { generateAccessToken, generateRefreshToken } from "../utilis/token";
+import { IEmailService } from "./interfaces/IEmailService";
 
 import {
   MESSAGES,
@@ -35,7 +36,8 @@ import { MentorResponseDTO } from "../dto/mentor.dto";
 export class UserService implements IUserService {
   constructor(
     @inject(TYPES.IUserRepository) private _userRepository: IUserRepository,
-    @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository
+    @inject(TYPES.IAdminRepository) private _adminRepository: IAdminRepository,
+    @inject(TYPES.IEmailService) private _emailService:IEmailService
   ) {}
 
   /* ----------------------------------------
@@ -148,14 +150,16 @@ export class UserService implements IUserService {
    * SEND OTP
    * ---------------------------------------- */
   async sendOtp(email: string): Promise<void> {
+    console.log("hiting user service otp")
     const user = await this._userRepository.findByEmail(email);
+    console.log('user found',user)
     if (!user) throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this._userRepository.updateOTP(email, otp, expiresAt);
-    await this.sendOTPEmail(email, otp);
+    await this._emailService.sendOTPEmail(email, otp,false);
   }
 
   /* ----------------------------------------
