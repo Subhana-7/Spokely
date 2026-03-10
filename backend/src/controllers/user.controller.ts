@@ -65,10 +65,7 @@ export class UserController implements IUserController {
       // const cookieOptions: CookieOptions = {
       //   httpOnly: false,
       //   secure: true,
-      //   // sameSite: COOKIE_KEYS.SAME_SITE,
       //   sameSite: 'lax',
-      //   // path: COOKIE_KEYS.PATH,
-      //   // domain: COOKIE_KEYS.DOMAIN,
       // };
 
       const cookieOptions: CookieOptions = {
@@ -116,10 +113,7 @@ export class UserController implements IUserController {
       // const cookieOptions: CookieOptions = {
       //   httpOnly: false,
       //   secure: true,
-      //   // sameSite: COOKIE_KEYS.SAME_SITE,
       //   sameSite: "lax",
-      //   // path: COOKIE_KEYS.PATH,
-      //   // domain: COOKIE_KEYS.DOMAIN,
       // };
 
       const cookieOptions: CookieOptions = {
@@ -182,10 +176,7 @@ export class UserController implements IUserController {
       // const cookieOptions: CookieOptions = {
       //   httpOnly: false,
       //   secure: true,
-      //   // sameSite:COOKIE_KEYS.SAME_SITE,
       //   sameSite: 'lax',
-      //   // path: COOKIE_KEYS.PATH,
-      //   // domain: COOKIE_KEYS.DOMAIN,
       // };
 
       const cookieOptions: CookieOptions = {
