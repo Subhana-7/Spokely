@@ -221,6 +221,7 @@ export class UserController implements IUserController {
   ----------------------------------------------------- */
   sendOtp = async (req: Request<{}, {}, SendOtpDTO>, res: Response) => {
     try {
+      console.log("SEND OTP CONTROLLER HIT");
       await this._userService.sendOtp(req.body.email);
       res.status(STATUS_CODES.OK).json({
         message: MESSAGES.SUCCESS.OTP_SENT,
