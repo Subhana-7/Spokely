@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { injectable } from "inversify";
 import { IEmailService } from "./interfaces/IEmailService";
 import {
@@ -11,30 +12,36 @@ import {
 
 @injectable()
 export class EmailService implements IEmailService {
-  private _transporter;
+
+   private resend: Resend;
 
   constructor() {
-    this._transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    });
-
-    this._transporter.verify((error, success) => {
-      if (error) {
-        console.error("SMTP connection failed:", error);
-      } else {
-        console.log("SMTP server is ready");
-      }
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
   }
+  // private _transporter;
+
+  // constructor() {
+  //   this._transporter = nodemailer.createTransport({
+  //     host: "smtp.gmail.com",
+  //     port: 587,
+  //     secure: false,
+  //     auth: {
+  //       user: process.env.EMAIL_USER,
+  //       pass: process.env.EMAIL_PASS,
+  //     },
+  //     connectionTimeout: 10000,
+  //     greetingTimeout: 10000,
+  //     socketTimeout: 10000,
+  //   });
+
+  //   this._transporter.verify((error, success) => {
+  //     if (error) {
+  //       console.error("SMTP connection failed:", error);
+  //     } else {
+  //       console.log("SMTP server is ready");
+  //     }
+  //   });
+  // }
 
   async sendVerificationUpdateEmail(
     to: string,
@@ -63,11 +70,17 @@ export class EmailService implements IEmailService {
         throw new Error(EMAIL_ERRORS.INVALID_VERIFICATION_STATUS);
     }
 
-    await this._transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    // await this._transporter.sendMail({
+    //   from: process.env.EMAIL_USER,
+    //   to,
+    //   subject,
+    //   text,
+    // });
+     await this.resend.emails.send({
+      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
       to,
       subject,
-      text,
+      text
     });
   }
 
@@ -75,11 +88,18 @@ export class EmailService implements IEmailService {
     const subject = EMAIL_MESSAGES.OTP.SUBJECT;
     const text = EMAIL_MESSAGES.OTP.TEXT(otp);
 
-    await this._transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    // await this._transporter.sendMail({
+    //   from: process.env.EMAIL_USER,
+    //   to,
+    //   subject,
+    //   text,
+    // });
+
+     await this.resend.emails.send({
+      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
       to,
       subject,
-      text,
+      text
     });
   }
 
@@ -111,12 +131,13 @@ export class EmailService implements IEmailService {
         ? EMAIL_MESSAGES.OTP_FORGOT_PASSWORD.TEXT(otp)
         : EMAIL_MESSAGES.OTP.TEXT(otp);
 
-      let res = await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text,
-      });
+      let res = await this.resend.emails.send({
+      from: process.env.EMAIL_FROM || "Spokely <onboarding@resend.dev>",
+      to,
+      subject,
+      text
+    });
+    console.log("OTP email sent to:", to);
       console.log("node mailer", res);
     } catch (error: unknown) {
       console.log("error", error);
