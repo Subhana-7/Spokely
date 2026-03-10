@@ -56,6 +56,8 @@ export class EmailService implements IEmailService {
   }
 
   async sendOTP(to: string, otp: string): Promise<void> {
+    console.log("RESEND KEY:", process.env.RESEND_API_KEY?.slice(0,5))
+
     const subject = EMAIL_MESSAGES.OTP.SUBJECT;
     const text = EMAIL_MESSAGES.OTP.TEXT(otp);
 
@@ -65,6 +67,8 @@ export class EmailService implements IEmailService {
       subject,
       text
     });
+
+    console.log("OTP email sent to:", to);
   }
 
   async sendOTPEmail(
