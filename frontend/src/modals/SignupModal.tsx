@@ -45,7 +45,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const roleOptions = [
     { value: "user", label: "User" },
@@ -87,7 +87,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
       newErrors.password = "Password is required";
     } else if (
       !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(
-        formData.password
+        formData.password,
       )
     ) {
       newErrors.password =
@@ -124,7 +124,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
       return;
     }
     window.location.href = `${baseUrl}/api/users/google`;
-    navigate("/user/home")
+    navigate("/user/home");
   };
   const handleFileUpload = async (file: File) => {
     try {
@@ -142,22 +142,18 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleCreateAccount = async () => {
-    console.log("what's happeining monu")
-    console.log("validate issue ano",!validate)
     if (!validate()) return;
 
     try {
-      let ress = await signup({
+      await signup({
         ...formData,
         ...mentorData,
         role: formData.role as "user" | "mentor",
       });
-      console.log(ress)
-      let res = await sendOTP(
+      await sendOTP(
         { email: formData.email },
-        formData.role as "user" | "mentor"
+        formData.role as "user" | "mentor",
       );
-      console.log(res)
       setShowOtpModal(true);
     } catch (err: any) {
       const message = err.response?.data?.message || err.message;

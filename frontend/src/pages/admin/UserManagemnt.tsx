@@ -31,8 +31,6 @@ const UserManagement = () => {
 
         const { result } = response.data;
 
-        console.log(result);
-
         setUsers(result.users);
         setTotal(result.total);
       } catch (err) {
@@ -42,8 +40,6 @@ const UserManagement = () => {
 
     fetchUsers();
   }, [search, filter, statusFilter, page, limit]);
-
-  console.log(users);
 
   const handleBlock = async (id: string) => {
     try {

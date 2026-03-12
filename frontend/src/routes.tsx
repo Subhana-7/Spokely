@@ -4,7 +4,7 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const GoogleRedirectHandler = lazy(
-  () => import("./modals/GoogleRedirectHandler")
+  () => import("./modals/GoogleRedirectHandler"),
 );
 const UserHome = lazy(() => import("./pages/user/UserDashboard"));
 const Connections = lazy(() => import("./pages/user/connections/Connections"));
@@ -19,24 +19,24 @@ const SessionSchedule = lazy(() => import("./pages/Sessions/ScheduleSessions"));
 const SessionDetail = lazy(() => import("./pages/Sessions/SessionDetails"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const MentorVerification = lazy(
-  () => import("./pages/admin/MentorVerification")
+  () => import("./pages/admin/MentorVerification"),
 );
 const UserProfile = lazy(() => import("./pages/user/UserSelfViewProfilePage"));
 const MentorProfile = lazy(
-  () => import("./pages/mentor/MentorSelfViewProfilePage")
+  () => import("./pages/mentor/MentorSelfViewProfilePage"),
 );
 const UserViewMentorProfile = lazy(
-  () => import("./pages/user/UserViewMentorProfile")
+  () => import("./pages/user/UserViewMentorProfile"),
 );
 const MentorViewUserProfile = lazy(
-  () => import("./pages/mentor/MentorViewUserProfile")
+  () => import("./pages/mentor/MentorViewUserProfile"),
 );
 const SessionsHub = lazy(() => import("./pages/Sessions/MentorSessionsHub"));
 const MentorPublicSessions = lazy(
-  () => import("./pages/Sessions/PublicSessions")
+  () => import("./pages/Sessions/PublicSessions"),
 );
 const MentorScheduleSession = lazy(
-  () => import("./pages/Sessions/MentorScheduleSession")
+  () => import("./pages/Sessions/MentorScheduleSession"),
 );
 const SessionListing = lazy(() => import("./pages/admin/SessionListing"));
 const ChatPage = lazy(() => import("./pages/chat/ChatPage"));
@@ -45,22 +45,22 @@ const StudentsPage = lazy(() => import("./pages/Sessions/StudentsListing"));
 const DailyTaskPage = lazy(() => import("./pages/user/dailyTask/DailyTask"));
 const WalletPage = lazy(() => import("./pages/Wallet"));
 const PublicMentorListing = lazy(
-  () => import("./pages/user/publicMentorListing")
+  () => import("./pages/user/publicMentorListing"),
 );
 const PaymentManagement = lazy(() => import("./pages/admin/PaymentManagement"));
 const DailyTaskManagement = lazy(
-  () => import("./pages/admin/DailyTaskManagement")
+  () => import("./pages/admin/DailyTaskManagement"),
 );
 const Reports = lazy(() => import("./pages/admin/ReportsManagement"));
 
 const SubscriptionHistory = lazy(
-  () => import("./pages/user/SubscriptionHistory")
+  () => import("./pages/user/SubscriptionHistory"),
 );
 
 const Notification = lazy(() => import("./pages/Notification"));
 const PaymentDetails = lazy(() => import("./pages/PaymentDetails"));
 const AdminDailyTaskDetails = lazy(
-  () => import("./pages/admin/DailyTaskDetails")
+  () => import("./pages/admin/DailyTaskDetails"),
 );
 
 const BlockedScreen = lazy(() => import("./pages/BlockedScreen"));
@@ -301,10 +301,8 @@ export default function AppRoutes() {
         ],
       },
     ],
-    []
+    [],
   );
 
-  return (
-    <Suspense fallback={<p>Loading page...</p>}>{useRoutes(routes)}</Suspense>
-  );
+  return useRoutes(routes);
 }

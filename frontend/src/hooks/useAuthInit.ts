@@ -8,19 +8,17 @@ export const useAuthInit = () => {
 
   useEffect(() => {
     const init = async () => {
+      const start = Date.now();
+
       try {
         const res = await refreshToken();
         console.log("refreshToken response:", res);
 
         let userData = null;
 
-        if (res?.user) {
-          userData = res.user;
-        } else if (res?.mentor) {
-          userData = res.mentor;
-        } else if (res?.admin) {
-          userData = res.admin;
-        }
+        if (res?.user) userData = res.user;
+        else if (res?.mentor) userData = res.mentor;
+        else if (res?.admin) userData = res.admin;
 
         if (userData?.isBlocked) {
           logout();
@@ -42,13 +40,19 @@ export const useAuthInit = () => {
             tags: userData.tags || [],
             isBlocked: userData.isBlocked || false,
           });
-          console.log("Normalized userData:", userData);
         } else {
           logout();
         }
       } catch (err) {
-        logout()
+        logout();
       } finally {
+        const elapsed = Date.now() - start;
+        const minDelay = 300;
+
+        if (elapsed < minDelay) {
+          await new Promise((r) => setTimeout(r, minDelay - elapsed));
+        }
+
         setLoading(false);
       }
     };

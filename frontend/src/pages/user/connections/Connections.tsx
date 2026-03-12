@@ -72,12 +72,6 @@ const Connections = () => {
       setTotal(totalCount);
       setTotalPages(pagesCount);
 
-      console.log("Pagination state:", {
-        connections: connectionsData.length,
-        total: totalCount,
-        totalPages: pagesCount,
-        currentPage: params?.page || 1,
-      });
     } catch (err: any) {
       toast.error("Failed to fetch connections");
       console.error("Fetch error:", err);

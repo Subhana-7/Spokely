@@ -11,13 +11,14 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/userAuthStore";
 import { getSessions, cancelSession } from "../../services/sessionService";
+import Loader from "../../components/Loader";
 
 const Button = lazy(() => import("../../modals/Button"));
 const Input = lazy(() => import("../../modals/Input"));
 const Card = lazy(() => import("../../components/common/Cards"));
 const Badge = lazy(() => import("../../components/common/Badge"));
 const DashboardHeader = lazy(
-  () => import("../user/DashBoardComponents/Header")
+  () => import("../user/DashBoardComponents/Header"),
 );
 
 const Sessions = () => {
@@ -97,15 +98,22 @@ const Sessions = () => {
   /** Badge styles */
   const badgeClasses = useMemo(
     () => ({
-      public: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
-      private: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-2xl",
-      "peer-to-peer": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
-      completed: "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
-      "on-going": "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
-      cancelled: "bg-red-500/20 text-red-300 border border-red-500/30 rounded-2xl",
-      upcoming: "bg-gray-500/20 text-gray-300 border border-gray-500/30 rounded-2xl",
+      public:
+        "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+      private:
+        "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-2xl",
+      "peer-to-peer":
+        "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+      completed:
+        "bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl",
+      "on-going":
+        "bg-blue-500/20 text-white border border-blue-500/30 rounded-2xl",
+      cancelled:
+        "bg-red-500/20 text-red-300 border border-red-500/30 rounded-2xl",
+      upcoming:
+        "bg-gray-500/20 text-gray-300 border border-gray-500/30 rounded-2xl",
     }),
-    []
+    [],
   );
 
   /** Pagination handlers */
@@ -115,7 +123,7 @@ const Sessions = () => {
   const handlePublicSessions = () => navigate("/user/sessions/public");
 
   return (
-    <Suspense fallback={<p>Loading page...</p>}>
+    <Suspense fallback={<Loader />}>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-24">
         <DashboardHeader />
         <div className="max-w-7xl mx-auto px-6 pt-6">

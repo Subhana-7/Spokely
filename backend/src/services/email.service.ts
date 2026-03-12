@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { Resend } from "resend";
 import { injectable } from "inversify";
 import { IEmailService } from "./interfaces/IEmailService";
@@ -17,7 +16,6 @@ export class EmailService implements IEmailService {
 
   constructor() {
     this.resend = new Resend(process.env.RESEND_API_KEY);
-    console.log("RESEND KEY:", process.env.RESEND_API_KEY?.slice(0,5))
   }
 
   async sendVerificationUpdateEmail(
@@ -56,7 +54,6 @@ export class EmailService implements IEmailService {
   }
 
   async sendOTP(to: string, otp: string): Promise<void> {
-    console.log("RESEND KEY:", process.env.RESEND_API_KEY?.slice(0,5))
 
     const subject = EMAIL_MESSAGES.OTP.SUBJECT;
     const text = EMAIL_MESSAGES.OTP.TEXT(otp);
@@ -67,8 +64,6 @@ export class EmailService implements IEmailService {
       subject,
       text
     });
-
-    console.log("OTP email sent to:", to);
   }
 
   async sendOTPEmail(
@@ -77,7 +72,6 @@ export class EmailService implements IEmailService {
     isForgotPassword: boolean = false,
   ): Promise<void | null> {
     try {
-      console.log("hit here");
 
       const subject = isForgotPassword
         ? EMAIL_MESSAGES.OTP_FORGOT_PASSWORD.SUBJECT
@@ -93,8 +87,6 @@ export class EmailService implements IEmailService {
       subject,
       text
     });
-    console.log("OTP email sent to:", to);
-      console.log("node mailer", res);
     } catch (error: unknown) {
       console.log("error", error);
       return null;

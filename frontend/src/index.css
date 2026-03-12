@@ -1,1 +1,6 @@
 @import "tailwindcss";
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
